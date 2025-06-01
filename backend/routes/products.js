@@ -2,237 +2,195 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 
-// Get all products with pagination, filtering, and search
+// Get all products with filters, pagination, and sorting
 router.get('/', async (req, res) => {
   try {
     const {
       page = 1,
       limit = 12,
       category,
-      search,
-      sort = 'createdAt',
-      order = 'DESC',
-      featured,
       minPrice,
-      maxPrice
+      maxPrice,
+      inStock,
+      search,
+      sortBy = 'newest'
     } = req.query;
 
     const offset = (page - 1) * limit;
     let whereConditions = ['p.isActive = 1'];
-    let joinConditions = '';
-    const params = {};
+    const params = { offset: parseInt(offset), limit: parseInt(limit) };
 
-    // Search functionality
-    if (search) {
-      whereConditions.push('(p.name LIKE @search OR p.nameVi LIKE @search OR p.description LIKE @search OR p.descriptionVi LIKE @search)');
-      params.search = `%${search}%`;
-    }
-
-    // Category filter
+    // Apply filters
     if (category) {
-      joinConditions = 'INNER JOIN ProductCategories pc ON p.id = pc.productId INNER JOIN Categories c ON pc.categoryId = c.id';
       whereConditions.push('c.slug = @category');
       params.category = category;
     }
 
-    // Featured filter
-    if (featured === 'true') {
-      whereConditions.push('p.isFeatured = 1');
-    }
-
-    // Price range filter
     if (minPrice) {
       whereConditions.push('p.price >= @minPrice');
-      params.minPrice = minPrice;
+      params.minPrice = parseFloat(minPrice);
     }
+
     if (maxPrice) {
       whereConditions.push('p.price <= @maxPrice');
-      params.maxPrice = maxPrice;
+      params.maxPrice = parseFloat(maxPrice);
     }
 
-    // Build WHERE clause
+    if (inStock === 'true') {
+      whereConditions.push('p.stockQuantity > 0');
+    }
+
+    if (search) {
+      whereConditions.push('(p.name LIKE @search OR p.description LIKE @search OR p.nameVi LIKE @search OR p.descriptionVi LIKE @search)');
+      params.search = `%${search}%`;
+    }
+
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    // Validate sort column
-    const allowedSortColumns = ['name', 'price', 'createdAt', 'stockQuantity'];
-    const sortColumn = allowedSortColumns.includes(sort) ? sort : 'createdAt';
-    const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    // Determine sort order
+    let orderBy = 'p.createdAt DESC'; // default newest
+    switch (sortBy) {
+      case 'name':
+        orderBy = 'p.name ASC';
+        break;
+      case 'price_low':
+        orderBy = 'p.price ASC';
+        break;
+      case 'price_high':
+        orderBy = 'p.price DESC';
+        break;
+      case 'popularity':
+        orderBy = 'p.views DESC, p.createdAt DESC';
+        break;
+    }
 
-    // Get total count for pagination
+    // Get total count
     const countQuery = `
       SELECT COUNT(DISTINCT p.id) as total
       FROM Products p
-      ${joinConditions}
+      LEFT JOIN ProductCategories pc ON p.id = pc.productId
+      LEFT JOIN Categories c ON pc.categoryId = c.id
       ${whereClause}
     `;
-
+    
     const countResult = await db.query(countQuery, params);
-    const totalItems = countResult[0].total;
-    const totalPages = Math.ceil(totalItems / limit);
+    const total = countResult[0]?.total || 0;
 
     // Get products
     const productsQuery = `
-      SELECT DISTINCT
+      SELECT DISTINCT 
         p.id,
         p.name,
         p.nameVi,
-        p.slug,
-        p.shortDescription,
-        p.shortDescriptionVi,
+        p.description,
+        p.descriptionVi,
         p.price,
         p.comparePrice,
-        p.sku,
-        p.stockQuantity,
-        p.weight,
-        p.roastLevel,
-        p.origin,
-        p.processingMethod,
-        p.images,
+        p.stockQuantity as stock_quantity,
+        p.imageUrl as image_url,
         p.isFeatured,
         p.createdAt
       FROM Products p
-      ${joinConditions}
+      LEFT JOIN ProductCategories pc ON p.id = pc.productId
+      LEFT JOIN Categories c ON pc.categoryId = c.id
       ${whereClause}
-      ORDER BY p.${sortColumn} ${sortOrder}
+      ORDER BY ${orderBy}
       OFFSET @offset ROWS
       FETCH NEXT @limit ROWS ONLY
     `;
 
-    params.offset = offset;
-    params.limit = parseInt(limit);
-
     const products = await db.query(productsQuery, params);
 
-    // Parse images JSON for each product
-    const processedProducts = products.map(product => ({
-      ...product,
-      images: product.images ? JSON.parse(product.images) : []
-    }));
-
     res.json({
-      products: processedProducts,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalItems,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
+      success: true,
+      products: products || [],
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / limit)
     });
 
   } catch (error) {
     console.error('Get products error:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch products',
+      products: [],
+      total: 0
+    });
   }
 });
 
-// Get single product by slug
-router.get('/:slug', async (req, res) => {
+// Get categories
+router.get('/categories', async (req, res) => {
   try {
-    const { slug } = req.params;
+    const categories = await db.query(`
+      SELECT id, name, nameVi, slug, description
+      FROM Categories
+      WHERE isActive = 1
+      ORDER BY name ASC
+    `);
+
+    res.json({
+      success: true,
+      categories: categories || []
+    });
+
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch categories',
+      categories: []
+    });
+  }
+});
+
+// Get single product
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
 
     const productQuery = `
       SELECT 
         p.*,
-        STRING_AGG(c.name, ', ') as categories,
-        STRING_AGG(c.nameVi, ', ') as categoriesVi
+        STUFF((
+          SELECT ', ' + c.name
+          FROM ProductCategories pc
+          JOIN Categories c ON pc.categoryId = c.id
+          WHERE pc.productId = p.id
+          FOR XML PATH('')
+        ), 1, 2, '') as categories
       FROM Products p
-      LEFT JOIN ProductCategories pc ON p.id = pc.productId
-      LEFT JOIN Categories c ON pc.categoryId = c.id
-      WHERE p.slug = @slug AND p.isActive = 1
-      GROUP BY p.id, p.name, p.nameVi, p.slug, p.description, p.descriptionVi, 
-               p.shortDescription, p.shortDescriptionVi, p.price, p.comparePrice, 
-               p.sku, p.stockQuantity, p.weight, p.roastLevel, p.origin, 
-               p.processingMethod, p.images, p.isActive, p.isFeatured, 
-               p.metaTitle, p.metaTitleVi, p.metaDescription, p.metaDescriptionVi, 
-               p.createdAt, p.updatedAt
+      WHERE p.id = @id AND p.isActive = 1
     `;
 
-    const products = await db.query(productQuery, { slug });
+    const products = await db.query(productQuery, { id: parseInt(id) });
 
     if (products.length === 0) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Product not found' 
+      });
     }
 
-    const product = products[0];
-    
-    // Parse images JSON
-    product.images = product.images ? JSON.parse(product.images) : [];
+    // Increment view count
+    await db.execute(
+      'UPDATE Products SET views = ISNULL(views, 0) + 1 WHERE id = @id',
+      { id: parseInt(id) }
+    );
 
-    // Get related products (same category, excluding current product)
-    const relatedQuery = `
-      SELECT TOP 4
-        p.id,
-        p.name,
-        p.nameVi,
-        p.slug,
-        p.shortDescription,
-        p.shortDescriptionVi,
-        p.price,
-        p.comparePrice,
-        p.images,
-        p.isFeatured
-      FROM Products p
-      INNER JOIN ProductCategories pc ON p.id = pc.productId
-      INNER JOIN ProductCategories pc2 ON pc.categoryId = pc2.categoryId
-      WHERE pc2.productId = @productId 
-        AND p.id != @productId 
-        AND p.isActive = 1
-      ORDER BY NEWID()
-    `;
-
-    const relatedProducts = await db.query(relatedQuery, { productId: product.id });
-    
-    // Parse images for related products
-    product.relatedProducts = relatedProducts.map(relatedProduct => ({
-      ...relatedProduct,
-      images: relatedProduct.images ? JSON.parse(relatedProduct.images) : []
-    }));
-
-    res.json(product);
+    res.json({
+      success: true,
+      product: products[0]
+    });
 
   } catch (error) {
     console.error('Get product error:', error);
-    res.status(500).json({ error: 'Failed to fetch product' });
-  }
-});
-
-// Get featured products
-router.get('/featured/list', async (req, res) => {
-  try {
-    const { limit = 8 } = req.query;
-
-    const query = `
-      SELECT TOP (@limit)
-        id,
-        name,
-        nameVi,
-        slug,
-        shortDescription,
-        shortDescriptionVi,
-        price,
-        comparePrice,
-        images,
-        isFeatured
-      FROM Products
-      WHERE isActive = 1 AND isFeatured = 1
-      ORDER BY createdAt DESC
-    `;
-
-    const products = await db.query(query, { limit: parseInt(limit) });
-
-    // Parse images JSON for each product
-    const processedProducts = products.map(product => ({
-      ...product,
-      images: product.images ? JSON.parse(product.images) : []
-    }));
-
-    res.json(processedProducts);
-
-  } catch (error) {
-    console.error('Get featured products error:', error);
-    res.status(500).json({ error: 'Failed to fetch featured products' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch product' 
+    });
   }
 });
 

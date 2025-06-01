@@ -2,26 +2,17 @@
   "common": {
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "save": "Save",
-    "edit": "Edit",
-    "delete": "Delete",
+    "tryAgain": "Try Again",
+    "clearAll": "Clear All",
+    "clearFilters": "Clear Filters",
     "search": "Search",
     "filter": "Filter",
-    "sort": "Sort",
-    "next": "Next",
+    "min": "Min",
+    "max": "Max",
+    "only": "only",
     "previous": "Previous",
-    "home": "Home",
-    "about": "About",
-    "contact": "Contact",
-    "blog": "Blog",
-    "products": "Products",
-    "cart": "Cart",
-    "account": "Account",
-    "login": "Login",    "register": "Register",
-    "logout": "Logout"
+    "next": "Next",
+    "errorLoadingProducts": "Failed to load products"
   },
   "navigation": {
     "home": "Home",
@@ -41,28 +32,25 @@
     "learnMore": "Learn More"
   },
   "products": {
-    "title": "Our Coffee Products",
-    "subtitle": "Premium Vietnamese Coffee Beans",
+    "title": "Our Products",
+    "subtitle": "Premium Vietnamese coffee beans, roasted to perfection",
+    "searchPlaceholder": "Search products...",
     "categories": "Categories",
     "allCategories": "All Categories",
-    "arabica": "Arabica",
-    "robusta": "Robusta",
-    "blend": "Blend",
-    "sortBy": "Sort by",
-    "price": "Price",
-    "name": "Name",
-    "newest": "Newest",
     "priceRange": "Price Range",
     "inStock": "In Stock",
     "outOfStock": "Out of Stock",
+    "sortBy": "Sort By",
+    "newest": "Newest",
+    "name": "Name",
+    "priceLowToHigh": "Price (Low to High)",
+    "priceHighToLow": "Price (High to Low)",
+    "popularity": "Popularity",
+    "noProductsFound": "No products found",
+    "tryAdjustingFilters": "Try adjusting your filters or search terms",
+    "showingResults": "Showing {{count}} of {{total}} products",
     "addToCart": "Add to Cart",
-    "quickView": "Quick View",
-    "viewDetails": "View Details",
-    "weight": "Weight",
-    "origin": "Origin",
-    "roastLevel": "Roast Level",
-    "flavor": "Flavor Profile",
-    "processing": "Processing Method"
+    "viewDetails": "View Details"
   },
   "cart": {
     "title": "Shopping Cart",
@@ -77,7 +65,8 @@
     "grandTotal": "Grand Total",
     "checkout": "Proceed to Checkout",
     "remove": "Remove",
-    "update": "Update Cart"
+    "update": "Update Cart",
+    "addError": "Failed to add product to cart"
   },
   "checkout": {
     "title": "Checkout",
@@ -246,7 +235,8 @@
     "settings": "Settings",
     "welcome": "Welcome back",
     "recentOrders": "Recent Orders",
-    "viewAll": "View All",    "noOrders": "No orders yet",
+    "viewAll": "View All",
+    "noOrders": "No orders yet",
     "startShopping": "Start Shopping"
   },
   "admin": {
@@ -316,6 +306,6 @@
   "seo": {
     "title": "Balan Coffee & Roastery - Premium Vietnamese Coffee",
     "description": "Discover premium Vietnamese coffee beans including Arabica Cầu Đất, Arabica Typica Kongo, and Robusta Lâm Đồng. Fresh roasted coffee delivered to your door.",
-    "keywords": "cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất"
+    "keywords": "Vietnamese coffee, premium coffee beans, coffee roastery"
   }
 }

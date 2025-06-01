@@ -2,47 +2,17 @@
   "common": {
     "loading": "Đang tải...",
     "error": "Lỗi",
-    "success": "Thành công",
-    "cancel": "Hủy",
-    "confirm": "Xác nhận",
-    "save": "Lưu",
-    "edit": "Sửa",
-    "delete": "Xóa",
+    "tryAgain": "Thử lại",
+    "clearAll": "Xóa tất cả",
+    "clearFilters": "Xóa bộ lọc",
     "search": "Tìm kiếm",
     "filter": "Lọc",
-    "sort": "Sắp xếp",
-    "next": "Tiếp theo",
+    "min": "Tối thiểu",
+    "max": "Tối đa",
+    "only": "chỉ",
     "previous": "Trước",
-    "home": "Trang chủ",
-    "about": "Giới thiệu",
-    "contact": "Liên hệ",
-    "blog": "Blog",
-    "products": "Sản phẩm",
-    "cart": "Giỏ hàng",
-    "account": "Tài khoản",
-    "login": "Đăng nhập",
-    "register": "Đăng ký",
-    "logout": "Đăng xuất",
-    "saving": "Đang lưu...",
-    "sending": "Đang gửi...",
-    "goBack": "Quay lại",
-    "readMore": "Đọc thêm",
-    "seeMore": "Xem thêm",
-    "breadcrumb": {
-      "home": "Trang chủ",
-      "blog": "Blog"
-    },
-    "pagination": {
-      "previous": "Trước",
-      "next": "Tiếp theo"
-    },
-    "nav": {
-      "home": "Trang chủ",
-      "products": "Sản phẩm",
-      "blog": "Blog",
-      "about": "Giới thiệu",
-      "contact": "Liên hệ"
-    }
+    "next": "Tiếp",
+    "errorLoadingProducts": "Không thể tải sản phẩm"
   },
   "navigation": {
     "home": "Trang chủ",
@@ -62,28 +32,25 @@
     "learnMore": "Tìm hiểu thêm"
   },
   "products": {
-    "title": "Sản Phẩm Cà Phê",
-    "subtitle": "Hạt Cà Phê Việt Nam Cao Cấp",
+    "title": "Sản phẩm của chúng tôi",
+    "subtitle": "Hạt cà phê Việt Nam cao cấp, rang hoàn hảo",
+    "searchPlaceholder": "Tìm kiếm sản phẩm...",
     "categories": "Danh mục",
     "allCategories": "Tất cả danh mục",
-    "arabica": "Arabica",
-    "robusta": "Robusta",
-    "blend": "Pha trộn",
-    "sortBy": "Sắp xếp theo",
-    "price": "Giá",
-    "name": "Tên",
-    "newest": "Mới nhất",
     "priceRange": "Khoảng giá",
     "inStock": "Còn hàng",
     "outOfStock": "Hết hàng",
+    "sortBy": "Sắp xếp theo",
+    "newest": "Mới nhất",
+    "name": "Tên",
+    "priceLowToHigh": "Giá (Thấp đến cao)",
+    "priceHighToLow": "Giá (Cao đến thấp)",
+    "popularity": "Phổ biến",
+    "noProductsFound": "Không tìm thấy sản phẩm",
+    "tryAdjustingFilters": "Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm",
+    "showingResults": "Hiển thị {{count}} trong {{total}} sản phẩm",
     "addToCart": "Thêm vào giỏ",
-    "quickView": "Xem nhanh",
-    "viewDetails": "Xem chi tiết",
-    "weight": "Trọng lượng",
-    "origin": "Xuất xứ",
-    "roastLevel": "Độ rang",
-    "flavor": "Hương vị",
-    "processing": "Phương pháp chế biến"
+    "viewDetails": "Xem chi tiết"
   },
   "cart": {
     "title": "Giỏ Hàng",
@@ -98,7 +65,8 @@
     "grandTotal": "Tổng cộng",
     "checkout": "Thanh toán",
     "remove": "Xóa",
-    "update": "Cập nhật giỏ hàng"
+    "update": "Cập nhật giỏ hàng",
+    "addError": "Không thể thêm sản phẩm vào giỏ hàng"
   },
   "checkout": {
     "title": "Thanh Toán",
@@ -519,7 +487,8 @@
     "enterImageUrl": "Nhập URL hình ảnh:",
     "remove": "Xóa",
     "productImages": "Hình ảnh sản phẩm"
-  },  "seo": {
+  },
+  "seo": {
     "title": "Balan Coffee & Roastery - Cà Phê Việt Nam Cao Cấp",
     "description": "Khám phá hạt cà phê Việt Nam cao cấp bao gồm Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Cà phê rang tươi giao tận nơi.",
     "keywords": "cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất"
