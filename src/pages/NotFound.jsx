@@ -1,16 +1,13 @@
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 
 const NotFound = () => {
-  const { t } = useTranslation();
-
   const popularPages = [
-    { name: t('common.nav.home'), path: '/', icon: '🏠' },
-    { name: t('common.nav.products'), path: '/products', icon: '☕' },
-    { name: t('common.nav.blog'), path: '/blog', icon: '📝' },
-    { name: t('common.nav.about'), path: '/about', icon: '👥' },
-    { name: t('common.nav.contact'), path: '/contact', icon: '📞' }
+    { name: 'Trang chủ', path: '/', icon: '🏠' },
+    { name: 'Sản phẩm', path: '/products', icon: '☕' },
+    { name: 'Blog', path: '/blog', icon: '📝' },
+    { name: 'Giới thiệu', path: '/about', icon: '👥' },
+    { name: 'Liên hệ', path: '/contact', icon: '📞' }
   ];
 
   const featuredProducts = [
@@ -32,10 +29,9 @@ const NotFound = () => {
   ];
 
   return (
-    <>
-      <Helmet>
-        <title>{t('notFound.title')} - Balan Coffee & Roastery</title>
-        <meta name="description" content={t('notFound.description')} />
+    <>      <Helmet>
+        <title>Trang không tìm thấy - Balan Coffee & Roastery</title>
+        <meta name="description" content="Trang bạn đang tìm không tồn tại. Khám phá các sản phẩm cà phê chất lượng cao của chúng tôi." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -53,13 +49,12 @@ const NotFound = () => {
             <h1 className="text-6xl md:text-8xl font-bold text-coffee-800 mb-4">
               404
             </h1>
-            
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">
-              {t('notFound.title')}
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">
+              Trang không tìm thấy
             </h2>
             
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              {t('notFound.message')}
+              Xin lỗi, trang bạn đang tìm kiếm không tồn tại. Có thể đường dẫn đã bị thay đổi hoặc bạn đã nhập sai địa chỉ. Hãy thử quay lại trang chủ hoặc tìm kiếm sản phẩm mà bạn quan tâm.
             </p>
 
             {/* Action Buttons */}
@@ -71,7 +66,7 @@ const NotFound = () => {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                {t('notFound.backHome')}
+                Về trang chủ
               </Link>
               
               <button
@@ -81,16 +76,15 @@ const NotFound = () => {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                {t('notFound.goBack')}
+                Quay lại
               </button>
             </div>
           </div>
 
           {/* Popular Pages */}
-          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">
-              {t('notFound.popularPages.title')}
-            </h3>              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">            <h3 className="text-xl font-semibold text-gray-900 mb-6">
+              Trang phổ biến
+            </h3><div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {popularPages.map((page) => (
                 <Link
                   key={page.path}
@@ -109,9 +103,8 @@ const NotFound = () => {
           </div>
 
           {/* Featured Products */}
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">
-              {t('notFound.featuredProducts.title')}
+          <div className="bg-white rounded-lg shadow-lg p-8">            <h3 className="text-xl font-semibold text-gray-900 mb-6">
+              Sản phẩm nổi bật
             </h3>
               <div className="grid md:grid-cols-3 gap-6">
               {featuredProducts.map((product) => (
@@ -140,16 +133,15 @@ const NotFound = () => {
           </div>
 
           {/* Search Section */}
-          <div className="mt-8 bg-coffee-50 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-coffee-800 mb-4">
-              {t('notFound.search.title')}
+          <div className="mt-8 bg-coffee-50 rounded-lg p-6">            <h3 className="text-lg font-semibold text-coffee-800 mb-4">
+              Tìm kiếm sản phẩm
             </h3>
             
             <div className="max-w-md mx-auto">
               <form className="flex">
                 <input
                   type="text"
-                  placeholder={t('notFound.search.placeholder')}
+                  placeholder="Tìm kiếm cà phê..."
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
                 />
                 <button
@@ -165,9 +157,8 @@ const NotFound = () => {
           </div>
 
           {/* Help Section */}
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 mb-4">
-              {t('notFound.help.message')}
+          <div className="mt-8 text-center">            <p className="text-gray-600 mb-4">
+              Cần hỗ trợ? Liên hệ với chúng tôi qua các kênh dưới đây:
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
@@ -175,7 +166,7 @@ const NotFound = () => {
                 to="/contact"
                 className="text-coffee-600 hover:text-coffee-700 font-medium"
               >
-                📧 {t('notFound.help.contact')}
+                📧 Gửi email
               </Link>
               
               <span className="hidden sm:inline text-gray-400">|</span>
@@ -184,7 +175,7 @@ const NotFound = () => {
                 href="tel:+84123456789"
                 className="text-coffee-600 hover:text-coffee-700 font-medium"
               >
-                📞 {t('notFound.help.phone')}
+                📞 Gọi điện thoại
               </a>
               
               <span className="hidden sm:inline text-gray-400">|</span>
@@ -193,7 +184,7 @@ const NotFound = () => {
                 to="/faq"
                 className="text-coffee-600 hover:text-coffee-700 font-medium"
               >
-                ❓ {t('notFound.help.faq')}
+                ❓ Câu hỏi thường gặp
               </Link>
             </div>
           </div>
@@ -201,13 +192,12 @@ const NotFound = () => {
           {/* Fun Coffee Fact */}
           <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <div className="flex items-center justify-center mb-2">
-              <span className="text-2xl mr-2">💡</span>
-              <h4 className="font-semibold text-yellow-800">
-                {t('notFound.fact.title')}
+              <span className="text-2xl mr-2">💡</span>              <h4 className="font-semibold text-yellow-800">
+                Bạn có biết?
               </h4>
             </div>
             <p className="text-yellow-700 text-sm">
-              {t('notFound.fact.message')}
+              Cà phê là thức uống được yêu thích thứ hai trên thế giới, chỉ sau nước! Tại Balan Coffee, chúng tôi rang từng hạt cà phê với tình yêu để mang đến cho bạn hương vị tuyệt vời nhất.
             </p>
           </div>
         </div>

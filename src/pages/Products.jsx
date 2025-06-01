@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
@@ -9,7 +8,6 @@ import { useCart } from '../context/CartContext';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Products = () => {
-    const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const { addToCart } = useCart();
     
@@ -213,14 +211,13 @@ const Products = () => {
         }
     };
 
-    return (
-        <>
+    return (        <>
             <Helmet>
-                <title>{t('products.title')} - Balan Coffee & Roastery</title>
-                <meta name="description" content="Shop premium Vietnamese coffee beans including Arabica Cầu Đất, Robusta Lâm Đồng, and expertly crafted blends. Free shipping on orders over $50." />
-                <meta name="keywords" content={`${t('seo.keywords')}, cà phê rang mộc, Arabica Cầu Đất, Robusta Lâm Đồng, coffee beans, Vietnamese coffee`} />
-                <meta property="og:title" content={`${t('products.title')} - Balan Coffee & Roastery`} />
-                <meta property="og:description" content="Shop premium Vietnamese coffee beans including Arabica Cầu Đất, Robusta Lâm Đồng, and expertly crafted blends." />
+                <title>Sản phẩm - Balan Coffee & Roastery</title>
+                <meta name="description" content="Mua hạt cà phê Việt Nam cao cấp bao gồm Arabica Cầu Đất, Robusta Lâm Đồng và các blend chuyên nghiệp. Miễn phí vận chuyển cho đơn hàng trên 1,000,000đ." />
+                <meta name="keywords" content="cà phê rang mộc, Arabica Cầu Đất, Robusta Lâm Đồng, hạt cà phê, cà phê Việt Nam, coffee beans, Vietnamese coffee" />
+                <meta property="og:title" content="Sản phẩm - Balan Coffee & Roastery" />
+                <meta property="og:description" content="Mua hạt cà phê Việt Nam cao cấp bao gồm Arabica Cầu Đất, Robusta Lâm Đồng và các blend chuyên nghiệp." />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
                 <meta name="twitter:card" content="summary_large_image" />
@@ -231,14 +228,13 @@ const Products = () => {
             </Helmet>
 
             <div className="min-h-screen bg-cream-50">
-                {/* Header */}
-                <div className="bg-coffee-800 text-white py-16">
+                {/* Header */}                <div className="bg-coffee-800 text-white py-16">
                     <div className="container mx-auto px-4 text-center">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                            {t('products.title')}
+                            Sản phẩm
                         </h1>
                         <p className="text-xl text-cream-200 max-w-2xl mx-auto">
-                            {t('products.subtitle')}
+                            Khám phá bộ sưu tập cà phê rang mộc chất lượng cao của chúng tôi
                         </p>
                     </div>
                 </div>
@@ -246,32 +242,31 @@ const Products = () => {
                 <div className="container mx-auto px-4 py-8">
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Filters Sidebar */}
-                        <aside className="lg:w-1/4">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                        <aside className="lg:w-1/4">                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-lg font-semibold text-coffee-800">
-                                        {t('common.filter')}
+                                        Bộ lọc
                                     </h2>
                                     <button
                                         onClick={clearFilters}
                                         className="text-sm text-coffee-600 hover:text-coffee-800 transition-colors"
                                         aria-label="Clear all filters"
                                     >
-                                        {t('common.clearAll')}
+                                        Xóa tất cả
                                     </button>
                                 </div>
 
                                 {/* Search */}
                                 <div className="mb-6">
                                     <label htmlFor="search-input" className="block text-sm font-medium text-coffee-700 mb-2">
-                                        {t('common.search')}
+                                        Tìm kiếm
                                     </label>
                                     <input
                                         id="search-input"
                                         type="text"
                                         value={filters.search}
                                         onChange={(e) => handleSearchChange(e.target.value)}
-                                        placeholder={t('products.searchPlaceholder')}
+                                        placeholder="Tìm kiếm sản phẩm..."
                                         className="w-full px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
                                     />
                                 </div>
@@ -279,7 +274,7 @@ const Products = () => {
                                 {/* Categories */}
                                 <div className="mb-6">
                                     <label htmlFor="category-select" className="block text-sm font-medium text-coffee-700 mb-2">
-                                        {t('products.categories')}
+                                        Danh mục
                                     </label>
                                     <select
                                         id="category-select"
@@ -287,7 +282,7 @@ const Products = () => {
                                         onChange={(e) => handleFilterChange('category', e.target.value)}
                                         className="w-full px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
                                     >
-                                        <option value="">{t('products.allCategories')}</option>
+                                        <option value="">Tất cả danh mục</option>
                                         {categories.map(category => (
                                             <option key={category.id} value={category.slug}>
                                                 {category.name}
@@ -299,12 +294,12 @@ const Products = () => {
                                 {/* Price Range */}
                                 <div className="mb-6">
                                     <label className="block text-sm font-medium text-coffee-700 mb-2">
-                                        {t('products.priceRange')}
+                                        Khoảng giá
                                     </label>
                                     <div className="grid grid-cols-2 gap-2">
                                         <input
                                             type="number"
-                                            placeholder={t('common.min')}
+                                            placeholder="Tối thiểu"
                                             value={filters.minPrice}
                                             onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                                             className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
@@ -313,7 +308,7 @@ const Products = () => {
                                         />
                                         <input
                                             type="number"
-                                            placeholder={t('common.max')}
+                                            placeholder="Tối đa"
                                             value={filters.maxPrice}
                                             onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                                             className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
@@ -333,7 +328,7 @@ const Products = () => {
                                             className="h-4 w-4 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded"
                                         />
                                         <span className="ml-2 text-sm text-coffee-700">
-                                            {t('products.inStock')} {t('common.only')}
+                                            Chỉ hiển thị còn hàng
                                         </span>
                                     </label>
                                 </div>
@@ -342,24 +337,20 @@ const Products = () => {
 
                         {/* Products Grid */}
                         <main className="lg:w-3/4">
-                            {/* Sort and Results */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            {/* Sort and Results */}                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                 <div className="text-coffee-600">
                                     {loading ? (
-                                        t('common.loading')
+                                        'Đang tải...'
                                     ) : error ? (
                                         <span className="text-red-600">{error}</span>
                                     ) : (
-                                        t('products.showingResults', { 
-                                            count: displayedProductsCount, 
-                                            total: totalProducts 
-                                        })
+                                        `Hiển thị ${displayedProductsCount} trong tổng số ${totalProducts} sản phẩm`
                                     )}
                                 </div>
                                 
                                 <div className="flex items-center space-x-4">
                                     <label htmlFor="sort-select" className="text-sm font-medium text-coffee-700">
-                                        {t('products.sortBy')}:
+                                        Sắp xếp theo:
                                     </label>
                                     <select
                                         id="sort-select"
@@ -367,21 +358,19 @@ const Products = () => {
                                         onChange={(e) => setSortBy(e.target.value)}
                                         className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
                                     >
-                                        <option value="newest">{t('products.newest')}</option>
-                                        <option value="name">{t('products.name')}</option>
-                                        <option value="price_low">{t('products.priceLowToHigh')}</option>
-                                        <option value="price_high">{t('products.priceHighToLow')}</option>
-                                        <option value="popularity">{t('products.popularity')}</option>
+                                        <option value="newest">Mới nhất</option>
+                                        <option value="name">Tên</option>
+                                        <option value="price_low">Giá thấp đến cao</option>
+                                        <option value="price_high">Giá cao đến thấp</option>
+                                        <option value="popularity">Phổ biến</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            {/* Error State */}
+                            </div>                            {/* Error State */}
                             {error && (
                                 <div className="text-center py-16">
                                     <div className="text-6xl mb-4">⚠️</div>
                                     <h3 className="text-xl font-semibold text-red-600 mb-2">
-                                        {t('common.error')}
+                                        Có lỗi xảy ra
                                     </h3>
                                     <p className="text-coffee-600 mb-4">{error}</p>
                                     <button
@@ -391,13 +380,15 @@ const Products = () => {
                                         }}
                                         className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg transition-colors"
                                     >
-                                        {t('common.tryAgain')}
+                                        Thử lại
                                     </button>
                                 </div>
-                            )}                            {/* Loading State */}
+                            )}                            
+                            
+                            {/* Loading State */}
                             {loading && !error && (
                                 <div className="flex justify-center items-center h-64">
-                                    <output aria-live="polite" aria-label={t('common.loading')}>
+                                    <output aria-live="polite" aria-label="Đang tải">
                                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
                                     </output>
                                 </div>
@@ -408,16 +399,16 @@ const Products = () => {
                                 <div className="text-center py-16">
                                     <div className="text-6xl mb-4">☕</div>
                                     <h3 className="text-xl font-semibold text-coffee-800 mb-2">
-                                        {t('products.noProductsFound')}
+                                        Không tìm thấy sản phẩm
                                     </h3>
                                     <p className="text-coffee-600 mb-4">
-                                        {t('products.tryAdjustingFilters')}
+                                        Hãy thử điều chỉnh bộ lọc để tìm kiếm
                                     </p>
                                     <button
                                         onClick={clearFilters}
                                         className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg transition-colors"
                                     >
-                                        {t('common.clearFilters')}
+                                        Xóa bộ lọc
                                     </button>
                                 </div>
                             )}
@@ -456,39 +447,35 @@ const Products = () => {
                                                     <div className="flex items-center justify-between mb-3">
                                                         <span className="text-xl font-bold text-coffee-800">
                                                             ${product.price?.toFixed(2)}
-                                                        </span>
-                                                        <span className={`text-sm px-2 py-1 rounded-full ${
+                                                        </span>                                                        <span className={`text-sm px-2 py-1 rounded-full ${
                                                             product.stock_quantity > 0 
                                                                 ? 'bg-green-100 text-green-800' 
                                                                 : 'bg-red-100 text-red-800'
                                                         }`}>
-                                                            {product.stock_quantity > 0 ? t('products.inStock') : t('products.outOfStock')}
+                                                            {product.stock_quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
                                                         </span>
                                                     </div>
-                                                    
-                                                    <div className="flex space-x-2">
+                                                      <div className="flex space-x-2">
                                                         <button
                                                             onClick={() => handleAddToCart(product)}
                                                             disabled={product.stock_quantity === 0}
                                                             className="flex-1 bg-coffee-600 hover:bg-coffee-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors disabled:bg-coffee-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2"
                                                             aria-label={`Add ${product.name} to cart`}
                                                         >
-                                                            {t('products.addToCart')}
+                                                            Thêm vào giỏ
                                                         </button>
                                                         <Link
                                                             to={`/products/${product.id}`}
                                                             className="bg-coffee-100 hover:bg-coffee-200 text-coffee-800 py-2 px-4 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2 text-center"
                                                             aria-label={`View ${product.name} details`}
                                                         >
-                                                            {t('products.viewDetails')}
+                                                            Xem chi tiết
                                                         </Link>
                                                     </div>
                                                 </div>
                                             </article>
                                         ))}
-                                    </div>
-
-                                    {/* Pagination */}
+                                    </div>                                    {/* Pagination */}
                                     {totalPages > 1 && (
                                         <nav className="flex justify-center items-center space-x-2" aria-label="Product pagination">
                                             <button
@@ -497,7 +484,7 @@ const Products = () => {
                                                 className="px-4 py-2 border border-coffee-300 rounded-lg text-coffee-700 hover:bg-coffee-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-coffee-500"
                                                 aria-label="Go to previous page"
                                             >
-                                                {t('common.previous')}
+                                                Trước
                                             </button>
                                               {paginationNumbers.map((page, index) => (
                                                 page === '...' ? (
@@ -527,7 +514,7 @@ const Products = () => {
                                                 className="px-4 py-2 border border-coffee-300 rounded-lg text-coffee-700 hover:bg-coffee-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-coffee-500"
                                                 aria-label="Go to next page"
                                             >
-                                                {t('common.next')}
+                                                Sau
                                             </button>
                                         </nav>
                                     )}

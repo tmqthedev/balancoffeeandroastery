@@ -1,12 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
 const Cart = () => {
-    const { t } = useTranslation();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const { 
@@ -45,39 +43,36 @@ const Cart = () => {
     }
 
     return (
-        <>
-            <Helmet>
-                <title>{t('cart.title')} - Balan Coffee</title>
-                <meta name="description" content="Review your coffee selections and proceed to checkout." />
+        <>            <Helmet>
+                <title>Giỏ hàng - Balan Coffee</title>
+                <meta name="description" content="Xem lại lựa chọn cà phê của bạn và tiến hành thanh toán." />
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
 
             <div className="min-h-screen bg-cream-50">
                 {/* Header */}
                 <div className="bg-coffee-800 text-white py-12">
-                    <div className="container mx-auto px-4">
-                        <h1 className="text-3xl md:text-4xl font-bold">
-                            {t('cart.title')} ({itemCount})
+                    <div className="container mx-auto px-4">                        <h1 className="text-3xl md:text-4xl font-bold">
+                            Giỏ hàng ({itemCount})
                         </h1>
                     </div>
                 </div>
 
                 <div className="container mx-auto px-4 py-8">
                     {cartItems.length === 0 ? (
-                        /* Empty Cart */
-                        <div className="text-center py-16">
+                        /* Empty Cart */                        <div className="text-center py-16">
                             <div className="text-6xl mb-6">🛒</div>
                             <h2 className="text-2xl font-semibold text-coffee-800 mb-4">
-                                {t('cart.empty')}
+                                Giỏ hàng trống
                             </h2>
                             <p className="text-coffee-600 mb-8 max-w-md mx-auto">
-                                Discover our premium Vietnamese coffee collection and add some delicious beans to your cart.
+                                Khám phá bộ sưu tập cà phê Việt Nam cao cấp và thêm một số loại hạt thơm ngon vào giỏ hàng của bạn.
                             </p>
                             <Link
                                 to="/products"
                                 className="bg-coffee-600 hover:bg-coffee-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
                             >
-                                {t('cart.continueShopping')}
+                                Tiếp tục mua sắm
                             </Link>
                         </div>
                     ) : (
@@ -86,16 +81,15 @@ const Cart = () => {
                             {/* Cart Items */}
                             <div className="lg:col-span-2">
                                 <div className="bg-white rounded-lg shadow-md">
-                                    <div className="p-6 border-b border-coffee-100">
-                                        <div className="flex justify-between items-center">
+                                    <div className="p-6 border-b border-coffee-100">                                        <div className="flex justify-between items-center">
                                             <h2 className="text-xl font-semibold text-coffee-800">
-                                                Cart Items ({itemCount})
+                                                Sản phẩm trong giỏ ({itemCount})
                                             </h2>
                                             <button
                                                 onClick={clearCart}
                                                 className="text-red-600 hover:text-red-800 text-sm font-medium"
                                             >
-                                                Clear Cart
+                                                Xóa giỏ hàng
                                             </button>
                                         </div>
                                     </div>
@@ -132,9 +126,8 @@ const Cart = () => {
                                                                         ? `${item.description.substring(0, 100)}...`
                                                                         : item.description
                                                                     }
-                                                                </p>
-                                                                <p className="text-coffee-800 font-semibold mt-2">
-                                                                    ${item.price} each
+                                                                </p>                                                                <p className="text-coffee-800 font-semibold mt-2">
+                                                                    {item.price.toLocaleString('vi-VN')}đ mỗi sản phẩm
                                                                 </p>
                                                             </div>
                                                             
@@ -157,10 +150,9 @@ const Cart = () => {
                                                                         +
                                                                     </button>
                                                                 </div>
-                                                                
-                                                                <div className="text-right">
+                                                                  <div className="text-right">
                                                                     <p className="text-lg font-semibold text-coffee-800">
-                                                                        ${(item.price * item.quantity).toFixed(2)}
+                                                                        {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                                                                     </p>
                                                                 </div>
                                                                 
@@ -183,57 +175,54 @@ const Cart = () => {
                                 </div>
                                 
                                 {/* Continue Shopping */}
-                                <div className="mt-6">
-                                    <Link
+                                <div className="mt-6">                                    <Link
                                         to="/products"
                                         className="inline-flex items-center text-coffee-600 hover:text-coffee-800 font-medium"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                         </svg>
-                                        {t('cart.continueShopping')}
+                                        Tiếp tục mua sắm
                                     </Link>
                                 </div>
                             </div>
                             
                             {/* Order Summary */}
                             <div className="lg:col-span-1">
-                                <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                                    <h3 className="text-xl font-semibold text-coffee-800 mb-6">
-                                        {t('cart.orderSummary')}
+                                <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                    <h3 className="text-xl font-semibold text-coffee-800 mb-6">
+                                        Tóm tắt đơn hàng
                                     </h3>
                                     
                                     <div className="space-y-4">
                                         <div className="flex justify-between">
-                                            <span className="text-coffee-600">{t('cart.subtotal')}</span>
-                                            <span className="font-semibold text-coffee-800">${subtotal.toFixed(2)}</span>
+                                            <span className="text-coffee-600">Tạm tính</span>
+                                            <span className="font-semibold text-coffee-800">{subtotal.toLocaleString('vi-VN')}đ</span>
                                         </div>
                                         
                                         <div className="flex justify-between">
-                                            <span className="text-coffee-600">{t('cart.shipping')}</span>
+                                            <span className="text-coffee-600">Phí vận chuyển</span>
                                             <span className="font-semibold text-coffee-800">
-                                                {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                                                {shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')}đ`}
                                             </span>
                                         </div>
                                         
                                         <div className="flex justify-between">
-                                            <span className="text-coffee-600">{t('cart.tax')}</span>
-                                            <span className="font-semibold text-coffee-800">${tax.toFixed(2)}</span>
+                                            <span className="text-coffee-600">Thuế</span>
+                                            <span className="font-semibold text-coffee-800">{tax.toLocaleString('vi-VN')}đ</span>
                                         </div>
                                         
                                         <hr className="border-coffee-200" />
                                         
                                         <div className="flex justify-between text-lg">
-                                            <span className="font-semibold text-coffee-800">{t('cart.total')}</span>
-                                            <span className="font-bold text-coffee-800">${total.toFixed(2)}</span>
+                                            <span className="font-semibold text-coffee-800">Tổng cộng</span>
+                                            <span className="font-bold text-coffee-800">{total.toLocaleString('vi-VN')}đ</span>
                                         </div>
                                     </div>
-                                    
-                                    {/* Shipping Notice */}
-                                    {subtotal < 50 && (
+                                      {/* Shipping Notice */}
+                                    {subtotal < 1000000 && (
                                         <div className="mt-4 p-3 bg-coffee-50 border border-coffee-200 rounded-lg">
                                             <p className="text-sm text-coffee-700">
-                                                Add ${(50 - subtotal).toFixed(2)} more for free shipping!
+                                                Thêm {(1000000 - subtotal).toLocaleString('vi-VN')}đ nữa để được miễn phí vận chuyển!
                                             </p>
                                         </div>
                                     )}
@@ -243,7 +232,7 @@ const Cart = () => {
                                         onClick={handleCheckout}
                                         className="w-full mt-6 bg-coffee-600 hover:bg-coffee-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors duration-200"
                                     >
-                                        {isAuthenticated ? t('cart.checkout') : 'Login & Checkout'}
+                                        {isAuthenticated ? 'Thanh toán' : 'Đăng nhập và thanh toán'}
                                     </button>
                                     
                                     {/* Security Notice */}
@@ -251,7 +240,7 @@ const Cart = () => {
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
-                                        Secure checkout
+                                        Thanh toán bảo mật
                                     </div>
                                 </div>
                             </div>

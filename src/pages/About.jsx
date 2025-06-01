@@ -1,9 +1,7 @@
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 
 const About = () => {
-  const { t } = useTranslation();
 
   const teamMembers = [
     {
@@ -102,14 +100,13 @@ const About = () => {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>{t('about.title')} - Balan Coffee & Roastery</title>
-        <meta name="description" content={t('about.description')} />
-        <meta name="keywords" content={t('about.keywords')} />
+    <>      <Helmet>
+        <title>Giới thiệu - Balan Coffee & Roastery</title>
+        <meta name="description" content="Tìm hiểu về hành trình 25 năm phát triển của Balan Coffee & Roastery - từ vườn cà phê nhỏ tại Đà Lạt đến thương hiệu cà phê đặc sản hàng đầu Việt Nam" />
+        <meta name="keywords" content="về chúng tôi, lịch sử balan coffee, cà phê đặc sản việt nam, rang xay cà phê, arabica cầu đất, robusta lâm đồng" />
         <link rel="canonical" href={`${window.location.origin}/about`} />
-        <meta property="og:title" content={`${t('about.title')} - Balan Coffee & Roastery`} />
-        <meta property="og:description" content={t('about.description')} />
+        <meta property="og:title" content="Giới thiệu - Balan Coffee & Roastery" />
+        <meta property="og:description" content="Tìm hiểu về hành trình 25 năm phát triển của Balan Coffee & Roastery - từ vườn cà phê nhỏ tại Đà Lạt đến thương hiệu cà phê đặc sản hàng đầu Việt Nam" />
         <meta property="og:url" content={`${window.location.origin}/about`} />
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${window.location.origin}/images/about/hero-image.jpg`} />
@@ -130,19 +127,18 @@ const About = () => {
               backgroundImage: "url('/images/about/hero-coffee-farm.jpg')"
             }}
           ></div>
-          
-          <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
+            <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              {t('about.hero.title')}
+              Câu chuyện của chúng tôi
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-cream-100">
-              {t('about.hero.subtitle')}
+              Hành trình 25 năm mang đến cà phê đặc sản chất lượng cao
             </p>
             <Link
               to="/products"
               className="inline-block bg-coffee-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-coffee-700 transition-colors"
             >
-              {t('about.hero.cta')}
+              Khám phá sản phẩm
             </Link>
           </div>
         </section>
@@ -150,10 +146,9 @@ const About = () => {
         {/* Story Section */}
         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">              <div>
                 <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                  {t('about.story.title')}
+                  Câu chuyện thương hiệu
                 </h2>
                 <div className="prose prose-lg text-gray-700">
                   <p className="mb-4">
@@ -191,15 +186,14 @@ const About = () => {
 
         {/* Values Section */}
         <section className="py-20 bg-cream-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {t('about.values.title')}
+                Giá trị cốt lõi
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                {t('about.values.subtitle')}
+                Những giá trị định hướng mọi hoạt động của chúng tôi
               </p>
-            </div>            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            </div><div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {values.map((value) => (
                 <div key={value.title} className="text-center">
                   <div className="text-6xl mb-4">{value.icon}</div>
@@ -217,13 +211,12 @@ const About = () => {
 
         {/* Timeline Section */}
         <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {t('about.timeline.title')}
+                Hành trình phát triển
               </h2>
               <p className="text-xl text-gray-600">
-                {t('about.timeline.subtitle')}
+                Những cột mốc quan trọng trong lịch sử phát triển
               </p>
             </div>
 
@@ -258,15 +251,14 @@ const About = () => {
 
         {/* Team Section */}
         <section className="py-20 bg-cream-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {t('about.team.title')}
+                Đội ngũ chuyên gia
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                {t('about.team.subtitle')}
+                Những con người tạo nên chất lượng đặc biệt của Balan Coffee
               </p>
-            </div>            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div><div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {teamMembers.map((member) => (
                 <div key={member.name} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                   <div className="h-64 overflow-hidden">
@@ -319,13 +311,12 @@ const About = () => {
 
         {/* Certifications Section */}
         <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {t('about.certifications.title')}
+                Chứng nhận chất lượng
               </h2>
               <p className="text-xl text-gray-600">
-                {t('about.certifications.subtitle')}
+                Các chứng nhận quốc tế đảm bảo chất lượng và tính bền vững
               </p>
             </div>
 
@@ -367,26 +358,25 @@ const About = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-coffee-600 text-white">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+        <section className="py-20 bg-coffee-600 text-white">          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
             <h2 className="text-4xl font-bold mb-6">
-              {t('about.cta.title')}
+              Hãy trở thành một phần của hành trình
             </h2>
             <p className="text-xl text-coffee-100 mb-8">
-              {t('about.cta.subtitle')}
+              Khám phá những dòng cà phê đặc sản được chế tác từ tâm huyết
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/products"
                 className="inline-block bg-white text-coffee-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-cream-100 transition-colors"
               >
-                {t('about.cta.shopNow')}
+                Mua sắm ngay
               </Link>
               <Link
                 to="/contact"
                 className="inline-block border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-coffee-600 transition-colors"
               >
-                {t('about.cta.contact')}
+                Liên hệ
               </Link>
             </div>
           </div>

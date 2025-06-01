@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 const Contact = () => {
-  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,10 +35,9 @@ const Contact = () => {
         phone: '',
         subject: '',
         message: ''
-      });
-    } catch (error) {
+      });    } catch (error) {
       console.error('Error submitting contact form:', error);
-      setError(t('contact.form.error'));
+      setError('Có lỗi xảy ra khi gửi form. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -63,14 +60,13 @@ const Contact = () => {
   }, []);
 
   return (
-    <>
-      <Helmet>
-        <title>{t('contact.title')} - Balan Coffee & Roastery</title>
-        <meta name="description" content={t('contact.description')} />
-        <meta name="keywords" content={t('contact.keywords')} />
+    <>      <Helmet>
+        <title>Liên hệ - Balan Coffee & Roastery</title>
+        <meta name="description" content="Liên hệ với Balan Coffee & Roastery để biết thêm thông tin về sản phẩm cà phê rang mộc chất lượng cao. Địa chỉ, điện thoại và form liên hệ trực tuyến." />
+        <meta name="keywords" content="liên hệ balan coffee, địa chỉ cửa hàng cà phê, điện thoại balan coffee, email balan coffee" />
         <link rel="canonical" href={`${window.location.origin}/contact`} />
-        <meta property="og:title" content={`${t('contact.title')} - Balan Coffee & Roastery`} />
-        <meta property="og:description" content={t('contact.description')} />
+        <meta property="og:title" content="Liên hệ - Balan Coffee & Roastery" />
+        <meta property="og:description" content="Liên hệ với Balan Coffee & Roastery để biết thêm thông tin về sản phẩm cà phê rang mộc chất lượng cao. Địa chỉ, điện thoại và form liên hệ trực tuyến." />
         <meta property="og:url" content={`${window.location.origin}/contact`} />
         <meta property="og:type" content="website" />
         
@@ -105,13 +101,12 @@ const Contact = () => {
       <div className="min-h-screen bg-cream-50">
         {/* Hero Section */}
         <section className="bg-coffee-800 text-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('contact.hero.title')}
+                Liên hệ với chúng tôi
               </h1>
               <p className="text-xl text-coffee-200 max-w-3xl mx-auto">
-                {t('contact.hero.subtitle')}
+                Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy liên hệ với chúng tôi để biết thêm thông tin về sản phẩm hoặc dịch vụ.
               </p>
             </div>
           </div>
@@ -119,26 +114,24 @@ const Contact = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
+            {/* Contact Form */}            <div className="bg-white rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                {t('contact.form.title')}
+                Gửi tin nhắn cho chúng tôi
               </h2>
 
               {submitted ? (
-                <div className="text-center py-8">
-                  <div className="text-6xl text-green-500 mb-4">✅</div>
+                <div className="text-center py-8">                  <div className="text-6xl text-green-500 mb-4">✅</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {t('contact.form.success.title')}
+                    Cảm ơn bạn đã liên hệ!
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    {t('contact.form.success.message')}
+                    Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất.
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
                     className="bg-coffee-600 text-white px-6 py-2 rounded-md hover:bg-coffee-700 transition-colors"
                   >
-                    {t('contact.form.success.sendAnother')}
+                    Gửi tin nhắn khác
                   </button>
                 </div>
               ) : (
@@ -152,7 +145,7 @@ const Contact = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('contact.form.name')} *
+                        Họ tên *
                       </label>
                       <input
                         type="text"
@@ -162,13 +155,13 @@ const Contact = () => {
                         onChange={handleChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                        placeholder={t('contact.form.namePlaceholder')}
+                        placeholder="Nhập họ tên của bạn"
                       />
                     </div>
 
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('contact.form.email')} *
+                        Email *
                       </label>
                       <input
                         type="email"
@@ -178,7 +171,7 @@ const Contact = () => {
                         onChange={handleChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                        placeholder={t('contact.form.emailPlaceholder')}
+                        placeholder="Nhập email của bạn"
                       />
                     </div>
                   </div>
@@ -186,7 +179,7 @@ const Contact = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('contact.form.phone')}
+                        Số điện thoại
                       </label>
                       <input
                         type="tel"

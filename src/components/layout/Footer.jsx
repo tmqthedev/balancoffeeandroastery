@@ -1,10 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
-    const { t } = useTranslation();
-
     const socialLinks = [
         { 
             name: 'Facebook', 
@@ -60,10 +57,9 @@ const Footer = () => {
                                     e.target.style.opacity = '0.8';
                                 }}
                             />
-                        </Link>
-                        <p className="text-cream-300 mb-4 max-w-md">
-                            {t('footer.description')}
-                        </p>                        <div className="flex space-x-4">
+                        </Link>                        <p className="text-cream-300 mb-4 max-w-md">
+                            Cà phê rang mộc chất lượng cao từ những vùng đất tốt nhất Việt Nam. Chúng tôi mang đến cho bạn hương vị cà phê đậm đà và tinh túy.
+                        </p><div className="flex space-x-4">
                             {socialLinks.map((social) => (
                                 <a 
                                     key={social.name}
@@ -77,22 +73,18 @@ const Footer = () => {
                                 </a>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Quick Links */}
+                    </div>                    {/* Quick Links */}
                     <div>
-                        <h4 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h4>
+                        <h4 className="text-lg font-semibold mb-4">Liên kết nhanh</h4>
                         <ul className="space-y-2">
-                            <li><Link to="/products" className="text-cream-300 hover:text-white transition-colors">{t('nav.products')}</Link></li>
-                            <li><Link to="/about" className="text-cream-300 hover:text-white transition-colors">{t('nav.about')}</Link></li>
-                            <li><Link to="/blog" className="text-cream-300 hover:text-white transition-colors">{t('nav.blog')}</Link></li>
-                            <li><Link to="/contact" className="text-cream-300 hover:text-white transition-colors">{t('nav.contact')}</Link></li>
+                            <li><Link to="/products" className="text-cream-300 hover:text-white transition-colors">Sản phẩm</Link></li>
+                            <li><Link to="/about" className="text-cream-300 hover:text-white transition-colors">Giới thiệu</Link></li>
+                            <li><Link to="/blog" className="text-cream-300 hover:text-white transition-colors">Blog</Link></li>
+                            <li><Link to="/contact" className="text-cream-300 hover:text-white transition-colors">Liên hệ</Link></li>
                         </ul>
-                    </div>
-
-                    {/* Contact Info */}
+                    </div>                    {/* Contact Info */}
                     <div>
-                        <h4 className="text-lg font-semibold mb-4">{t('footer.contact')}</h4>
+                        <h4 className="text-lg font-semibold mb-4">Thông tin liên hệ</h4>
                         <div className="space-y-2 text-cream-300">
                             <p className="flex items-center">
                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,16 +110,15 @@ const Footer = () => {
                 </div>
 
                 <div className="border-t border-coffee-700 mt-8 pt-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-cream-300 text-sm">
-                            © 2024 Balan Coffee & Roastery. {t('footer.allRightsReserved')}
+                    <div className="flex flex-col md:flex-row justify-between items-center">                        <p className="text-cream-300 text-sm">
+                            © 2024 Balan Coffee & Roastery. Tất cả quyền được bảo lưu.
                         </p>
                         <div className="flex space-x-6 mt-4 md:mt-0">
                             <Link to="/privacy" className="text-cream-300 hover:text-white text-sm transition-colors">
-                                {t('footer.privacy')}
+                                Chính sách bảo mật
                             </Link>
                             <Link to="/terms" className="text-cream-300 hover:text-white text-sm transition-colors">
-                                {t('footer.terms')}
+                                Điều khoản sử dụng
                             </Link>
                         </div>
                     </div>

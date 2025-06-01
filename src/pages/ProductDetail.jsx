@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 
 const ProductDetail = () => {
-    const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart, isInCart, getItemQuantity } = useCart();
@@ -35,13 +33,12 @@ const ProductDetail = () => {
             if (response.data.product.category_id) {
                 const relatedResponse = await axios.get(`/api/products?category=${response.data.product.category_id}&limit=4&exclude=${id}`);
                 setRelatedProducts(relatedResponse.data.products);
-            }
-        } catch (error) {
+            }        } catch (error) {
             console.error('Failed to fetch product:', error);
             if (error.response?.status === 404) {
-                setError('Product not found');
+                setError('Không tìm thấy sản phẩm');
             } else {
-                setError('Failed to load product');
+                setError('Không thể tải sản phẩm');
             }
         } finally {
             setLoading(false);
@@ -79,15 +76,14 @@ const ProductDetail = () => {
         return (
             <div className="min-h-screen bg-cream-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-6xl mb-4">☕</div>
-                    <h2 className="text-2xl font-semibold text-coffee-800 mb-4">
-                        {error || 'Product not found'}
+                    <div className="text-6xl mb-4">☕</div>                    <h2 className="text-2xl font-semibold text-coffee-800 mb-4">
+                        {error || 'Không tìm thấy sản phẩm'}
                     </h2>
                     <Link
                         to="/products"
                         className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
                     >
-                        Browse Products
+                        Xem sản phẩm
                     </Link>
                 </div>
             </div>
@@ -135,11 +131,10 @@ const ProductDetail = () => {
 
             <div className="min-h-screen bg-cream-50">
                 {/* Breadcrumb */}
-                <div className="container mx-auto px-4 py-4">
-                    <nav className="flex items-center space-x-2 text-sm text-coffee-600">
-                        <Link to="/" className="hover:text-coffee-800">Home</Link>
+                <div className="container mx-auto px-4 py-4">                    <nav className="flex items-center space-x-2 text-sm text-coffee-600">
+                        <Link to="/" className="hover:text-coffee-800">Trang chủ</Link>
                         <span>/</span>
-                        <Link to="/products" className="hover:text-coffee-800">Products</Link>
+                        <Link to="/products" className="hover:text-coffee-800">Sản phẩm</Link>
                         <span>/</span>
                         <span className="text-coffee-800 font-medium">{product.name}</span>
                     </nav>
@@ -180,13 +175,12 @@ const ProductDetail = () => {
                             <div className="flex items-center space-x-4">
                                 <span className="text-3xl font-bold text-coffee-800">
                                     ${product.price}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                </span>                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                     product.stock_quantity > 0 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
                                 }`}>
-                                    {product.stock_quantity > 0 ? t('products.inStock') : t('products.outOfStock')}
+                                    {product.stock_quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
                                 </span>
                             </div>
 
@@ -197,37 +191,35 @@ const ProductDetail = () => {
                             </div>
 
                             {/* Product Details */}
-                            <div className="grid grid-cols-2 gap-4 py-4 border-t border-coffee-200">
-                                {product.origin && (
+                            <div className="grid grid-cols-2 gap-4 py-4 border-t border-coffee-200">                                {product.origin && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">{t('products.origin')}:</span>
+                                        <span className="text-sm font-medium text-coffee-600">Xuất xứ:</span>
                                         <p className="text-coffee-800">{product.origin}</p>
                                     </div>
                                 )}
                                 {product.roast_level && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">{t('products.roastLevel')}:</span>
+                                        <span className="text-sm font-medium text-coffee-600">Độ rang:</span>
                                         <p className="text-coffee-800">{product.roast_level}</p>
                                     </div>
                                 )}
                                 {product.flavor_profile && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">{t('products.flavor')}:</span>
+                                        <span className="text-sm font-medium text-coffee-600">Hương vị:</span>
                                         <p className="text-coffee-800">{product.flavor_profile}</p>
                                     </div>
                                 )}
                                 {product.processing_method && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">{t('products.processing')}:</span>
+                                        <span className="text-sm font-medium text-coffee-600">Phương pháp chế biến:</span>
                                         <p className="text-coffee-800">{product.processing_method}</p>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Weight Selection */}
-                            <div>
+                            {/* Weight Selection */}                            <div>
                                 <label className="block text-sm font-medium text-coffee-700 mb-2">
-                                    {t('products.weight')}:
+                                    Trọng lượng:
                                 </label>
                                 <div className="grid grid-cols-4 gap-2">
                                     {weights.map(weight => (
@@ -247,10 +239,9 @@ const ProductDetail = () => {
                             </div>
 
                             {/* Quantity and Add to Cart */}
-                            <div className="space-y-4">
-                                <div>
+                            <div className="space-y-4">                                <div>
                                     <label className="block text-sm font-medium text-coffee-700 mb-2">
-                                        {t('cart.quantity')}:
+                                        Số lượng:
                                     </label>
                                     <div className="flex items-center border border-coffee-300 rounded-lg w-32">
                                         <button
@@ -271,14 +262,13 @@ const ProductDetail = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <button
+                                <div className="space-y-3">                                    <button
                                         onClick={handleAddToCart}
                                         disabled={product.stock_quantity === 0 || addingToCart}
                                         className="w-full bg-coffee-600 hover:bg-coffee-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:bg-coffee-300 disabled:cursor-not-allowed"
                                     >
-                                        {addingToCart ? t('common.loading') : 
-                                         inCart ? `In Cart (${cartQuantity})` : t('products.addToCart')}
+                                        {addingToCart ? 'Đang thêm...' : 
+                                         inCart ? `Trong giỏ (${cartQuantity})` : 'Thêm vào giỏ'}
                                     </button>
                                     
                                     <button
@@ -286,31 +276,30 @@ const ProductDetail = () => {
                                         disabled={product.stock_quantity === 0 || addingToCart}
                                         className="w-full bg-coffee-800 hover:bg-coffee-900 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:bg-coffee-300 disabled:cursor-not-allowed"
                                     >
-                                        Buy Now
+                                        Mua ngay
                                     </button>
                                 </div>
                             </div>
 
                             {/* Additional Info */}
-                            <div className="border-t border-coffee-200 pt-6">
-                                <div className="space-y-3 text-sm text-coffee-600">
+                            <div className="border-t border-coffee-200 pt-6">                                <div className="space-y-3 text-sm text-coffee-600">
                                     <div className="flex items-center">
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                         </svg>
-                                        Free shipping on orders over $50
+                                        Miễn phí vận chuyển cho đơn hàng trên 1,000,000đ
                                     </div>
                                     <div className="flex items-center">
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Freshly roasted to order
+                                        Rang mộc tươi theo đơn hàng
                                     </div>
                                     <div className="flex items-center">
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                         </svg>
-                                        Satisfaction guaranteed
+                                        Đảm bảo hài lòng 100%
                                     </div>
                                 </div>
                             </div>
@@ -319,9 +308,8 @@ const ProductDetail = () => {
 
                     {/* Related Products */}
                     {relatedProducts.length > 0 && (
-                        <div className="mt-16">
-                            <h2 className="text-2xl font-bold text-coffee-800 mb-8 text-center">
-                                Related Products
+                        <div className="mt-16">                            <h2 className="text-2xl font-bold text-coffee-800 mb-8 text-center">
+                                Sản phẩm liên quan
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {relatedProducts.map(relatedProduct => (
