@@ -1,0 +1,525 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "save": "Lưu",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "sort": "Sắp xếp",
+    "next": "Tiếp theo",
+    "previous": "Trước",
+    "home": "Trang chủ",
+    "about": "Giới thiệu",
+    "contact": "Liên hệ",
+    "blog": "Blog",
+    "products": "Sản phẩm",
+    "cart": "Giỏ hàng",
+    "account": "Tài khoản",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "saving": "Đang lưu...",
+    "sending": "Đang gửi...",
+    "goBack": "Quay lại",
+    "readMore": "Đọc thêm",
+    "seeMore": "Xem thêm",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "blog": "Blog"
+    },
+    "pagination": {
+      "previous": "Trước",
+      "next": "Tiếp theo"
+    },
+    "nav": {
+      "home": "Trang chủ",
+      "products": "Sản phẩm",
+      "blog": "Blog",
+      "about": "Giới thiệu",
+      "contact": "Liên hệ"
+    }
+  },
+  "navigation": {
+    "home": "Trang chủ",
+    "products": "Sản phẩm",
+    "blog": "Blog",
+    "about": "Giới thiệu",
+    "contact": "Liên hệ",
+    "cart": "Giỏ hàng",
+    "account": "Tài khoản",
+    "admin": "Quản trị"
+  },
+  "hero": {
+    "title": "Cà Phê Việt Nam Cao Cấp",
+    "subtitle": "Từ cao nguyên Việt Nam đến tách cà phê của bạn",
+    "description": "Khám phá những hạt cà phê được rang cẩn thận, thu hoạch trực tiếp từ nông dân Việt Nam và rang đến độ hoàn hảo.",
+    "shopNow": "Mua ngay",
+    "learnMore": "Tìm hiểu thêm"
+  },
+  "products": {
+    "title": "Sản Phẩm Cà Phê",
+    "subtitle": "Hạt Cà Phê Việt Nam Cao Cấp",
+    "categories": "Danh mục",
+    "allCategories": "Tất cả danh mục",
+    "arabica": "Arabica",
+    "robusta": "Robusta",
+    "blend": "Pha trộn",
+    "sortBy": "Sắp xếp theo",
+    "price": "Giá",
+    "name": "Tên",
+    "newest": "Mới nhất",
+    "priceRange": "Khoảng giá",
+    "inStock": "Còn hàng",
+    "outOfStock": "Hết hàng",
+    "addToCart": "Thêm vào giỏ",
+    "quickView": "Xem nhanh",
+    "viewDetails": "Xem chi tiết",
+    "weight": "Trọng lượng",
+    "origin": "Xuất xứ",
+    "roastLevel": "Độ rang",
+    "flavor": "Hương vị",
+    "processing": "Phương pháp chế biến"
+  },
+  "cart": {
+    "title": "Giỏ Hàng",
+    "empty": "Giỏ hàng của bạn đang trống",
+    "continueShopping": "Tiếp tục mua sắm",
+    "quantity": "Số lượng",
+    "price": "Giá",
+    "total": "Tổng",
+    "subtotal": "Tạm tính",
+    "shipping": "Phí vận chuyển",
+    "tax": "Thuế",
+    "grandTotal": "Tổng cộng",
+    "checkout": "Thanh toán",
+    "remove": "Xóa",
+    "update": "Cập nhật giỏ hàng"
+  },
+  "checkout": {
+    "title": "Thanh Toán",
+    "billingInfo": "Thông tin thanh toán",
+    "shippingInfo": "Thông tin giao hàng",
+    "paymentMethod": "Phương thức thanh toán",
+    "orderSummary": "Tóm tắt đơn hàng",
+    "firstName": "Họ",
+    "lastName": "Tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "city": "Thành phố",
+    "province": "Tỉnh/Thành phố",
+    "postalCode": "Mã bưu điện",
+    "sameAsBilling": "Giống địa chỉ thanh toán",
+    "placeOrder": "Đặt hàng",
+    "processing": "Đang xử lý..."
+  },
+  "payment": {
+    "selectMethod": "Chọn phương thức thanh toán",
+    "methods": {
+      "momo": {
+        "description": "Thanh toán bằng ví điện tử MoMo"
+      },
+      "vnpay": {
+        "description": "Thanh toán qua ngân hàng Việt Nam"
+      }
+    },
+    "vnpay": {
+      "selectBank": "Chọn ngân hàng",
+      "allBanks": "Tất cả ngân hàng"
+    },
+    "orderSummary": "Tóm tắt đơn hàng",
+    "orderId": "Mã đơn hàng",
+    "subtotal": "Tạm tính",
+    "shipping": "Phí vận chuyển",
+    "discount": "Giảm giá",
+    "total": "Tổng cộng",
+    "proceedToPayment": "Tiến hành thanh toán",
+    "processing": "Đang xử lý...",
+    "securityNotice": "Thanh toán của bạn được bảo mật bằng mã hóa SSL",
+    "success": {
+      "title": "Thanh toán thành công!",
+      "message": "Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đã được xác nhận."
+    },
+    "failed": {
+      "title": "Thanh toán thất bại",
+      "message": "Chúng tôi không thể xử lý thanh toán của bạn. Vui lòng thử lại."
+    },
+    "error": {
+      "title": "Lỗi thanh toán",
+      "message": "Có lỗi xảy ra trong quá trình xử lý thanh toán."
+    },
+    "orderDetails": "Chi tiết đơn hàng",
+    "amount": "Số tiền",
+    "status": "Trạng thái",
+    "status.completed": "Hoàn thành",
+    "status.failed": "Thất bại",
+    "status.pending": "Đang chờ",
+    "viewOrder": "Xem chi tiết đơn hàng",
+    "continueShopping": "Tiếp tục mua sắm",
+    "backToProducts": "Về trang sản phẩm",
+    "errors": {
+      "selectMethod": "Vui lòng chọn phương thức thanh toán",
+      "createFailed": "Không thể tạo thanh toán",
+      "generic": "Xử lý thanh toán thất bại"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập tài khoản",
+      "email": "Địa chỉ email",
+      "password": "Mật khẩu",
+      "remember": "Ghi nhớ đăng nhập",
+      "forgotPassword": "Quên mật khẩu?",
+      "submit": "Đăng nhập",
+      "noAccount": "Chưa có tài khoản?",
+      "signUp": "Đăng ký tại đây",
+      "withFacebook": "Tiếp tục với Facebook"
+    },
+    "register": {
+      "title": "Tạo tài khoản mới",
+      "firstName": "Họ",
+      "lastName": "Tên",
+      "email": "Địa chỉ email",
+      "phone": "Số điện thoại",
+      "password": "Mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "agreeTerms": "Tôi đồng ý với Điều khoản & Điều kiện",
+      "submit": "Tạo tài khoản",
+      "hasAccount": "Đã có tài khoản?",
+      "signIn": "Đăng nhập tại đây"
+    },
+    "errors": {
+      "required": "Trường này là bắt buộc",
+      "invalidEmail": "Vui lòng nhập địa chỉ email hợp lệ",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự",
+      "passwordsNotMatch": "Mật khẩu không khớp",
+      "loginFailed": "Email hoặc mật khẩu không đúng",
+      "registerFailed": "Đăng ký thất bại. Vui lòng thử lại."
+    }
+  },
+  "blog": {
+    "title": "Câu Chuyện & Tin Tức Cà Phê",
+    "description": "Khám phá thế giới cà phê Việt Nam qua những câu chuyện và kiến thức chuyên sâu từ các chuyên gia",
+    "keywords": "blog cà phê, tin tức cà phê, kiến thức cà phê Việt Nam, hướng dẫn pha chế",
+    "hero": {
+      "title": "Câu Chuyện Cà Phê",
+      "subtitle": "Khám phá thế giới cà phê Việt Nam qua những câu chuyện và kiến thức chuyên sâu"
+    },
+    "search": {
+      "placeholder": "Tìm kiếm bài viết...",
+      "button": "Tìm kiếm"
+    },
+    "filter": {
+      "allCategories": "Tất cả danh mục"
+    },
+    "empty": {
+      "title": "Không tìm thấy bài viết",
+      "message": "Không có bài viết nào phù hợp với tiêu chí tìm kiếm của bạn."
+    },
+    "readMore": "Đọc thêm",
+    "post": {
+      "readTime": "phút đọc",
+      "notFound": {
+        "title": "Không tìm thấy bài viết",
+        "message": "Bài viết bạn tìm kiếm không tồn tại hoặc đã bị xóa.",
+        "backToBlog": "Về trang Blog"
+      },
+      "share": {
+        "title": "Chia sẻ bài viết",
+        "copy": "Sao chép liên kết",
+        "copied": "Đã sao chép liên kết!"
+      },
+      "related": {
+        "title": "Bài viết liên quan"
+      }
+    }
+  },
+  "about": {
+    "title": "Về Chúng Tôi",
+    "description": "Tìm hiểu về hành trình 25 năm phát triển của Balan Coffee & Roastery từ một vườn cà phê nhỏ đến thương hiệu cà phê hàng đầu Việt Nam",
+    "keywords": "về Balan Coffee, lịch sử cà phê, trang trại cà phê Việt Nam, rang xay cà phê",
+    "hero": {
+      "title": "Từ Trái Tim Việt Nam",
+      "subtitle": "25 năm đam mê mang đến những hạt cà phê Việt Nam tốt nhất",
+      "cta": "Khám phá sản phẩm"
+    },
+    "story": {
+      "title": "Câu Chuyện Của Chúng Tôi"
+    },
+    "values": {
+      "title": "Giá Trị Cốt Lõi",
+      "subtitle": "Những nguyên tắc định hướng mọi hoạt động của chúng tôi"
+    },
+    "timeline": {
+      "title": "Hành Trình Phát Triển",
+      "subtitle": "Những cột mốc quan trọng trong 25 năm qua"
+    },
+    "team": {
+      "title": "Đội Ngũ Chuyên Gia",
+      "subtitle": "Những người đam mê cà phê đứng sau thành công của chúng tôi"
+    },
+    "certifications": {
+      "title": "Chứng Nhận & Tiêu Chuẩn",
+      "subtitle": "Cam kết chất lượng và phát triển bền vững"
+    },
+    "cta": {
+      "title": "Sẵn sàng trải nghiệm cà phê tuyệt vời?",
+      "subtitle": "Hãy để chúng tôi mang đến cho bạn những hương vị cà phê Việt Nam đích thực",
+      "shopNow": "Mua sắm ngay",
+      "contact": "Liên hệ với chúng tôi"
+    }
+  },
+  "contact": {
+    "title": "Liên Hệ",
+    "description": "Kết nối với đội ngũ chuyên gia cà phê của Balan Coffee. Chúng tôi luôn sẵn sàng hỗ trợ và chia sẻ kiến thức về cà phê Việt Nam",
+    "keywords": "liên hệ Balan Coffee, hỗ trợ khách hàng, địa chỉ cửa hàng cà phê",
+    "hero": {
+      "title": "Liên Hệ Với Chúng Tôi",
+      "subtitle": "Kết nối với các chuyên gia cà phê của chúng tôi"
+    },
+    "info": {
+      "title": "Thông Tin Liên Hệ",
+      "address": "Địa chỉ",
+      "phone": "Điện thoại",
+      "email": "Email",
+      "hours": "Giờ làm việc",
+      "weekdays": "Thứ 2 - Thứ 6",
+      "weekend": "Thứ 7 - Chủ nhật"
+    },
+    "form": {
+      "title": "Gửi Tin Nhắn",
+      "name": "Họ và tên",
+      "namePlaceholder": "Nhập họ và tên của bạn",
+      "email": "Email",
+      "emailPlaceholder": "Nhập địa chỉ email",
+      "phone": "Số điện thoại",
+      "phonePlaceholder": "Nhập số điện thoại (tùy chọn)",
+      "subject": "Chủ đề",
+      "selectSubject": "Chọn chủ đề",
+      "subjects": {
+        "general": "Thông tin chung",
+        "product": "Sản phẩm",
+        "wholesale": "Mua sỉ",
+        "partnership": "Hợp tác",
+        "support": "Hỗ trợ kỹ thuật"
+      },
+      "message": "Tin nhắn",
+      "messagePlaceholder": "Nhập tin nhắn của bạn...",
+      "send": "Gửi tin nhắn",
+      "sending": "Đang gửi...",
+      "error": "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.",
+      "success": {
+        "title": "Gửi thành công!",
+        "message": "Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi trong vòng 24 giờ.",
+        "sendAnother": "Gửi tin nhắn khác"
+      }
+    },
+    "social": {
+      "title": "Kết Nối Với Chúng Tôi",
+      "description": "Theo dõi chúng tôi trên mạng xã hội để cập nhật tin tức mới nhất"
+    },
+    "faq": {
+      "title": "Câu Hỏi Thường Gặp",
+      "description": "Tìm câu trả lời nhanh cho những câu hỏi phổ biến",
+      "link": "Xem FAQ"
+    },
+    "map": {
+      "title": "Vị Trí Cửa Hàng",
+      "description": "Ghé thăm cửa hàng của chúng tôi để trải nghiệm cà phê tươi ngon",
+      "placeholder": "Bản đồ sẽ hiển thị tại đây"
+    }
+  },
+  "account": {
+    "title": "Tài Khoản Của Tôi",
+    "description": "Quản lý thông tin tài khoản, đơn hàng và thiết lập cá nhân",
+    "welcome": "Chào mừng, {{name}}!",
+    "subtitle": "Quản lý thông tin cá nhân và theo dõi đơn hàng của bạn",
+    "logout": "Đăng xuất",
+    "tabs": {
+      "profile": "Hồ sơ",
+      "orders": "Đơn hàng",
+      "password": "Đổi mật khẩu",
+      "preferences": "Thiết lập"
+    },
+    "profile": {
+      "title": "Thông Tin Cá Nhân",
+      "firstName": "Họ",
+      "lastName": "Tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "dateOfBirth": "Ngày sinh",
+      "gender": "Giới tính",
+      "selectGender": "Chọn giới tính",
+      "male": "Nam",
+      "female": "Nữ",
+      "other": "Khác",
+      "save": "Lưu thay đổi",
+      "updateSuccess": "Cập nhật thông tin thành công!",
+      "updateError": "Có lỗi xảy ra khi cập nhật thông tin."
+    },
+    "orders": {
+      "title": "Đơn Hàng Của Tôi",
+      "empty": {
+        "title": "Chưa có đơn hàng nào",
+        "message": "Bạn chưa thực hiện đơn hàng nào. Hãy bắt đầu mua sắm để trải nghiệm cà phê tuyệt vời!",
+        "shopNow": "Mua sắm ngay"
+      },
+      "orderNumber": "Đơn hàng #{{number}}",
+      "items": "{{count}} sản phẩm",
+      "paymentMethod": "Thanh toán",
+      "viewDetails": "Xem chi tiết",
+      "status": {
+        "pending": "Chờ xác nhận",
+        "confirmed": "Đã xác nhận",
+        "processing": "Đang chuẩn bị",
+        "shipped": "Đang giao",
+        "delivered": "Đã giao",
+        "cancelled": "Đã hủy"
+      }
+    },
+    "password": {
+      "title": "Đổi Mật Khẩu",
+      "current": "Mật khẩu hiện tại",
+      "new": "Mật khẩu mới",
+      "confirm": "Xác nhận mật khẩu mới",
+      "change": "Đổi mật khẩu",
+      "changeSuccess": "Đổi mật khẩu thành công!",
+      "changeError": "Có lỗi xảy ra khi đổi mật khẩu.",
+      "mismatch": "Mật khẩu xác nhận không khớp."
+    },
+    "preferences": {
+      "title": "Thiết Lập Tài Khoản",
+      "notifications": "Thông báo",
+      "emailNotifications": "Nhận thông báo qua email",
+      "orderUpdates": "Cập nhật trạng thái đơn hàng",
+      "newsletter": "Nhận bản tin và ưu đãi",
+      "privacy": "Quyền riêng tư",
+      "dataSharing": "Chia sẻ dữ liệu với đối tác",
+      "analytics": "Tham gia cải thiện dịch vụ",
+      "save": "Lưu thiết lập"
+    }
+  },
+  "notFound": {
+    "title": "Trang Không Tồn Tại",
+    "description": "Trang bạn tìm kiếm không tồn tại hoặc đã bị di chuyển",
+    "message": "Oops! Có vẻ như bạn đã lạc đường trong hành trình khám phá cà phê. Trang bạn tìm kiếm không tồn tại hoặc đã bị di chuyển.",
+    "backHome": "Về trang chủ",
+    "goBack": "Quay lại",
+    "popularPages": {
+      "title": "Trang Phổ Biến"
+    },
+    "featuredProducts": {
+      "title": "Sản Phẩm Nổi Bật"
+    },
+    "search": {
+      "title": "Tìm kiếm những gì bạn cần?",
+      "placeholder": "Tìm kiếm sản phẩm, bài viết..."
+    },
+    "help": {
+      "message": "Cần hỗ trợ? Chúng tôi luôn sẵn sàng giúp đỡ bạn:",
+      "contact": "Liên hệ với chúng tôi",
+      "phone": "Gọi điện hỗ trợ",
+      "faq": "Câu hỏi thường gặp"
+    },
+    "fact": {
+      "title": "Bạn Có Biết?",
+      "message": "Cà phê Robusta Việt Nam có hàm lượng caffeine cao gấp đôi so với Arabica, mang lại hương vị đậm đà và năng lượng bền bỉ cho ngày mới!"
+    }
+  },
+  "footer": {
+    "about": {
+      "title": "Về Balan Coffee",
+      "description": "Chúng tôi đam mê mang đến cho bạn những loại cà phê Việt Nam tốt nhất, rang tươi và giao tận nơi."
+    },
+    "quickLinks": "Liên kết nhanh",
+    "customerService": "Dịch vụ khách hàng",
+    "followUs": "Theo dõi chúng tôi",
+    "newsletter": "Nhận tin",
+    "newsletterDesc": "Đăng ký để nhận cập nhật và ưu đãi đặc biệt",
+    "subscribe": "Đăng ký",
+    "copyright": "© 2024 Balan Coffee & Roastery. Bảo lưu mọi quyền."
+  },
+  "admin": {
+    "dashboard": "Bảng điều khiển",
+    "products": "Sản phẩm",
+    "orders": "Đơn hàng",
+    "customers": "Khách hàng",
+    "categories": "Danh mục",
+    "blogs": "Blog",
+    "contacts": "Liên hệ",
+    "contactsManagement": "Quản lý liên hệ",
+    "contactForms": "Biểu mẫu liên hệ",
+    "newsletterSubscriptions": "Đăng ký bản tin",
+    "settings": "Cài đặt",
+    "analytics": "Phân tích",
+    "addNew": "Thêm mới",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "publish": "Xuất bản",
+    "draft": "Bản nháp",
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "addNewBlog": "Thêm blog mới",
+    "editBlog": "Sửa blog",
+    "searchBlogs": "Tìm kiếm blog",
+    "searchContacts": "Tìm kiếm liên hệ",
+    "searchEmails": "Tìm kiếm email",
+    "allStatuses": "Tất cả trạng thái",
+    "title": "Tiêu đề",
+    "titleVietnamese": "Tiêu đề tiếng Việt",
+    "titleEnglish": "Tiêu đề tiếng Anh",
+    "content": "Nội dung",
+    "contentVietnamese": "Nội dung tiếng Việt",
+    "contentEnglish": "Nội dung tiếng Anh",
+    "excerpt": "Tóm tắt",
+    "excerptVietnamese": "Tóm tắt tiếng Việt",
+    "excerptEnglish": "Tóm tắt tiếng Anh",
+    "featuredImage": "Hình ảnh nổi bật",
+    "author": "Tác giả",
+    "publishDate": "Ngày xuất bản",
+    "status": "Trạng thái",
+    "actions": "Hành động",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật",
+    "name": "Tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "subject": "Chủ đề",
+    "message": "Tin nhắn",
+    "replied": "Đã trả lời",
+    "notReplied": "Chưa trả lời",
+    "reply": "Trả lời",
+    "markAsReplied": "Đánh dấu đã trả lời",
+    "subscriber": "Người đăng ký",
+    "subscribers": "Danh sách đăng ký",
+    "subscribedAt": "Ngày đăng ký",
+    "unsubscribe": "Hủy đăng ký",
+    "export": "Xuất dữ liệu",
+    "totalBlogs": "Tổng số blog",
+    "totalContacts": "Tổng số liên hệ",
+    "totalSubscribers": "Tổng số đăng ký",
+    "recentContacts": "Liên hệ gần đây",
+    "viewAll": "Xem tất cả",
+    "noData": "Không có dữ liệu",
+    "loading": "Đang tải...",
+    "error": "Có lỗi xảy ra",
+    "success": "Thành công",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa?",
+    "deleteSuccess": "Xóa thành công",
+    "deleteError": "Lỗi khi xóa",
+    "saveSuccess": "Lưu thành công",
+    "saveError": "Lỗi khi lưu",
+    "updateSuccess": "Cập nhật thành công",
+    "updateError": "Lỗi khi cập nhật"
+  },
+  "seo": {
+    "title": "Balan Coffee & Roastery - Cà Phê Việt Nam Cao Cấp",
+    "description": "Khám phá hạt cà phê Việt Nam cao cấp bao gồm Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Cà phê rang tươi giao tận nơi.",
+    "keywords": "cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất"
+  }
+}
