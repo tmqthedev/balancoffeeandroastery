@@ -400,17 +400,13 @@
     }
   },
   "footer": {
-    "about": {
-      "title": "Về Balan Coffee",
-      "description": "Chúng tôi đam mê mang đến cho bạn những loại cà phê Việt Nam tốt nhất, rang tươi và giao tận nơi."
-    },
-    "quickLinks": "Liên kết nhanh",
-    "customerService": "Dịch vụ khách hàng",
-    "followUs": "Theo dõi chúng tôi",
-    "newsletter": "Nhận tin",
-    "newsletterDesc": "Đăng ký để nhận cập nhật và ưu đãi đặc biệt",
-    "subscribe": "Đăng ký",
-    "copyright": "© 2024 Balan Coffee & Roastery. Bảo lưu mọi quyền."
+    "tagline": "Cà Phê Việt Nam Cao Cấp",
+    "description": "Chúng tôi chuyên về hạt cà phê Việt Nam cao cấp, được rang cẩn thận đến hoàn hảo. Từ Arabica Cầu Đất đến Robusta Lâm Đồng, khám phá hương vị đích thực của Việt Nam.",
+    "quickLinks": "Liên Kết Nhanh",
+    "contact": "Thông Tin Liên Hệ",
+    "allRightsReserved": "Tất cả quyền được bảo lưu.",
+    "privacy": "Chính Sách Bảo Mật",
+    "terms": "Điều Khoản Dịch Vụ"
   },
   "admin": {
     "dashboard": "Bảng điều khiển",

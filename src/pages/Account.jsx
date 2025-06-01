@@ -340,10 +340,8 @@ const Account = () => {
                       {t('account.orders.title')}
                     </h2>
 
-                    {loading ? (
-                      <div className="space-y-4">
-                        {[...Array(3)].map((_, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+                    {loading ? (                      <div className="space-y-4">                        {[...Array(3)].map(() => (
+                          <div key={`order-skeleton-${Math.random().toString(36).slice(2, 9)}`} className="border border-gray-200 rounded-lg p-4 animate-pulse">
                             <div className="h-4 bg-gray-300 rounded mb-2"></div>
                             <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                           </div>

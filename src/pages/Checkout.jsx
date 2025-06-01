@@ -156,21 +156,10 @@ const Checkout = () => {
 
     const handlePrevious = () => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
-    };
-
-    const handlePaymentSuccess = (paymentData) => {
-        navigate('/payment/result', { 
-            state: { 
-                success: true, 
-                orderId: paymentData.orderId 
-            } 
-        });
-    };
-
-    const handlePaymentError = (error) => {
+    };    const handlePaymentError = (error) => {
         console.error('Payment failed:', error);
         setErrors({ payment: error.message || 'Payment failed' });
-    };    const createOrder = async () => {
+    };const createOrder = async () => {
         const orderData = {
             items: cartItems.map(item => ({
                 productId: item.product_id,
@@ -557,11 +546,8 @@ const Checkout = () => {
                                             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
                                                 {errors.payment}
                                             </div>
-                                        )}
-
-                                        <PaymentMethods
+                                        )}                                        <PaymentMethods
                                             orderData={createOrder}
-                                            onPaymentSuccess={handlePaymentSuccess}
                                             onPaymentError={handlePaymentError}
                                         />
                                     </div>

@@ -214,17 +214,13 @@
     }
   },
   "footer": {
-    "about": {
-      "title": "About Balan Coffee",
-      "description": "We are passionate about bringing you the finest Vietnamese coffee, roasted fresh and delivered to your door."
-    },
+    "tagline": "Premium Vietnamese Coffee",
+    "description": "We specialize in premium Vietnamese coffee beans, carefully roasted to perfection. From Arabica Cầu Đất to Robusta Lâm Đồng, discover the authentic taste of Vietnam.",
     "quickLinks": "Quick Links",
-    "customerService": "Customer Service",
-    "followUs": "Follow Us",
-    "newsletter": "Newsletter",
-    "newsletterDesc": "Subscribe for updates and special offers",
-    "subscribe": "Subscribe",
-    "copyright": "© 2024 Balan Coffee & Roastery. All rights reserved."
+    "contact": "Contact Info",
+    "allRightsReserved": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "account": {
     "dashboard": "Dashboard",

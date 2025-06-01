@@ -143,10 +143,9 @@ const Blog = () => {
           </div>
 
           {/* Blog Grid */}
-          {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+          {loading ? (            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map(() => (
+                <div key={`blog-skeleton-${Math.random().toString(36).slice(2, 9)}`} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
                   <div className="h-48 bg-gray-300"></div>
                   <div className="p-6">
                     <div className="h-4 bg-gray-300 rounded mb-2"></div>

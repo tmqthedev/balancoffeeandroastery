@@ -90,12 +90,10 @@ const NotFound = () => {
           <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">
               {t('notFound.popularPages.title')}
-            </h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {popularPages.map((page, index) => (
+            </h3>              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {popularPages.map((page) => (
                 <Link
-                  key={index}
+                  key={page.path}
                   to={page.path}
                   className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-coffee-300 hover:bg-coffee-50 transition-colors group"
                 >
@@ -115,11 +113,10 @@ const NotFound = () => {
             <h3 className="text-xl font-semibold text-gray-900 mb-6">
               {t('notFound.featuredProducts.title')}
             </h3>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              {featuredProducts.map((product, index) => (
+              <div className="grid md:grid-cols-3 gap-6">
+              {featuredProducts.map((product) => (
                 <Link
-                  key={index}
+                  key={product.path}
                   to={product.path}
                   className="group block"
                 >

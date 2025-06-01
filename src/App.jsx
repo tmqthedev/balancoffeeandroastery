@@ -1,12 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { useTranslation } from 'react-i18next';
-
-// Components
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import LanguageSwitcher from './components/common/LanguageSwitcher';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 
 // Pages
 import Home from './pages/Home';
@@ -32,27 +32,15 @@ import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminBlogs from './pages/admin/AdminBlogs';
 import AdminContacts from './pages/admin/AdminContacts';
 
-// Context Providers
-import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
-
-// Protected Route Component
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import AdminRoute from './components/auth/AdminRoute';
-
 function App() {
-  const { i18n } = useTranslation();
-
   return (
     <HelmetProvider>
       <AuthProvider>
         <CartProvider>
           <Router>
-            <div className="min-h-screen bg-cream-50" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
+            <div className="App">
               <Navbar />
-              <LanguageSwitcher />
-              
-              <main className="flex-grow">
+              <main className="pt-16">
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Home />} />
@@ -121,7 +109,6 @@ function App() {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
-              
               <Footer />
             </div>
           </Router>

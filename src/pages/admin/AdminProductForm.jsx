@@ -127,7 +127,7 @@ const AdminProductForm = () => {
     }
   };  const handleImageAdd = () => {
     const imageUrl = prompt(t('admin.enterImageUrl'));
-    if (imageUrl && imageUrl.trim()) {
+    if (imageUrl?.trim()) {
       setFormData(prev => ({
         ...prev,
         images: [...prev.images, imageUrl.trim()]
@@ -177,7 +177,6 @@ const AdminProductForm = () => {
       setSaving(false);
     }
   };
-
   if (loading) {
     return (
       <AdminLayout>
@@ -185,7 +184,7 @@ const AdminProductForm = () => {
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              <div key={`loading-skeleton-${i}-${Math.random().toString(36).slice(2, 9)}`} className="h-16 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -281,11 +280,9 @@ const AdminProductForm = () => {
             </div>
           </div>          {/* Images */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.productImages')}</h3>
-            
-            <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.productImages')}</h3>            <div className="space-y-4">
               {formData.images.map((image, index) => (
-                <div key={index} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                <div key={`product-image-${Math.random().toString(36).slice(2, 9)}`} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                   <img 
                     src={image} 
                     alt={`Product ${index + 1}`}
@@ -485,13 +482,15 @@ const AdminProductForm = () => {
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
               {t('common.cancel')}
-            </button>
-            <button
+            </button>            <button
               type="submit"
               disabled={saving}
               className="px-4 py-2 bg-brown-600 text-white rounded-md hover:bg-brown-700 disabled:opacity-50"
             >
-              {saving ? t('common.saving') : (isEdit ? t('common.update') : t('common.create'))}
+              {(() => {
+                if (saving) return t('common.saving');
+                return isEdit ? t('common.update') : t('common.create');
+              })()}
             </button>
           </div>
         </form>

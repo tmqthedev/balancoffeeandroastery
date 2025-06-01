@@ -77,7 +77,6 @@ const AdminCustomers = () => {
       ? 'bg-green-100 text-green-800' 
       : 'bg-yellow-100 text-yellow-800';
   };
-
   if (loading) {
     return (
       <AdminLayout>
@@ -85,7 +84,7 @@ const AdminCustomers = () => {
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              <div key={`loading-skeleton-${i}-${Math.random().toString(36).slice(2, 9)}`} className="h-16 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>

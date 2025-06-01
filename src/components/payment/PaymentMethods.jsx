@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
-const PaymentMethods = ({ orderData, onPaymentSuccess, onPaymentError }) => {
+const PaymentMethods = ({ orderData, onPaymentError }) => {
     const { t } = useTranslation();
     const [selectedMethod, setSelectedMethod] = useState('');
     const [selectedBank, setSelectedBank] = useState('');

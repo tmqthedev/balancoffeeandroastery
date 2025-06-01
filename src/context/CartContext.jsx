@@ -12,10 +12,9 @@ export const useCart = () => {
     return context;
 };
 
-export const CartProvider = ({ children }) => {
-    const [cartItems, setCartItems] = useState([]);
+export const CartProvider = ({ children }) => {    const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated } = useAuth();
 
     // Load cart on authentication change
     useEffect(() => {

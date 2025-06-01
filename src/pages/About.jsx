@@ -77,6 +77,30 @@ const About = () => {
     }
   ];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Balan Coffee & Roastery",
+    "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng",
+    "url": window.location.origin,
+    "logo": `${window.location.origin}/logo.png`,
+    "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Coffee Street",
+        "addressLocality": "Ho Chi Minh City",
+        "addressCountry": "VN"
+    },
+    "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+84-123-456-789",
+        "contactType": "customer service"
+    },
+    "sameAs": [
+        "https://facebook.com/balancoffee",
+        "https://instagram.com/balancoffee"
+    ]
+  };
+
   return (
     <>
       <Helmet>
@@ -92,32 +116,7 @@ const About = () => {
         
         {/* Structured Data */}
         <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "Balan Coffee & Roastery",
-            "description": t('about.description'),
-            "url": window.location.origin,
-            "logo": `${window.location.origin}/images/logo.png`,
-            "foundingDate": "1998",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "123 Đường Cà Phê",
-              "addressLocality": "Đà Lạt",
-              "addressRegion": "Lâm Đồng",
-              "addressCountry": "VN"
-            },
-            "contactPoint": {
-              "@type": "ContactPoint",
-              "telephone": "+84-123-456-789",
-              "contactType": "customer service",
-              "email": "info@balancoffee.com"
-            },
-            "sameAs": [
-              "https://facebook.com/balancoffee",
-              "https://instagram.com/balancoffee"
-            ]
-          })}
+          {JSON.stringify(structuredData)}
         </script>
       </Helmet>
 
@@ -200,11 +199,9 @@ const About = () => {
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 {t('about.values.subtitle')}
               </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {values.map((value, index) => (
-                <div key={index} className="text-center">
+            </div>            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {values.map((value) => (
+                <div key={value.title} className="text-center">
                   <div className="text-6xl mb-4">{value.icon}</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">
                     {value.title}
@@ -232,10 +229,8 @@ const About = () => {
 
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-coffee-200"></div>
-
-              {milestones.map((milestone, index) => (
-                <div key={index} className={`relative flex items-center mb-12 ${
+              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-coffee-200"></div>              {milestones.map((milestone, index) => (
+                <div key={milestone.year} className={`relative flex items-center mb-12 ${
                   index % 2 === 0 ? 'justify-start' : 'justify-end'
                 }`}>
                   {/* Timeline dot */}
@@ -271,11 +266,9 @@ const About = () => {
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 {t('about.team.subtitle')}
               </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {teamMembers.map((member, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            </div>            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {teamMembers.map((member) => (
+                <div key={member.name} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                   <div className="h-64 overflow-hidden">
                     <img
                       src={member.image}

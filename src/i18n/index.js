@@ -19,13 +19,12 @@ i18n
   // Detect user language
   .use(LanguageDetector)
   // Pass the i18n instance to react-i18next
-  .use(initReactI18next)
-  // Initialize i18next
+  .use(initReactI18next)  // Initialize i18next
   .init({
     resources,
     fallbackLng: 'vi', // Default to Vietnamese
     lng: 'vi', // Default language
-    debug: process.env.NODE_ENV === 'development',
+    debug: import.meta.env.DEV,
 
     interpolation: {
       escapeValue: false // React already does escaping

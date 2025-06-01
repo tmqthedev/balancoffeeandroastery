@@ -87,10 +87,9 @@ const BlogPost = () => {
           <div className="animate-pulse">
             <div className="h-8 bg-gray-300 rounded mb-4"></div>
             <div className="h-4 bg-gray-300 rounded mb-6 w-1/3"></div>
-            <div className="h-64 bg-gray-300 rounded mb-6"></div>
-            <div className="space-y-4">
-              {[...Array(6)].map((_, index) => (
-                <div key={index} className="h-4 bg-gray-300 rounded"></div>
+            <div className="h-64 bg-gray-300 rounded mb-6"></div>            <div className="space-y-4">
+              {[...Array(6)].map(() => (
+                <div key={`skeleton-line-${Math.random().toString(36).slice(2, 9)}`} className="h-4 bg-gray-300 rounded"></div>
               ))}
             </div>
           </div>
@@ -147,6 +146,32 @@ const BlogPost = () => {
   const content = currentLang === 'vi' ? blog.content_vi : blog.content_en;
   const excerpt = currentLang === 'vi' ? blog.excerpt_vi : blog.excerpt_en;
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": blog?.title || blog?.title_vi,
+    "description": blog?.excerpt || blog?.excerpt_vi,
+    "image": blog?.featured_image || "/logo.png",
+    "datePublished": blog?.created_at,
+    "dateModified": blog?.updated_at || blog?.created_at,
+    "author": {
+        "@type": "Organization",
+        "name": "Balan Coffee & Roastery",
+        "logo": {
+            "@type": "ImageObject",
+            "url": `${window.location.origin}/logo.png`
+        }
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "Balan Coffee & Roastery",
+        "logo": {
+            "@type": "ImageObject",
+            "url": `${window.location.origin}/logo.png`
+        }
+    }
+};
+
   return (
     <>
       <Helmet>
@@ -175,31 +200,7 @@ const BlogPost = () => {
         
         {/* Structured Data */}
         <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            "headline": title,
-            "description": excerpt,
-            "image": blog.image_url || `${window.location.origin}/images/og-default.jpg`,
-            "author": {
-              "@type": "Organization",
-              "name": blog.author_name || "Balan Coffee & Roastery"
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Balan Coffee & Roastery",
-              "logo": {
-                "@type": "ImageObject",
-                "url": `${window.location.origin}/images/logo.png`
-              }
-            },
-            "datePublished": blog.created_at,
-            "dateModified": blog.updated_at || blog.created_at,
-            "mainEntityOfPage": {
-              "@type": "WebPage",
-              "@id": `${window.location.origin}/blog/${blog.slug}`
-            }
-          })}
+          {JSON.stringify(structuredData)}
         </script>
       </Helmet>
 

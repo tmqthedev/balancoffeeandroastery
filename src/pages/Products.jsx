@@ -90,8 +90,7 @@ const Products = () => {
                 params,
                 timeout: 10000
             });
-            
-            if (response.data && response.data.products) {
+              if (response.data?.products) {
                 setProducts(response.data.products);
                 setTotalProducts(response.data.total || 0);
                 setTotalPages(Math.ceil((response.data.total || 0) / productsPerPage));
@@ -111,10 +110,9 @@ const Products = () => {
         }
     };
 
-    const fetchCategories = async () => {
-        try {
+    const fetchCategories = async () => {        try {
             const response = await axios.get(`${API_BASE_URL}/api/categories`, { timeout: 5000 });
-            if (response.data && response.data.categories) {
+            if (response.data?.categories) {
                 setCategories(response.data.categories);
             }
         } catch (error) {
@@ -396,12 +394,12 @@ const Products = () => {
                                         {t('common.tryAgain')}
                                     </button>
                                 </div>
-                            )}
-
-                            {/* Loading State */}
+                            )}                            {/* Loading State */}
                             {loading && !error && (
-                                <div className="flex justify-center items-center h-64" role="status" aria-label={t('common.loading')}>
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
+                                <div className="flex justify-center items-center h-64">
+                                    <output aria-live="polite" aria-label={t('common.loading')}>
+                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
+                                    </output>
                                 </div>
                             )}
 
@@ -438,9 +436,8 @@ const Products = () => {
                                                                 alt={product.name}
                                                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                                                 loading="lazy"
-                                                            />
-                                                        ) : (
-                                                            <span className="text-4xl" role="img" aria-label="Coffee">☕</span>
+                                                            />                                                        ) : (
+                                                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMyIDJDMTcuNjQgMiA2IDE0LjM2IDYgMjlDNiAzMy42NCA3LjQ0IDM3LjkyIDEwIDQxLjQyVjQ4QzEwIDUwLjIxIDExLjc5IDUyIDEzIDUySDUxQzUzLjIxIDUyIDU1IDUwLjIxIDU1IDQ4VjQxLjQyQzU3LjU2IDM3LjkyIDU5IDMzLjY0IDU5IDI5QzU5IDE0LjM2IDQ3LjM2IDIgMzMgMkgzMloiIGZpbGw9IiM2RjQ1MzAiLz4KPHBhdGggZD0iTTE2IDI5QzE2IDM0LjUyIDIwLjQ4IDM5IDI2IDM5SDM4QzQzLjUyIDM5IDQ4IDM0LjUyIDQ4IDI5QzQ4IDIzLjQ4IDQzLjUyIDE5IDM4IDE5SDI2QzIwLjQ4IDE5IDE2IDIzLjQ4IDE2IDI5WiIgZmlsbD0iIzg3NjM0NSIvPgo8L3N2Zz4K" alt="Coffee placeholder" className="text-4xl w-16 h-16 mx-auto text-coffee-400" />
                                                         )}
                                                     </div>
                                                 </Link>
@@ -502,10 +499,9 @@ const Products = () => {
                                             >
                                                 {t('common.previous')}
                                             </button>
-                                            
-                                            {paginationNumbers.map((page, index) => (
+                                              {paginationNumbers.map((page, index) => (
                                                 page === '...' ? (
-                                                    <span key={`ellipsis-${index}`} className="px-2 text-coffee-500">
+                                                    <span key={`ellipsis-${currentPage}-${index}`} className="px-2 text-coffee-500">
                                                         ...
                                                     </span>
                                                 ) : (

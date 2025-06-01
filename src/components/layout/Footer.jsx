@@ -1,53 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 
 const Footer = () => {
     const { t } = useTranslation();
-    const [email, setEmail] = useState('');
-    const [subscribeLoading, setSubscribeLoading] = useState(false);
-    const [subscribeMessage, setSubscribeMessage] = useState('');
-
-    const handleNewsletterSubscribe = async (e) => {
-        e.preventDefault();
-        
-        if (!email) return;
-
-        setSubscribeLoading(true);
-        setSubscribeMessage('');
-
-        try {
-            const response = await axios.post('/api/contacts/subscribe', { email });
-            
-            if (response.data.success) {
-                setSubscribeMessage(t('contact.newsletter.success'));
-                setEmail('');
-            } else {
-                setSubscribeMessage(response.data.message || t('contact.newsletter.error'));
-            }
-        } catch (error) {
-            console.error('Newsletter subscription error:', error);
-            setSubscribeMessage(error.response?.data?.message || t('contact.newsletter.error'));
-        } finally {
-            setSubscribeLoading(false);
-        }
-    };
-
-    const quickLinks = [
-        { path: '/products', label: t('navigation.products') },
-        { path: '/blog', label: t('navigation.blog') },
-        { path: '/about', label: t('navigation.about') },
-        { path: '/contact', label: t('navigation.contact') }
-    ];
-
-    const customerServiceLinks = [
-        { path: '/shipping', label: 'Shipping Info' },
-        { path: '/returns', label: 'Returns & Exchanges' },
-        { path: '/faq', label: 'FAQ' },
-        { path: '/privacy', label: 'Privacy Policy' },
-        { path: '/terms', label: 'Terms of Service' }
-    ];
 
     const socialLinks = [
         { 
@@ -89,32 +45,33 @@ const Footer = () => {
     ];
 
     return (
-        <footer className="bg-coffee-900 text-cream-100">
+        <footer className="bg-coffee-900 text-white">
             <div className="container mx-auto px-4 py-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {/* About Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center space-x-2 mb-4">
-                            <div className="w-10 h-10 bg-coffee-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">B</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-cream-50">Balan Coffee</h3>
-                                <p className="text-sm text-cream-300">& Roastery</p>
-                            </div>
-                        </div>
-                        <p className="text-cream-200 text-sm leading-relaxed">
-                            {t('footer.about.description')}
-                        </p>
-                        <div className="flex space-x-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    {/* Logo and Company Info */}
+                    <div className="col-span-1 md:col-span-2">                        <Link to="/" className="flex items-center space-x-3 mb-4">
+                            <img 
+                                src="/logo.png" 
+                                alt="Balan Coffee & Roastery" 
+                                className="h-12 w-auto"
+                                style={{ filter: 'brightness(0) invert(1)' }}
+                                onError={(e) => {
+                                    e.target.style.filter = 'none';
+                                    e.target.style.opacity = '0.8';
+                                }}
+                            />
+                        </Link>
+                        <p className="text-cream-300 mb-4 max-w-md">
+                            {t('footer.description')}
+                        </p>                        <div className="flex space-x-4">
                             {socialLinks.map((social) => (
-                                <a
+                                <a 
                                     key={social.name}
-                                    href={social.url}
+                                    href={social.url} 
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-cream-300 hover:text-coffee-400 transition-colors duration-200"
-                                    aria-label={social.name}
+                                    className="text-cream-300 hover:text-white transition-colors"
+                                    aria-label={`Follow us on ${social.name}`}
                                 >
                                     {social.icon}
                                 </a>
@@ -123,81 +80,55 @@ const Footer = () => {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-cream-50">{t('footer.quickLinks')}</h4>
+                    <div>
+                        <h4 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h4>
                         <ul className="space-y-2">
-                            {quickLinks.map((link) => (
-                                <li key={link.path}>
-                                    <Link
-                                        to={link.path}
-                                        className="text-cream-200 hover:text-coffee-400 transition-colors duration-200 text-sm"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
+                            <li><Link to="/products" className="text-cream-300 hover:text-white transition-colors">{t('nav.products')}</Link></li>
+                            <li><Link to="/about" className="text-cream-300 hover:text-white transition-colors">{t('nav.about')}</Link></li>
+                            <li><Link to="/blog" className="text-cream-300 hover:text-white transition-colors">{t('nav.blog')}</Link></li>
+                            <li><Link to="/contact" className="text-cream-300 hover:text-white transition-colors">{t('nav.contact')}</Link></li>
                         </ul>
                     </div>
 
-                    {/* Customer Service */}
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-cream-50">{t('footer.customerService')}</h4>
-                        <ul className="space-y-2">
-                            {customerServiceLinks.map((link) => (
-                                <li key={link.path}>
-                                    <Link
-                                        to={link.path}
-                                        className="text-cream-200 hover:text-coffee-400 transition-colors duration-200 text-sm"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Newsletter */}
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-cream-50">{t('footer.newsletter')}</h4>
-                        <p className="text-cream-200 text-sm">{t('footer.newsletterDesc')}</p>
-                        
-                        <form onSubmit={handleNewsletterSubscribe} className="space-y-3">
-                            <div className="flex">
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder={t('contact.newsletter.email')}
-                                    className="flex-1 px-3 py-2 bg-coffee-800 border border-coffee-700 rounded-l-lg text-cream-100 placeholder-cream-400 focus:outline-none focus:border-coffee-500 text-sm"
-                                    required
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={subscribeLoading}
-                                    className="bg-coffee-600 text-white px-4 py-2 rounded-r-lg hover:bg-coffee-500 transition-colors duration-200 text-sm font-medium disabled:opacity-50"
-                                >
-                                    {subscribeLoading ? '...' : t('footer.subscribe')}
-                                </button>
-                            </div>
-                            {subscribeMessage && (
-                                <p className={`text-xs ${subscribeMessage.includes('success') || subscribeMessage.includes('thành công') ? 'text-green-400' : 'text-red-400'}`}>
-                                    {subscribeMessage}
-                                </p>
-                            )}
-                        </form>
+                    {/* Contact Info */}
+                    <div>
+                        <h4 className="text-lg font-semibold mb-4">{t('footer.contact')}</h4>
+                        <div className="space-y-2 text-cream-300">
+                            <p className="flex items-center">
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                123 Coffee Street, Ho Chi Minh City
+                            </p>
+                            <p className="flex items-center">
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                +84 123 456 789
+                            </p>
+                            <p className="flex items-center">
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                info@balancoffee.com
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Bottom Section */}
-                <div className="border-t border-coffee-800 mt-8 pt-6">
-                    <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div className="border-t border-coffee-700 mt-8 pt-8">
+                    <div className="flex flex-col md:flex-row justify-between items-center">
                         <p className="text-cream-300 text-sm">
-                            {t('footer.copyright')}
+                            © 2024 Balan Coffee & Roastery. {t('footer.allRightsReserved')}
                         </p>
-                        <div className="flex items-center space-x-4 text-sm text-cream-300">
-                            <span>📍 123 Coffee Street, Vietnam</span>
-                            <span>📞 +84 123 456 789</span>
-                            <span>✉️ hello@balancoffee.com</span>
+                        <div className="flex space-x-6 mt-4 md:mt-0">
+                            <Link to="/privacy" className="text-cream-300 hover:text-white text-sm transition-colors">
+                                {t('footer.privacy')}
+                            </Link>
+                            <Link to="/terms" className="text-cream-300 hover:text-white text-sm transition-colors">
+                                {t('footer.terms')}
+                            </Link>
                         </div>
                     </div>
                 </div>

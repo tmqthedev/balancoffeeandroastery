@@ -6,6 +6,23 @@ import { Helmet } from 'react-helmet-async';
 const Home = () => {
     const { t } = useTranslation();
 
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Balan Coffee & Roastery",
+        "url": window.location.origin,
+        "logo": `${window.location.origin}/logo.png`,
+        "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng beans",
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "VN"
+        },
+        "sameAs": [
+            "https://facebook.com/balancoffee",
+            "https://instagram.com/balancoffee"
+        ]
+    };
+
     return (
         <>
             <Helmet>
@@ -17,6 +34,7 @@ const Home = () => {
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
                 <link rel="canonical" href={window.location.href} />
+                <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
             </Helmet>
 
             <div className="min-h-screen">
