@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
-import FileUpload from '../../components/common/FileUpload';
 import axios from 'axios';
 
 const AdminProductForm = () => {
@@ -10,7 +9,6 @@ const AdminProductForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = !!id;
-
   const [formData, setFormData] = useState({
     name: '',
     nameVi: '',
@@ -33,10 +31,9 @@ const AdminProductForm = () => {
     metaDescriptionVi: '',
     isFeatured: false,
     isActive: true,
-    categoryIds: []
+    categoryIds: [],
+    images: [] // Changed from separate images state to be part of formData
   });
-
-  const [images, setImages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,8 +63,7 @@ const AdminProductForm = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const product = response.data;
-      setFormData({
+      const product = response.data;      setFormData({
         name: product.name || '',
         nameVi: product.nameVi || '',
         slug: product.slug || '',
@@ -89,10 +85,9 @@ const AdminProductForm = () => {
         metaDescriptionVi: product.metaDescriptionVi || '',
         isFeatured: product.isFeatured || false,
         isActive: product.isActive !== false,
-        categoryIds: product.categories || []
+        categoryIds: product.categories || [],
+        images: product.images || []
       });
-      
-      setImages(product.images || []);
     } catch (error) {
       console.error('Error fetching product:', error);
       setError('Failed to load product');
@@ -130,33 +125,28 @@ const AdminProductForm = () => {
         slug: generateSlug(value)
       }));
     }
-  };
-  const handleImageUpload = async (uploadedFiles) => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      
-      // No need to manually create FormData here since the FileUpload 
-      // component already handles this and makes the API call
-      
-      // Just update the product's images with the uploaded files
-      if (Array.isArray(uploadedFiles)) {
-        const newImages = uploadedFiles.map(file => 
-          file.optimized?.url || file.thumbnail?.url || file.original.url
-        );
-        setImages(prev => [...prev, ...newImages]);
-      } else if (uploadedFiles) {
-        const newImage = uploadedFiles.optimized?.url || 
-                         uploadedFiles.thumbnail?.url || 
-                         uploadedFiles.original.url;
-        setImages(prev => [...prev, newImage]);
-      }    } catch (error) {
-      console.error('Image upload error:', error);
-      setError('Failed to upload images');
+  };  const handleImageAdd = () => {
+    const imageUrl = prompt(t('admin.enterImageUrl'));
+    if (imageUrl && imageUrl.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, imageUrl.trim()]
+      }));
     }
   };
 
   const handleImageRemove = (index) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleImageChange = (index, newUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.map((img, i) => i === index ? newUrl : img)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -165,10 +155,8 @@ const AdminProductForm = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('adminToken');
-      const submitData = {
+      const token = localStorage.getItem('adminToken');      const submitData = {
         ...formData,
-        images: images,
         price: parseFloat(formData.price) || 0,
         comparePrice: parseFloat(formData.comparePrice) || null,
         stockQuantity: parseInt(formData.stockQuantity) || 0
@@ -291,19 +279,46 @@ const AdminProductForm = () => {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Images */}
+          </div>          {/* Images */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.productImages')}</h3>            <FileUpload
-              onUpload={handleImageUpload}
-              accept="image/*"
-              multiple={true}
-              uploadType="product"
-              currentImages={images}
-              onRemove={handleImageRemove}
-              className="mb-4"
-            />
+            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.productImages')}</h3>
+            
+            <div className="space-y-4">
+              {formData.images.map((image, index) => (
+                <div key={index} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                  <img 
+                    src={image} 
+                    alt={`Product ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-md"
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMgMTZWN0EyIDIgMCAwIDEgNSA1SDE5QTIgMiAwIDAgMSAyMSA3VjE2QTIgMiAwIDAgMSAxOSAxOEg1QTIgMiAwIDAgMSAzIDE2WiIgZmlsbD0iI0Y5RkFGQiIgc3Ryb2tlPSIjRDFENUNCIiBzdHJva2Utd2lkdGg9IjIiLz4KPHBhdGggZD0iTTcgMTNMMTAgMTZMMTMgMTNMMTcgMTciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0Q5RDlEOSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+';
+                    }}
+                  />
+                  <input
+                    type="url"
+                    value={image}
+                    onChange={(e) => handleImageChange(index, e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleImageRemove(index)}
+                    className="text-red-600 hover:text-red-700 px-3 py-2"
+                  >
+                    {t('admin.remove')}
+                  </button>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={handleImageAdd}
+                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-amber-500 hover:text-amber-600 transition-colors"
+              >
+                + {t('admin.addImage')}
+              </button>
+            </div>
           </div>
 
           {/* Pricing */}

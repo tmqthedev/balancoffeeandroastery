@@ -28,13 +28,10 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "mssql": "^11.0.1",
-    "multer": "^2.0.0",
     "nodemailer": "^7.0.3",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
-    "passport-local": "^1.0.0",
-    "sharp": "^0.34.2",
-    "uuid": "^11.1.0"
+    "passport-local": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

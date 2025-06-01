@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import FileUpload from '../../components/common/FileUpload';
 import axios from 'axios';
 
 const AdminBlogs = () => {
@@ -108,30 +107,17 @@ const AdminBlogs = () => {
       featured: false
     });
     setShowModal(true);
-  };
-  const handleSubmit = async (e) => {
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('adminToken');
-        // Prepare form data with proper image handling
-      let featuredImageUrl = '';
-      if (typeof formData.featured_image === 'string') {
-        featuredImageUrl = formData.featured_image;
-      } else if (formData.featured_image) {
-        featuredImageUrl = formData.featured_image.url || formData.featured_image;
-      }
       
-      const submitData = {
-        ...formData,
-        featured_image: featuredImageUrl
-      };
-
       const url = editingBlog 
         ? `/api/admin/blogs/${editingBlog.id}`
         : '/api/admin/blogs';
       const method = editingBlog ? 'put' : 'post';
 
-      await axios[method](url, submitData, {
+      await axios[method](url, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -416,22 +402,17 @@ const AdminBlogs = () => {
                     />
                   </div>
                 </div>                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="md:col-span-2">                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       {t('admin.featuredImage')}
-                    </label>                    <FileUpload
-                      onUpload={(files) => {
-                        if (files && files.length > 0) {
-                          setFormData({...formData, featured_image: files[0]});
-                        }
-                      }}
-                      maxFiles={1}
-                      acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/webp']}
-                      maxSize={5}
-                      uploadType="blog"
-                      initialFiles={formData.featured_image ? [formData.featured_image] : []}
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.featured_image}
+                      onChange={(e) => setFormData({...formData, featured_image: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder="https://example.com/image.jpg"
                     />
-                  </div>                  <div className="md:col-span-1 space-y-4">
+                  </div><div className="md:col-span-1 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         {t('admin.status')}

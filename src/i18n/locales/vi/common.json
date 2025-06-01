@@ -513,26 +513,15 @@
     "deleteSuccess": "Xóa thành công",
     "deleteError": "Lỗi khi xóa",
     "saveSuccess": "Lưu thành công",
-    "saveError": "Lỗi khi lưu",
-    "updateSuccess": "Cập nhật thành công",
-    "updateError": "Lỗi khi cập nhật"
-  },
-  "seo": {
+    "saveError": "Lỗi khi lưu",    "updateSuccess": "Cập nhật thành công",
+    "updateError": "Lỗi khi cập nhật",
+    "addImage": "Thêm hình ảnh",
+    "enterImageUrl": "Nhập URL hình ảnh:",
+    "remove": "Xóa",
+    "productImages": "Hình ảnh sản phẩm"
+  },  "seo": {
     "title": "Balan Coffee & Roastery - Cà Phê Việt Nam Cao Cấp",
     "description": "Khám phá hạt cà phê Việt Nam cao cấp bao gồm Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Cà phê rang tươi giao tận nơi.",
     "keywords": "cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất"
-  },
-  "fileUpload": {
-    "dropFiles": "Thả tệp vào đây hoặc",
-    "browse": "chọn tệp",
-    "uploading": "Đang tải lên...",
-    "currentImages": "Hình ảnh hiện tại",
-    "imageFormats": "PNG, JPG, GIF tối đa",
-    "maxSize": "{{size}}MB tối đa",
-    "errors": {
-      "fileSize": "Kích thước tệp phải nhỏ hơn {{size}}MB",
-      "fileType": "Chỉ cho phép tệp hình ảnh",
-      "uploadFailed": "Tải lên thất bại, vui lòng thử lại"
-    }
   }
 }

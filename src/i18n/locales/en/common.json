@@ -20,22 +20,8 @@
     "products": "Products",
     "cart": "Cart",
     "account": "Account",
-    "login": "Login",
-    "register": "Register",
-    "logout": "Logout",
-    "fileUpload": {
-      "dropFiles": "Drop files here or",
-      "browse": "browse",
-      "uploading": "Uploading...",
-      "currentImages": "Current Images",
-      "imageFormats": "PNG, JPG, GIF up to",
-      "maxSize": "{{size}}MB max",
-      "errors": {
-        "fileSize": "File size must be less than {{size}}MB",
-        "fileType": "Only image files are allowed",
-        "uploadFailed": "Upload failed, please try again"
-      }
-    }
+    "login": "Login",    "register": "Register",
+    "logout": "Logout"
   },
   "navigation": {
     "home": "Home",
@@ -319,6 +305,10 @@
     "message": "Message",
     "contactDetails": "Contact Details",
     "receivedAt": "Received At",
+    "addImage": "Add Image",
+    "enterImageUrl": "Enter image URL:",
+    "remove": "Remove",
+    "productImages": "Product Images",
     "subscribedAt": "Subscribed At",
     "unsubscribe": "Unsubscribe",
     "exportCSV": "Export CSV"

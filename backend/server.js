@@ -54,9 +54,6 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Database connection
 const db = require('./config/database');
 
@@ -81,7 +78,6 @@ app.use('/api/blogs', require('./routes/blogs'));
 app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/admin', require('./routes/admin'));
-app.use('/api/upload', require('./routes/upload'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
