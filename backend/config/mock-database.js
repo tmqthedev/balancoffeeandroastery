@@ -238,8 +238,7 @@ class MockDatabase {
       return { rowsAffected: [1] };
     }
 
-    return { recordset: [] };
-  }
+    return { recordset: [] };  }
 }
 
-module.exports = new MockDatabase();
+module.exports = MockDatabase;

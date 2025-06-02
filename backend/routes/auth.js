@@ -6,13 +6,11 @@ const passport = require('passport');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
 
+// Validation middleware
+const { validateRequest, userValidationRules, loginValidationRules } = require('../middleware/validation');
+
 // Register
-router.post('/register', [
-  body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
-  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
-], async (req, res) => {
+router.post('/register', validateRequest(userValidationRules), async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

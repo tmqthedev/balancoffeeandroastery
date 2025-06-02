@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 const path = require('path');
+const { accessLogger, errorLogger, errorHandler, requestTracker } = require('./middleware/logging');
 
 // Load environment variables
 dotenv.config();

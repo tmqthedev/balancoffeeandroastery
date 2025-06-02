@@ -1,10 +1,11 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import { initAnalytics } from './utils/analytics';
 
 // Loading component
 const LoadingSpinner = () => (
@@ -19,6 +20,11 @@ const PublicRoutes = React.lazy(() => import('./routes/PublicRoutes'));
 const AdminRoutes = React.lazy(() => import('./routes/AdminRoutes'));
 
 function App() {
+  // Initialize analytics on app mount
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+
   return (
     <HelmetProvider>
       <AuthProvider>
