@@ -70,8 +70,7 @@ const Account = () => {
         setSuccess('Cập nhật thông tin thành công!');
       } else {
         setError(response.message || 'Cập nhật thất bại');
-      }
-    } catch (error) {
+      }    } catch {
       setError('Có lỗi xảy ra khi cập nhật thông tin');
     } finally {
       setLoading(false);
@@ -245,12 +244,12 @@ const Account = () => {
                     </h2>
 
                     <form onSubmit={handleProfileUpdate} className="space-y-6">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div className="grid md:grid-cols-2 gap-4">                        <div>
+                          <label htmlFor="first-name" className="block text-sm font-medium text-gray-700 mb-2">
                             Họ
                           </label>
                           <input
+                            id="first-name"
                             type="text"
                             value={formData.first_name}
                             onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
@@ -259,23 +258,23 @@ const Account = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="last-name" className="block text-sm font-medium text-gray-700 mb-2">
                             Tên
                           </label>
                           <input
+                            id="last-name"
                             type="text"
                             value={formData.last_name}
                             onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
                           />
                         </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                      </div>                      <div>
+                        <label htmlFor="user-email" className="block text-sm font-medium text-gray-700 mb-2">
                           Email
                         </label>
                         <input
+                          id="user-email"
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -283,12 +282,12 @@ const Account = () => {
                         />
                       </div>
 
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div className="grid md:grid-cols-2 gap-4">                        <div>
+                          <label htmlFor="user-phone" className="block text-sm font-medium text-gray-700 mb-2">
                             Số điện thoại
                           </label>
                           <input
+                            id="user-phone"
                             type="tel"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -297,23 +296,23 @@ const Account = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="user-birthday" className="block text-sm font-medium text-gray-700 mb-2">
                             Ngày sinh
                           </label>
                           <input
+                            id="user-birthday"
                             type="date"
                             value={formData.date_of_birth}
                             onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
                           />
                         </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                      </div>                      <div>
+                        <label htmlFor="user-gender" className="block text-sm font-medium text-gray-700 mb-2">
                           Giới tính
                         </label>
                         <select
+                          id="user-gender"
                           value={formData.gender}
                           onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
@@ -341,12 +340,10 @@ const Account = () => {
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">
                       Đơn hàng của tôi
-                    </h2>
-
-                    {loading ? (
+                    </h2>                    {loading ? (
                       <div className="space-y-4">
                         {[...Array(3)].map((_, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+                          <div key={`loading-${index}`} className="border border-gray-200 rounded-lg p-4 animate-pulse">
                             <div className="h-4 bg-gray-300 rounded mb-2"></div>
                             <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                           </div>
@@ -418,14 +415,13 @@ const Account = () => {
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">
                       Đổi mật khẩu
-                    </h2>
-
-                    <form onSubmit={handlePasswordChange} className="space-y-6 max-w-md">
+                    </h2>                    <form onSubmit={handlePasswordChange} className="space-y-6 max-w-md">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 mb-2">
                           Mật khẩu hiện tại
                         </label>
                         <input
+                          id="current-password"
                           type="password"
                           value={passwordData.current_password}
                           onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
@@ -435,10 +431,11 @@ const Account = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">
                           Mật khẩu mới
                         </label>
                         <input
+                          id="new-password"
                           type="password"
                           value={passwordData.new_password}
                           onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
@@ -449,10 +446,11 @@ const Account = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
                           Xác nhận mật khẩu mới
                         </label>
                         <input
+                          id="confirm-password"
                           type="password"
                           value={passwordData.confirm_password}
                           onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
@@ -484,19 +482,18 @@ const Account = () => {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">
                           Thông báo
-                        </h3>
-                        <div className="space-y-3">
+                        </h3>                        <div className="space-y-3">
                           <label className="flex items-center">
                             <input type="checkbox" className="mr-3" defaultChecked />
-                            Nhận thông báo qua email
+                            <span>Nhận thông báo qua email</span>
                           </label>
                           <label className="flex items-center">
                             <input type="checkbox" className="mr-3" defaultChecked />
-                            Cập nhật trạng thái đơn hàng
+                            <span>Cập nhật trạng thái đơn hàng</span>
                           </label>
                           <label className="flex items-center">
                             <input type="checkbox" className="mr-3" />
-                            Nhận bản tin khuyến mãi
+                            <span>Nhận bản tin khuyến mãi</span>
                           </label>
                         </div>
                       </div>
@@ -504,15 +501,14 @@ const Account = () => {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">
                           Quyền riêng tư
-                        </h3>
-                        <div className="space-y-3">
+                        </h3>                        <div className="space-y-3">
                           <label className="flex items-center">
                             <input type="checkbox" className="mr-3" />
-                            Chia sẻ dữ liệu với đối tác
+                            <span>Chia sẻ dữ liệu với đối tác</span>
                           </label>
                           <label className="flex items-center">
                             <input type="checkbox" className="mr-3" defaultChecked />
-                            Cho phép phân tích hành vi
+                            <span>Cho phép phân tích hành vi</span>
                           </label>
                         </div>
                       </div>

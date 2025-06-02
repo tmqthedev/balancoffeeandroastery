@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AdminBlogs = () => {
@@ -23,12 +23,10 @@ const AdminBlogs = () => {
   });
 
   const blogsPerPage = 10;
-
   useEffect(() => {
     fetchBlogs();
-  }, [currentPage, searchTerm, statusFilter]);
-
-  const fetchBlogs = async () => {
+  }, [fetchBlogs]);
+  const fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
@@ -48,7 +46,7 @@ const AdminBlogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, statusFilter]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -156,7 +154,6 @@ const AdminBlogs = () => {
       console.error('Error updating blog status:', error);
     }
   };
-
   const getStatusBadge = (status) => {
     const colors = {
       published: 'bg-green-100 text-green-800',
@@ -164,6 +161,19 @@ const AdminBlogs = () => {
       archived: 'bg-gray-100 text-gray-800'
     };
     return `px-2 py-1 rounded-full text-xs font-medium ${colors[status] || colors.draft}`;
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'published':
+        return 'Đã xuất bản';
+      case 'draft':
+        return 'Bản nháp';
+      case 'archived':
+        return 'Đã lưu trữ';
+      default:
+        return status;
+    }
   };
 
   const formatDate = (dateString) => {
@@ -250,9 +260,7 @@ const AdminBlogs = () => {
                   </div>
                 </td>                <td className="px-6 py-4 whitespace-nowrap">
                   <span className={getStatusBadge(blog.status)}>
-                    {blog.status === 'published' ? 'Đã xuất bản' :
-                     blog.status === 'draft' ? 'Bản nháp' :
-                     blog.status === 'archived' ? 'Đã lưu trữ' : blog.status}
+                    {getStatusText(blog.status)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -317,13 +325,14 @@ const AdminBlogs = () => {
           <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">            <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 {editingBlog ? 'Sửa blog' : 'Thêm blog mới'}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              </h3>              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div>
+                    <label htmlFor="title-vi" className="block text-sm font-medium text-gray-700 mb-1">
                       Tiêu đề tiếng Việt
                     </label>
                     <input
+                      id="title-vi"
                       type="text"
                       value={formData.title_vi}
                       onChange={(e) => setFormData({...formData, title_vi: e.target.value})}
@@ -331,23 +340,25 @@ const AdminBlogs = () => {
                       required
                     />
                   </div>
-                  <div>                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div>
+                    <label htmlFor="title-en" className="block text-sm font-medium text-gray-700 mb-1">
                       Tiêu đề tiếng Anh
                     </label>
                     <input
+                      id="title-en"
                       type="text"
                       value={formData.title_en}
                       onChange={(e) => setFormData({...formData, title_en: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                </div>                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="excerpt-vi" className="block text-sm font-medium text-gray-700 mb-1">
                       Tóm tắt tiếng Việt
                     </label>
                     <textarea
+                      id="excerpt-vi"
                       value={formData.excerpt_vi}
                       onChange={(e) => setFormData({...formData, excerpt_vi: e.target.value})}
                       rows={3}
@@ -355,10 +366,11 @@ const AdminBlogs = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="excerpt-en" className="block text-sm font-medium text-gray-700 mb-1">
                       Tóm tắt tiếng Anh
                     </label>
                     <textarea
+                      id="excerpt-en"
                       value={formData.excerpt_en}
                       onChange={(e) => setFormData({...formData, excerpt_en: e.target.value})}
                       rows={3}
@@ -367,10 +379,11 @@ const AdminBlogs = () => {
                   </div>
                 </div>                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="content-vi" className="block text-sm font-medium text-gray-700 mb-1">
                       Nội dung tiếng Việt
                     </label>
                     <textarea
+                      id="content-vi"
                       value={formData.content_vi}
                       onChange={(e) => setFormData({...formData, content_vi: e.target.value})}
                       rows={8}
@@ -379,45 +392,55 @@ const AdminBlogs = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="content-en" className="block text-sm font-medium text-gray-700 mb-1">
                       Nội dung tiếng Anh
                     </label>
                     <textarea
+                      id="content-en"
                       value={formData.content_en}
                       onChange={(e) => setFormData({...formData, content_en: e.target.value})}
                       rows={8}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                </div><div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <label htmlFor="featured-image" className="block text-sm font-medium text-gray-700 mb-1">
                       Hình ảnh nổi bật
                     </label>
                     <input
+                      id="featured-image"
                       type="url"
                       value={formData.featured_image}
                       onChange={(e) => setFormData({...formData, featured_image: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                       placeholder="https://example.com/image.jpg"
                     />
-                  </div><div className="md:col-span-1 space-y-4">
-                    <div>                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                  </div>                  <div className="md:col-span-1 space-y-4">
+                    <div>
+                      <label htmlFor="status-select" className="block text-sm font-medium text-gray-700 mb-1">
                         Trạng thái
                       </label>
                       <select
+                        id="status-select"
                         value={formData.status}
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      >                        <option value="draft">Bản nháp</option>
+                      >
+                        <option value="draft">Bản nháp</option>
                         <option value="published">Đã xuất bản</option>
                         <option value="archived">Đã lưu trữ</option>
                       </select>
                     </div>
-                    <div>                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div>
+                      <label htmlFor="featured-checkbox" className="block text-sm font-medium text-gray-700 mb-1">
                         Nổi bật
                       </label>
                       <div className="flex items-center mt-2">
                         <input
+                          id="featured-checkbox"
                           type="checkbox"
                           checked={formData.featured}
                           onChange={(e) => setFormData({...formData, featured: e.target.checked})}

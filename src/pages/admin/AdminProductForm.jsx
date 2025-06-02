@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
@@ -36,13 +36,12 @@ const AdminProductForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-
   useEffect(() => {
     fetchCategories();
     if (isEdit) {
       fetchProduct();
     }
-  }, [id, isEdit]);
+  }, [isEdit, fetchProduct]);
 
   const fetchCategories = async () => {
     try {
@@ -52,8 +51,7 @@ const AdminProductForm = () => {
       console.error('Error fetching categories:', error);
     }
   };
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
@@ -61,7 +59,8 @@ const AdminProductForm = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const product = response.data;      setFormData({
+      const product = response.data;
+      setFormData({
         name: product.name || '',
         nameVi: product.nameVi || '',
         slug: product.slug || '',
@@ -92,7 +91,7 @@ const AdminProductForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const generateSlug = (text) => {
     return text
@@ -114,16 +113,16 @@ const AdminProductForm = () => {
     setFormData(prev => ({
       ...prev,
       [field]: value
-    }));
-
-    // Auto-generate slug from name
+    }));    // Auto-generate slug from name
     if (field === 'name' && !isEdit) {
       setFormData(prev => ({
         ...prev,
         slug: generateSlug(value)
       }));
     }
-  };  const handleImageAdd = () => {
+  };
+
+  const handleImageAdd = () => {
     const imageUrl = prompt('Nhập URL hình ảnh:');
     if (imageUrl?.trim()) {
       setFormData(prev => ({
@@ -148,12 +147,12 @@ const AdminProductForm = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault();    setSaving(true);
     setError('');
 
     try {
-      const token = localStorage.getItem('adminToken');      const submitData = {
+      const token = localStorage.getItem('adminToken');
+      const submitData = {
         ...formData,
         price: parseFloat(formData.price) || 0,
         comparePrice: parseFloat(formData.comparePrice) || null,
@@ -171,10 +170,10 @@ const AdminProductForm = () => {
     } catch (error) {
       console.error('Save error:', error);
       setError(error.response?.data?.message || 'Failed to save product');
-    } finally {
-      setSaving(false);
+    } finally {      setSaving(false);
     }
   };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -382,10 +381,11 @@ const AdminProductForm = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="origin" className="block text-sm font-medium text-gray-700 mb-2">
                   Xuất xứ
                 </label>
                 <input
+                  id="origin"
                   type="text"
                   value={formData.origin}
                   onChange={(e) => handleInputChange('origin', e.target.value)}

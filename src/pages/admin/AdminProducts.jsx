@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
@@ -17,12 +17,10 @@ const AdminProducts = () => {
     sort: 'createdAt',
     order: 'DESC'
   });
-
   useEffect(() => {
     fetchProducts();
-  }, [filters]);
-
-  const fetchProducts = async () => {
+  }, [fetchProducts]);
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -38,7 +36,7 @@ const AdminProducts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();

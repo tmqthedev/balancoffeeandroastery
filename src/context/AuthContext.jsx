@@ -1,16 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
-
-export const AuthContext = createContext({});
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
+import { AuthContext } from './authConstants';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -52,10 +43,8 @@ export const AuthProvider = ({ children }) => {
         };
 
         checkAuth();
-    }, []);
-
-    // Login function
-    const login = async (email, password) => {
+    }, []);    // Login function
+    const login = useCallback(async (email, password) => {
         try {
             const response = await axios.post('/api/auth/login', {
                 email,
@@ -86,10 +75,8 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Login failed' 
             };
         }
-    };
-
-    // Register function
-    const register = async (userData) => {
+    }, []);    // Register function
+    const register = useCallback(async (userData) => {
         try {
             const response = await axios.post('/api/auth/register', userData);
 
@@ -117,10 +104,8 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Registration failed' 
             };
         }
-    };
-
-    // Logout function
-    const logout = async () => {
+    }, []);    // Logout function
+    const logout = useCallback(async () => {
         try {
             await axios.post('/api/auth/logout');
         } catch (error) {
@@ -132,10 +117,8 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setIsAuthenticated(false);
         }
-    };
-
-    // Update user profile
-    const updateProfile = async (profileData) => {
+    }, []);    // Update user profile
+    const updateProfile = useCallback(async (profileData) => {
         try {
             const response = await axios.put('/api/users/profile', profileData);
             
@@ -152,17 +135,15 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Profile update failed' 
             };
         }
-    };
-
-    // Check if user has specific role
-    const hasRole = (role) => {
+    }, []);    // Check if user has specific role
+    const hasRole = useCallback((role) => {
         return user && user.role === role;
-    };    // Check if user is admin
-    const isAdmin = () => {
-        return hasRole('admin');
-    };
+    }, [user]);
 
-    const value = useMemo(() => ({
+    // Check if user is admin
+    const isAdmin = useCallback(() => {
+        return hasRole('admin');
+    }, [hasRole]);const value = useMemo(() => ({
         user,
         loading,
         isAuthenticated,
@@ -172,7 +153,7 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         hasRole,
         isAdmin
-    }), [user, loading, isAuthenticated]);
+    }), [user, loading, isAuthenticated, login, register, logout, updateProfile, hasRole, isAdmin]);
 
     return (
         <AuthContext.Provider value={value}>

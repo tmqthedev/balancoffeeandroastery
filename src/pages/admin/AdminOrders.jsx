@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
@@ -17,12 +17,10 @@ const AdminOrders = () => {
     sort: 'createdAt',
     order: 'DESC'
   });
-
   useEffect(() => {
     fetchOrders();
-  }, [filters]);
-
-  const fetchOrders = async () => {
+  }, [fetchOrders]);
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -38,7 +36,7 @@ const AdminOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
@@ -119,26 +117,6 @@ const AdminOrders = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const getOrderStatusText = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'Chờ xử lý';
-      case 'confirmed':
-        return 'Đã xác nhận';
-      case 'processing':
-        return 'Đang xử lý';
-      case 'shipped':
-        return 'Đã gửi hàng';
-      case 'delivered':
-        return 'Đã giao hàng';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
-    }
-  };
-
   const getPaymentStatusText = (status) => {
     switch (status) {
       case 'pending':
@@ -177,24 +155,24 @@ const AdminOrders = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow rounded-lg p-6">          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="bg-white shadow rounded-lg p-6">          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-5 gap-4">            <div>
+              <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-1">
                 Tìm kiếm
               </label>
               <input
+                id="search-input"
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 placeholder="Tìm kiếm đơn hàng..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            </div>            <div>
+              <label htmlFor="status-select" className="block text-sm font-medium text-gray-700 mb-1">
                 Trạng thái đơn hàng
               </label>
               <select
+                id="status-select"
                 value={filters.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
@@ -207,12 +185,12 @@ const AdminOrders = () => {
                 <option value="delivered">Đã giao hàng</option>
                 <option value="cancelled">Đã hủy</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            </div>            <div>
+              <label htmlFor="payment-status-select" className="block text-sm font-medium text-gray-700 mb-1">
                 Trạng thái thanh toán
               </label>
               <select
+                id="payment-status-select"
                 value={filters.paymentStatus}
                 onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
@@ -223,12 +201,12 @@ const AdminOrders = () => {
                 <option value="failed">Thanh toán thất bại</option>
                 <option value="refunded">Đã hoàn tiền</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            </div>            <div>
+              <label htmlFor="sort-select" className="block text-sm font-medium text-gray-700 mb-1">
                 Sắp xếp theo
               </label>
               <select
+                id="sort-select"
                 value={`${filters.sort}-${filters.order}`}
                 onChange={(e) => {
                   const [sort, order] = e.target.value.split('-');

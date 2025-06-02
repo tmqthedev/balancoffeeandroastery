@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AdminContacts = () => {
@@ -14,16 +14,14 @@ const AdminContacts = () => {
   const [selectedContact, setSelectedContact] = useState(null);
 
   const itemsPerPage = 15;
-
   useEffect(() => {
     if (activeTab === 'contacts') {
       fetchContacts();
     } else {
       fetchNewsletters();
     }
-  }, [currentPage, searchTerm, statusFilter, activeTab]);
-
-  const fetchContacts = async () => {
+  }, [activeTab, fetchContacts, fetchNewsletters]);
+  const fetchContacts = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
@@ -43,9 +41,9 @@ const AdminContacts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, statusFilter]);
 
-  const fetchNewsletters = async () => {
+  const fetchNewsletters = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
@@ -54,8 +52,7 @@ const AdminContacts = () => {
         params: {
           page: currentPage,
           limit: itemsPerPage,
-          search: searchTerm
-        }
+          search: searchTerm        }
       });
       setNewsletters(response.data.newsletters);
       setTotalPages(Math.ceil(response.data.total / itemsPerPage));
@@ -64,7 +61,7 @@ const AdminContacts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -128,7 +125,6 @@ const AdminContacts = () => {
       alert('Lỗi khi xóa đăng ký. Vui lòng thử lại.');
     }
   };
-
   const getStatusBadge = (status) => {
     const colors = {
       new: 'bg-blue-100 text-blue-800',
@@ -137,6 +133,21 @@ const AdminContacts = () => {
       archived: 'bg-gray-100 text-gray-800'
     };
     return `px-2 py-1 rounded-full text-xs font-medium ${colors[status] || colors.new}`;
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'new':
+        return 'Mới';
+      case 'read':
+        return 'Đã đọc';
+      case 'replied':
+        return 'Đã trả lời';
+      case 'archived':
+        return 'Đã lưu trữ';
+      default:
+        return status;
+    }
   };
 
   const formatDate = (dateString) => {
@@ -310,10 +321,7 @@ const AdminContacts = () => {
                     </div>
                   </td>                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={getStatusBadge(contact.status)}>
-                      {contact.status === 'new' ? 'Mới' : 
-                       contact.status === 'read' ? 'Đã đọc' :
-                       contact.status === 'replied' ? 'Đã trả lời' :
-                       contact.status === 'archived' ? 'Đã lưu trữ' : contact.status}
+                      {getStatusText(contact.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -411,48 +419,44 @@ const AdminContacts = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
                   Chi tiết liên hệ
-                </h3>
-                <span className={getStatusBadge(selectedContact.status)}>
-                  {selectedContact.status === 'new' ? 'Mới' : 
-                   selectedContact.status === 'read' ? 'Đã đọc' :
-                   selectedContact.status === 'replied' ? 'Đã trả lời' :
-                   selectedContact.status === 'archived' ? 'Đã lưu trữ' : selectedContact.status}
+                </h3>                <span className={getStatusBadge(selectedContact.status)}>
+                  {getStatusText(selectedContact.status)}
                 </span>
               </div>
               
               <div className="space-y-4">                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Tên</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedContact.name}</p>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Tên</p>
+                    <p className="text-sm text-gray-900">{selectedContact.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedContact.email}</p>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Email</p>
+                    <p className="text-sm text-gray-900">{selectedContact.email}</p>
                   </div>
                 </div>
                 
                 {selectedContact.phone && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedContact.phone}</p>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Số điện thoại</p>
+                    <p className="text-sm text-gray-900">{selectedContact.phone}</p>
                   </div>
                 )}
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Chủ đề</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedContact.subject}</p>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Chủ đề</p>
+                  <p className="text-sm text-gray-900">{selectedContact.subject}</p>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Tin nhắn</label>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Tin nhắn</p>
                   <div className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50">
                     <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedContact.message}</p>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Ngày nhận</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatDate(selectedContact.created_at)}</p>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Ngày nhận</p>
+                  <p className="text-sm text-gray-900">{formatDate(selectedContact.created_at)}</p>
                 </div>
               </div>              <div className="flex justify-between items-center pt-6 border-t">
                 <div className="flex space-x-2">

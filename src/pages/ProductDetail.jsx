@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
@@ -17,13 +17,9 @@ const ProductDetail = () => {
     const [selectedWeight, setSelectedWeight] = useState('250g');
     const [addingToCart, setAddingToCart] = useState(false);
 
-    const weights = ['100g', '250g', '500g', '1kg'];
-
-    useEffect(() => {
+    const weights = ['100g', '250g', '500g', '1kg'];    useEffect(() => {
         fetchProduct();
-    }, [id]);
-
-    const fetchProduct = async () => {
+    }, [fetchProduct]);const fetchProduct = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axios.get(`/api/products/${id}`);
@@ -43,7 +39,7 @@ const ProductDetail = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
     const handleAddToCart = async () => {
         if (!product) return;

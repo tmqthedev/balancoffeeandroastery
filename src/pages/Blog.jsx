@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
@@ -11,13 +11,11 @@ const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState([]);  const blogsPerPage = 6;
-
   useEffect(() => {
     fetchBlogs();
     fetchCategories();
-  }, [currentPage, searchTerm, selectedCategory]);
-
-  const fetchBlogs = async () => {
+  }, [fetchBlogs, fetchCategories]);
+  const fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get('/api/blogs', {
@@ -35,16 +33,15 @@ const Blog = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchCategories = async () => {
+  }, [currentPage, searchTerm, selectedCategory]);
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get('/api/blogs/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();

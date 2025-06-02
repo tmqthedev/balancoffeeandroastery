@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
 
@@ -15,12 +15,10 @@ const AdminCustomers = () => {
     sort: 'createdAt',
     order: 'DESC'
   });
-
   useEffect(() => {
     fetchCustomers();
-  }, [filters]);
-
-  const fetchCustomers = async () => {
+  }, [fetchCustomers]);
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -36,7 +34,7 @@ const AdminCustomers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();

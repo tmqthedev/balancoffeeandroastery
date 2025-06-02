@@ -104,10 +104,9 @@ const Checkout = () => {
     };
 
     const validateStep = (step) => {
-        const newErrors = {};
-
-        if (step === 1) {
-            // Validate billing information        const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'province'];
+        const newErrors = {};        if (step === 1) {
+            // Validate billing information
+            const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'province'];
             required.forEach(field => {
                 if (!formData.billing[field]) {
                     newErrors[`billing.${field}`] = 'Trường này là bắt buộc';

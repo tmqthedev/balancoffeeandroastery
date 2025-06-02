@@ -1,32 +1,21 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from './AuthContext';
+import PropTypes from 'prop-types';
+import { useAuth } from './authConstants';
+import { CartContext } from './cartConstants';
 
-const CartContext = createContext({});
-
-export const useCart = () => {
-    const context = useContext(CartContext);
-    if (!context) {
-        throw new Error('useCart must be used within a CartProvider');
-    }
-    return context;
-};
-
-export const CartProvider = ({ children }) => {    const [cartItems, setCartItems] = useState([]);
+export const CartProvider = ({ children }) => {
+    const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { isAuthenticated } = useAuth();
-
-    // Load cart on authentication change
+    const { isAuthenticated } = useAuth();    // Load cart on authentication change
     useEffect(() => {
         if (isAuthenticated) {
             loadCartFromServer();
         } else {
             loadCartFromLocalStorage();
         }
-    }, [isAuthenticated]);
-
-    // Load cart from server for authenticated users
-    const loadCartFromServer = async () => {
+    }, [isAuthenticated, loadCartFromServer, loadCartFromLocalStorage]);// Load cart from server for authenticated users
+    const loadCartFromServer = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axios.get('/api/users/cart');
@@ -40,10 +29,8 @@ export const CartProvider = ({ children }) => {    const [cartItems, setCartItem
         } finally {
             setLoading(false);
         }
-    };
-
-    // Load cart from localStorage for guest users
-    const loadCartFromLocalStorage = () => {
+    }, [loadCartFromLocalStorage]);// Load cart from localStorage for guest users
+    const loadCartFromLocalStorage = useCallback(() => {
         try {
             const savedCart = localStorage.getItem('cartItems');
             if (savedCart) {
@@ -53,7 +40,7 @@ export const CartProvider = ({ children }) => {    const [cartItems, setCartItem
             console.error('Failed to load cart from localStorage:', error);
             setCartItems([]);
         }
-    };
+    }, []);
 
     // Save cart to localStorage for guest users
     const saveCartToLocalStorage = (items) => {
@@ -251,4 +238,8 @@ export const CartProvider = ({ children }) => {    const [cartItems, setCartItem
             {children}
         </CartContext.Provider>
     );
+};
+
+CartProvider.propTypes = {
+    children: PropTypes.node.isRequired
 };

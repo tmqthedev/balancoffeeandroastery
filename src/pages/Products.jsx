@@ -41,11 +41,9 @@ const Products = () => {
     // Memoized filtered products count
     const displayedProductsCount = useMemo(() => {
         return Math.min(products.length, productsPerPage);
-    }, [products.length]);
-
-    useEffect(() => {
+    }, [products.length]);    useEffect(() => {
         fetchProducts();
-    }, [filters, sortBy, currentPage]);
+    }, [fetchProducts]);
 
     useEffect(() => {
         fetchCategories();
@@ -63,9 +61,7 @@ const Products = () => {
         if (currentPage > 1) params.set('page', currentPage.toString());
         
         setSearchParams(params);
-    }, [filters, sortBy, currentPage, setSearchParams]);
-
-    const fetchProducts = async () => {
+    }, [filters, sortBy, currentPage, setSearchParams]);    const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -105,7 +101,7 @@ const Products = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters, sortBy, currentPage]);
 
     const fetchCategories = async () => {        try {
             const response = await axios.get(`${API_BASE_URL}/api/categories`, { timeout: 5000 });
@@ -334,13 +330,15 @@ const Products = () => {
                         <main className="lg:w-3/4">
                             {/* Sort and Results */}                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                                 <div className="text-coffee-600">
-                                    {loading ? (
-                                        'Đang tải...'
-                                    ) : error ? (
-                                        <span className="text-red-600">{error}</span>
-                                    ) : (
-                                        `Hiển thị ${displayedProductsCount} trong tổng số ${totalProducts} sản phẩm`
-                                    )}
+                                    {(() => {
+                                        if (loading) {
+                                            return 'Đang tải...';
+                                        }
+                                        if (error) {
+                                            return <span className="text-red-600">{error}</span>;
+                                        }
+                                        return `Hiển thị ${displayedProductsCount} trong tổng số ${totalProducts} sản phẩm`;
+                                    })()}
                                 </div>
                                 
                                 <div className="flex items-center space-x-4">

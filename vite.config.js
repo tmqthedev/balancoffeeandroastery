@@ -56,7 +56,8 @@ export default defineConfig({
         },
         entryFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.');
+          const fileName = assetInfo.names ? assetInfo.names[0] : (assetInfo.originalFileName || 'asset');
+          const info = fileName.split('.');
           const ext = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
             return `images/[name]-[hash][extname]`;

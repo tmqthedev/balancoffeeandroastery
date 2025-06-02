@@ -34,45 +34,54 @@ const Navbar = () => {
             isScrolled ? 'bg-white shadow-lg' : 'bg-white/95 backdrop-blur-sm'
         }`}>
             <div className="container mx-auto px-2 sm:px-4 lg:px-6">
-                <div className="flex justify-between items-center py-1 sm:py-2">{/* Logo */}                    {/* Logo */}
-                    <Link to="/" className="flex items-center hover:opacity-80 transition-opacity py-1">
-                        <div className="flex-shrink-0">
-                            <img 
-                                src="/logo.png" 
-                                alt="Balan Coffee & Roastery" 
-                                className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28 object-contain"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'block';
-                                }}
-                            />
-                            <div className="hidden h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28 bg-coffee-600 rounded-lg flex items-center justify-center text-white font-bold text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
-                                B
+                <div className="flex items-center py-1 sm:py-2">
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity py-1">
+                            <div className="flex-shrink-0">
+                                <img 
+                                    src="/logo.png" 
+                                    alt="Balan Coffee & Roastery" 
+                                    className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28 object-contain"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'block';
+                                    }}
+                                />
+                                <div className="hidden h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28 bg-coffee-600 rounded-lg flex items-center justify-center text-white font-bold text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
+                                    B
+                                </div>
                             </div>
+                        </Link>
+                    </div>
+
+                    {/* Desktop Navigation - Centered */}
+                    <div className="hidden lg:flex flex-1 justify-center">
+                        <div className="flex items-center space-x-6 xl:space-x-8">
+                            {navigation.map((item) => (
+                                <Link
+                                    key={item.name}
+                                    to={item.href}
+                                    className={`text-sm xl:text-base font-medium transition-all duration-200 hover:text-coffee-600 relative py-2 px-1 ${
+                                        location.pathname === item.href
+                                            ? 'text-coffee-600'
+                                            : 'text-coffee-800'
+                                    }`}
+                                >
+                                    {item.name}
+                                    {location.pathname === item.href && (
+                                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-100 transition-transform duration-200"></span>
+                                    )}
+                                    {location.pathname !== item.href && (
+                                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-0 hover:scale-100 transition-transform duration-200"></span>
+                                    )}
+                                </Link>
+                            ))}
                         </div>
-                    </Link>{/* Desktop Navigation */}
-                    <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-                        {navigation.map((item) => (
-                            <Link
-                                key={item.name}
-                                to={item.href}
-                                className={`text-sm xl:text-base font-medium transition-all duration-200 hover:text-coffee-600 relative py-2 px-1 ${
-                                    location.pathname === item.href
-                                        ? 'text-coffee-600'
-                                        : 'text-coffee-800'
-                                }`}
-                            >
-                                {item.name}
-                                {location.pathname === item.href && (
-                                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-100 transition-transform duration-200"></span>
-                                )}
-                                {location.pathname !== item.href && (
-                                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-0 hover:scale-100 transition-transform duration-200"></span>
-                                )}
-                            </Link>
-                        ))}
-                    </div>                    {/* Right Side Icons */}
-                    <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
+                    </div>
+
+                    {/* Right Side Icons */}
+                    <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0 ml-auto lg:ml-0">
                         {/* Search Icon */}                        <button 
                             className="p-2 lg:p-2.5 text-coffee-800 hover:text-coffee-600 hover:bg-coffee-50 rounded-lg transition-all duration-200 group"
                             aria-label="Search"
@@ -148,21 +157,17 @@ const Navbar = () => {
                                         Đăng xuất
                                     </button>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center space-x-2 hidden lg:flex">                                <Link 
-                                    to="/login" 
-                                    className="text-sm font-medium text-coffee-800 hover:text-coffee-600 px-4 py-2.5 rounded-lg hover:bg-coffee-50 transition-all duration-200 border border-transparent hover:border-coffee-200"
-                                >
-                                    Đăng nhập
-                                </Link>                                <Link 
-                                    to="/register" 
-                                    className="bg-gradient-to-r from-coffee-600 to-coffee-700 hover:from-coffee-700 hover:to-coffee-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                                >
-                                    Đăng ký
-                                </Link>
-                            </div>
-                        )}                        {/* Mobile Menu Button */}
+                            </div>                        ) : (
+                            <Link 
+                                to="/auth" 
+                                className="hidden lg:inline-flex items-center space-x-2 bg-gradient-to-r from-coffee-600 to-coffee-700 hover:from-coffee-700 hover:to-coffee-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span>Tài khoản</span>
+                            </Link>
+                        )}{/* Mobile Menu Button */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="lg:hidden p-2 text-coffee-800 hover:text-coffee-600 hover:bg-coffee-50 rounded-lg transition-all duration-200"
@@ -193,22 +198,17 @@ const Navbar = () => {
                                 >
                                     {item.name}
                                 </Link>
-                            ))}
-                            
-                            {!isAuthenticated ? (
-                                <div className="border-t border-coffee-200 pt-4 mt-4 space-y-2">                                    <Link
-                                        to="/login"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="block px-4 py-3 text-base font-medium text-coffee-800 hover:text-coffee-600 hover:bg-coffee-50 rounded-lg transition-colors"
-                                    >
-                                        Đăng nhập
-                                    </Link>
+                            ))}                            {!isAuthenticated ? (
+                                <div className="border-t border-coffee-200 pt-4 mt-4">
                                     <Link
-                                        to="/register"
+                                        to="/auth"
                                         onClick={() => setIsMenuOpen(false)}
-                                        className="block px-4 py-3 text-base font-medium bg-coffee-600 text-white hover:bg-coffee-700 rounded-lg transition-colors text-center"
+                                        className="flex items-center justify-center space-x-2 px-4 py-3 text-base font-medium bg-coffee-600 text-white hover:bg-coffee-700 rounded-lg transition-colors"
                                     >
-                                        Đăng ký
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span>Tài khoản</span>
                                     </Link>
                                 </div>
                             ) : (
