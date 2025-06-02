@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
-import { useAuth } from './authConstants';
+import { useAuth } from './AuthContext';
 import { CartContext } from './cartConstants';
+
+// Re-export the useCart hook
+export { useCart } from './cartConstants';
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const { isAuthenticated } = useAuth();    // Load cart on authentication change
+    const [loading, setLoading] = useState(false);    const { isAuthenticated } = useAuth();
+
+    // Load cart on authentication change
     useEffect(() => {
         if (isAuthenticated) {
             loadCartFromServer();
         } else {
-            loadCartFromLocalStorage();
-        }
-    }, [isAuthenticated, loadCartFromServer, loadCartFromLocalStorage]);// Load cart from server for authenticated users
+            loadCartFromLocalStorage();        }
+    }, [isAuthenticated, loadCartFromServer, loadCartFromLocalStorage]);
+
+    // Load cart from server for authenticated users
     const loadCartFromServer = useCallback(async () => {
         try {
             setLoading(true);
@@ -27,9 +32,10 @@ export const CartProvider = ({ children }) => {
             // Fallback to local storage
             loadCartFromLocalStorage();
         } finally {
-            setLoading(false);
-        }
-    }, [loadCartFromLocalStorage]);// Load cart from localStorage for guest users
+            setLoading(false);        }
+    }, [loadCartFromLocalStorage]);
+
+    // Load cart from localStorage for guest users
     const loadCartFromLocalStorage = useCallback(() => {
         try {
             const savedCart = localStorage.getItem('cartItems');

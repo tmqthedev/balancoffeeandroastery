@@ -18,10 +18,9 @@ const Home = () => {
             "https://facebook.com/balancoffee",
             "https://instagram.com/balancoffee"
         ]
-    };
-
-    return (
-        <>            <Helmet>
+    };    return (
+        <>
+            <Helmet>
                 <title>Balan Coffee & Roastery - Cà phê rang mộc chất lượng cao</title>
                 <meta name="description" content="Cà phê rang mộc chất lượng cao từ Việt Nam. Chuyên về Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Mua hạt cà phê nguyên chất online." />
                 <meta name="keywords" content="cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất" />

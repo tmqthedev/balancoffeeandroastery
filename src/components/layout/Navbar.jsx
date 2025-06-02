@@ -5,13 +5,12 @@ import { useCart } from '../../context/CartContext';
 
 const Navbar = () => {
     const location = useLocation();
-    const navigate = useNavigate();
-    const { user, isAuthenticated, logout } = useAuth();
-    const { cart } = useCart();
+    const navigate = useNavigate();    const { user, isAuthenticated, logout } = useAuth();
+    const { cartItems, getCartTotals } = useCart();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
-    const cartItemsCount = cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+    const cartItemsCount = getCartTotals()?.itemCount || 0;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -19,12 +18,12 @@ const Navbar = () => {
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    const handleLogout = async () => {
+    }, []);    const handleLogout = async () => {
         await logout();
         navigate('/');
-    };    const navigation = [
+    };
+
+    const navigation = [
         { name: 'Trang chủ', href: '/' },
         { name: 'Sản phẩm', href: '/products' },
         { name: 'Giới thiệu', href: '/about' },

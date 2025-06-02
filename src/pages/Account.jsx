@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const Account = () => {
   const { user, updateUserInfo, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -118,9 +120,6 @@ const Account = () => {
     }).format(amount);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
 
   const getOrderStatusColor = (status) => {
     switch (status) {
@@ -154,6 +153,58 @@ const Account = () => {
       default:
         return 'Không xác định';
     }
+  };
+
+  const renderOrdersContent = () => {
+    if (loading) {
+      return (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-coffee-600"></div>
+          <p className="mt-2 text-gray-600">Đang tải đơn hàng...</p>
+        </div>
+      );
+    }
+
+    if (orders.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Bạn chưa có đơn hàng nào</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="mt-4 bg-coffee-600 text-white px-6 py-2 rounded-md hover:bg-coffee-700 transition-colors"
+          >
+            Mua sắm ngay
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {orders.map((order) => (
+          <div key={order.id} className="border border-gray-200 rounded-lg p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Đơn hàng #{order.id}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                </p>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusColor(order.status)}`}>
+                {getOrderStatusText(order.status)}
+              </span>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-lg font-semibold text-gray-900">
+                Tổng: {formatCurrency(order.total_amount)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   const tabs = [
@@ -346,73 +397,8 @@ const Account = () => {
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">
                       Đơn hàng của tôi
-                    </h2>                    {loading ? (
-                      <div className="space-y-4">
-                        {[...Array(3)].map((_, index) => (
-                          <div key={`loading-${index}`} className="border border-gray-200 rounded-lg p-4 animate-pulse">
-                            <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : orders.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="text-6xl text-gray-400 mb-4">📦</div>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                          Chưa có đơn hàng nào
-                        </h3>
-                        <p className="text-gray-500 mb-6">
-                          Bạn chưa có đơn hàng nào. Hãy khám phá các sản phẩm cà phê tuyệt vời của chúng tôi!
-                        </p>
-                        <a
-                          href="/products"
-                          className="inline-block bg-coffee-600 text-white px-6 py-3 rounded-md hover:bg-coffee-700 transition-colors"
-                        >
-                          Mua sắm ngay
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {orders.map((order) => (
-                          <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                  Đơn hàng #{order.order_number}
-                                </h3>
-                                <p className="text-gray-600 text-sm">
-                                  {formatDate(order.created_at)}
-                                </p>
-                              </div>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOrderStatusColor(order.status)}`}>
-                                {getOrderStatusText(order.status)}
-                              </span>
-                            </div>
-
-                            <div className="border-t border-gray-200 pt-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm text-gray-600">
-                                    {order.items?.length || 0} sản phẩm
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    Phương thức thanh toán: {order.payment_method}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-lg font-semibold text-gray-900">
-                                    {formatCurrency(order.total_amount)}
-                                  </p>
-                                  <button className="text-coffee-600 hover:text-coffee-700 text-sm font-medium mt-1">
-                                    Xem chi tiết
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    </h2>
+                    {renderOrdersContent()}
                   </div>
                 )}
 

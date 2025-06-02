@@ -223,45 +223,53 @@ const AdminProductForm = () => {
         <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 space-y-6">
           {/* Basic Information */}          <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin cơ bản</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                   Tên sản phẩm *
                 </label>
                 <input
+                  id="name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              </div>
+              
+              <div>
+                <label htmlFor="nameVi" className="block text-sm font-medium text-gray-700 mb-2">
                   Tên sản phẩm (Tiếng Việt) *
                 </label>
                 <input
+                  id="nameVi"
                   type="text"
                   value={formData.nameVi}
                   onChange={(e) => handleInputChange('nameVi', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Slug *
-                </label>
+              </div>
+              
+              <div>
+                <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-2">
+                  Slug *                </label>
                 <input
+                  id="slug"
                   type="text"
                   value={formData.slug}
                   onChange={(e) => handleInputChange('slug', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              </div>
+              
+              <div>
+                <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-2">
                   SKU *
                 </label>
                 <input
+                  id="sku"
                   type="text"
                   value={formData.sku}
                   onChange={(e) => handleInputChange('sku', e.target.value)}
@@ -270,9 +278,12 @@ const AdminProductForm = () => {
                 />
               </div>
             </div>
-          </div>          {/* Images */}
+          </div>
+
+          {/* Images */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Hình ảnh sản phẩm</h3>            <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Hình ảnh sản phẩm</h3>
+            <div className="space-y-4">
               {formData.images.map((image, index) => (
                 <div key={`product-image-${Math.random().toString(36).slice(2, 9)}`} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                   <img 
@@ -306,16 +317,16 @@ const AdminProductForm = () => {
                 + Thêm hình ảnh
               </button>
             </div>
-          </div>
-
-          {/* Pricing */}
+          </div>          {/* Pricing */}
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Giá cả</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
                   Giá bán * ($)
                 </label>
                 <input
+                  id="price"
                   type="number"
                   step="0.01"
                   value={formData.price}
@@ -323,11 +334,14 @@ const AdminProductForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              </div>
+              
+              <div>
+                <label htmlFor="comparePrice" className="block text-sm font-medium text-gray-700 mb-2">
                   Giá so sánh ($)
                 </label>
                 <input
+                  id="comparePrice"
                   type="number"
                   step="0.01"
                   value={formData.comparePrice}
@@ -335,11 +349,13 @@ const AdminProductForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="stockQuantity" className="block text-sm font-medium text-gray-700 mb-2">
                   Số lượng tồn kho *
                 </label>
                 <input
+                  id="stockQuantity"
                   type="number"
                   value={formData.stockQuantity}
                   onChange={(e) => handleInputChange('stockQuantity', e.target.value)}
@@ -353,10 +369,11 @@ const AdminProductForm = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Chi tiết cà phê</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-2">
                   Trọng lượng
                 </label>
                 <input
+                  id="weight"
                   type="text"
                   value={formData.weight}
                   onChange={(e) => handleInputChange('weight', e.target.value)}
@@ -365,10 +382,11 @@ const AdminProductForm = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="roastLevel" className="block text-sm font-medium text-gray-700 mb-2">
                   Mức độ rang
                 </label>
                 <select
+                  id="roastLevel"
                   value={formData.roastLevel}
                   onChange={(e) => handleInputChange('roastLevel', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
@@ -394,10 +412,11 @@ const AdminProductForm = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="processingMethod" className="block text-sm font-medium text-gray-700 mb-2">
                   Phương pháp chế biến
                 </label>
                 <select
+                  id="processingMethod"
                   value={formData.processingMethod}
                   onChange={(e) => handleInputChange('processingMethod', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
@@ -410,7 +429,7 @@ const AdminProductForm = () => {
                 </select>
               </div>
             </div>
-          </div>          {/* Categories */}
+          </div>{/* Categories */}
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Danh mục</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

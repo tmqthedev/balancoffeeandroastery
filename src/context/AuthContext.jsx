@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
-import { AuthContext } from './authConstants';
+import { AuthContext, useAuth } from './authConstants';
+
+// Re-export AuthContext and useAuth hook
+export { AuthContext, useAuth };
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -40,10 +43,10 @@ export const AuthProvider = ({ children }) => {
             } finally {
                 setLoading(false);
             }
-        };
+        };        checkAuth();
+    }, []);
 
-        checkAuth();
-    }, []);    // Login function
+    // Login function
     const login = useCallback(async (email, password) => {
         try {
             const response = await axios.post('/api/auth/login', {
@@ -73,9 +76,10 @@ export const AuthProvider = ({ children }) => {
             return { 
                 success: false, 
                 message: error.response?.data?.message || 'Login failed' 
-            };
-        }
-    }, []);    // Register function
+            };        }
+    }, []);
+
+    // Register function
     const register = useCallback(async (userData) => {
         try {
             const response = await axios.post('/api/auth/register', userData);
@@ -102,9 +106,10 @@ export const AuthProvider = ({ children }) => {
             return { 
                 success: false, 
                 message: error.response?.data?.message || 'Registration failed' 
-            };
-        }
-    }, []);    // Logout function
+            };        }
+    }, []);
+
+    // Logout function
     const logout = useCallback(async () => {
         try {
             await axios.post('/api/auth/logout');
@@ -115,9 +120,10 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('authToken');
             delete axios.defaults.headers.common['Authorization'];
             setUser(null);
-            setIsAuthenticated(false);
-        }
-    }, []);    // Update user profile
+            setIsAuthenticated(false);        }
+    }, []);
+
+    // Update user profile
     const updateProfile = useCallback(async (profileData) => {
         try {
             const response = await axios.put('/api/users/profile', profileData);
@@ -133,17 +139,18 @@ export const AuthProvider = ({ children }) => {
             return { 
                 success: false, 
                 message: error.response?.data?.message || 'Profile update failed' 
-            };
-        }
-    }, []);    // Check if user has specific role
+            };        }
+    }, []);
+
+    // Check if user has specific role
     const hasRole = useCallback((role) => {
         return user && user.role === role;
-    }, [user]);
-
-    // Check if user is admin
+    }, [user]);    // Check if user is admin
     const isAdmin = useCallback(() => {
         return hasRole('admin');
-    }, [hasRole]);const value = useMemo(() => ({
+    }, [hasRole]);
+
+    const value = useMemo(() => ({
         user,
         loading,
         isAuthenticated,
