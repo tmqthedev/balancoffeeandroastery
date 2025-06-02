@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
 
 const AdminDashboard = () => {
-  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +43,6 @@ const AdminDashboard = () => {
       minute: '2-digit'
     });
   };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
@@ -62,6 +59,25 @@ const AdminDashboard = () => {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ xử lý';
+      case 'confirmed':
+        return 'Đã xác nhận';
+      case 'processing':
+        return 'Đang xử lý';
+      case 'shipped':
+        return 'Đã gửi hàng';
+      case 'delivered':
+        return 'Đã giao hàng';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return 'Không xác định';
     }
   };
   if (loading) {
@@ -102,11 +118,10 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Page Header */}
+      <div className="space-y-6">        {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('admin.dashboard')}</h1>
-          <p className="mt-2 text-gray-600">{t('admin.dashboardSubtitle')}</p>
+          <h1 className="text-3xl font-bold text-gray-900">Bảng điều khiển</h1>
+          <p className="mt-2 text-gray-600">Tổng quan về hoạt động kinh doanh</p>
         </div>
 
         {/* Stats Cards */}
@@ -120,9 +135,8 @@ const AdminDashboard = () => {
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {t('admin.totalCustomers')}
+                  <dl>                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Tổng khách hàng
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {stats?.totalUsers?.toLocaleString() || 0}
@@ -142,9 +156,8 @@ const AdminDashboard = () => {
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {t('admin.totalProducts')}
+                  <dl>                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Tổng sản phẩm
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {stats?.totalProducts?.toLocaleString() || 0}
@@ -164,9 +177,8 @@ const AdminDashboard = () => {
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {t('admin.totalOrders')}
+                  <dl>                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Tổng đơn hàng
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {stats?.totalOrders?.toLocaleString() || 0}
@@ -186,9 +198,8 @@ const AdminDashboard = () => {
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {t('admin.totalRevenue')}
+                  <dl>                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Tổng doanh thu
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {formatCurrency(stats?.totalRevenue || 0)}
@@ -202,28 +213,26 @@ const AdminDashboard = () => {
 
         {/* Recent Orders */}
         <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              {t('admin.recentOrders')}
+          <div className="px-4 py-5 sm:p-6">            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              Đơn hàng gần đây
             </h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('admin.orderNumber')}
+                  <tr>                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Số đơn hàng
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('admin.customer')}
+                      Khách hàng
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('admin.total')}
+                      Tổng tiền
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('admin.status')}
+                      Trạng thái
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('admin.date')}
+                      Ngày tạo
                     </th>
                   </tr>
                 </thead>
@@ -239,9 +248,8 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatCurrency(order.total)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                          {t(`admin.orderStatus.${order.status}`)}
+                      <td className="px-6 py-4 whitespace-nowrap">                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                          {getStatusText(order.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -257,12 +265,11 @@ const AdminDashboard = () => {
 
         {/* Monthly Revenue Chart Placeholder */}
         <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              {t('admin.monthlyRevenue')}
+          <div className="px-4 py-5 sm:p-6">            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              Doanh thu theo tháng
             </h3>
             <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">{t('admin.chartPlaceholder')}</p>
+              <p className="text-gray-500">Biểu đồ sẽ được hiển thị tại đây</p>
             </div>
           </div>
         </div>

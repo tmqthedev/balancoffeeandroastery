@@ -1,36 +1,22 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import AdminRoute from './components/auth/AdminRoute';
 
-// Pages
-import Home from './pages/Home';
-import Products from './pages/Products';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import PaymentResult from './components/payment/PaymentResult';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import Account from './pages/Account';
-import NotFound from './pages/NotFound';
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+    <span className="ml-3 text-gray-600">Đang tải...</span>
+  </div>
+);
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminOrders from './pages/admin/AdminOrders';
-import AdminCustomers from './pages/admin/AdminCustomers';
-import AdminBlogs from './pages/admin/AdminBlogs';
-import AdminContacts from './pages/admin/AdminContacts';
+// Lazy load route components for better code splitting
+const PublicRoutes = React.lazy(() => import('./routes/PublicRoutes'));
+const AdminRoutes = React.lazy(() => import('./routes/AdminRoutes'));
 
 function App() {
   return (
@@ -42,71 +28,19 @@ function App() {
               <Navbar />
               <main className="pt-16">
                 <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/blog/:slug" element={<BlogPost />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
-                  
-                  {/* Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  
-                  {/* Protected Routes */}
-                  <Route path="/checkout" element={
-                    <ProtectedRoute>
-                      <Checkout />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/payment/result" element={
-                    <ProtectedRoute>
-                      <PaymentResult />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/account/*" element={
-                    <ProtectedRoute>
-                      <Account />
-                    </ProtectedRoute>
+                  {/* Admin Routes - Separate chunk */}
+                  <Route path="/admin/*" element={
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AdminRoutes />
+                    </Suspense>
                   } />
                   
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
+                  {/* Public Routes - Main chunk */}
+                  <Route path="/*" element={
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <PublicRoutes />
+                    </Suspense>
                   } />
-                  <Route path="/admin/products" element={
-                    <AdminRoute>
-                      <AdminProducts />
-                    </AdminRoute>
-                  } />
-                  <Route path="/admin/orders" element={
-                    <AdminRoute>
-                      <AdminOrders />
-                    </AdminRoute>
-                  } />
-                  <Route path="/admin/customers" element={
-                    <AdminRoute>
-                      <AdminCustomers />
-                    </AdminRoute>
-                  } />
-                  <Route path="/admin/blogs" element={
-                    <AdminRoute>
-                      <AdminBlogs />
-                    </AdminRoute>
-                  } />
-                  <Route path="/admin/contacts" element={
-                    <AdminRoute>
-                      <AdminContacts />
-                    </AdminRoute>
-                  } />
-                  
-                  {/* 404 Route */}
-                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
               <Footer />

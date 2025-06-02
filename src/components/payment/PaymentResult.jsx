@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const PaymentResult = () => {
-    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [paymentStatus, setPaymentStatus] = useState('processing');
@@ -67,11 +65,10 @@ const PaymentResult = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-cream-50">
+        return (            <div className="min-h-screen flex items-center justify-center bg-cream-50">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600 mx-auto mb-4"></div>
-                    <p className="text-coffee-700">{t('payment.processing')}</p>
+                    <p className="text-coffee-700">Đang xử lý...</p>
                 </div>
             </div>
         );
@@ -104,27 +101,25 @@ const PaymentResult = () => {
                     </div>
                 );
         }
-    };
-
-    const getStatusTitle = () => {
+    };    const getStatusTitle = () => {
         switch (paymentStatus) {
             case 'success':
-                return t('payment.success.title');
+                return 'Thanh toán thành công!';
             case 'failed':
-                return t('payment.failed.title');
+                return 'Thanh toán thất bại';
             default:
-                return t('payment.error.title');
+                return 'Đã xảy ra lỗi';
         }
     };
 
     const getStatusMessage = () => {
         switch (paymentStatus) {
             case 'success':
-                return t('payment.success.message');
+                return 'Đơn hàng của bạn đã được thanh toán thành công. Chúng tôi sẽ xử lý và giao hàng trong thời gian sớm nhất.';
             case 'failed':
-                return t('payment.failed.message');
+                return 'Giao dịch thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.';
             default:
-                return t('payment.error.message');
+                return 'Đã xảy ra lỗi trong quá trình xử lý thanh toán. Vui lòng liên hệ với chúng tôi để được hỗ trợ.';
         }
     };
 
@@ -142,19 +137,19 @@ const PaymentResult = () => {
                         {getStatusMessage()}
                     </p>
 
-                    {orderDetails && (
-                        <div className="bg-cream-50 rounded-lg p-4 mb-6">
-                            <h3 className="font-semibold text-coffee-800 mb-2">{t('payment.orderDetails')}</h3>
+                    {orderDetails && (                        <div className="bg-cream-50 rounded-lg p-4 mb-6">
+                            <h3 className="font-semibold text-coffee-800 mb-2">Chi tiết đơn hàng</h3>
                             <div className="space-y-1 text-sm text-coffee-600">
-                                <p><span className="font-medium">{t('payment.orderId')}:</span> {orderDetails.order_id}</p>
-                                <p><span className="font-medium">{t('payment.amount')}:</span> {orderDetails.total_amount?.toLocaleString('vi-VN')} VND</p>
-                                <p><span className="font-medium">{t('payment.status')}:</span> 
+                                <p><span className="font-medium">Mã đơn hàng:</span> {orderDetails.order_id}</p>
+                                <p><span className="font-medium">Số tiền:</span> {orderDetails.total_amount?.toLocaleString('vi-VN')} VND</p>
+                                <p><span className="font-medium">Trạng thái:</span> 
                                     <span className={`ml-1 px-2 py-1 rounded text-xs ${
                                         orderDetails.payment_status === 'completed' 
                                             ? 'bg-green-100 text-green-800' 
                                             : 'bg-red-100 text-red-800'
                                     }`}>
-                                        {t(`payment.status.${orderDetails.payment_status}`)}
+                                        {orderDetails.payment_status === 'completed' ? 'Đã thanh toán' : 
+                                         orderDetails.payment_status === 'pending' ? 'Đang chờ' : 'Thất bại'}
                                     </span>
                                 </p>
                             </div>
@@ -162,12 +157,11 @@ const PaymentResult = () => {
                     )}
 
                     <div className="space-y-3">
-                        {paymentStatus === 'success' && orderDetails && (
-                            <button
+                        {paymentStatus === 'success' && orderDetails && (                            <button
                                 onClick={handleViewOrder}
                                 className="w-full bg-coffee-600 text-white py-3 px-4 rounded-lg hover:bg-coffee-700 transition duration-200 font-medium"
                             >
-                                {t('payment.viewOrder')}
+                                Xem đơn hàng
                             </button>
                         )}
                         
@@ -177,9 +171,8 @@ const PaymentResult = () => {
                                 paymentStatus === 'success' 
                                     ? 'bg-cream-200 text-coffee-700 hover:bg-cream-300' 
                                     : 'bg-coffee-600 text-white hover:bg-coffee-700'
-                            }`}
-                        >
-                            {paymentStatus === 'success' ? t('payment.continueShopping') : t('payment.backToProducts')}
+                            }`}                        >
+                            {paymentStatus === 'success' ? 'Tiếp tục mua sắm' : 'Quay lại sản phẩm'}
                         </button>
                     </div>
                 </div>

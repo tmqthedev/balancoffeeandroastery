@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
 
 const AdminProducts = () => {
-  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,11 +63,10 @@ const AdminProducts = () => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
-
   const getStockStatus = (quantity) => {
-    if (quantity === 0) return { color: 'text-red-600', text: t('admin.outOfStock') };
-    if (quantity < 10) return { color: 'text-yellow-600', text: t('admin.lowStock') };
-    return { color: 'text-green-600', text: t('admin.inStock') };
+    if (quantity === 0) return { color: 'text-red-600', text: 'Hết hàng' };
+    if (quantity < 10) return { color: 'text-yellow-600', text: 'Sắp hết' };
+    return { color: 'text-green-600', text: 'Còn hàng' };
   };
   if (loading) {
     return (
@@ -88,22 +85,20 @@ const AdminProducts = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-6">        {/* Header */}
         <div className="sm:flex sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('admin.products')}</h1>
-            <p className="mt-2 text-gray-600">{t('admin.productsSubtitle')}</p>
+            <h1 className="text-3xl font-bold text-gray-900">Sản phẩm</h1>
+            <p className="mt-2 text-gray-600">Quản lý danh sách sản phẩm cà phê</p>
           </div>
           <div className="mt-4 sm:mt-0">
             <Link
               to="/admin/products/new"
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brown-600 hover:bg-brown-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brown-500"
             >
-              <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              {t('admin.addProduct')}
+              Thêm sản phẩm
             </Link>
           </div>
         </div>
@@ -111,35 +106,33 @@ const AdminProducts = () => {
         {/* Filters */}
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.search')}
+            <div>              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tìm kiếm
               </label>
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                placeholder={t('admin.searchProducts')}
+                placeholder="Tìm kiếm sản phẩm..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               />
-            </div>
-            <div>
+            </div>            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.featured')}
+                Nổi bật
               </label>
               <select
                 value={filters.featured}
                 onChange={(e) => handleFilterChange('featured', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               >
-                <option value="">{t('common.all')}</option>
-                <option value="true">{t('common.featured')}</option>
-                <option value="false">{t('common.regular')}</option>
+                <option value="">Tất cả</option>
+                <option value="true">Nổi bật</option>
+                <option value="false">Thường</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.sortBy')}
+                Sắp xếp theo
               </label>
               <select
                 value={`${filters.sort}-${filters.order}`}
@@ -150,12 +143,12 @@ const AdminProducts = () => {
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               >
-                <option value="createdAt-DESC">{t('common.newest')}</option>
-                <option value="createdAt-ASC">{t('common.oldest')}</option>
-                <option value="name-ASC">{t('common.nameAZ')}</option>
-                <option value="name-DESC">{t('common.nameZA')}</option>
-                <option value="price-ASC">{t('common.priceLowHigh')}</option>
-                <option value="price-DESC">{t('common.priceHighLow')}</option>
+                <option value="createdAt-DESC">Mới nhất</option>
+                <option value="createdAt-ASC">Cũ nhất</option>
+                <option value="name-ASC">Tên A-Z</option>
+                <option value="name-DESC">Tên Z-A</option>
+                <option value="price-ASC">Giá thấp đến cao</option>
+                <option value="price-DESC">Giá cao đến thấp</option>
               </select>
             </div>
             <div className="flex items-end">
@@ -163,7 +156,7 @@ const AdminProducts = () => {
                 type="submit"
                 className="w-full px-4 py-2 bg-brown-600 text-white rounded-md hover:bg-brown-700 focus:outline-none focus:ring-2 focus:ring-brown-500"
               >
-                {t('common.search')}
+                Tìm kiếm
               </button>
             </div>
           </form>
@@ -188,29 +181,28 @@ const AdminProducts = () => {
         {/* Products Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200">              <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.product')}
+                    Sản phẩm
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.sku')}
+                    Mã SKU
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.price')}
+                    Giá
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.stock')}
+                    Tồn kho
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.status')}
+                    Trạng thái
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.created')}
+                    Ngày tạo
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.actions')}
+                    Thao tác
                   </th>
                 </tr>
               </thead>
@@ -262,35 +254,33 @@ const AdminProducts = () => {
                           {product.stockQuantity} {stockStatus.text}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap">                        <div className="flex items-center space-x-2">
                           {product.isFeatured && (
                             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                              {t('common.featured')}
+                              Nổi bật
                             </span>
                           )}
                           <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            {t('admin.active')}
+                            Hoạt động
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(product.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">                        <div className="flex justify-end space-x-2">
                           <Link
                             to={`/admin/products/${product.id}/edit`}
                             className="text-brown-600 hover:text-brown-900"
                           >
-                            {t('common.edit')}
+                            Chỉnh sửa
                           </Link>
                           <Link
                             to={`/products/${product.slug}`}
                             target="_blank"
                             className="text-blue-600 hover:text-blue-900"
                           >
-                            {t('common.view')}
+                            Xem
                           </Link>
                         </div>
                       </td>
@@ -302,28 +292,27 @@ const AdminProducts = () => {
           </div>
 
           {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          {pagination.totalPages > 1 && (            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
               <div className="flex-1 flex justify-between sm:hidden">
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={!pagination.hasPrev}
                   className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('common.previous')}
+                  Trước
                 </button>
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={!pagination.hasNext}
                   className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('common.next')}
+                  Tiếp
                 </button>
               </div>
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    {t('common.showing')} <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> {t('common.to')} <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.totalItems)}</span> {t('common.of')} <span className="font-medium">{pagination.totalItems}</span> {t('common.results')}
+                    Hiển thị <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> đến <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.totalItems)}</span> trong tổng số <span className="font-medium">{pagination.totalItems}</span> kết quả
                   </p>
                 </div>
                 <div>
@@ -333,7 +322,7 @@ const AdminProducts = () => {
                       disabled={!pagination.hasPrev}
                       className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="sr-only">{t('common.previous')}</span>
+                      <span className="sr-only">Trước</span>
                       <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -360,7 +349,7 @@ const AdminProducts = () => {
                       disabled={!pagination.hasNext}
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="sr-only">{t('common.next')}</span>
+                      <span className="sr-only">Tiếp</span>
                       <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>

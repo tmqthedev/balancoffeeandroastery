@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const AdminBlogs = () => {
-  const { t } = useTranslation();
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,9 +127,8 @@ const AdminBlogs = () => {
       alert('Error saving blog. Please try again.');
     }
   };
-
   const handleDelete = async (blogId) => {
-    if (!window.confirm(t('admin.confirmDelete'))) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa blog này?')) return;
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -141,7 +138,7 @@ const AdminBlogs = () => {
       fetchBlogs();
     } catch (error) {
       console.error('Error deleting blog:', error);
-      alert('Error deleting blog. Please try again.');
+      alert('Lỗi khi xóa blog. Vui lòng thử lại.');
     }
   };
 
@@ -181,25 +178,23 @@ const AdminBlogs = () => {
     );
   }
 
-  return (
-    <div className="p-6">
+  return (    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('admin.blogs')}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý Blog</h1>
         <button
           onClick={handleCreate}
           className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
         >
-          {t('admin.addNewBlog')}
+          Thêm blog mới
         </button>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">          <div>
             <input
               type="text"
-              placeholder={t('admin.searchBlogs')}
+              placeholder="Tìm kiếm blog..."
               value={searchTerm}
               onChange={handleSearch}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -211,10 +206,10 @@ const AdminBlogs = () => {
               onChange={handleStatusFilter}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <option value="all">{t('admin.allStatuses')}</option>
-              <option value="published">{t('admin.published')}</option>
-              <option value="draft">{t('admin.draft')}</option>
-              <option value="archived">{t('admin.archived')}</option>
+              <option value="all">Tất cả trạng thái</option>
+              <option value="published">Đã xuất bản</option>
+              <option value="draft">Bản nháp</option>
+              <option value="archived">Đã lưu trữ</option>
             </select>
           </div>
         </div>
@@ -223,22 +218,21 @@ const AdminBlogs = () => {
       {/* Blogs Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
+          <thead className="bg-gray-50">            <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('admin.title')}
+                Tiêu đề
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('admin.status')}
+                Trạng thái
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('admin.featured')}
+                Nổi bật
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('admin.createdAt')}
+                Ngày tạo
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('admin.actions')}
+                Thao tác
               </th>
             </tr>
           </thead>
@@ -254,10 +248,11 @@ const AdminBlogs = () => {
                       {blog.excerpt_vi || blog.excerpt_en}
                     </div>
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                </td>                <td className="px-6 py-4 whitespace-nowrap">
                   <span className={getStatusBadge(blog.status)}>
-                    {t(`admin.${blog.status}`)}
+                    {blog.status === 'published' ? 'Đã xuất bản' :
+                     blog.status === 'draft' ? 'Bản nháp' :
+                     blog.status === 'archived' ? 'Đã lưu trữ' : blog.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -269,25 +264,24 @@ const AdminBlogs = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(blog.created_at)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                </td>                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
                     onClick={() => handleEdit(blog)}
                     className="text-amber-600 hover:text-amber-900 mr-4"
                   >
-                    {t('admin.edit')}
+                    Sửa
                   </button>
                   <button
                     onClick={() => toggleStatus(blog.id, blog.status)}
                     className="text-blue-600 hover:text-blue-900 mr-4"
                   >
-                    {blog.status === 'published' ? t('admin.unpublish') : t('admin.publish')}
+                    {blog.status === 'published' ? 'Hủy xuất bản' : 'Xuất bản'}
                   </button>
                   <button
                     onClick={() => handleDelete(blog.id)}
                     className="text-red-600 hover:text-red-900"
                   >
-                    {t('admin.delete')}
+                    Xóa
                   </button>
                 </td>
               </tr>
@@ -320,16 +314,14 @@ const AdminBlogs = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">            <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingBlog ? t('admin.editBlog') : t('admin.addNewBlog')}
+                {editingBlog ? 'Sửa blog' : 'Thêm blog mới'}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.titleVietnamese')}
+                  <div>                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tiêu đề tiếng Việt
                     </label>
                     <input
                       type="text"
@@ -339,9 +331,8 @@ const AdminBlogs = () => {
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.titleEnglish')}
+                  <div>                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tiêu đề tiếng Anh
                     </label>
                     <input
                       type="text"
@@ -352,10 +343,9 @@ const AdminBlogs = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.excerptVietnamese')}
+                      Tóm tắt tiếng Việt
                     </label>
                     <textarea
                       value={formData.excerpt_vi}
@@ -366,7 +356,7 @@ const AdminBlogs = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.excerptEnglish')}
+                      Tóm tắt tiếng Anh
                     </label>
                     <textarea
                       value={formData.excerpt_en}
@@ -375,12 +365,10 @@ const AdminBlogs = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.contentVietnamese')}
+                      Nội dung tiếng Việt
                     </label>
                     <textarea
                       value={formData.content_vi}
@@ -392,7 +380,7 @@ const AdminBlogs = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.contentEnglish')}
+                      Nội dung tiếng Anh
                     </label>
                     <textarea
                       value={formData.content_en}
@@ -401,9 +389,9 @@ const AdminBlogs = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                </div>                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                </div><div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('admin.featuredImage')}
+                      Hình ảnh nổi bật
                     </label>
                     <input
                       type="url"
@@ -413,23 +401,20 @@ const AdminBlogs = () => {
                       placeholder="https://example.com/image.jpg"
                     />
                   </div><div className="md:col-span-1 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('admin.status')}
+                    <div>                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Trạng thái
                       </label>
                       <select
                         value={formData.status}
                         onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      >
-                        <option value="draft">{t('admin.draft')}</option>
-                        <option value="published">{t('admin.published')}</option>
-                        <option value="archived">{t('admin.archived')}</option>
+                      >                        <option value="draft">Bản nháp</option>
+                        <option value="published">Đã xuất bản</option>
+                        <option value="archived">Đã lưu trữ</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('admin.featured')}
+                    <div>                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nổi bật
                       </label>
                       <div className="flex items-center mt-2">
                         <input
@@ -438,25 +423,24 @@ const AdminBlogs = () => {
                           onChange={(e) => setFormData({...formData, featured: e.target.checked})}
                           className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                         />
-                        <span className="ml-2 text-sm text-gray-700">{t('admin.featuredPost')}</span>
+                        <span className="ml-2 text-sm text-gray-700">Bài viết nổi bật</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
-                  <button
+                <div className="flex justify-end space-x-4 pt-4">                  <button
                     type="button"
                     onClick={() => setShowModal(false)}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                   >
-                    {t('admin.cancel')}
+                    Hủy
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
                   >
-                    {editingBlog ? t('admin.update') : t('admin.create')}
+                    {editingBlog ? 'Cập nhật' : 'Tạo mới'}
                   </button>
                 </div>
               </form>

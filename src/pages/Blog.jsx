@@ -1,26 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 const Blog = () => {
-  const { t, i18n } = useTranslation();
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [categories, setCategories] = useState([]);
-  const blogsPerPage = 6;
-
-  const currentLang = i18n.language;
+  const [categories, setCategories] = useState([]);  const blogsPerPage = 6;
 
   useEffect(() => {
     fetchBlogs();
     fetchCategories();
-  }, [currentPage, searchTerm, selectedCategory, currentLang]);
+  }, [currentPage, searchTerm, selectedCategory]);
 
   const fetchBlogs = async () => {
     try {
@@ -30,8 +25,7 @@ const Blog = () => {
           page: currentPage,
           limit: blogsPerPage,
           search: searchTerm,
-          category: selectedCategory,
-          lang: currentLang
+          category: selectedCategory,          lang: 'vi'
         }
       });
       setBlogs(response.data.blogs);
@@ -60,7 +54,7 @@ const Blog = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(currentLang === 'vi' ? 'vi-VN' : 'en-US', {
+    return date.toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -73,14 +67,13 @@ const Blog = () => {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>{t('blog.title')} - Balan Coffee & Roastery</title>
-        <meta name="description" content={t('blog.description')} />
-        <meta name="keywords" content={t('blog.keywords')} />
+    <>      <Helmet>
+        <title>Blog - Balan Coffee & Roastery</title>
+        <meta name="description" content="Khám phá thế giới cà phê qua blog của chúng tôi với những bài viết về cách pha chế, kiến thức về hạt cà phê và xu hướng cà phê mới nhất" />
+        <meta name="keywords" content="blog cà phê, cách pha cà phê, kiến thức cà phê, arabica, robusta, cà phê rang mộc" />
         <link rel="canonical" href={`${window.location.origin}/blog`} />
-        <meta property="og:title" content={`${t('blog.title')} - Balan Coffee & Roastery`} />
-        <meta property="og:description" content={t('blog.description')} />
+        <meta property="og:title" content="Blog - Balan Coffee & Roastery" />
+        <meta property="og:description" content="Khám phá thế giới cà phê qua blog của chúng tôi với những bài viết về cách pha chế, kiến thức về hạt cà phê và xu hướng cà phê mới nhất" />
         <meta property="og:url" content={`${window.location.origin}/blog`} />
         <meta property="og:type" content="website" />
       </Helmet>
@@ -88,13 +81,12 @@ const Blog = () => {
       <div className="min-h-screen bg-cream-50">
         {/* Hero Section */}
         <div className="bg-coffee-800 text-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('blog.hero.title')}
+                Blog Cà Phê
               </h1>
               <p className="text-xl text-coffee-200 max-w-3xl mx-auto">
-                {t('blog.hero.subtitle')}
+                Khám phá thế giới cà phê qua những bài viết về cách pha chế, kiến thức về hạt cà phê và xu hướng mới nhất
               </p>
             </div>
           </div>
@@ -106,10 +98,9 @@ const Blog = () => {
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
               <form onSubmit={handleSearch} className="flex-1">
-                <div className="flex">
-                  <input
+                <div className="flex">                  <input
                     type="text"
-                    placeholder={t('blog.search.placeholder')}
+                    placeholder="Tìm kiếm bài viết..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
@@ -118,7 +109,7 @@ const Blog = () => {
                     type="submit"
                     className="px-6 py-2 bg-coffee-600 text-white rounded-r-md hover:bg-coffee-700 transition-colors"
                   >
-                    {t('blog.search.button')}
+                    Tìm kiếm
                   </button>
                 </div>
               </form>
@@ -131,11 +122,10 @@ const Blog = () => {
                   setCurrentPage(1);
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-              >
-                <option value="">{t('blog.filter.allCategories')}</option>
+              >                <option value="">Tất cả danh mục</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {currentLang === 'vi' ? category.name_vi : category.name_en}
+                    {category.name_vi || category.name_en}
                   </option>
                 ))}
               </select>
@@ -159,14 +149,13 @@ const Blog = () => {
                 </div>
               ))}
             </div>
-          ) : blogs.length === 0 ? (
-            <div className="text-center py-12">
+          ) : blogs.length === 0 ? (            <div className="text-center py-12">
               <div className="text-6xl text-gray-400 mb-4">📝</div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                {t('blog.empty.title')}
+                Không tìm thấy bài viết nào
               </h3>
               <p className="text-gray-500">
-                {t('blog.empty.message')}
+                Không có bài viết nào phù hợp với tiêu chí tìm kiếm của bạn
               </p>
             </div>
           ) : (
@@ -178,10 +167,9 @@ const Blog = () => {
                 >
                   {/* Blog Image */}
                   <Link to={`/blog/${blog.slug}`}>
-                    <div className="h-48 overflow-hidden">
-                      <img
+                    <div className="h-48 overflow-hidden">                      <img
                         src={blog.image_url || '/images/blog/default-blog.jpg'}
-                        alt={currentLang === 'vi' ? blog.title_vi : blog.title_en}
+                        alt={blog.title_vi || blog.title_en}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       />
                     </div>
@@ -189,33 +177,30 @@ const Blog = () => {
 
                   <div className="p-6">
                     {/* Category and Date */}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                      <span className="bg-coffee-100 text-coffee-800 px-2 py-1 rounded-full">
-                        {blog.category && (currentLang === 'vi' ? blog.category.name_vi : blog.category.name_en)}
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">                      <span className="bg-coffee-100 text-coffee-800 px-2 py-1 rounded-full">
+                        {blog.category && (blog.category.name_vi || blog.category.name_en)}
                       </span>
                       <time dateTime={blog.created_at}>
                         {formatDate(blog.created_at)}
                       </time>
                     </div>
 
-                    {/* Title */}
-                    <h2 className="text-xl font-semibold text-gray-900 mb-3 hover:text-coffee-600 transition-colors">
+                    {/* Title */}                    <h2 className="text-xl font-semibold text-gray-900 mb-3 hover:text-coffee-600 transition-colors">
                       <Link to={`/blog/${blog.slug}`}>
-                        {currentLang === 'vi' ? blog.title_vi : blog.title_en}
+                        {blog.title_vi || blog.title_en}
                       </Link>
                     </h2>
 
                     {/* Excerpt */}
                     <p className="text-gray-600 mb-4">
-                      {truncateContent(currentLang === 'vi' ? blog.excerpt_vi : blog.excerpt_en)}
+                      {truncateContent(blog.excerpt_vi || blog.excerpt_en)}
                     </p>
 
                     {/* Read More */}
-                    <Link
-                      to={`/blog/${blog.slug}`}
+                    <Link                      to={`/blog/${blog.slug}`}
                       className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium transition-colors"
                     >
-                      {t('blog.readMore')}
+                      Đọc thêm
                       <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -229,13 +214,12 @@ const Blog = () => {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-12">
-              <nav className="flex items-center space-x-2">
-                <button
+              <nav className="flex items-center space-x-2">                <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                   className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('common.pagination.previous')}
+                  Trước
                 </button>
 
                 {[...Array(totalPages)].map((_, index) => (
@@ -250,14 +234,12 @@ const Blog = () => {
                   >
                     {index + 1}
                   </button>
-                ))}
-
-                <button
+                ))}                <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
                   className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('common.pagination.next')}
+                  Tiếp
                 </button>
               </nav>
             </div>

@@ -188,13 +188,13 @@ const Contact = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                        placeholder={t('contact.form.phonePlaceholder')}
+                        placeholder="Nhập số điện thoại của bạn"
                       />
                     </div>
 
                     <div>
                       <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('contact.form.subject')} *
+                        Chủ đề *
                       </label>
                       <select
                         id="subject"
@@ -203,20 +203,19 @@ const Contact = () => {
                         onChange={handleChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                      >
-                        <option value="">{t('contact.form.selectSubject')}</option>
-                        <option value="general">{t('contact.form.subjects.general')}</option>
-                        <option value="product">{t('contact.form.subjects.product')}</option>
-                        <option value="wholesale">{t('contact.form.subjects.wholesale')}</option>
-                        <option value="partnership">{t('contact.form.subjects.partnership')}</option>
-                        <option value="support">{t('contact.form.subjects.support')}</option>
+                      >                        <option value="">Chọn chủ đề</option>
+                        <option value="general">Câu hỏi chung</option>
+                        <option value="product">Thông tin sản phẩm</option>
+                        <option value="wholesale">Bán buôn</option>
+                        <option value="partnership">Hợp tác kinh doanh</option>
+                        <option value="support">Hỗ trợ kỹ thuật</option>
                       </select>
                     </div>
                   </div>
 
                   <div>
                     <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('contact.form.message')} *
+                      Tin nhắn *
                     </label>
                     <textarea
                       id="message"
@@ -226,7 +225,7 @@ const Contact = () => {
                       required
                       rows={6}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                      placeholder={t('contact.form.messagePlaceholder')}
+                      placeholder="Nhập tin nhắn của bạn..."
                     ></textarea>
                   </div>
 
@@ -235,7 +234,7 @@ const Contact = () => {
                     disabled={loading}
                     className="w-full bg-coffee-600 text-white py-3 px-6 rounded-md hover:bg-coffee-700 focus:outline-none focus:ring-2 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {loading ? t('contact.form.sending') : t('contact.form.send')}
+                    {loading ? 'Đang gửi...' : 'Gửi tin nhắn'}
                   </button>
                 </form>
               )}
@@ -246,7 +245,7 @@ const Contact = () => {
               {/* Store Information */}
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  {t('contact.info.title')}
+                  Thông tin liên hệ
                 </h2>
 
                 <div className="space-y-6">
@@ -257,9 +256,8 @@ const Contact = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {t('contact.info.address')}
+                    <div className="ml-4">                      <h3 className="text-lg font-semibold text-gray-900">
+                        Địa chỉ
                       </h3>
                       <p className="text-gray-600 mt-1">
                         {storeInfo.address}
@@ -273,9 +271,8 @@ const Contact = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {t('contact.info.phone')}
+                    <div className="ml-4">                      <h3 className="text-lg font-semibold text-gray-900">
+                        Số điện thoại
                       </h3>
                       <p className="text-gray-600 mt-1">
                         <a href={`tel:${storeInfo.phone}`} className="hover:text-coffee-600 transition-colors">
@@ -291,9 +288,8 @@ const Contact = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {t('contact.info.email')}
+                    <div className="ml-4">                      <h3 className="text-lg font-semibold text-gray-900">
+                        Email
                       </h3>
                       <p className="text-gray-600 mt-1">
                         <a href={`mailto:${storeInfo.email}`} className="hover:text-coffee-600 transition-colors">
@@ -309,23 +305,21 @@ const Contact = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {t('contact.info.hours')}
+                    <div className="ml-4">                      <h3 className="text-lg font-semibold text-gray-900">
+                        Giờ mở cửa
                       </h3>
                       <div className="text-gray-600 mt-1">
-                        <p>{t('contact.info.weekdays')}: {storeInfo.hours.weekdays}</p>
-                        <p>{t('contact.info.weekend')}: {storeInfo.hours.weekend}</p>
+                        <p>Thứ 2 - Thứ 6: {storeInfo.hours.weekdays}</p>
+                        <p>Thứ 7 - Chủ nhật: {storeInfo.hours.weekend}</p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Social Media */}
-              <div className="bg-white rounded-lg shadow-lg p-8">
+              {/* Social Media */}              <div className="bg-white rounded-lg shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  {t('contact.social.title')}
+                  Theo dõi chúng tôi
                 </h2>
 
                 <div className="flex space-x-4">
@@ -370,26 +364,24 @@ const Contact = () => {
                   >
                     <span className="text-sm font-bold">Z</span>
                   </a>
-                </div>
-
-                <p className="text-gray-600 mt-4 text-sm">
-                  {t('contact.social.description')}
+                </div>                <p className="text-gray-600 mt-4 text-sm">
+                  Theo dõi chúng tôi để cập nhật tin tức mới nhất về cà phê
                 </p>
               </div>
 
               {/* FAQ Link */}
               <div className="bg-coffee-50 border border-coffee-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-coffee-800 mb-2">
-                  {t('contact.faq.title')}
+                  Câu hỏi thường gặp
                 </h3>
                 <p className="text-coffee-700 text-sm mb-4">
-                  {t('contact.faq.description')}
+                  Tìm câu trả lời cho những thắc mắc phổ biến về sản phẩm và dịch vụ
                 </p>
                 <a
                   href="/faq"
                   className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium transition-colors"
                 >
-                  {t('contact.faq.link')}
+                  Xem câu hỏi thường gặp
                   <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -403,10 +395,10 @@ const Contact = () => {
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
               <div className="p-6 border-b border-gray-200">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {t('contact.map.title')}
+                  Vị trí cửa hàng
                 </h2>
                 <p className="text-gray-600 mt-2">
-                  {t('contact.map.description')}
+                  Tìm chúng tôi tại địa chỉ dưới đây
                 </p>
               </div>
               
@@ -418,7 +410,7 @@ const Contact = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <p className="text-gray-500">
-                    {t('contact.map.placeholder')}
+                    Bản đồ sẽ được hiển thị tại đây
                   </p>
                 </div>
               </div>

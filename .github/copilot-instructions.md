@@ -7,9 +7,9 @@ This is a full-stack e-commerce website with blog integration for a coffee roast
 
 ### Frontend
 - **Technology**: React with Vite, Tailwind CSS
-- **Features**: Multilingual support (English/Vietnamese), responsive design, SEO optimization
+- **Features**: Vietnamese language interface, responsive design, SEO optimization
 - **Color Scheme**: Coffee tones (brown, cream, yellow) for elegant, minimalist design
-- **Key Libraries**: React Router, i18next, React Helmet, Axios
+- **Key Libraries**: React Router, React Helmet, Axios
 
 ### Backend
 - **Technology**: Node.js with Express
@@ -32,7 +32,7 @@ Key tables: Users, Products, Orders, Order_Products, Blogs, Contacts
 3. **SEO**: Include proper meta tags, structured data, sitemap.xml, robots.txt
 4. **Performance**: Optimize images, lazy loading, code splitting
 5. **Accessibility**: Follow WCAG guidelines, semantic HTML, proper ARIA labels
-6. **Internationalization**: Use i18next keys for all user-facing text
+6. **Language**: All user-facing text is in Vietnamese
 
 ## Target Keywords
 Focus on Vietnamese coffee terms: "cà phê rang mộc", "Arabica Cầu Đất", "Arabica Typica Kongo", "Robusta Lâm Đồng", "coffee and roastery", "mua hạt cà phê nguyên chất"

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import PaymentMethods from '../components/payment/PaymentMethods';
 
 const Checkout = () => {
-    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const { cartItems, getCartTotals } = useCart();
@@ -48,12 +46,10 @@ const Checkout = () => {
         if (cartItems.length === 0) {
             navigate('/cart');
         }
-    }, [cartItems, navigate]);
-
-    const steps = [
-        { number: 1, title: t('checkout.billingInfo') },
-        { number: 2, title: t('checkout.shippingInfo') },
-        { number: 3, title: t('checkout.paymentMethod') }
+    }, [cartItems, navigate]);    const steps = [
+        { number: 1, title: 'Thông tin thanh toán' },
+        { number: 2, title: 'Thông tin giao hàng' },
+        { number: 3, title: 'Phương thức thanh toán' }
     ];
 
     const vietnameseProvinces = [
@@ -111,32 +107,28 @@ const Checkout = () => {
         const newErrors = {};
 
         if (step === 1) {
-            // Validate billing information
-            const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'province'];
+            // Validate billing information        const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'province'];
             required.forEach(field => {
                 if (!formData.billing[field]) {
-                    newErrors[`billing.${field}`] = t('auth.errors.required');
+                    newErrors[`billing.${field}`] = 'Trường này là bắt buộc';
                 }
             });
             
             if (formData.billing.email && !/\S+@\S+\.\S+/.test(formData.billing.email)) {
-                newErrors['billing.email'] = t('auth.errors.invalidEmail');
+                newErrors['billing.email'] = 'Email không hợp lệ';
             }
         }
 
-        if (step === 2 && !formData.shipping.sameAsBilling) {
-            // Validate shipping information
+        if (step === 2 && !formData.shipping.sameAsBilling) {            // Validate shipping information
             const required = ['firstName', 'lastName', 'address', 'city', 'province'];
             required.forEach(field => {
                 if (!formData.shipping[field]) {
-                    newErrors[`shipping.${field}`] = t('auth.errors.required');
+                    newErrors[`shipping.${field}`] = 'Trường này là bắt buộc';
                 }
             });
-        }
-
-        if (step === 3) {
+        }        if (step === 3) {
             if (!formData.paymentMethod) {
-                newErrors.paymentMethod = t('payment.errors.selectMethod');
+                newErrors.paymentMethod = 'Vui lòng chọn phương thức thanh toán';
             }
         }
 
@@ -185,7 +177,7 @@ const Checkout = () => {
     return (
         <>
             <Helmet>
-                <title>{t('checkout.title')} - Balan Coffee</title>
+                <title>Thanh toán - Balan Coffee</title>
                 <meta name="description" content="Complete your coffee order securely with multiple payment options." />
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
@@ -195,7 +187,7 @@ const Checkout = () => {
                 <div className="bg-coffee-800 text-white py-12">
                     <div className="container mx-auto px-4">
                         <h1 className="text-3xl md:text-4xl font-bold">
-                            {t('checkout.title')}
+                            Thanh toán
                         </h1>
                     </div>
                 </div>
@@ -240,15 +232,13 @@ const Checkout = () => {
                             <div className="bg-white rounded-lg shadow-md p-6">
                                 {/* Step 1: Billing Information */}
                                 {currentStep === 1 && (
-                                    <div className="space-y-6">
-                                        <h2 className="text-xl font-semibold text-coffee-800">
-                                            {t('checkout.billingInfo')}
+                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-coffee-800">
+                                            Thông tin thanh toán
                                         </h2>
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.firstName')} *
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Họ *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -263,9 +253,8 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.lastName')} *
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Tên *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -282,9 +271,8 @@ const Checkout = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.email')} *
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Email *
                                                 </label>
                                                 <input
                                                     type="email"
@@ -299,9 +287,8 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.phone')} *
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Số điện thoại *
                                                 </label>
                                                 <input
                                                     type="tel"
@@ -317,9 +304,8 @@ const Checkout = () => {
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                {t('checkout.address')} *
+                                        <div>                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                Địa chỉ *
                                             </label>
                                             <input
                                                 type="text"
@@ -336,9 +322,8 @@ const Checkout = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.city')} *
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Thành phố *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -353,9 +338,8 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.province')} *
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Tỉnh/Thành phố *
                                                 </label>
                                                 <select
                                                     value={formData.billing.province}
@@ -374,9 +358,8 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>
-                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                    {t('checkout.postalCode')}
+                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    Mã bưu điện
                                                 </label>
                                                 <input
                                                     type="text"
@@ -391,9 +374,8 @@ const Checkout = () => {
 
                                 {/* Step 2: Shipping Information */}
                                 {currentStep === 2 && (
-                                    <div className="space-y-6">
-                                        <h2 className="text-xl font-semibold text-coffee-800">
-                                            {t('checkout.shippingInfo')}
+                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-coffee-800">
+                                            Thông tin giao hàng
                                         </h2>
                                         
                                         <div>
@@ -403,9 +385,8 @@ const Checkout = () => {
                                                     checked={formData.shipping.sameAsBilling}
                                                     onChange={(e) => handleSameAsBillingChange(e.target.checked)}
                                                     className="h-4 w-4 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded"
-                                                />
-                                                <span className="ml-2 text-sm text-coffee-700">
-                                                    {t('checkout.sameAsBilling')}
+                                                />                                                <span className="ml-2 text-sm text-coffee-700">
+                                                    Giống như thông tin thanh toán
                                                 </span>
                                             </label>
                                         </div>
@@ -413,9 +394,8 @@ const Checkout = () => {
                                         {!formData.shipping.sameAsBilling && (
                                             <>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                            {t('checkout.firstName')} *
+                                                    <div>                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                            Họ *
                                                         </label>
                                                         <input
                                                             type="text"
@@ -430,9 +410,8 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                            {t('checkout.lastName')} *
+                                                    <div>                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                            Tên *
                                                         </label>
                                                         <input
                                                             type="text"
@@ -448,9 +427,8 @@ const Checkout = () => {
                                                     </div>
                                                 </div>
 
-                                                <div>
-                                                    <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                        {t('checkout.address')} *
+                                                <div>                                                    <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                        Địa chỉ *
                                                     </label>
                                                     <input
                                                         type="text"
@@ -467,13 +445,12 @@ const Checkout = () => {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                            {t('checkout.city')} *
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.shipping.city}
+                                                    <div>                                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                                Thành phố *
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.shipping.city}
                                                             onChange={(e) => handleInputChange('shipping', 'city', e.target.value)}
                                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
                                                                 errors['shipping.city'] ? 'border-red-300' : 'border-coffee-300'
@@ -484,12 +461,11 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                            {t('checkout.province')} *
-                                                        </label>
-                                                        <select
-                                                            value={formData.shipping.province}
+                                                    <div>                                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                                Tỉnh/Thành phố *
+                                                            </label>
+                                                            <select
+                                                                value={formData.shipping.province}
                                                             onChange={(e) => handleInputChange('shipping', 'province', e.target.value)}
                                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
                                                                 errors['shipping.province'] ? 'border-red-300' : 'border-coffee-300'
@@ -505,13 +481,12 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
-                                                            {t('checkout.postalCode')}
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.shipping.postalCode}
+                                                    <div>                                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                                Mã bưu điện
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.shipping.postalCode}
                                                             onChange={(e) => handleInputChange('shipping', 'postalCode', e.target.value)}
                                                             className="w-full px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500"
                                                         />
@@ -537,9 +512,8 @@ const Checkout = () => {
 
                                 {/* Step 3: Payment Method */}
                                 {currentStep === 3 && (
-                                    <div className="space-y-6">
-                                        <h2 className="text-xl font-semibold text-coffee-800">
-                                            {t('checkout.paymentMethod')}
+                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-coffee-800">
+                                            Phương thức thanh toán
                                         </h2>
                                         
                                         {errors.payment && (
@@ -560,7 +534,7 @@ const Checkout = () => {
                                         disabled={currentStep === 1}
                                         className="bg-coffee-100 hover:bg-coffee-200 text-coffee-800 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {t('common.previous')}
+                                        Quay lại
                                     </button>
                                     
                                     {currentStep < 3 && (
@@ -568,7 +542,7 @@ const Checkout = () => {
                                             onClick={handleNext}
                                             className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                                         >
-                                            {t('common.next')}
+                                            Tiếp tục
                                         </button>
                                     )}
                                 </div>
@@ -577,9 +551,8 @@ const Checkout = () => {
 
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                                <h3 className="text-xl font-semibold text-coffee-800 mb-6">
-                                    {t('checkout.orderSummary')}
+                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                <h3 className="text-xl font-semibold text-coffee-800 mb-6">
+                                    Tóm tắt đơn hàng
                                 </h3>
                                 
                                 <div className="space-y-4">
@@ -600,33 +573,33 @@ const Checkout = () => {
                                 
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
-                                        <span className="text-coffee-600">{t('cart.subtotal')}</span>
+                                        <span className="text-coffee-600">Tạm tính</span>
                                         <span className="font-semibold text-coffee-800">${subtotal.toFixed(2)}</span>
                                     </div>
                                     
                                     <div className="flex justify-between">
-                                        <span className="text-coffee-600">{t('cart.shipping')}</span>
+                                        <span className="text-coffee-600">Phí vận chuyển</span>
                                         <span className="font-semibold text-coffee-800">
                                             {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
                                         </span>
                                     </div>
                                     
                                     <div className="flex justify-between">
-                                        <span className="text-coffee-600">{t('cart.tax')}</span>
+                                        <span className="text-coffee-600">Thuế</span>
                                         <span className="font-semibold text-coffee-800">${tax.toFixed(2)}</span>
                                     </div>
                                     
                                     <hr className="border-coffee-200" />
                                     
                                     <div className="flex justify-between text-lg">
-                                        <span className="font-semibold text-coffee-800">{t('cart.total')}</span>
+                                        <span className="font-semibold text-coffee-800">Tổng cộng</span>
                                         <span className="font-bold text-coffee-800">${total.toFixed(2)}</span>
                                     </div>
                                 </div>
                                 
                                 <div className="mt-6 p-3 bg-coffee-50 border border-coffee-200 rounded-lg">
                                     <p className="text-sm text-coffee-700 text-center">
-                                        🔒 {t('payment.securityNotice')}
+                                        🔒 Giao dịch được bảo mật an toàn
                                     </p>
                                 </div>
                             </div>

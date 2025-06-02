@@ -1,23 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 const BlogPost = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
   const [blog, setBlog] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const currentLang = i18n.language;
-
   useEffect(() => {
     fetchBlogPost();
-  }, [slug, currentLang]);
+  }, [slug]);
 
   const fetchBlogPost = async () => {
     try {
@@ -25,7 +20,7 @@ const BlogPost = () => {
       setError(null);
       
       const response = await axios.get(`/api/blogs/${slug}`, {
-        params: { lang: currentLang }
+        params: { lang: 'vi' }
       });
       
       setBlog(response.data.blog);
@@ -44,16 +39,15 @@ const BlogPost = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(currentLang === 'vi' ? 'vi-VN' : 'en-US', {
+    return date.toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
   };
-
   const handleShare = (platform) => {
     const url = window.location.href;
-    const title = currentLang === 'vi' ? blog.title_vi : blog.title_en;
+    const title = blog.title_vi || blog.title_en;
     
     let shareUrl = '';
     
@@ -77,7 +71,7 @@ const BlogPost = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
     // You could add a toast notification here
-    alert(t('blog.post.share.copied'));
+    alert('Đã sao chép liên kết vào clipboard!');
   };
 
   if (loading) {
@@ -100,20 +94,19 @@ const BlogPost = () => {
 
   if (error === 'notFound') {
     return (
-      <div className="min-h-screen bg-cream-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-cream-50 flex items-center justify-center">        <div className="text-center">
           <div className="text-6xl text-gray-400 mb-4">📝</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {t('blog.post.notFound.title')}
+            Không tìm thấy bài viết
           </h1>
           <p className="text-gray-600 mb-6">
-            {t('blog.post.notFound.message')}
+            Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa
           </p>
           <Link
             to="/blog"
             className="inline-flex items-center px-6 py-3 bg-coffee-600 text-white rounded-md hover:bg-coffee-700 transition-colors"
           >
-            {t('blog.post.notFound.backToBlog')}
+            Quay lại Blog
           </Link>
         </div>
       </div>
@@ -122,29 +115,27 @@ const BlogPost = () => {
 
   if (error || !blog) {
     return (
-      <div className="min-h-screen bg-cream-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-cream-50 flex items-center justify-center">        <div className="text-center">
           <div className="text-6xl text-gray-400 mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {t('common.error.title')}
+            Đã xảy ra lỗi
           </h1>
           <p className="text-gray-600 mb-6">
-            {t('common.error.message')}
+            Không thể tải bài viết. Vui lòng thử lại sau.
           </p>
           <button
             onClick={() => navigate(-1)}
             className="inline-flex items-center px-6 py-3 bg-coffee-600 text-white rounded-md hover:bg-coffee-700 transition-colors"
           >
-            {t('common.goBack')}
+            Quay lại
           </button>
         </div>
       </div>
     );
   }
-
-  const title = currentLang === 'vi' ? blog.title_vi : blog.title_en;
-  const content = currentLang === 'vi' ? blog.content_vi : blog.content_en;
-  const excerpt = currentLang === 'vi' ? blog.excerpt_vi : blog.excerpt_en;
+  const title = blog.title_vi || blog.title_en;
+  const content = blog.content_vi || blog.content_en;
+  const excerpt = blog.excerpt_vi || blog.excerpt_en;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -177,7 +168,7 @@ const BlogPost = () => {
       <Helmet>
         <title>{title} - Balan Coffee & Roastery</title>
         <meta name="description" content={excerpt} />
-        <meta name="keywords" content={blog.meta_keywords || t('blog.keywords')} />
+        <meta name="keywords" content={blog.meta_keywords || 'blog cà phê, cách pha cà phê, kiến thức cà phê, arabica, robusta, cà phê rang mộc'} />
         <link rel="canonical" href={`${window.location.origin}/blog/${blog.slug}`} />
         
         {/* Open Graph */}
@@ -187,9 +178,8 @@ const BlogPost = () => {
         <meta property="og:type" content="article" />
         <meta property="og:image" content={blog.image_url || `${window.location.origin}/images/og-default.jpg`} />
         <meta property="article:published_time" content={blog.created_at} />
-        <meta property="article:author" content={blog.author_name || 'Balan Coffee & Roastery'} />
-        {blog.category && (
-          <meta property="article:section" content={currentLang === 'vi' ? blog.category.name_vi : blog.category.name_en} />
+        <meta property="article:author" content={blog.author_name || 'Balan Coffee & Roastery'} />        {blog.category && (
+          <meta property="article:section" content={blog.category.name_vi || blog.category.name_en} />
         )}
         
         {/* Twitter Card */}
@@ -207,14 +197,13 @@ const BlogPost = () => {
       <div className="min-h-screen bg-cream-50">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <nav className="flex items-center space-x-2 text-sm">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">            <nav className="flex items-center space-x-2 text-sm">
               <Link to="/" className="text-gray-500 hover:text-coffee-600">
-                {t('common.breadcrumb.home')}
+                Trang chủ
               </Link>
               <span className="text-gray-400">/</span>
               <Link to="/blog" className="text-gray-500 hover:text-coffee-600">
-                {t('common.breadcrumb.blog')}
+                Blog
               </Link>
               <span className="text-gray-400">/</span>
               <span className="text-gray-900 truncate">{title}</span>
@@ -226,10 +215,9 @@ const BlogPost = () => {
           {/* Header */}
           <header className="mb-8">
             {/* Category */}
-            {blog.category && (
-              <div className="mb-4">
+            {blog.category && (              <div className="mb-4">
                 <span className="inline-block bg-coffee-100 text-coffee-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {currentLang === 'vi' ? blog.category.name_vi : blog.category.name_en}
+                  {blog.category.name_vi || blog.category.name_en}
                 </span>
               </div>
             )}
@@ -254,12 +242,11 @@ const BlogPost = () => {
                 <time dateTime={blog.created_at}>
                   {formatDate(blog.created_at)}
                 </time>
-              </div>
-              <div className="flex items-center">
+              </div>              <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {blog.read_time || 5} {t('blog.post.readTime')}
+                {blog.read_time || 5} phút đọc
               </div>
             </div>
           </header>
@@ -283,9 +270,8 @@ const BlogPost = () => {
             />
           </div>
 
-          {/* Share Buttons */}
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">{t('blog.post.share.title')}</h3>
+          {/* Share Buttons */}          <div className="mt-12 pt-8 border-t border-gray-200">
+            <h3 className="text-lg font-semibold mb-4">Chia sẻ bài viết</h3>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => handleShare('facebook')}
@@ -320,11 +306,10 @@ const BlogPost = () => {
               <button
                 onClick={copyToClipboard}
                 className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              >                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                {t('blog.post.share.copy')}
+                Sao chép liên kết
               </button>
             </div>
           </div>
@@ -332,10 +317,9 @@ const BlogPost = () => {
 
         {/* Related Posts */}
         {relatedBlogs.length > 0 && (
-          <section className="bg-white py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <section className="bg-white py-12">            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-8">
-                {t('blog.post.related.title')}
+                Bài viết liên quan
               </h2>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -345,31 +329,28 @@ const BlogPost = () => {
                     className="bg-cream-50 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
                   >
                     <Link to={`/blog/${relatedBlog.slug}`}>
-                      <div className="h-48 overflow-hidden">
-                        <img
+                      <div className="h-48 overflow-hidden">                        <img
                           src={relatedBlog.image_url || '/images/blog/default-blog.jpg'}
-                          alt={currentLang === 'vi' ? relatedBlog.title_vi : relatedBlog.title_en}
+                          alt={relatedBlog.title_vi || relatedBlog.title_en}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                     </Link>
 
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-coffee-600 transition-colors">
+                    <div className="p-6">                      <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-coffee-600 transition-colors">
                         <Link to={`/blog/${relatedBlog.slug}`}>
-                          {currentLang === 'vi' ? relatedBlog.title_vi : relatedBlog.title_en}
+                          {relatedBlog.title_vi || relatedBlog.title_en}
                         </Link>
                       </h3>
                       
                       <p className="text-gray-600 text-sm mb-4">
                         {formatDate(relatedBlog.created_at)}
                       </p>
-                      
-                      <Link
+                        <Link
                         to={`/blog/${relatedBlog.slug}`}
                         className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium text-sm transition-colors"
                       >
-                        {t('blog.readMore')}
+                        Đọc thêm
                         <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>

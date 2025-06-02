@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const AdminContacts = () => {
-  const { t } = useTranslation();
   const [contacts, setContacts] = useState([]);
   const [newsletters, setNewsletters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,9 +97,8 @@ const AdminContacts = () => {
       alert('Error updating status. Please try again.');
     }
   };
-
   const handleDeleteContact = async (contactId) => {
-    if (!window.confirm(t('admin.confirmDelete'))) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa liên hệ này?')) return;
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -114,22 +111,21 @@ const AdminContacts = () => {
       }
     } catch (error) {
       console.error('Error deleting contact:', error);
-      alert('Error deleting contact. Please try again.');
+      alert('Lỗi khi xóa liên hệ. Vui lòng thử lại.');
     }
   };
 
   const handleDeleteNewsletter = async (newsletterId) => {
-    if (!window.confirm(t('admin.confirmDelete'))) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa đăng ký này?')) return;
 
     try {
       const token = localStorage.getItem('adminToken');
       await axios.delete(`/api/admin/newsletters/${newsletterId}`, {
         headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchNewsletters();
+      });      fetchNewsletters();
     } catch (error) {
       console.error('Error deleting newsletter subscription:', error);
-      alert('Error deleting subscription. Please try again.');
+      alert('Lỗi khi xóa đăng ký. Vui lòng thử lại.');
     }
   };
 
@@ -199,15 +195,14 @@ const AdminContacts = () => {
     );
   }
 
-  return (
-    <div className="p-6">
+  return (    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('admin.contactsManagement')}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý liên hệ</h1>
         <button
           onClick={exportToCSV}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
-          {t('admin.exportCSV')}
+          Xuất CSV
         </button>
       </div>
 
@@ -225,9 +220,8 @@ const AdminContacts = () => {
               activeTab === 'contacts'
                 ? 'border-amber-500 text-amber-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            {t('admin.contactForms')}
+            }`}          >
+            Biểu mẫu liên hệ
           </button>
           <button
             onClick={() => {
@@ -242,18 +236,17 @@ const AdminContacts = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            {t('admin.newsletterSubscriptions')}
+            Đăng ký nhận tin
           </button>
         </nav>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">          <div>
             <input
               type="text"
-              placeholder={activeTab === 'contacts' ? t('admin.searchContacts') : t('admin.searchEmails')}
+              placeholder={activeTab === 'contacts' ? 'Tìm kiếm liên hệ...' : 'Tìm kiếm email...'}
               value={searchTerm}
               onChange={handleSearch}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -266,11 +259,11 @@ const AdminContacts = () => {
                 onChange={handleStatusFilter}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="all">{t('admin.allStatuses')}</option>
-                <option value="new">{t('admin.new')}</option>
-                <option value="read">{t('admin.read')}</option>
-                <option value="replied">{t('admin.replied')}</option>
-                <option value="archived">{t('admin.archived')}</option>
+                <option value="all">Tất cả trạng thái</option>
+                <option value="new">Mới</option>
+                <option value="read">Đã đọc</option>
+                <option value="replied">Đã trả lời</option>
+                <option value="archived">Đã lưu trữ</option>
               </select>
             </div>
           )}
@@ -280,23 +273,22 @@ const AdminContacts = () => {
       {/* Content Tables */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {activeTab === 'contacts' ? (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200">            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.contact')}
+                  Liên hệ
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.subject')}
+                  Chủ đề
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.status')}
+                  Trạng thái
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.createdAt')}
+                  Ngày tạo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.actions')}
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -316,37 +308,38 @@ const AdminContacts = () => {
                     <div className="text-sm text-gray-900 max-w-xs truncate">
                       {contact.subject}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </td>                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={getStatusBadge(contact.status)}>
-                      {t(`admin.${contact.status}`)}
+                      {contact.status === 'new' ? 'Mới' : 
+                       contact.status === 'read' ? 'Đã đọc' :
+                       contact.status === 'replied' ? 'Đã trả lời' :
+                       contact.status === 'archived' ? 'Đã lưu trữ' : contact.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(contact.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  </td>                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleViewContact(contact)}
                       className="text-amber-600 hover:text-amber-900 mr-4"
                     >
-                      {t('admin.view')}
+                      Xem
                     </button>
                     <select
                       value={contact.status}
                       onChange={(e) => handleStatusUpdate(contact.id, e.target.value)}
                       className="text-blue-600 border border-blue-300 rounded text-xs px-2 py-1 mr-4"
                     >
-                      <option value="new">{t('admin.new')}</option>
-                      <option value="read">{t('admin.read')}</option>
-                      <option value="replied">{t('admin.replied')}</option>
-                      <option value="archived">{t('admin.archived')}</option>
+                      <option value="new">Mới</option>
+                      <option value="read">Đã đọc</option>
+                      <option value="replied">Đã trả lời</option>
+                      <option value="archived">Đã lưu trữ</option>
                     </select>
                     <button
                       onClick={() => handleDeleteContact(contact.id)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      {t('admin.delete')}
+                      Xóa
                     </button>
                   </td>
                 </tr>
@@ -354,17 +347,16 @@ const AdminContacts = () => {
             </tbody>
           </table>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200">            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.email')}
+                  Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.subscribedAt')}
+                  Ngày đăng ký
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('admin.actions')}
+                  Thao tác
                 </th>
               </tr>
             </thead>
@@ -376,13 +368,12 @@ const AdminContacts = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(newsletter.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  </td>                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleDeleteNewsletter(newsletter.id)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      {t('admin.unsubscribe')}
+                      Hủy đăng ký
                     </button>
                   </td>
                 </tr>
@@ -416,55 +407,54 @@ const AdminContacts = () => {
       {/* Contact Detail Modal */}
       {showModal && selectedContact && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">            <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {t('admin.contactDetails')}
+                  Chi tiết liên hệ
                 </h3>
                 <span className={getStatusBadge(selectedContact.status)}>
-                  {t(`admin.${selectedContact.status}`)}
+                  {selectedContact.status === 'new' ? 'Mới' : 
+                   selectedContact.status === 'read' ? 'Đã đọc' :
+                   selectedContact.status === 'replied' ? 'Đã trả lời' :
+                   selectedContact.status === 'archived' ? 'Đã lưu trữ' : selectedContact.status}
                 </span>
               </div>
               
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t('admin.name')}</label>
+                    <label className="block text-sm font-medium text-gray-700">Tên</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedContact.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t('admin.email')}</label>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedContact.email}</p>
                   </div>
                 </div>
                 
                 {selectedContact.phone && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{t('admin.phone')}</label>
+                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedContact.phone}</p>
                   </div>
                 )}
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{t('admin.subject')}</label>
+                  <label className="block text-sm font-medium text-gray-700">Chủ đề</label>
                   <p className="mt-1 text-sm text-gray-900">{selectedContact.subject}</p>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{t('admin.message')}</label>
+                  <label className="block text-sm font-medium text-gray-700">Tin nhắn</label>
                   <div className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50">
                     <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedContact.message}</p>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{t('admin.receivedAt')}</label>
+                  <label className="block text-sm font-medium text-gray-700">Ngày nhận</label>
                   <p className="mt-1 text-sm text-gray-900">{formatDate(selectedContact.created_at)}</p>
                 </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-6 border-t">
+              </div>              <div className="flex justify-between items-center pt-6 border-t">
                 <div className="flex space-x-2">
                   <select
                     value={selectedContact.status}
@@ -474,23 +464,23 @@ const AdminContacts = () => {
                     }}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
-                    <option value="new">{t('admin.new')}</option>
-                    <option value="read">{t('admin.read')}</option>
-                    <option value="replied">{t('admin.replied')}</option>
-                    <option value="archived">{t('admin.archived')}</option>
+                    <option value="new">Mới</option>
+                    <option value="read">Đã đọc</option>
+                    <option value="replied">Đã trả lời</option>
+                    <option value="archived">Đã lưu trữ</option>
                   </select>
                   <a
                     href={`mailto:${selectedContact.email}?subject=Re: ${selectedContact.subject}`}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    {t('admin.reply')}
+                    Trả lời
                   </a>
                 </div>
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
-                  {t('admin.close')}
+                  Đóng
                 </button>
               </div>
             </div>

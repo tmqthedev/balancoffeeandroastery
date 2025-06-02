@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
 
 const AdminProductForm = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = !!id;
@@ -126,7 +124,7 @@ const AdminProductForm = () => {
       }));
     }
   };  const handleImageAdd = () => {
-    const imageUrl = prompt(t('admin.enterImageUrl'));
+    const imageUrl = prompt('Nhập URL hình ảnh:');
     if (imageUrl?.trim()) {
       setFormData(prev => ({
         ...prev,
@@ -195,14 +193,13 @@ const AdminProductForm = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
+        {/* Header */}        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {isEdit ? t('admin.editProduct') : t('admin.addProduct')}
+              {isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
             </h1>
             <p className="mt-2 text-gray-600">
-              {isEdit ? t('admin.editProductSubtitle') : t('admin.addProductSubtitle')}
+              {isEdit ? 'Cập nhật thông tin sản phẩm' : 'Tạo sản phẩm mới trong danh mục'}
             </p>
           </div>
         </div>
@@ -225,13 +222,12 @@ const AdminProductForm = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 space-y-6">
-          {/* Basic Information */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.basicInfo')}</h3>
+          {/* Basic Information */}          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin cơ bản</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.productName')} *
+                  Tên sản phẩm *
                 </label>
                 <input
                   type="text"
@@ -240,10 +236,9 @@ const AdminProductForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>
-              <div>
+              </div>              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.productNameVi')} *
+                  Tên sản phẩm (Tiếng Việt) *
                 </label>
                 <input
                   type="text"
@@ -252,10 +247,9 @@ const AdminProductForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>
-              <div>
+              </div>              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.slug')} *
+                  Slug *
                 </label>
                 <input
                   type="text"
@@ -264,10 +258,9 @@ const AdminProductForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>
-              <div>
+              </div>              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.sku')} *
+                  SKU *
                 </label>
                 <input
                   type="text"
@@ -280,7 +273,7 @@ const AdminProductForm = () => {
             </div>
           </div>          {/* Images */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.productImages')}</h3>            <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Hình ảnh sản phẩm</h3>            <div className="space-y-4">
               {formData.images.map((image, index) => (
                 <div key={`product-image-${Math.random().toString(36).slice(2, 9)}`} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                   <img 
@@ -297,13 +290,12 @@ const AdminProductForm = () => {
                     onChange={(e) => handleImageChange(index, e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="https://example.com/image.jpg"
-                  />
-                  <button
+                  />                  <button
                     type="button"
                     onClick={() => handleImageRemove(index)}
                     className="text-red-600 hover:text-red-700 px-3 py-2"
                   >
-                    {t('admin.remove')}
+                    Xóa
                   </button>
                 </div>
               ))}
@@ -311,20 +303,18 @@ const AdminProductForm = () => {
               <button
                 type="button"
                 onClick={handleImageAdd}
-                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-amber-500 hover:text-amber-600 transition-colors"
-              >
-                + {t('admin.addImage')}
+                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-amber-500 hover:text-amber-600 transition-colors"              >
+                + Thêm hình ảnh
               </button>
             </div>
           </div>
 
           {/* Pricing */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.pricing')}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Giá cả</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.price')} * ($)
+                  Giá bán * ($)
                 </label>
                 <input
                   type="number"
@@ -334,10 +324,9 @@ const AdminProductForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                   required
                 />
-              </div>
-              <div>
+              </div>              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.comparePrice')} ($)
+                  Giá so sánh ($)
                 </label>
                 <input
                   type="number"
@@ -349,7 +338,7 @@ const AdminProductForm = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.stockQuantity')} *
+                  Số lượng tồn kho *
                 </label>
                 <input
                   type="number"
@@ -360,15 +349,13 @@ const AdminProductForm = () => {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Coffee Details */}
+          </div>          {/* Coffee Details */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.coffeeDetails')}</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Chi tiết cà phê</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.weight')}
+                  Trọng lượng
                 </label>
                 <input
                   type="text"
@@ -380,14 +367,14 @@ const AdminProductForm = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.roastLevel')}
+                  Mức độ rang
                 </label>
                 <select
                   value={formData.roastLevel}
                   onChange={(e) => handleInputChange('roastLevel', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                 >
-                  <option value="">{t('admin.selectRoastLevel')}</option>
+                  <option value="">Chọn mức độ rang</option>
                   <option value="light">Light</option>
                   <option value="medium">Medium</option>
                   <option value="medium-dark">Medium Dark</option>
@@ -396,7 +383,7 @@ const AdminProductForm = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.origin')}
+                  Xuất xứ
                 </label>
                 <input
                   type="text"
@@ -408,14 +395,14 @@ const AdminProductForm = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('admin.processingMethod')}
+                  Phương pháp chế biến
                 </label>
                 <select
                   value={formData.processingMethod}
                   onChange={(e) => handleInputChange('processingMethod', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-brown-500 focus:border-brown-500"
                 >
-                  <option value="">{t('admin.selectProcessing')}</option>
+                  <option value="">Chọn phương pháp</option>
                   <option value="washed">Washed</option>
                   <option value="natural">Natural</option>
                   <option value="honey">Honey</option>
@@ -423,11 +410,9 @@ const AdminProductForm = () => {
                 </select>
               </div>
             </div>
-          </div>
-
-          {/* Categories */}
+          </div>          {/* Categories */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.categories')}</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Danh mục</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {categories.map((category) => (
                 <label key={category.id} className="flex items-center">
@@ -451,7 +436,7 @@ const AdminProductForm = () => {
 
           {/* Options */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('admin.options')}</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Tùy chọn</h3>
             <div className="space-y-4">
               <label className="flex items-center">
                 <input
@@ -460,7 +445,7 @@ const AdminProductForm = () => {
                   onChange={(e) => handleInputChange('isFeatured', e.target.checked)}
                   className="h-4 w-4 text-brown-600 focus:ring-brown-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700">{t('admin.featured')}</span>
+                <span className="ml-2 text-sm text-gray-700">Sản phẩm nổi bật</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -469,27 +454,25 @@ const AdminProductForm = () => {
                   onChange={(e) => handleInputChange('isActive', e.target.checked)}
                   className="h-4 w-4 text-brown-600 focus:ring-brown-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700">{t('admin.active')}</span>
+                <span className="ml-2 text-sm text-gray-700">Kích hoạt</span>
               </label>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <button
+          <div className="flex justify-end space-x-4 pt-6 border-t">            <button
               type="button"
               onClick={() => navigate('/admin/products')}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
-              {t('common.cancel')}
-            </button>            <button
+              Hủy
+            </button><button
               type="submit"
               disabled={saving}
               className="px-4 py-2 bg-brown-600 text-white rounded-md hover:bg-brown-700 disabled:opacity-50"
-            >
-              {(() => {
-                if (saving) return t('common.saving');
-                return isEdit ? t('common.update') : t('common.create');
+            >              {(() => {
+                if (saving) return 'Đang lưu...';
+                return isEdit ? 'Cập nhật' : 'Tạo mới';
               })()}
             </button>
           </div>

@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
 import axios from 'axios';
 
 const AdminOrders = () => {
-  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,7 +39,6 @@ const AdminOrders = () => {
       setLoading(false);
     }
   };
-
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
@@ -56,7 +53,7 @@ const AdminOrders = () => {
       ));
     } catch (error) {
       console.error('Error updating order status:', error);
-      alert(t('admin.updateOrderError'));
+      alert('Lỗi khi cập nhật trạng thái đơn hàng');
     }
   };
 
@@ -108,7 +105,6 @@ const AdminOrders = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getPaymentStatusColor = (status) => {
     switch (status) {
       case 'pending':
@@ -121,6 +117,40 @@ const AdminOrders = () => {
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getOrderStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ xử lý';
+      case 'confirmed':
+        return 'Đã xác nhận';
+      case 'processing':
+        return 'Đang xử lý';
+      case 'shipped':
+        return 'Đã gửi hàng';
+      case 'delivered':
+        return 'Đã giao hàng';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return status;
+    }
+  };
+
+  const getPaymentStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ thanh toán';
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'failed':
+        return 'Thanh toán thất bại';
+      case 'refunded':
+        return 'Đã hoàn tiền';
+      default:
+        return status;
     }
   };
   if (loading) {
@@ -140,65 +170,63 @@ const AdminOrders = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="space-y-6">        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('admin.orders')}</h1>
-          <p className="mt-2 text-gray-600">{t('admin.ordersSubtitle')}</p>
+          <h1 className="text-3xl font-bold text-gray-900">Đơn hàng</h1>
+          <p className="mt-2 text-gray-600">Quản lý và theo dõi tất cả đơn hàng</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="bg-white shadow rounded-lg p-6">          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.search')}
+                Tìm kiếm
               </label>
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                placeholder={t('admin.searchOrders')}
+                placeholder="Tìm kiếm đơn hàng..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('admin.orderStatus')}
+                Trạng thái đơn hàng
               </label>
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               >
-                <option value="">{t('common.all')}</option>
-                <option value="pending">{t('admin.orderStatus.pending')}</option>
-                <option value="confirmed">{t('admin.orderStatus.confirmed')}</option>
-                <option value="processing">{t('admin.orderStatus.processing')}</option>
-                <option value="shipped">{t('admin.orderStatus.shipped')}</option>
-                <option value="delivered">{t('admin.orderStatus.delivered')}</option>
-                <option value="cancelled">{t('admin.orderStatus.cancelled')}</option>
+                <option value="">Tất cả</option>
+                <option value="pending">Chờ xử lý</option>
+                <option value="confirmed">Đã xác nhận</option>
+                <option value="processing">Đang xử lý</option>
+                <option value="shipped">Đã gửi hàng</option>
+                <option value="delivered">Đã giao hàng</option>
+                <option value="cancelled">Đã hủy</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('admin.paymentStatus')}
+                Trạng thái thanh toán
               </label>
               <select
                 value={filters.paymentStatus}
                 onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               >
-                <option value="">{t('common.all')}</option>
-                <option value="pending">{t('admin.paymentStatus.pending')}</option>
-                <option value="paid">{t('admin.paymentStatus.paid')}</option>
-                <option value="failed">{t('admin.paymentStatus.failed')}</option>
-                <option value="refunded">{t('admin.paymentStatus.refunded')}</option>
+                <option value="">Tất cả</option>
+                <option value="pending">Chờ thanh toán</option>
+                <option value="paid">Đã thanh toán</option>
+                <option value="failed">Thanh toán thất bại</option>
+                <option value="refunded">Đã hoàn tiền</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('common.sortBy')}
+                Sắp xếp theo
               </label>
               <select
                 value={`${filters.sort}-${filters.order}`}
@@ -209,10 +237,10 @@ const AdminOrders = () => {
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brown-500 focus:border-brown-500"
               >
-                <option value="createdAt-DESC">{t('common.newest')}</option>
-                <option value="createdAt-ASC">{t('common.oldest')}</option>
-                <option value="total-DESC">{t('common.totalHighLow')}</option>
-                <option value="total-ASC">{t('common.totalLowHigh')}</option>
+                <option value="createdAt-DESC">Mới nhất</option>
+                <option value="createdAt-ASC">Cũ nhất</option>
+                <option value="total-DESC">Tổng tiền cao đến thấp</option>
+                <option value="total-ASC">Tổng tiền thấp đến cao</option>
               </select>
             </div>
             <div className="flex items-end">
@@ -220,7 +248,7 @@ const AdminOrders = () => {
                 type="submit"
                 className="w-full px-4 py-2 bg-brown-600 text-white rounded-md hover:bg-brown-700 focus:outline-none focus:ring-2 focus:ring-brown-500"
               >
-                {t('common.search')}
+                Tìm kiếm
               </button>
             </div>
           </form>
@@ -245,29 +273,28 @@ const AdminOrders = () => {
         {/* Orders Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200">              <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.order')}
+                    Đơn hàng
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.customer')}
+                    Khách hàng
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.total')}
+                    Tổng tiền
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.orderStatus')}
+                    Trạng thái đơn hàng
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.paymentStatus')}
+                    Trạng thái thanh toán
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.date')}
+                    Ngày tạo
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('admin.actions')}
+                    Thao tác
                   </th>
                 </tr>
               </thead>
@@ -297,34 +324,32 @@ const AdminOrders = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(order.total)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <select
+                    <td className="px-6 py-4 whitespace-nowrap">                      <select
                         value={order.status}
                         onChange={(e) => updateOrderStatus(order.id, e.target.value)}
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-0 ${getStatusColor(order.status)}`}
                       >
-                        <option value="pending">{t('admin.orderStatus.pending')}</option>
-                        <option value="confirmed">{t('admin.orderStatus.confirmed')}</option>
-                        <option value="processing">{t('admin.orderStatus.processing')}</option>
-                        <option value="shipped">{t('admin.orderStatus.shipped')}</option>
-                        <option value="delivered">{t('admin.orderStatus.delivered')}</option>
-                        <option value="cancelled">{t('admin.orderStatus.cancelled')}</option>
+                        <option value="pending">Chờ xử lý</option>
+                        <option value="confirmed">Đã xác nhận</option>
+                        <option value="processing">Đang xử lý</option>
+                        <option value="shipped">Đã gửi hàng</option>
+                        <option value="delivered">Đã giao hàng</option>
+                        <option value="cancelled">Đã hủy</option>
                       </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentStatusColor(order.paymentStatus)}`}>
-                        {t(`admin.paymentStatus.${order.paymentStatus}`)}
+                        {getPaymentStatusText(order.paymentStatus)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(order.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    </td>                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link
                         to={`/admin/orders/${order.id}`}
                         className="text-brown-600 hover:text-brown-900"
                       >
-                        {t('common.view')}
+                        Xem
                       </Link>
                     </td>
                   </tr>
@@ -334,28 +359,27 @@ const AdminOrders = () => {
           </div>
 
           {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          {pagination.totalPages > 1 && (            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
               <div className="flex-1 flex justify-between sm:hidden">
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={!pagination.hasPrev}
                   className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('common.previous')}
+                  Trước
                 </button>
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={!pagination.hasNext}
                   className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t('common.next')}
+                  Tiếp
                 </button>
               </div>
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    {t('common.showing')} <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> {t('common.to')} <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.totalItems)}</span> {t('common.of')} <span className="font-medium">{pagination.totalItems}</span> {t('common.results')}
+                    Hiển thị <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> đến <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.totalItems)}</span> trong tổng số <span className="font-medium">{pagination.totalItems}</span> kết quả
                   </p>
                 </div>
                 <div>
@@ -365,7 +389,7 @@ const AdminOrders = () => {
                       disabled={!pagination.hasPrev}
                       className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="sr-only">{t('common.previous')}</span>
+                      <span className="sr-only">Trước</span>
                       <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -392,7 +416,7 @@ const AdminOrders = () => {
                       disabled={!pagination.hasNext}
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="sr-only">{t('common.next')}</span>
+                      <span className="sr-only">Tiếp</span>
                       <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>

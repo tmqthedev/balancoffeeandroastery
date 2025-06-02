@@ -96,10 +96,9 @@ const Products = () => {
                 setProducts([]);
                 setTotalProducts(0);
                 setTotalPages(1);
-            }
-        } catch (error) {
+            }        } catch (error) {
             console.error('Failed to fetch products:', error);
-            setError(error.response?.data?.message || t('common.errorLoadingProducts'));
+            setError(error.response?.data?.message || 'Lỗi khi tải danh sách sản phẩm');
             setProducts([]);
             setTotalProducts(0);
             setTotalPages(1);
@@ -128,14 +127,12 @@ const Products = () => {
         setFilters(prev => ({ ...prev, search: value }));
         const cleanup = debouncedSearch(value);
         return cleanup;
-    }, [debouncedSearch]);
-
-    const handleAddToCart = async (product) => {
+    }, [debouncedSearch]);    const handleAddToCart = async (product) => {
         try {
             await addToCart(product.id, 1);
         } catch (error) {
             console.error('Failed to add to cart:', error);
-            setError(t('cart.addError'));
+            setError('Lỗi khi thêm sản phẩm vào giỏ hàng');
         }
     };
 
@@ -184,12 +181,10 @@ const Products = () => {
         }
 
         return rangeWithDots;
-    }, [currentPage, totalPages]);
-
-    const structuredData = {
+    }, [currentPage, totalPages]);    const structuredData = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        "name": t('products.title'),
+        "name": "Sản phẩm cà phê",
         "description": "Premium Vietnamese coffee beans including Arabica Cầu Đất, Robusta Lâm Đồng",
         "url": window.location.href,
         "mainEntity": {
@@ -289,13 +284,11 @@ const Products = () => {
                                             </option>
                                         ))}
                                     </select>
-                                </div>
-
-                                {/* Price Range */}
+                                </div>                                {/* Price Range */}
                                 <div className="mb-6">
-                                    <label className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <h3 className="block text-sm font-medium text-coffee-700 mb-2">
                                         Khoảng giá
-                                    </label>
+                                    </h3>
                                     <div className="grid grid-cols-2 gap-2">
                                         <input
                                             type="number"
@@ -305,6 +298,7 @@ const Products = () => {
                                             className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
                                             min="0"
                                             step="0.01"
+                                            aria-label="Giá tối thiểu"
                                         />
                                         <input
                                             type="number"
@@ -314,6 +308,7 @@ const Products = () => {
                                             className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
                                             min="0"
                                             step="0.01"
+                                            aria-label="Giá tối đa"
                                         />
                                     </div>
                                 </div>
