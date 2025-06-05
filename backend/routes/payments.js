@@ -26,6 +26,17 @@ const VNPAY_CONFIG = {
     locale: 'vn'
 };
 
+// iPOS API Configuration (for Momo QR payments as per SDD)
+const IPOS_CONFIG = {
+    apiUrl: process.env.IPOS_API_URL || 'https://api.ipos.vn',
+    partnerCode: process.env.IPOS_PARTNER_CODE,
+    accessKey: process.env.IPOS_ACCESS_KEY,
+    secretKey: process.env.IPOS_SECRET_KEY,
+    webhookSecret: process.env.IPOS_WEBHOOK_SECRET,
+    redirectUrl: process.env.IPOS_REDIRECT_URL || 'http://localhost:3000/payment/result',
+    ipnUrl: process.env.IPOS_IPN_URL || 'http://localhost:5000/api/payments/ipos/callback'
+};
+
 // Create Momo Payment
 router.post('/momo/create', authenticateToken, async (req, res) => {
     try {
@@ -289,6 +300,172 @@ router.get('/status/:orderId', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Payment status error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// iPOS API - Create Momo QR Payment (as per SDD requirements)
+router.post('/ipos/create-qr', authenticateToken, async (req, res) => {
+    try {
+        const { orderId, amount, orderInfo } = req.body;
+
+        // Validate order belongs to user
+        const orderQuery = `
+            SELECT o.*, u.email, u.firstName, u.lastName 
+            FROM Orders o 
+            JOIN Users u ON o.userId = u.id 
+            WHERE o.id = @orderId AND o.userId = @userId AND o.status = 'pending'
+        `;        const orderResult = await executeQuery(orderQuery, { orderId, userId: req.user.userId });
+
+        if (orderResult.length === 0) {
+            return res.status(404).json({ success: false, message: 'Order not found or already processed' });
+        }
+
+        const requestId = `IPOS_${orderId}_${Date.now()}`;
+        const timestamp = Math.floor(Date.now() / 1000);
+
+        // Create signature for iPOS API
+        const signatureString = `${IPOS_CONFIG.partnerCode}${requestId}${amount}${orderId}${timestamp}`;
+        const signature = crypto.createHmac('sha256', IPOS_CONFIG.secretKey).update(signatureString).digest('hex');
+
+        const requestBody = {
+            partnerCode: IPOS_CONFIG.partnerCode,
+            accessKey: IPOS_CONFIG.accessKey,
+            requestId: requestId,
+            orderId: orderId,
+            amount: amount,
+            orderInfo: orderInfo,
+            redirectUrl: IPOS_CONFIG.redirectUrl,
+            ipnUrl: IPOS_CONFIG.ipnUrl,
+            timestamp: timestamp,
+            signature: signature,
+            paymentMethod: 'MOMO_QR'
+        };
+
+        // Send request to iPOS API
+        const response = await axios.post(`${IPOS_CONFIG.apiUrl}/v1/payment/create`, requestBody, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${IPOS_CONFIG.accessKey}`
+            }
+        });
+
+        if (response.data.success) {
+            // Update order with payment info
+            await executeQuery(`
+                UPDATE Orders 
+                SET paymentMethod = 'ipos_momo_qr', paymentReference = @requestId, updatedAt = GETDATE()
+                WHERE id = @orderId
+            `, { requestId, orderId });
+
+            res.json({
+                success: true,
+                qrCode: response.data.qrCode,
+                paymentUrl: response.data.paymentUrl,
+                requestId: requestId,
+                expiryTime: response.data.expiryTime
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                message: 'Failed to create iPOS payment',
+                error: response.data.message
+            });
+        }
+    } catch (error) {
+        console.error('iPOS payment creation error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// iPOS API - Webhook Callback
+router.post('/ipos/callback', async (req, res) => {
+    try {
+        const { orderId, transactionId, amount, status, timestamp, signature } = req.body;
+
+        // Verify webhook signature
+        const signatureString = `${orderId}${transactionId}${amount}${status}${timestamp}`;
+        const expectedSignature = crypto.createHmac('sha256', IPOS_CONFIG.webhookSecret).update(signatureString).digest('hex');
+
+        if (signature !== expectedSignature) {
+            return res.status(400).json({ success: false, message: 'Invalid signature' });
+        }
+
+        if (status === 'SUCCESS') {
+            // Payment successful
+            await executeQuery(`
+                UPDATE Orders 
+                SET status = 'paid', paymentStatus = 'completed', paymentReference = @transactionId, updatedAt = GETDATE()
+                WHERE id = @orderId
+            `, { transactionId, orderId });
+
+            // Update product stock
+            await executeQuery(`
+                UPDATE Products 
+                SET stockQuantity = stockQuantity - op.quantity
+                FROM Products p
+                JOIN OrderProducts op ON p.id = op.productId
+                WHERE op.orderId = @orderId
+            `, { orderId });
+        } else if (status === 'FAILED') {
+            // Payment failed
+            await executeQuery(`
+                UPDATE Orders 
+                SET status = 'cancelled', paymentStatus = 'failed', updatedAt = GETDATE()
+                WHERE id = @orderId
+            `, { orderId });
+        }
+
+        res.json({ success: true, message: 'Webhook processed successfully' });
+    } catch (error) {
+        console.error('iPOS callback error:', error);
+        res.status(500).json({ success: false, message: 'Webhook processing failed' });
+    }
+});
+
+// iPOS API - Check Payment Status
+router.get('/ipos/status/:orderId', authenticateToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+
+        // Get payment reference from order
+        const orderQuery = `
+            SELECT paymentReference, paymentMethod 
+            FROM Orders 
+            WHERE id = @orderId AND userId = @userId AND paymentMethod = 'ipos_momo_qr'
+        `;
+        const orderResult = await executeQuery(orderQuery, { orderId, userId: req.user.userId });
+
+        if (orderResult.length === 0) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        const order = orderResult[0];
+        const timestamp = Math.floor(Date.now() / 1000);
+        const signatureString = `${IPOS_CONFIG.partnerCode}${order.paymentReference}${timestamp}`;
+        const signature = crypto.createHmac('sha256', IPOS_CONFIG.secretKey).update(signatureString).digest('hex');
+
+        // Query iPOS API for payment status
+        const response = await axios.get(`${IPOS_CONFIG.apiUrl}/v1/payment/status`, {
+            params: {
+                partnerCode: IPOS_CONFIG.partnerCode,
+                requestId: order.paymentReference,
+                timestamp: timestamp,
+                signature: signature
+            },
+            headers: {
+                'Authorization': `Bearer ${IPOS_CONFIG.accessKey}`
+            }
+        });
+
+        res.json({
+            success: true,
+            paymentStatus: response.data.status,
+            transactionId: response.data.transactionId,
+            amount: response.data.amount
+        });
+    } catch (error) {
+        console.error('iPOS status check error:', error);
+        res.status(500).json({ success: false, message: 'Failed to check payment status' });
     }
 });
 

@@ -2,13 +2,13 @@
 -- Database: BalanCoffeeRoastery
 
 -- Create Database
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'BalanCoffeeRoastery')
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'BalanCoffeeDB')
 BEGIN
-    CREATE DATABASE BalanCoffeeRoastery;
+    CREATE DATABASE BalanCoffeeDB;
 END
 GO
 
-USE BalanCoffeeRoastery;
+USE BalanCoffeeDB;
 GO
 
 -- Users Table

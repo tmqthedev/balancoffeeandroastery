@@ -5,6 +5,7 @@ const db = require('../config/database');
 // Get all products with filters, pagination, and sorting
 router.get('/', async (req, res) => {
   try {
+    console.log('🔍 Products API called with query:', req.query);
     const {
       page = 1,
       limit = 12,
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
       whereConditions.push('p.price >= @minPrice');
       params.minPrice = parseFloat(minPrice);
     }
-
+    
     if (maxPrice) {
       whereConditions.push('p.price <= @maxPrice');
       params.maxPrice = parseFloat(maxPrice);
@@ -41,7 +42,7 @@ router.get('/', async (req, res) => {
     }
 
     if (search) {
-      whereConditions.push('(p.name LIKE @search OR p.description LIKE @search OR p.nameVi LIKE @search OR p.descriptionVi LIKE @search)');
+      whereConditions.push('(p.name LIKE @search OR p.shortDescription LIKE @search OR p.nameVi LIKE @search OR p.shortDescriptionVi LIKE @search)');
       params.search = `%${search}%`;
     }
 
@@ -66,28 +67,30 @@ router.get('/', async (req, res) => {
 
     // Get total count
     const countQuery = `
-      SELECT COUNT(DISTINCT p.id) as total
+      SELECT COUNT(p.id) as total
       FROM Products p
       LEFT JOIN ProductCategories pc ON p.id = pc.productId
       LEFT JOIN Categories c ON pc.categoryId = c.id
       ${whereClause}
     `;
     
+    console.log('🔍 Count query:', countQuery);
+    console.log('🔍 Query params:', params);
     const countResult = await db.query(countQuery, params);
+    console.log('🔍 Count result:', countResult);
     const total = countResult[0]?.total || 0;
 
     // Get products
     const productsQuery = `
-      SELECT DISTINCT 
+      SELECT 
         p.id,
         p.name,
         p.nameVi,
-        p.description,
-        p.descriptionVi,
+        p.shortDescription as description,
+        p.shortDescriptionVi as descriptionVi,
         p.price,
         p.comparePrice,
         p.stockQuantity as stock_quantity,
-        p.imageUrl as image_url,
         p.isFeatured,
         p.createdAt
       FROM Products p
@@ -99,7 +102,9 @@ router.get('/', async (req, res) => {
       FETCH NEXT @limit ROWS ONLY
     `;
 
+    console.log('🔍 Products query:', productsQuery);
     const products = await db.query(productsQuery, params);
+    console.log('🔍 Products result:', products?.length, 'products found');
 
     res.json({
       success: true,
@@ -111,7 +116,9 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get products error:', error);
+    console.error('❌ Get products error:', error);
+    console.error('❌ Error details:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch products',
@@ -135,39 +142,36 @@ router.get('/categories', async (req, res) => {
       success: true,
       categories: categories || []
     });
-
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to fetch categories',
-      categories: []
+      message: 'Failed to fetch categories' 
     });
   }
 });
 
-// Get single product
+// Get single product by ID
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const productQuery = `
+    const product = await db.query(`
       SELECT 
         p.*,
-        STUFF((
-          SELECT ', ' + c.name
-          FROM ProductCategories pc
-          JOIN Categories c ON pc.categoryId = c.id
-          WHERE pc.productId = p.id
-          FOR XML PATH('')
-        ), 1, 2, '') as categories
+        STRING_AGG(c.name, ', ') as categories,
+        STRING_AGG(c.nameVi, ', ') as categoriesVi
       FROM Products p
+      LEFT JOIN ProductCategories pc ON p.id = pc.productId
+      LEFT JOIN Categories c ON pc.categoryId = c.id
       WHERE p.id = @id AND p.isActive = 1
-    `;
+      GROUP BY p.id, p.name, p.nameVi, p.shortDescription, p.shortDescriptionVi, 
+               p.price, p.comparePrice, p.stockQuantity, p.isFeatured, p.createdAt,
+               p.updatedAt, p.isActive, p.sku, p.weight, p.origin, p.roastLevel,
+               p.processingMethod, p.altText, p.metaTitle, p.metaDescription
+    `, { id });
 
-    const products = await db.query(productQuery, { id: parseInt(id) });
-
-    if (products.length === 0) {
+    if (!product || product.length === 0) {
       return res.status(404).json({ 
         success: false, 
         message: 'Product not found' 
@@ -175,16 +179,12 @@ router.get('/:id', async (req, res) => {
     }
 
     // Increment view count
-    await db.execute(
-      'UPDATE Products SET views = ISNULL(views, 0) + 1 WHERE id = @id',
-      { id: parseInt(id) }
-    );
+    await db.query('UPDATE Products SET views = views + 1 WHERE id = @id', { id });
 
     res.json({
       success: true,
-      product: products[0]
+      product: product[0]
     });
-
   } catch (error) {
     console.error('Get product error:', error);
     res.status(500).json({ 

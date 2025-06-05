@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 

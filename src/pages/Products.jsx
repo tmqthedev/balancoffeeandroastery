@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 
@@ -43,7 +43,7 @@ const Products = () => {
         return Math.min(products.length, productsPerPage);
     }, [products.length]);    useEffect(() => {
         fetchProducts();
-    }, [fetchProducts]);
+    }, [filters, sortBy, currentPage]); // Direct dependencies instead of fetchProducts
 
     useEffect(() => {
         fetchCategories();
@@ -98,12 +98,13 @@ const Products = () => {
             setProducts([]);
             setTotalProducts(0);
             setTotalPages(1);
-        } finally {
+                } finally {
             setLoading(false);
         }
     }, [filters, sortBy, currentPage]);
 
-    const fetchCategories = async () => {        try {
+    const fetchCategories = async () => {
+        try {
             const response = await axios.get(`${API_BASE_URL}/api/categories`, { timeout: 5000 });
             if (response.data?.categories) {
                 setCategories(response.data.categories);
@@ -125,7 +126,7 @@ const Products = () => {
         return cleanup;
     }, [debouncedSearch]);    const handleAddToCart = async (product) => {
         try {
-            await addToCart(product.id, 1);
+            await addToCart(product, 1);
         } catch (error) {
             console.error('Failed to add to cart:', error);
             setError('Lỗi khi thêm sản phẩm vào giỏ hàng');

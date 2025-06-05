@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
+
+// Configure axios defaults
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -10,15 +13,16 @@ const Blog = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [categories, setCategories] = useState([]);  const blogsPerPage = 6;
-  useEffect(() => {
+  const [categories, setCategories] = useState([]);  const blogsPerPage = 6;  useEffect(() => {
     fetchBlogs();
+  }, [currentPage, searchTerm, selectedCategory]); // Direct dependencies
+
+  useEffect(() => {
     fetchCategories();
-  }, [fetchBlogs, fetchCategories]);
-  const fetchBlogs = useCallback(async () => {
+  }, []); // Only run onceconst fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/blogs', {
+      const response = await axios.get(`${API_BASE_URL}/api/blogs`, {
         params: {
           page: currentPage,
           limit: blogsPerPage,
@@ -33,10 +37,9 @@ const Blog = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, selectedCategory]);
-  const fetchCategories = useCallback(async () => {
+  }, [currentPage, searchTerm, selectedCategory];  const fetchCategories = useCallback(async () => {
     try {
-      const response = await axios.get('/api/blogs/categories');
+      const response = await axios.get(`${API_BASE_URL}/api/blogs/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -231,7 +234,9 @@ const Blog = () => {
                   >
                     {index + 1}
                   </button>
-                ))}                <button
+                ))}
+
+                <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
                   className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"

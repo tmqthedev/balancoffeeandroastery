@@ -6,7 +6,7 @@ import { useCart } from '../../context/CartContext';
 const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();    const { user, isAuthenticated, logout } = useAuth();
-    const { cartItems, getCartTotals } = useCart();
+    const { getCartTotals } = useCart();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 

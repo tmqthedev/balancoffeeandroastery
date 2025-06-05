@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { executeQuery } = require('../config/database');
+const db = require('../config/database');
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
@@ -17,12 +17,10 @@ const authenticateToken = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         // Verify user still exists and is active
-        const userQuery = `
-            SELECT user_id, username, email, full_name, role, is_active 
-            FROM Users 
-            WHERE user_id = @userId AND is_active = 1
-        `;
-        const userResult = await executeQuery(userQuery, { userId: decoded.userId });
+        const userResult = await db.query(
+            'SELECT id, email, firstName, lastName, role, isActive FROM Users WHERE id = @userId AND isActive = 1',
+            { userId: decoded.userId }
+        );
 
         if (userResult.length === 0) {
             return res.status(401).json({ 
@@ -32,10 +30,10 @@ const authenticateToken = async (req, res, next) => {
         }
 
         req.user = {
-            userId: userResult[0].user_id,
-            username: userResult[0].username,
+            userId: userResult[0].id,
             email: userResult[0].email,
-            fullName: userResult[0].full_name,
+            firstName: userResult[0].firstName,
+            lastName: userResult[0].lastName,  
             role: userResult[0].role
         };
 
@@ -48,7 +46,7 @@ const authenticateToken = async (req, res, next) => {
             });
         }
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 success: false, 
                 message: 'Token expired' 
             });

@@ -15,7 +15,7 @@ const Home = React.lazy(() => import('../pages/Home'));
 const Products = React.lazy(() => import('../pages/Products'));
 const ProductDetail = React.lazy(() => import('../pages/ProductDetail'));
 const Cart = React.lazy(() => import('../pages/Cart'));
-const Blog = React.lazy(() => import('../pages/Blog'));
+const Blog = React.lazy(() => import('../pages/BlogSimple'));
 const BlogPost = React.lazy(() => import('../pages/BlogPost'));
 const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));
@@ -29,8 +29,7 @@ const Account = React.lazy(() => import('../pages/Account'));
 
 const PublicRoutes = () => {
   return (
-    <Suspense fallback={<PublicLoadingSpinner />}>
-      <Routes>
+    <Suspense fallback={<PublicLoadingSpinner />}>      <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />

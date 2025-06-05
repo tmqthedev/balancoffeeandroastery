@@ -10,31 +10,42 @@ passport.use(new LocalStrategy({
   passwordField: 'password'
 }, async (email, password, done) => {
   try {
+    console.log('🔍 Passport Local Strategy - Email:', email);
     const users = await db.query(
       'SELECT * FROM Users WHERE email = @email AND isActive = 1',
       { email }
     );
 
+    console.log('🔍 Passport Local Strategy - Users found:', users.length);
     if (users.length === 0) {
+      console.log('❌ No user found with email:', email);
       return done(null, false, { message: 'Invalid email or password' });
     }
 
     const user = users[0];
+    console.log('🔍 Passport Local Strategy - User:', { 
+      id: user.id, 
+      email: user.email, 
+      hasPassword: !!user.password,
+      passwordLength: user.password ? user.password.length : 0
+    });
 
     if (!user.password) {
+      console.log('❌ No password found for user');
       return done(null, false, { message: 'Please use social login or reset your password' });
-    }
-
+    }    console.log('🔍 Passport Local Strategy - Comparing passwords...');
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('🔍 Passport Local Strategy - Password match:', isMatch);
 
     if (!isMatch) {
+      console.log('❌ Password does not match');
       return done(null, false, { message: 'Invalid email or password' });
-    }
-
-    // Remove password from user object
-    delete user.password;
-    return done(null, user);
-  } catch (error) {
+    }    console.log('✅ Authentication successful for user:', user.email);
+    // Create a copy and remove password from the copy
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+    return done(null, userWithoutPassword);} catch (error) {
+    console.error('❌ Passport Local Strategy error:', error);
     return done(error);
   }
 }));
@@ -52,12 +63,11 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
     let users = await db.query(
       'SELECT * FROM Users WHERE facebookId = @facebookId',
       { facebookId: profile.id }
-    );
-
-    if (users.length > 0) {
+    );    if (users.length > 0) {
       const user = users[0];
-      delete user.password;
-      return done(null, user);
+      const userWithoutPassword = { ...user };
+      delete userWithoutPassword.password;
+      return done(null, userWithoutPassword);
     }
 
     // Check if user exists with the same email
@@ -83,11 +93,10 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
         const updatedUsers = await db.query(
           'SELECT * FROM Users WHERE email = @email',
           { email }
-        );
-
-        const user = updatedUsers[0];
-        delete user.password;
-        return done(null, user);
+        );        const user = updatedUsers[0];
+        const userWithoutPassword = { ...user };
+        delete userWithoutPassword.password;
+        return done(null, userWithoutPassword);
       }
     }
 
@@ -107,11 +116,10 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
         facebookId: profile.id,
         profileImage: profile.photos && profile.photos[0] ? profile.photos[0].value : null
       }
-    );
-
-    const newUser = result.recordset[0];
-    delete newUser.password;
-    return done(null, newUser);
+    );    const newUser = result.recordset[0];
+    const userWithoutPassword = { ...newUser };
+    delete userWithoutPassword.password;
+    return done(null, userWithoutPassword);
   } catch (error) {
     console.error('Facebook strategy error:', error);
     return done(error);
@@ -136,11 +144,10 @@ passport.deserializeUser(async (id, done) => {
 
     if (users.length === 0) {
       return done(null, false);
-    }
-
-    const user = users[0];
-    delete user.password;
-    done(null, user);
+    }    const user = users[0];
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+    done(null, userWithoutPassword);
   } catch (error) {
     done(error);
   }

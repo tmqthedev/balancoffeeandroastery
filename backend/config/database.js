@@ -36,13 +36,25 @@ const connect = async () => {
     }
     
     if (!pool) {
+      console.log('🔗 Attempting to connect to Azure SQL Database...');
       pool = new sql.ConnectionPool(config);
       await pool.connect();
+      console.log('✅ Successfully connected to Azure SQL Database');
     }
     return pool;
   } catch (err) {
-    console.error('Database connection error:', err);
-    console.log('🔄 Switching to mock database for development...');
+    console.error('❌ Azure SQL Database connection failed:', err.message);
+    
+    if (err.message.includes('not allowed to access')) {
+      console.log('💡 IP Address not whitelisted in Azure SQL firewall');
+      console.log('🔄 Switching to mock database for development...');
+    } else if (err.message.includes('Login failed')) {
+      console.log('💡 Authentication failed - check credentials');
+      console.log('🔄 Switching to mock database for development...');
+    } else {
+      console.log('🔄 Switching to mock database for development...');
+    }
+    
     useMockDb = true;
     if (!mockDb) {
       mockDb = new MockDatabase();

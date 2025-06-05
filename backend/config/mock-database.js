@@ -2,11 +2,10 @@
 class MockDatabase {
   constructor() {
     this.mockData = {
-      users: [
-        {
+      users: [        {
           id: 1,
           email: 'admin@balancoffee.com',
-          password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewBaJtzB.Y.G6M8G', // password123
+          password: '$2b$12$v.Asbvx1DxwYFel57uUu.eUFA3GuowvuNVyfdPV194acvto6woacu', // password123
           firstName: 'Admin',
           lastName: 'User',
           role: 'admin',
@@ -17,7 +16,7 @@ class MockDatabase {
         {
           id: 2,
           email: 'user@example.com',
-          password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewBaJtzB.Y.G6M8G',
+          password: '$2b$12$v.Asbvx1DxwYFel57uUu.eUFA3GuowvuNVyfdPV194acvto6woacu', // password123
           firstName: 'John',
           lastName: 'Doe',
           role: 'customer',
@@ -137,7 +136,59 @@ class MockDatabase {
           isActive: true
         }
       ],
-      blogs: [],
+      blogs: [
+        {
+          id: 1,
+          title: 'The Art of Coffee Roasting',
+          titleVi: 'Nghệ Thuật Rang Cà Phê',
+          slug: 'art-of-coffee-roasting',
+          excerpt: 'Discover the secrets behind perfect coffee roasting and how it affects the flavor profile.',
+          excerptVi: 'Khám phá bí mật đằng sau việc rang cà phê hoàn hảo và cách nó ảnh hưởng đến hương vị.',
+          content: 'Coffee roasting is both an art and a science...',
+          contentVi: 'Rang cà phê vừa là nghệ thuật vừa là khoa học...',
+          featuredImage: '/images/blog/coffee-roasting.jpg',
+          publishedAt: new Date('2024-01-15'),
+          status: 'published',
+          tags: 'roasting,coffee,arabica',
+          viewCount: 245,
+          authorId: 1,
+          createdAt: new Date('2024-01-01')
+        },
+        {
+          id: 2,
+          title: 'Vietnamese Coffee Culture',
+          titleVi: 'Văn Hóa Cà Phê Việt Nam',
+          slug: 'vietnamese-coffee-culture',
+          excerpt: 'Explore the rich tradition of Vietnamese coffee and its unique brewing methods.',
+          excerptVi: 'Khám phá truyền thống phong phú của cà phê Việt Nam và phương pháp pha chế độc đáo.',
+          content: 'Vietnamese coffee culture has a long and storied history...',
+          contentVi: 'Văn hóa cà phê Việt Nam có một lịch sử lâu đời và phong phú...',
+          featuredImage: '/images/blog/vietnamese-coffee.jpg',
+          publishedAt: new Date('2024-02-01'),
+          status: 'published',
+          tags: 'vietnamese,culture,traditional',
+          viewCount: 189,
+          authorId: 1,
+          createdAt: new Date('2024-01-15')
+        },
+        {
+          id: 3,
+          title: 'Health Benefits of Coffee',
+          titleVi: 'Lợi Ích Sức Khỏe Của Cà Phê',
+          slug: 'health-benefits-of-coffee',
+          excerpt: 'Learn about the surprising health benefits of moderate coffee consumption.',
+          excerptVi: 'Tìm hiểu về những lợi ích sức khỏe đáng ngạc nhiên của việc uống cà phê vừa phải.',
+          content: 'Recent studies have shown that coffee consumption...',
+          contentVi: 'Các nghiên cứu gần đây đã chỉ ra rằng việc uống cà phê...',
+          featuredImage: '/images/blog/coffee-health.jpg',
+          publishedAt: new Date('2024-02-15'),
+          status: 'published',
+          tags: 'health,benefits,research',
+          viewCount: 156,
+          authorId: 1,
+          createdAt: new Date('2025-06-04')
+        }
+      ],
       contacts: [],
       orders: []
     };
@@ -198,10 +249,64 @@ class MockDatabase {
       }
       
       return products;
+    }    if (sql.includes('SELECT') && sql.includes('Categories')) {
+      return [...this.mockData.categories];
     }
 
-    if (sql.includes('SELECT') && sql.includes('Categories')) {
-      return [...this.mockData.categories];
+    if (sql.includes('SELECT') && sql.includes('Blogs')) {
+      let blogs = [...this.mockData.blogs];
+      
+      // Add author name for JOIN queries
+      if (sql.includes('Users u ON b.authorId = u.id')) {
+        blogs = blogs.map(blog => {
+          const author = this.mockData.users.find(u => u.id === blog.authorId);
+          return {
+            ...blog,
+            authorName: author ? `${author.firstName} ${author.lastName}` : 'Unknown Author'
+          };
+        });
+      }
+      
+      // Handle search
+      if (sql.includes('LIKE @search') && params.search) {
+        const searchTerm = params.search.replace(/%/g, '').toLowerCase();
+        blogs = blogs.filter(blog => 
+          blog.title.toLowerCase().includes(searchTerm) ||
+          blog.titleVi.toLowerCase().includes(searchTerm) ||
+          blog.content.toLowerCase().includes(searchTerm) ||
+          blog.contentVi.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // Handle status filter
+      if (sql.includes('status = @status') && params.status) {
+        blogs = blogs.filter(blog => blog.status === params.status);
+      }
+      
+      // Handle count query
+      if (sql.includes('COUNT')) {
+        return [{ total: blogs.length }];
+      }
+      
+      // Handle single blog by slug
+      if (sql.includes('WHERE b.slug = @slug') && params.slug) {
+        const blog = blogs.find(b => b.slug === params.slug);
+        return blog ? [blog] : [];
+      }
+      
+      // Apply sorting
+      if (sql.includes('ORDER BY b.publishedAt DESC')) {
+        blogs.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+      }
+      
+      // Handle pagination
+      if (sql.includes('OFFSET') && sql.includes('FETCH NEXT')) {
+        const offset = params.offset || 0;
+        const limit = params.limit || 10;
+        blogs = blogs.slice(offset, offset + limit);
+      }
+      
+      return blogs;
     }
 
     if (sql.includes('SELECT') && sql.includes('Users')) {

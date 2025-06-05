@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
+const { authenticateToken } = require('../middleware/auth');
 
 // Validation middleware
 const { validateRequest, userValidationRules, loginValidationRules } = require('../middleware/validation');
@@ -105,29 +106,46 @@ router.post('/login', [
   })(req, res, next);
 });
 
-// Facebook OAuth routes
-router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+// Facebook OAuth routes (only if configured)
+if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+  router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 
-router.get('/facebook/callback',
-  passport.authenticate('facebook', { session: false }),
-  (req, res) => {
-    try {
-      const token = jwt.sign(
-        { userId: req.user.id, email: req.user.email, role: req.user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || '7d' }
-      );
+  router.get('/facebook/callback',
+    passport.authenticate('facebook', { session: false }),
+    (req, res) => {
+      try {
+        const token = jwt.sign(
+          { userId: req.user.id, email: req.user.email, role: req.user.role },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRE || '7d' }
+        );
 
-      // Redirect to frontend with token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
-    } catch (error) {
-      console.error('Facebook callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/auth/error`);
+        // Redirect to frontend with token
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+      } catch (error) {
+        console.error('Facebook callback error:', error);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        res.redirect(`${frontendUrl}/auth/error`);
+      }
     }
-  }
-);
+  );
+} else {
+  // Provide alternative routes when Facebook OAuth is not configured
+  router.get('/facebook', (req, res) => {
+    res.status(501).json({ 
+      error: 'Facebook OAuth not configured',
+      message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'
+    });
+  });
+
+  router.get('/facebook/callback', (req, res) => {
+    res.status(501).json({ 
+      error: 'Facebook OAuth not configured',
+      message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'
+    });
+  });
+}
 
 // Get current user (protected route)
 router.get('/me', authenticateToken, async (req, res) => {
@@ -141,7 +159,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(users[0]);
+    res.json({ user: users[0] });
 
   } catch (error) {
     console.error('Get user error:', error);
@@ -257,23 +275,5 @@ router.put('/password', authenticateToken, [
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logout successful' });
 });
-
-// Middleware to authenticate JWT token
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
-    }
-    req.user = user;
-    next();
-  });
-}
 
 module.exports = router;

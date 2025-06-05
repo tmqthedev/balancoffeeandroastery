@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -127,7 +127,7 @@ const Cart = () => {
                                                                         : item.description
                                                                     }
                                                                 </p>                                                                <p className="text-coffee-800 font-semibold mt-2">
-                                                                    {item.price.toLocaleString('vi-VN')}đ mỗi sản phẩm
+                                                                    {(item.price * 1000).toLocaleString('vi-VN')}đ mỗi sản phẩm
                                                                 </p>
                                                             </div>
                                                             
@@ -149,10 +149,9 @@ const Cart = () => {
                                                                     >
                                                                         +
                                                                     </button>
-                                                                </div>
-                                                                  <div className="text-right">
+                                                                </div>                                                                  <div className="text-right">
                                                                     <p className="text-lg font-semibold text-coffee-800">
-                                                                        {(item.price * item.quantity).toLocaleString('vi-VN')}đ
+                                                                        {(item.price * item.quantity * 1000).toLocaleString('vi-VN')}đ
                                                                     </p>
                                                                 </div>
                                                                 

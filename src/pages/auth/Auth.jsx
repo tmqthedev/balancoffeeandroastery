@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import { useAuth } from '../../context/AuthContext';
 
 const Auth = () => {

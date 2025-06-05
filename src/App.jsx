@@ -1,11 +1,10 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import { initAnalytics } from './utils/analytics';
 
 // Loading component
 const LoadingSpinner = () => (
@@ -15,46 +14,34 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Lazy load route components for better code splitting
+// Lazy load route components
 const PublicRoutes = React.lazy(() => import('./routes/PublicRoutes'));
-const AdminRoutes = React.lazy(() => import('./routes/AdminRoutes'));
 
 function App() {
-  // Initialize analytics on app mount
-  useEffect(() => {
-    initAnalytics();
-  }, []);
-
   return (
-    <HelmetProvider>
-      <AuthProvider>
-        <CartProvider>
-          <Router>
-            <div className="App">
-              <Navbar />
-              <main className="pt-16">
-                <Routes>
-                  {/* Admin Routes - Separate chunk */}
-                  <Route path="/admin/*" element={
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AdminRoutes />
-                    </Suspense>
-                  } />
-                  
-                  {/* Public Routes - Main chunk */}
-                  <Route path="/*" element={
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <PublicRoutes />
-                    </Suspense>
-                  } />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          </Router>
-        </CartProvider>
-      </AuthProvider>
-    </HelmetProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
+          <div className="App min-h-screen">
+            <Helmet>
+              <title>Balan Coffee & Roastery - Cà phê rang mộc Việt Nam</title>
+              <meta name="description" content="Cà phê rang mộc chất lượng cao từ Balan Coffee & Roastery. Arabica Cầu Đất, Robusta Lâm Đồng nguyên chất." />
+            </Helmet>
+            <Navbar />
+            <main className="pt-16">
+              <Routes>
+                <Route path="/*" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PublicRoutes />
+                  </Suspense>
+                } />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

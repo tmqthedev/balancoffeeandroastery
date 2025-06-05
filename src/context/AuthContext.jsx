@@ -1,7 +1,25 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import axios from 'axios';
 import { AuthContext, useAuth } from './authConstants';
+
+// Configure axios defaults
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Add token to all requests
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 // Re-export AuthContext and useAuth hook
 export { AuthContext, useAuth };
@@ -11,158 +29,146 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Configure axios defaults
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Check if user is authenticated on app load
+    // Check if user is logged in on mount
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    setLoading(false);
-                    return;
-                }
-
-                // Verify token with backend
-                const response = await axios.get('/api/auth/me');
-                if (response.data.success) {
-                    setUser(response.data.user);
-                    setIsAuthenticated(true);
-                } else {
-                    localStorage.removeItem('authToken');
-                    delete axios.defaults.headers.common['Authorization'];
-                }
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                localStorage.removeItem('authToken');
-                delete axios.defaults.headers.common['Authorization'];
-            } finally {
-                setLoading(false);
-            }
-        };        checkAuth();
+        checkAuthStatus();
     }, []);
 
-    // Login function
-    const login = useCallback(async (email, password) => {
+    const checkAuthStatus = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
         try {
-            const response = await axios.post('/api/auth/login', {
+            const response = await api.get('/auth/me');
+            setUser(response.data.user);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            localStorage.removeItem('authToken');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Login function with real API call
+    const login = async (email, password, remember = false) => {
+        setLoading(true);
+        try {
+            const response = await api.post('/auth/login', {
                 email,
-                password
+                password,
+                remember
             });
 
-            if (response.data.success) {
-                const { token, user } = response.data;
-                
-                // Store token in localStorage
-                localStorage.setItem('authToken', token);
-                
-                // Set axios default header
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                
-                // Update state
-                setUser(user);
-                setIsAuthenticated(true);
-                
-                return { success: true };
-            } else {
-                return { success: false, message: response.data.message };
-            }
+            const { token, user: userData } = response.data;
+            
+            // Store token in localStorage
+            localStorage.setItem('authToken', token);
+            
+            // Update state
+            setUser(userData);
+            setIsAuthenticated(true);
+            
+            return { success: true };
         } catch (error) {
-            console.error('Login error:', error);
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Login failed' 
-            };        }
-    }, []);
-
-    // Register function
-    const register = useCallback(async (userData) => {
-        try {
-            const response = await axios.post('/api/auth/register', userData);
-
-            if (response.data.success) {
-                const { token, user } = response.data;
-                
-                // Store token in localStorage
-                localStorage.setItem('authToken', token);
-                
-                // Set axios default header
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                
-                // Update state
-                setUser(user);
-                setIsAuthenticated(true);
-                
-                return { success: true };
-            } else {
-                return { success: false, message: response.data.message };
-            }
-        } catch (error) {
-            console.error('Register error:', error);
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Registration failed' 
-            };        }
-    }, []);
+            console.error('Login failed:', error);
+            const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại';
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Logout function
-    const logout = useCallback(async () => {
+    const logout = async () => {
         try {
-            await axios.post('/api/auth/logout');
+            await api.post('/auth/logout');
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('Logout API error:', error);
         } finally {
-            // Clear local storage and state
             localStorage.removeItem('authToken');
-            delete axios.defaults.headers.common['Authorization'];
             setUser(null);
-            setIsAuthenticated(false);        }
-    }, []);
-
-    // Update user profile
-    const updateProfile = useCallback(async (profileData) => {
+            setIsAuthenticated(false);
+        }
+    };    // Register function with real API call
+    const register = async (userData) => {
+        setLoading(true);
         try {
-            const response = await axios.put('/api/users/profile', profileData);
-            
-            if (response.data.success) {
-                setUser(response.data.user);
-                return { success: true };
-            } else {
-                return { success: false, message: response.data.message };
-            }
-        } catch (error) {
-            console.error('Profile update error:', error);
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Profile update failed' 
-            };        }
-    }, []);
+            const response = await api.post('/auth/register', {
+                email: userData.email,
+                password: userData.password,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                phone: userData.phone
+            });
 
-    // Check if user has specific role
-    const hasRole = useCallback((role) => {
-        return user && user.role === role;
-    }, [user]);    // Check if user is admin
-    const isAdmin = useCallback(() => {
-        return hasRole('admin');
-    }, [hasRole]);
+            const { token, user: newUser } = response.data;
+            
+            // Store token in localStorage
+            localStorage.setItem('authToken', token);
+            
+            // Update state
+            setUser(newUser);
+            setIsAuthenticated(true);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Registration failed:', error);
+            const errorMessage = error.response?.data?.error || 'Đăng ký thất bại';
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Update user info
+    const updateUserInfo = async (userData) => {
+        setLoading(true);
+        try {
+            const response = await api.put('/auth/profile', userData);
+            setUser(response.data.user);
+            return { success: true };
+        } catch (error) {
+            console.error('Update profile failed:', error);
+            const errorMessage = error.response?.data?.error || 'Cập nhật thông tin thất bại';
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Change password
+    const changePassword = async (currentPassword, newPassword) => {
+        setLoading(true);
+        try {
+            await api.put('/auth/password', {
+                currentPassword,
+                newPassword
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Change password failed:', error);
+            const errorMessage = error.response?.data?.error || 'Đổi mật khẩu thất bại';
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const value = useMemo(() => ({
         user,
         loading,
         isAuthenticated,
         login,
-        register,
         logout,
-        updateProfile,
-        hasRole,
-        isAdmin
-    }), [user, loading, isAuthenticated, login, register, logout, updateProfile, hasRole, isAdmin]);
-
-    return (
+        register,
+        updateUserInfo,
+        changePassword,
+        checkAuthStatus
+    }), [user, loading, isAuthenticated]);    return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
@@ -170,5 +176,5 @@ export const AuthProvider = ({ children }) => {
 };
 
 AuthProvider.propTypes = {
-    children: PropTypes.node.isRequired
+    children: PropTypes.node.isRequired,
 };

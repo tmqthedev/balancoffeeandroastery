@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
+
+// Configure axios defaults
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -11,13 +14,12 @@ const BlogPost = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);  useEffect(() => {
     fetchBlogPost();
-  }, [fetchBlogPost]);
-  const fetchBlogPost = useCallback(async () => {
+  }, [fetchBlogPost]);  const fetchBlogPost = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`/api/blogs/${slug}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/blogs/${slug}`, {
         params: { lang: 'vi' }
       });
       
