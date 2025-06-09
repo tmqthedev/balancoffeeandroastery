@@ -82,6 +82,29 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // Login with token (for OAuth callbacks)
+    const loginWithToken = async (token) => {
+        setLoading(true);
+        try {
+            // Store token in localStorage
+            localStorage.setItem('authToken', token);
+            
+            // Get user data using the token
+            const response = await api.get('/auth/me');
+            setUser(response.data.user);
+            setIsAuthenticated(true);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Login with token failed:', error);
+            localStorage.removeItem('authToken');
+            const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại';
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Logout function
     const logout = async () => {
         try {
@@ -156,19 +179,18 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const value = useMemo(() => ({
+    };    const value = useMemo(() => ({
         user,
         loading,
         isAuthenticated,
         login,
+        loginWithToken,
         logout,
         register,
         updateUserInfo,
         changePassword,
         checkAuthStatus
-    }), [user, loading, isAuthenticated]);    return (
+    }), [user, loading, isAuthenticated]);return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>

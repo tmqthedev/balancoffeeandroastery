@@ -109,24 +109,31 @@ router.post('/login', [
 // Facebook OAuth routes (only if configured)
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-
   router.get('/facebook/callback',
     passport.authenticate('facebook', { session: false }),
     (req, res) => {
       try {
+        if (!req.user) {
+          console.error('Facebook callback - No user returned');
+          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+          return res.redirect(`${frontendUrl}/auth/callback?error=no_user`);
+        }
+
         const token = jwt.sign(
           { userId: req.user.id, email: req.user.email, role: req.user.role },
           process.env.JWT_SECRET,
           { expiresIn: process.env.JWT_EXPIRE || '7d' }
         );
 
+        console.log('Facebook callback successful for user:', req.user.email);
+        
         // Redirect to frontend with token
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
       } catch (error) {
         console.error('Facebook callback error:', error);
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        res.redirect(`${frontendUrl}/auth/error`);
+        res.redirect(`${frontendUrl}/auth/callback?error=callback_failed`);
       }
     }
   );

@@ -20,6 +20,7 @@ const BlogPost = React.lazy(() => import('../pages/BlogPost'));
 const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));
 const Auth = React.lazy(() => import('../pages/auth/Auth'));
+const FacebookCallback = React.lazy(() => import('../pages/auth/FacebookCallback'));
 const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 // Protected pages
@@ -38,11 +39,11 @@ const PublicRoutes = () => {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-          {/* Auth Routes */}
+        <Route path="/contact" element={<Contact />} />        {/* Auth Routes */}
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/callback" element={<FacebookCallback />} />
         
         {/* Protected Routes */}
         <Route path="/checkout" element={

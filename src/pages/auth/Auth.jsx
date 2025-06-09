@@ -24,8 +24,8 @@ const Auth = () => {
         password: '',
         confirmPassword: '',
         agreeTerms: false
-    });
-    const [loading, setLoading] = useState(false);
+    });    const [loading, setLoading] = useState(false);
+    const [facebookLoading, setFacebookLoading] = useState(false);
     const [error, setError] = useState('');
     const [registerErrors, setRegisterErrors] = useState({});
 
@@ -131,9 +131,11 @@ const Auth = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleFacebookLogin = () => {
+    };    const handleFacebookLogin = () => {
+        setFacebookLoading(true);
+        // Store intended redirect location
+        sessionStorage.setItem('authRedirect', from);
+        // Redirect to Facebook OAuth
         window.location.href = '/api/auth/facebook';
     };
 
@@ -290,17 +292,20 @@ const Auth = () => {
                                     <div className="relative flex justify-center text-sm">
                                         <span className="px-2 bg-white text-coffee-500">Hoặc đăng nhập với</span>
                                     </div>
-                                </div>
-
-                                <button
+                                </div>                                <button
                                     type="button"
                                     onClick={handleFacebookLogin}
-                                    className="w-full flex items-center justify-center px-4 py-3 border border-coffee-300 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                                    disabled={facebookLoading || loading}
+                                    className="w-full flex items-center justify-center px-4 py-3 border border-coffee-300 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                    </svg>
-                                    Tiếp tục với Facebook
+                                    {facebookLoading ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                    ) : (
+                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    )}
+                                    {facebookLoading ? 'Đang chuyển hướng...' : 'Tiếp tục với Facebook'}
                                 </button>
                             </form>
                         )}
@@ -455,14 +460,38 @@ const Auth = () => {
                                     {registerErrors.agreeTerms && (
                                         <p className="mt-1 text-sm text-red-600">{registerErrors.agreeTerms}</p>
                                     )}
-                                </div>
-
-                                <button
+                                </div>                                <button
                                     type="submit"
                                     disabled={loading}
                                     className="w-full bg-gradient-to-r from-coffee-600 to-coffee-700 text-white py-3 px-4 rounded-lg font-medium hover:from-coffee-700 hover:to-coffee-800 focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
                                 >
                                     {loading ? 'Đang đăng ký...' : 'Tạo tài khoản'}
+                                </button>
+
+                                {/* Divider */}
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-coffee-300" />
+                                    </div>
+                                    <div className="relative flex justify-center text-sm">
+                                        <span className="px-2 bg-white text-coffee-500">Hoặc đăng ký với</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleFacebookLogin}
+                                    disabled={facebookLoading || loading}
+                                    className="w-full flex items-center justify-center px-4 py-3 border border-coffee-300 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {facebookLoading ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                    ) : (
+                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    )}
+                                    {facebookLoading ? 'Đang chuyển hướng...' : 'Tiếp tục với Facebook'}
                                 </button>
                             </form>
                         )}
