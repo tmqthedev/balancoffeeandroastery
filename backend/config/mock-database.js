@@ -307,11 +307,16 @@ class MockDatabase {
       }
       
       return blogs;
-    }
-
-    if (sql.includes('SELECT') && sql.includes('Users')) {
+    }    if (sql.includes('SELECT') && sql.includes('Users')) {
       if (sql.includes('WHERE email = @email')) {
-        return this.mockData.users.filter(u => u.email === params.email);
+        let foundUsers = this.mockData.users.filter(u => u.email === params.email);
+        
+        // Handle additional conditions like isActive = 1
+        if (sql.includes('AND isActive = 1')) {
+          foundUsers = foundUsers.filter(u => u.isActive === true);
+        }
+        
+        return foundUsers;
       }
       if (sql.includes('WHERE id = @userId')) {
         return this.mockData.users.filter(u => u.id === params.userId);
@@ -320,15 +325,14 @@ class MockDatabase {
     }
 
     return [];
-  }
-
-  async execute(sql, params = {}) {
+  }  async execute(sql, params = {}) {
     console.log('Mock DB Execute:', sql.substring(0, 100) + '...');
     
     if (sql.includes('INSERT INTO Users')) {
       const newUser = {
         id: this.mockData.users.length + 1,
         ...params,
+        isActive: true, // Ensure user is active by default
         createdAt: new Date()
       };
       this.mockData.users.push(newUser);

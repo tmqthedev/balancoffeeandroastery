@@ -13,11 +13,6 @@ const { validateRequest, userValidationRules, loginValidationRules } = require('
 // Register
 router.post('/register', validateRequest(userValidationRules), async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password, firstName, lastName, phone } = req.body;
 
     // Check if user already exists
@@ -281,6 +276,51 @@ router.put('/password', authenticateToken, [
 // Logout (client-side token removal)
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logout successful' });
+});
+
+// Debug endpoint to check JWT token (temporary)
+router.get('/debug-token', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'No token provided',
+                authHeader: authHeader
+            });
+        }
+
+        console.log('Token received:', token);
+        console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Present' : 'Missing');
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Decoded token:', decoded);
+        
+        // Check user in database
+        const userResult = await db.execute(
+            'SELECT id, email, firstName, lastName, role, isActive FROM Users WHERE id = @userId',
+            { userId: decoded.userId }
+        );
+        
+        console.log('User query result:', userResult.recordset);
+        
+        res.json({
+            success: true,
+            decoded: decoded,
+            user: userResult.recordset[0] || null,
+            userCount: userResult.recordset.length
+        });
+        
+    } catch (error) {
+        console.error('Debug token error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            name: error.name
+        });
+    }
 });
 
 module.exports = router;

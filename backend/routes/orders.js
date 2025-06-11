@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
 const fetch = require('node-fetch');
+const iposService = require('../services/iposService');
+const emailService = require('../services/emailService');
 
 // Middleware to authenticate token (required for getting orders)
 const authenticateToken = (req, res, next) => {
@@ -45,15 +47,16 @@ const generateOrderNumber = () => {
 
 // Create new order
 router.post('/', authenticateTokenOptional, [
-  body('customerEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('customerName').trim().isLength({ min: 1 }).withMessage('Customer name is required'),
-  body('customerPhone').optional().isMobilePhone('vi-VN').withMessage('Invalid phone number'),
-  body('shippingAddress').trim().isLength({ min: 1 }).withMessage('Shipping address is required'),
-  body('shippingCity').trim().isLength({ min: 1 }).withMessage('Shipping city is required'),
+  body('billing.email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('billing.firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+  body('billing.lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
+  body('billing.phone').optional().isMobilePhone('vi-VN').withMessage('Invalid phone number'),
+  body('billing.address').trim().isLength({ min: 1 }).withMessage('Billing address is required'),
+  body('billing.city').trim().isLength({ min: 1 }).withMessage('Billing city is required'),
   body('items').isArray({ min: 1 }).withMessage('Order items are required'),
   body('items.*.productId').isInt({ min: 1 }).withMessage('Valid product ID is required'),
   body('items.*.quantity').isInt({ min: 1 }).withMessage('Valid quantity is required'),
-  body('paymentMethod').isIn(['momo', 'vnpay', 'cod']).withMessage('Invalid payment method'),
+  body('paymentMethod').optional().isIn(['momo', 'vnpay', 'cod']).withMessage('Invalid payment method'),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -62,25 +65,23 @@ router.post('/', authenticateTokenOptional, [
     }
 
     const {
-      customerEmail,
-      customerName,
-      customerPhone,
-      shippingAddress,
-      shippingCity,
-      shippingPostalCode,
-      billingAddress,
-      billingCity,
-      billingPostalCode,
+      billing,
+      shipping,
       items,
-      paymentMethod,
-      notes
+      paymentMethod = 'cod',
+      notes,
+      subtotal,
+      shippingFee,
+      tax,
+      total
     } = req.body;
 
-    // Validate and calculate order totals
-    let subtotal = 0;
-    const orderItems = [];
+    // Use billing info if shipping is same as billing
+    const shippingInfo = shipping || billing;
 
-    for (const item of items) {
+    // Validate and calculate order totals
+    let calculatedSubtotal = 0;
+    const orderItems = [];    for (const item of items) {
       const products = await db.query(
         'SELECT id, name, price, stockQuantity, sku FROM Products WHERE id = @productId AND isActive = 1',
         { productId: item.productId }
@@ -96,68 +97,62 @@ router.post('/', authenticateTokenOptional, [
         return res.status(400).json({ error: `Insufficient stock for product: ${product.name}` });
       }
 
-      const itemTotal = product.price * item.quantity;
-      subtotal += itemTotal;
-
-      orderItems.push({
+      const itemTotal = (item.price || product.price) * item.quantity;
+      calculatedSubtotal += itemTotal;      orderItems.push({
         productId: product.id,
         productName: product.name,
         productSku: product.sku,
         quantity: item.quantity,
-        price: product.price
+        price: item.price || product.price
       });
     }
 
-    // Calculate fees and total
-    const shippingFee = subtotal >= 500000 ? 0 : 30000; // Free shipping over 500k VND
-    const tax = 0; // No tax for now
-    const discount = 0; // No discount for now
-    const total = subtotal + shippingFee + tax - discount;
+    // Use provided totals or calculate them
+    const calculatedShippingFee = shippingFee || (calculatedSubtotal >= 1000000 ? 0 : 50000); // Free shipping over 1M VND
+    const calculatedTax = tax || Math.round(calculatedSubtotal * 0.1); // 10% tax
+    const calculatedTotal = total || (calculatedSubtotal + calculatedShippingFee + calculatedTax);
 
     // Generate order number
-    const orderNumber = generateOrderNumber();
-
-    // Create order
+    const orderNumber = generateOrderNumber();    // Create order in database first
     const orderResult = await db.execute(`
       INSERT INTO Orders (
         orderNumber, userId, customerEmail, customerName, customerPhone,
-        shippingAddress, shippingCity, shippingPostalCode,
-        billingAddress, billingCity, billingPostalCode,
-        subtotal, shippingFee, tax, discount, total,
+        shippingAddress, shippingCity, shippingPostalCode, shippingProvince,
+        billingAddress, billingCity, billingPostalCode, billingProvince,
+        subtotal, shippingFee, tax, total,
         status, paymentMethod, paymentStatus, notes, createdAt, updatedAt
       )
       OUTPUT INSERTED.*
       VALUES (
         @orderNumber, @userId, @customerEmail, @customerName, @customerPhone,
-        @shippingAddress, @shippingCity, @shippingPostalCode,
-        @billingAddress, @billingCity, @billingPostalCode,
-        @subtotal, @shippingFee, @tax, @discount, @total,
+        @shippingAddress, @shippingCity, @shippingPostalCode, @shippingProvince,
+        @billingAddress, @billingCity, @billingPostalCode, @billingProvince,
+        @subtotal, @shippingFee, @tax, @total,
         'pending', @paymentMethod, 'pending', @notes, GETDATE(), GETDATE()
       )
     `, {
       orderNumber,
       userId: req.user ? req.user.userId : null,
-      customerEmail,
-      customerName,
-      customerPhone: customerPhone || null,
-      shippingAddress,
-      shippingCity,
-      shippingPostalCode: shippingPostalCode || null,
-      billingAddress: billingAddress || shippingAddress,
-      billingCity: billingCity || shippingCity,
-      billingPostalCode: billingPostalCode || shippingPostalCode || null,
-      subtotal,
-      shippingFee,
-      tax,
-      discount,
-      total,
+      customerEmail: billing.email,
+      customerName: `${billing.firstName} ${billing.lastName}`,
+      customerPhone: billing.phone || null,
+      shippingAddress: shippingInfo.address,
+      shippingCity: shippingInfo.city,
+      shippingPostalCode: shippingInfo.postalCode || null,
+      shippingProvince: shippingInfo.province || null,
+      billingAddress: billing.address,
+      billingCity: billing.city,
+      billingPostalCode: billing.postalCode || null,
+      billingProvince: billing.province || null,
+      subtotal: subtotal || calculatedSubtotal,
+      shippingFee: calculatedShippingFee,
+      tax: calculatedTax,
+      total: calculatedTotal,
       paymentMethod,
       notes: notes || null
     });
 
-    const order = orderResult.recordset[0];
-
-    // Add order items
+    const order = orderResult.recordset[0];    // Add order items
     for (const item of orderItems) {
       await db.execute(`
         INSERT INTO OrderProducts (orderId, productId, quantity, price, productName, productSku)
@@ -169,16 +164,47 @@ router.post('/', authenticateTokenOptional, [
         price: item.price,
         productName: item.productName,
         productSku: item.productSku
-      });
-
-      // Update product stock
+      });      // Update product stock
       await db.execute(
         'UPDATE Products SET stockQuantity = stockQuantity - @quantity WHERE id = @productId',
         { quantity: item.quantity, productId: item.productId }
       );
     }
 
-    // Clear user cart if logged in
+    // Create iPOS payment order if payment method is iPOS
+    let iposData = null;
+    if (paymentMethod === 'ipos' || paymentMethod === 'qr') {      const iposOrderData = {
+        orderNumber: order.orderNumber,
+        total: calculatedTotal,
+        customerName: `${billing.firstName} ${billing.lastName}`,
+        customerEmail: billing.email,
+        customerPhone: billing.phone,
+        items: orderItems
+      };
+
+      const iposResult = await iposService.createPaymentOrder(iposOrderData);
+      
+      if (iposResult.success) {        // Update order with iPOS data
+        await db.execute(`
+          UPDATE Orders 
+          SET iposOrderId = @iposOrderId, qrCode = @qrCode, qrCodeUrl = @qrCodeUrl, 
+              paymentUrl = @paymentUrl, expiresAt = @expiresAt
+          WHERE id = @orderId
+        `, {
+          orderId: order.id,
+          iposOrderId: iposResult.data.iposOrderId,
+          qrCode: iposResult.data.qrCode,
+          qrCodeUrl: iposResult.data.qrCodeUrl,
+          paymentUrl: iposResult.data.paymentUrl,
+          expiresAt: iposResult.data.expiresAt
+        });
+
+        iposData = iposResult.data;
+      } else {
+        // If iPOS fails, still return order but with error
+        console.error('iPOS order creation failed:', iposResult.error);
+      }
+    }    // Clear user cart if logged in
     if (req.user) {
       await db.execute(
         'DELETE FROM CartItems WHERE userId = @userId',
@@ -187,21 +213,26 @@ router.post('/', authenticateTokenOptional, [
     }
 
     res.status(201).json({
-      message: 'Order created successfully',
-      order: {
+      success: true,
+      message: 'Order created successfully',      order: {
         id: order.id,
         orderNumber: order.orderNumber,
         total: order.total,
         status: order.status,
         paymentMethod: order.paymentMethod,
         paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt
+        createdAt: order.createdAt,
+        iposData: iposData // Include QR code and payment URL
       }
     });
-
   } catch (error) {
     console.error('Create order error:', error);
-    res.status(500).json({ error: 'Failed to create order' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to create order',
+      details: error.message,
+      code: error.code || 'UNKNOWN_ERROR'
+    });
   }
 });
 
@@ -524,5 +555,269 @@ router.post('/ipos-webhook', express.raw({ type: 'application/json' }), async (r
     res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
+
+// iPOS Webhook endpoint for payment notifications
+router.post('/ipos/webhook', async (req, res) => {
+  try {
+    const { order_id, status, transaction_id, amount, paid_at, timestamp, signature } = req.body;
+
+    // Verify webhook signature
+    if (!iposService.verifyWebhookSignature(req.body, signature, timestamp)) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    console.log('iPOS webhook received:', { order_id, status, transaction_id });
+
+    // Find order by iPOS order ID
+    const orders = await db.query(
+      'SELECT * FROM Orders WHERE ipos_order_id = @iposOrderId',
+      { iposOrderId: order_id }
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = orders[0];
+
+    // Update order payment status
+    if (status === 'paid') {
+      await db.execute(`
+        UPDATE Orders 
+        SET payment_status = 'completed', status = 'confirmed', 
+            transaction_id = @transactionId, paid_at = @paidAt, updated_at = GETDATE()
+        WHERE id = @orderId
+      `, {
+        orderId: order.id,
+        transactionId: transaction_id,
+        paidAt: paid_at
+      });
+
+      // Get full order details for email
+      const fullOrderData = await getOrderDetails(order.id);
+      
+      // Send payment notifications
+      const paymentData = {
+        transactionId: transaction_id,
+        amount: amount,
+        paidAt: paid_at
+      };
+
+      // Send email to admin
+      await emailService.sendPaymentNotificationToAdmin(fullOrderData, paymentData);
+      
+      // Send confirmation to customer
+      await emailService.sendPaymentConfirmationToCustomer(fullOrderData, paymentData);
+
+      // Trigger invoice printing
+      await iposService.printInvoice(order_id);
+
+      console.log(`Payment confirmed for order ${order.order_number}`);
+    } else if (status === 'failed' || status === 'expired') {
+      await db.execute(`
+        UPDATE Orders 
+        SET payment_status = @status, updated_at = GETDATE()
+        WHERE id = @orderId
+      `, {
+        orderId: order.id,
+        status: status
+      });
+    }
+
+    res.json({ success: true, message: 'Webhook processed' });
+
+  } catch (error) {
+    console.error('iPOS webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Check payment status endpoint
+router.get('/:orderId/payment-status', authenticateTokenOptional, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Get order
+    const orders = await db.query(
+      'SELECT * FROM Orders WHERE order_number = @orderNumber OR id = @orderId',
+      { orderNumber: orderId, orderId: parseInt(orderId) || 0 }
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = orders[0];
+
+    // Check with iPOS if order has iPOS ID
+    let iposStatus = null;
+    if (order.ipos_order_id) {
+      const statusResult = await iposService.checkPaymentStatus(order.ipos_order_id);
+      if (statusResult.success) {
+        iposStatus = statusResult.data;
+        
+        // Update local status if different
+        if (iposStatus.status === 'paid' && order.payment_status !== 'completed') {
+          await db.execute(`
+            UPDATE Orders 
+            SET payment_status = 'completed', status = 'confirmed',
+                transaction_id = @transactionId, paid_at = @paidAt, updated_at = GETDATE()
+            WHERE id = @orderId
+          `, {
+            orderId: order.id,
+            transactionId: iposStatus.transactionId,
+            paidAt: iposStatus.paidAt
+          });
+          order.payment_status = 'completed';
+          order.status = 'confirmed';
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      order: {
+        id: order.id,
+        orderNumber: order.order_number,
+        status: order.status,
+        paymentStatus: order.payment_status,
+        total: order.total,
+        qrCodeUrl: order.qr_code_url,
+        paymentUrl: order.payment_url,
+        expiresAt: order.expires_at
+      },
+      iposStatus
+    });
+
+  } catch (error) {
+    console.error('Check payment status error:', error);
+    res.status(500).json({ error: 'Failed to check payment status' });
+  }
+});
+
+// Debug endpoint to create test order for iPOS testing (temporary)
+router.post('/debug/create-test-order', authenticateToken, async (req, res) => {
+    try {
+        console.log('Creating test order for user:', req.user.userId);
+        
+        const orderNumber = 'TEST001';
+        const userId = req.user.userId;
+        
+        // Check if test order already exists
+        const existingOrder = await db.execute(
+            'SELECT * FROM Orders WHERE orderNumber = @orderNumber',
+            { orderNumber }
+        );
+        
+        if (existingOrder.recordset.length > 0) {
+            return res.json({
+                success: true,
+                message: 'Test order already exists',
+                order: existingOrder.recordset[0]
+            });
+        }
+        
+        // Create test order
+        const result = await db.execute(`
+            INSERT INTO Orders (
+                orderNumber,
+                userId,
+                customerEmail,
+                customerName,
+                customerPhone,
+                shippingAddress,
+                shippingCity,
+                subtotal,
+                total,
+                status,
+                paymentMethod,
+                paymentStatus,
+                createdAt
+            ) 
+            OUTPUT INSERTED.*
+            VALUES (
+                @orderNumber,
+                @userId,
+                @email,
+                @name,
+                @phone,
+                @address,
+                @city,
+                @subtotal,
+                @total,
+                @status,
+                @paymentMethod,
+                @paymentStatus,
+                GETDATE()
+            )
+        `, {
+            orderNumber,
+            userId,
+            email: 'test@example.com',
+            name: 'Test User',
+            phone: '0901234567',
+            address: '123 Test Street, District 1',
+            city: 'Ho Chi Minh City',
+            subtotal: 100000.00,
+            total: 100000.00,
+            status: 'pending',
+            paymentMethod: 'ipos',
+            paymentStatus: 'pending'
+        });
+        
+        const newOrder = result.recordset[0];
+        
+        res.json({
+            success: true,
+            message: 'Test order created successfully',
+            order: newOrder
+        });
+        
+    } catch (error) {
+        console.error('Create test order error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create test order',
+            details: error.message
+        });
+    }
+});
+
+// Helper function to get full order details
+async function getOrderDetails(orderId) {
+  const orders = await db.query(`
+    SELECT 
+      o.*, 
+      (SELECT 
+        JSON_QUERY('[' + STRING_AGG(JSON_QUERY('{
+          "productId":' + CAST(op.product_id AS VARCHAR) + ',
+          "productName":"' + op.product_name + '",
+          "productSku":"' + ISNULL(op.product_sku, '') + '",
+          "quantity":' + CAST(op.quantity AS VARCHAR) + ',
+          "price":' + CAST(op.price AS VARCHAR) + '
+        }'), ',') + ']') 
+       FROM Order_Products op 
+       WHERE op.order_id = o.id
+      ) as items_json
+    FROM Orders o 
+    WHERE o.id = @orderId
+  `, { orderId });
+
+  if (orders.length === 0) return null;
+
+  const order = orders[0];
+  return {
+    orderNumber: order.order_number,
+    customerName: order.customer_name,
+    customerEmail: order.customer_email,
+    customerPhone: order.customer_phone,
+    shippingAddress: `${order.shipping_address}, ${order.shipping_city}, ${order.shipping_province}`,
+    subtotal: order.subtotal,
+    shippingFee: order.shipping_fee,
+    tax: order.tax,
+    total: order.total,
+    items: order.items_json ? JSON.parse(order.items_json) : []
+  };
+}
 
 module.exports = router;

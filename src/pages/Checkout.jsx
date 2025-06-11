@@ -149,24 +149,52 @@ const Checkout = () => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
     };    const handlePaymentError = (error) => {
         console.error('Payment failed:', error);
-        setErrors({ payment: error.message || 'Payment failed' });
-    };const createOrder = async () => {
-        const orderData = {
-            items: cartItems.map(item => ({
-                productId: item.product_id,
-                quantity: item.quantity,
-                price: item.price
-            })),
-            billing: formData.billing,
-            shipping: formData.shipping.sameAsBilling ? formData.billing : formData.shipping,
-            subtotal,
-            shippingFee: shipping,
-            tax,
-            total,
-            notes: formData.notes
-        };
+        setErrors({ payment: error.message || 'Thanh toán thất bại. Vui lòng thử lại.' });
+    };
 
-        return orderData;
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    };    const createOrder = async () => {
+        try {
+            const orderData = {
+                items: cartItems.map(item => ({
+                    productId: item.product_id,
+                    quantity: item.quantity,
+                    price: item.price * 25000 // Convert to VND
+                })),
+                billing: formData.billing,
+                shipping: formData.shipping.sameAsBilling ? formData.billing : formData.shipping,
+                subtotal,
+                shippingFee: shipping,
+                tax,
+                total,
+                notes: formData.notes,
+                paymentMethod: formData.paymentMethod
+            };
+
+            // Call API to create order
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Không thể tạo đơn hàng. Vui lòng thử lại.');
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Order creation failed:', error);
+            throw error;
+        }
     };
 
     if (cartItems.length === 0) {
@@ -560,9 +588,8 @@ const Checkout = () => {
                                             <div className="flex-1">
                                                 <h4 className="text-sm font-medium text-coffee-800">{item.name}</h4>
                                                 <p className="text-sm text-coffee-600">Qty: {item.quantity}</p>
-                                            </div>
-                                            <span className="text-sm font-semibold text-coffee-800">
-                                                ${(item.price * item.quantity).toFixed(2)}
+                                            </div>                                            <span className="text-sm font-semibold text-coffee-800">
+                                                {formatCurrency(item.price * item.quantity * 25000)}
                                             </span>
                                         </div>
                                     ))}
@@ -570,29 +597,28 @@ const Checkout = () => {
                                 
                                 <hr className="my-4 border-coffee-200" />
                                 
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
+                                <div className="space-y-2">                                    <div className="flex justify-between">
                                         <span className="text-coffee-600">Tạm tính</span>
-                                        <span className="font-semibold text-coffee-800">${subtotal.toFixed(2)}</span>
+                                        <span className="font-semibold text-coffee-800">{formatCurrency(subtotal)}</span>
                                     </div>
                                     
                                     <div className="flex justify-between">
                                         <span className="text-coffee-600">Phí vận chuyển</span>
                                         <span className="font-semibold text-coffee-800">
-                                            {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                                            {shipping === 0 ? 'Miễn phí' : formatCurrency(shipping)}
                                         </span>
                                     </div>
                                     
                                     <div className="flex justify-between">
                                         <span className="text-coffee-600">Thuế</span>
-                                        <span className="font-semibold text-coffee-800">${tax.toFixed(2)}</span>
+                                        <span className="font-semibold text-coffee-800">{formatCurrency(tax)}</span>
                                     </div>
                                     
                                     <hr className="border-coffee-200" />
                                     
                                     <div className="flex justify-between text-lg">
                                         <span className="font-semibold text-coffee-800">Tổng cộng</span>
-                                        <span className="font-bold text-coffee-800">${total.toFixed(2)}</span>
+                                        <span className="font-bold text-coffee-800">{formatCurrency(total)}</span>
                                     </div>
                                 </div>
                                 

@@ -44,12 +44,11 @@ const Account = () => {
       fetchOrders();
     }
   }, [activeTab]);
-
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const response = await axios.get('/api/orders/my-orders', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
       });
       setOrders(response.data.orders || []);
     } catch (error) {
@@ -78,12 +77,16 @@ const Account = () => {
       setLoading(false);
     }
   };
-
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     
     if (passwordData.new_password !== passwordData.confirm_password) {
       setError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    if (passwordData.new_password.length < 6) {
+      setError('Mật khẩu mới phải có ít nhất 6 ký tự');
       return;
     }
 
@@ -93,7 +96,7 @@ const Account = () => {
 
     try {
       const response = await axios.put('/api/users/change-password', passwordData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
       });
 
       if (response.data.success) {
@@ -105,8 +108,8 @@ const Account = () => {
         });
       } else {
         setError(response.data.message || 'Đổi mật khẩu thất bại');
-      }
-    } catch (error) {
+      }    } catch (error) {
+      console.error('Password change error:', error);
       setError(error.response?.data?.message || 'Có lỗi xảy ra khi đổi mật khẩu');
     } finally {
       setLoading(false);
@@ -117,7 +120,7 @@ const Account = () => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
-    }).format(amount);
+    }).format(amount * 25000); // Convert USD to VND
   };
 
 

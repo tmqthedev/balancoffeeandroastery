@@ -7,6 +7,14 @@ import { useCart } from '../context/CartContext';
 // Configure axios defaults
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Format currency to VND
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(amount * 25000); // Convert USD to VND
+};
+
 const Products = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { addToCart } = useCart();
@@ -192,11 +200,10 @@ const Products = () => {
                 "position": index + 1,
                 "name": product.name,
                 "description": product.description,
-                "image": product.image_url,
-                "offers": {
+                "image": product.image_url,                "offers": {
                     "@type": "Offer",
-                    "price": product.price,
-                    "priceCurrency": "USD",
+                    "price": product.price * 25000,
+                    "priceCurrency": "VND",
                     "availability": product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
                 }
             }))
@@ -437,11 +444,10 @@ const Products = () => {
                                                     <p className="text-coffee-600 text-sm mb-3 line-clamp-2">
                                                         {product.description}
                                                     </p>
-                                                    
-                                                    <div className="flex items-center justify-between mb-3">
+                                                      <div className="flex items-center justify-between mb-3">
                                                         <span className="text-xl font-bold text-coffee-800">
-                                                            ${product.price?.toFixed(2)}
-                                                        </span>                                                        <span className={`text-sm px-2 py-1 rounded-full ${
+                                                            {formatCurrency(product.price)}
+                                                        </span><span className={`text-sm px-2 py-1 rounded-full ${
                                                             product.stock_quantity > 0 
                                                                 ? 'bg-green-100 text-green-800' 
                                                                 : 'bg-red-100 text-red-800'

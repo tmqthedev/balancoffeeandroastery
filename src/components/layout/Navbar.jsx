@@ -21,12 +21,9 @@ const Navbar = () => {
     }, []);    const handleLogout = async () => {
         await logout();
         navigate('/');
-    };
-
-    const navigation = [
-        { name: 'Trang chủ', href: '/' },
-        { name: 'Sản phẩm', href: '/products' },
+    };    const navigation = [
         { name: 'Giới thiệu', href: '/about' },
+        { name: 'Sản phẩm', href: '/products' },
         { name: 'Blog', href: '/blog' },
         { name: 'Liên hệ', href: '/contact' },
     ];return (        <nav className={`fixed w-full z-50 transition-all duration-300 ${
@@ -56,26 +53,29 @@ const Navbar = () => {
 
                     {/* Desktop Navigation - Centered */}
                     <div className="hidden lg:flex flex-1 justify-center">
-                        <div className="flex items-center space-x-6 xl:space-x-8">
-                            {navigation.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    to={item.href}
-                                    className={`text-sm xl:text-base font-medium transition-all duration-200 hover:text-coffee-600 relative py-2 px-1 ${
-                                        location.pathname === item.href
-                                            ? 'text-coffee-600'
-                                            : 'text-coffee-800'
-                                    }`}
-                                >
-                                    {item.name}
-                                    {location.pathname === item.href && (
-                                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-100 transition-transform duration-200"></span>
-                                    )}
-                                    {location.pathname !== item.href && (
-                                        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-0 hover:scale-100 transition-transform duration-200"></span>
-                                    )}
-                                </Link>
-                            ))}
+                        <div className="flex items-center space-x-6 xl:space-x-8">                            {navigation.map((item) => {
+                                const isActive = item.href === '/about' 
+                                    ? (location.pathname === '/' || location.pathname === '/about' || location.pathname === '/gioi-thieu')
+                                    : location.pathname === item.href;
+                                
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        to={item.href}
+                                        className={`text-sm xl:text-base font-medium transition-all duration-200 hover:text-coffee-600 relative py-2 px-1 ${
+                                            isActive ? 'text-coffee-600' : 'text-coffee-800'
+                                        }`}
+                                    >
+                                        {item.name}
+                                        {isActive && (
+                                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-100 transition-transform duration-200"></span>
+                                        )}
+                                        {!isActive && (
+                                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-coffee-600 rounded-full transform scale-0 hover:scale-100 transition-transform duration-200"></span>
+                                        )}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
 

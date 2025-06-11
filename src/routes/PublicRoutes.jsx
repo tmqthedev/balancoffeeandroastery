@@ -10,8 +10,7 @@ const PublicLoadingSpinner = () => (
   </div>
 );
 
-// Lazy load public pages
-const Home = React.lazy(() => import('../pages/Home'));
+// Lazy load public pages  
 const Products = React.lazy(() => import('../pages/Products'));
 const ProductDetail = React.lazy(() => import('../pages/ProductDetail'));
 const Cart = React.lazy(() => import('../pages/Cart'));
@@ -21,6 +20,7 @@ const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));
 const Auth = React.lazy(() => import('../pages/auth/Auth'));
 const FacebookCallback = React.lazy(() => import('../pages/auth/FacebookCallback'));
+const QRPaymentPage = React.lazy(() => import('../pages/QRPaymentPage'));
 const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 // Protected pages
@@ -29,26 +29,30 @@ const PaymentResult = React.lazy(() => import('../components/payment/PaymentResu
 const Account = React.lazy(() => import('../pages/Account'));
 
 const PublicRoutes = () => {
-  return (
-    <Suspense fallback={<PublicLoadingSpinner />}>      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+  return (    <Suspense fallback={<PublicLoadingSpinner />}>      <Routes>
+        {/* Public Routes - About page as default */}
+        <Route path="/" element={<About />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/gioi-thieu" element={<About />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />        {/* Auth Routes */}
+        <Route path="/contact" element={<Contact />} />{/* Auth Routes */}
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<FacebookCallback />} />
         
-        {/* Protected Routes */}
-        <Route path="/checkout" element={
+        {/* Protected Routes */}        <Route path="/checkout" element={
           <ProtectedRoute>
             <Checkout />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment/qr" element={
+          <ProtectedRoute>
+            <QRPaymentPage />
           </ProtectedRoute>
         } />
         <Route path="/payment/result" element={

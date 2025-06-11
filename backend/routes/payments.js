@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const axios = require('axios');
 const { authenticateToken } = require('../middleware/auth');
-const { executeQuery } = require('../config/database');
+const { execute, query } = require('../config/database');
 const router = express.Router();
 
 // Momo Payment Configuration
@@ -49,7 +49,7 @@ router.post('/momo/create', authenticateToken, async (req, res) => {
             JOIN Users u ON o.user_id = u.user_id 
             WHERE o.order_id = @orderId AND o.user_id = @userId AND o.status = 'pending'
         `;
-        const orderResult = await executeQuery(orderQuery, { orderId, userId: req.user.userId });
+        const orderResult = await execute(orderQuery, { orderId, userId: req.user.userId });
 
         if (orderResult.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found or already processed' });
@@ -84,7 +84,7 @@ router.post('/momo/create', authenticateToken, async (req, res) => {
 
         if (response.data.resultCode === 0) {
             // Update order with payment info
-            await executeQuery(`
+            await execute(`
                 UPDATE Orders 
                 SET payment_method = 'momo', payment_reference = @requestId, updated_at = GETDATE()
                 WHERE order_id = @orderId
@@ -123,23 +123,21 @@ router.post('/momo/callback', async (req, res) => {
         if (signature === expectedSignature) {
             if (resultCode === 0) {
                 // Payment successful
-                await executeQuery(`
+                await execute(`
                     UPDATE Orders 
                     SET status = 'paid', payment_status = 'completed', payment_reference = @transId, updated_at = GETDATE()
                     WHERE order_id = @orderId
-                `, { transId, orderId });
-
-                // Update product stock
-                await executeQuery(`
+                `, { transId, orderId });                // Update product stock
+                await execute(`
                     UPDATE Products 
-                    SET stock_quantity = stock_quantity - op.quantity
+                    SET stockQuantity = stockQuantity - op.quantity
                     FROM Products p
-                    JOIN Order_Products op ON p.product_id = op.product_id
-                    WHERE op.order_id = @orderId
+                    JOIN OrderProducts op ON p.id = op.productId
+                    WHERE op.orderId = @orderId
                 `, { orderId });
             } else {
                 // Payment failed
-                await executeQuery(`
+                await execute(`
                     UPDATE Orders 
                     SET status = 'cancelled', payment_status = 'failed', updated_at = GETDATE()
                     WHERE order_id = @orderId
@@ -166,7 +164,7 @@ router.post('/vnpay/create', authenticateToken, async (req, res) => {
             JOIN Users u ON o.user_id = u.user_id 
             WHERE o.order_id = @orderId AND o.user_id = @userId AND o.status = 'pending'
         `;
-        const orderResult = await executeQuery(orderQuery, { orderId, userId: req.user.userId });
+        const orderResult = await execute(orderQuery, { orderId, userId: req.user.userId });
 
         if (orderResult.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found or already processed' });
@@ -206,7 +204,7 @@ router.post('/vnpay/create', authenticateToken, async (req, res) => {
         const paymentUrl = VNPAY_CONFIG.url + '?' + new URLSearchParams(vnp_Params).toString();
 
         // Update order with payment info
-        await executeQuery(`
+        await execute(`
             UPDATE Orders 
             SET payment_method = 'vnpay', payment_reference = @orderId, updated_at = GETDATE()
             WHERE order_id = @orderId
@@ -245,25 +243,23 @@ router.get('/vnpay/return', async (req, res) => {
 
             if (responseCode === '00') {
                 // Payment successful
-                await executeQuery(`
+                await execute(`
                     UPDATE Orders 
                     SET status = 'paid', payment_status = 'completed', payment_reference = @transactionNo, updated_at = GETDATE()
                     WHERE order_id = @orderId
-                `, { transactionNo: vnp_Params['vnp_TransactionNo'], orderId });
-
-                // Update product stock
-                await executeQuery(`
+                `, { transactionNo: vnp_Params['vnp_TransactionNo'], orderId });                // Update product stock
+                await execute(`
                     UPDATE Products 
-                    SET stock_quantity = stock_quantity - op.quantity
+                    SET stockQuantity = stockQuantity - op.quantity
                     FROM Products p
-                    JOIN Order_Products op ON p.product_id = op.product_id
-                    WHERE op.order_id = @orderId
+                    JOIN OrderProducts op ON p.id = op.productId
+                    WHERE op.orderId = @orderId
                 `, { orderId });
 
                 res.json({ success: true, message: 'Payment successful', orderId });
             } else {
                 // Payment failed
-                await executeQuery(`
+                await execute(`
                     UPDATE Orders 
                     SET status = 'cancelled', payment_status = 'failed', updated_at = GETDATE()
                     WHERE order_id = @orderId
@@ -290,7 +286,7 @@ router.get('/status/:orderId', authenticateToken, async (req, res) => {
             FROM Orders 
             WHERE order_id = @orderId AND user_id = @userId
         `;
-        const result = await executeQuery(query, { orderId, userId: req.user.userId });
+        const result = await execute(query, { orderId, userId: req.user.userId });
 
         if (result.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found' });
@@ -306,15 +302,13 @@ router.get('/status/:orderId', authenticateToken, async (req, res) => {
 // iPOS API - Create Momo QR Payment (as per SDD requirements)
 router.post('/ipos/create-qr', authenticateToken, async (req, res) => {
     try {
-        const { orderId, amount, orderInfo } = req.body;
-
-        // Validate order belongs to user
+        const { orderId, amount, orderInfo } = req.body;        // Validate order belongs to user
         const orderQuery = `
             SELECT o.*, u.email, u.firstName, u.lastName 
             FROM Orders o 
             JOIN Users u ON o.userId = u.id 
-            WHERE o.id = @orderId AND o.userId = @userId AND o.status = 'pending'
-        `;        const orderResult = await executeQuery(orderQuery, { orderId, userId: req.user.userId });
+            WHERE o.orderNumber = @orderId AND o.userId = @userId AND o.status = 'pending'
+        `;        const orderResult = await execute(orderQuery, { orderId, userId: req.user.userId });
 
         if (orderResult.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found or already processed' });
@@ -351,7 +345,7 @@ router.post('/ipos/create-qr', authenticateToken, async (req, res) => {
 
         if (response.data.success) {
             // Update order with payment info
-            await executeQuery(`
+            await execute(`
                 UPDATE Orders 
                 SET paymentMethod = 'ipos_momo_qr', paymentReference = @requestId, updatedAt = GETDATE()
                 WHERE id = @orderId
@@ -392,14 +386,14 @@ router.post('/ipos/callback', async (req, res) => {
 
         if (status === 'SUCCESS') {
             // Payment successful
-            await executeQuery(`
+            await execute(`
                 UPDATE Orders 
                 SET status = 'paid', paymentStatus = 'completed', paymentReference = @transactionId, updatedAt = GETDATE()
                 WHERE id = @orderId
             `, { transactionId, orderId });
 
             // Update product stock
-            await executeQuery(`
+            await execute(`
                 UPDATE Products 
                 SET stockQuantity = stockQuantity - op.quantity
                 FROM Products p
@@ -408,7 +402,7 @@ router.post('/ipos/callback', async (req, res) => {
             `, { orderId });
         } else if (status === 'FAILED') {
             // Payment failed
-            await executeQuery(`
+            await execute(`
                 UPDATE Orders 
                 SET status = 'cancelled', paymentStatus = 'failed', updatedAt = GETDATE()
                 WHERE id = @orderId
@@ -433,7 +427,7 @@ router.get('/ipos/status/:orderId', authenticateToken, async (req, res) => {
             FROM Orders 
             WHERE id = @orderId AND userId = @userId AND paymentMethod = 'ipos_momo_qr'
         `;
-        const orderResult = await executeQuery(orderQuery, { orderId, userId: req.user.userId });
+        const orderResult = await execute(orderQuery, { orderId, userId: req.user.userId });
 
         if (orderResult.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found' });

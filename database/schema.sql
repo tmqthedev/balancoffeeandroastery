@@ -92,13 +92,32 @@ CREATE TABLE Orders (
     shippingAddress NVARCHAR(500) NOT NULL,
     shippingCity NVARCHAR(100) NOT NULL,
     shippingPostalCode NVARCHAR(20) NULL,
+    shippingProvince NVARCHAR(100) NULL,
     billingAddress NVARCHAR(500) NULL,
     billingCity NVARCHAR(100) NULL,
     billingPostalCode NVARCHAR(20) NULL,
+    billingProvince NVARCHAR(100) NULL,
     subtotal DECIMAL(10,2) NOT NULL,
     shippingFee DECIMAL(10,2) NOT NULL DEFAULT 0,
     tax DECIMAL(10,2) NOT NULL DEFAULT 0,
     discount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    total DECIMAL(10,2) NOT NULL,
+    status NVARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, confirmed, processing, shipped, delivered, cancelled
+    paymentMethod NVARCHAR(50) NOT NULL DEFAULT 'cod', -- cod, ipos, qr, momo, vnpay
+    paymentStatus NVARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, completed, failed, refunded
+    -- iPOS Integration fields
+    iposOrderId NVARCHAR(100) NULL, -- iPOS order ID
+    qrCode NTEXT NULL, -- QR code content
+    qrCodeUrl NVARCHAR(500) NULL, -- QR code image URL
+    paymentUrl NVARCHAR(500) NULL, -- iPOS payment page URL
+    transactionId NVARCHAR(100) NULL, -- Transaction ID from iPOS
+    paidAt DATETIME2 NULL, -- Payment completion time
+    expiresAt DATETIME2 NULL, -- QR code expiry time
+    notes NTEXT NULL,
+    createdAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    updatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE SET NULL
+);
     total DECIMAL(10,2) NOT NULL,
     status NVARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, confirmed, processing, shipped, delivered, cancelled
     paymentMethod NVARCHAR(50) NOT NULL, -- momo, vnpay, cod

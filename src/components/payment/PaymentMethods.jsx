@@ -1,80 +1,104 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 
-const PaymentMethods = ({ orderData, onPaymentError }) => {
-    const [selectedMethod, setSelectedMethod] = useState('');
-    const [selectedBank, setSelectedBank] = useState('');
-    const [loading, setLoading] = useState(false);    const paymentMethods = [
+const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) => {
+    const navigate = useNavigate();
+    const { clearCart } = useCart();
+    const [selectedMethod, setSelectedMethod] = useState('ipos');
+    const [loading, setLoading] = useState(false);
+
+    const paymentMethods = [
         {
-            id: 'momo',
-            name: 'MoMo',
-            description: 'Thanh toán qua ví điện tử MoMo',
-            icon: '💳',
-            color: 'bg-pink-500'
+            id: 'ipos',
+            name: 'Thanh toán QR iPOS',
+            description: 'Quét mã QR để thanh toán nhanh chóng',
+            icon: '📱',
+            color: 'bg-blue-500',
+            popular: true
         },
         {
-            id: 'vnpay',
-            name: 'VNPay',
-            description: 'Thanh toán qua cổng VNPay',
-            icon: '🏦',
-            color: 'bg-blue-500'
+            id: 'cod',
+            name: 'Thanh toán khi nhận hàng',
+            description: 'Thanh toán bằng tiền mặt khi nhận hàng',
+            icon: '💵',
+            color: 'bg-green-500',
+            popular: false
         }
-    ];
+    ];    const handlePaymentMethodChange = (methodId) => {
+        setSelectedMethod(methodId);
+        if (onPaymentMethodSelect) {
+            onPaymentMethodSelect(methodId);
+        }
+    };
 
-    const vnpayBanks = [
-        { code: '', name: 'Tất cả ngân hàng' },
-        { code: 'VNPAYQR', name: 'VNPay QR' },
-        { code: 'VNBANK', name: 'Ngân hàng nội địa' },
-        { code: 'INTCARD', name: 'Thẻ quốc tế' },
-        { code: 'VIETCOMBANK', name: 'Vietcombank' },
-        { code: 'VIETINBANK', name: 'VietinBank' },
-        { code: 'BIDV', name: 'BIDV' },
-        { code: 'AGRIBANK', name: 'Agribank' },
-        { code: 'TCB', name: 'Techcombank' },
-        { code: 'ACB', name: 'ACB' },
-        { code: 'MB', name: 'MB Bank' },
-        { code: 'SACOMBANK', name: 'Sacombank' },
-        { code: 'TPB', name: 'TPBank' },
-        { code: 'VIB', name: 'VIB' },
-        { code: 'MSBANK', name: 'MSB' },
-        { code: 'HDBANK', name: 'HDBank' }
-    ];    const handlePayment = async () => {
+    const handleSubmitOrder = async () => {
         if (!selectedMethod) {
-            onPaymentError('Vui lòng chọn phương thức thanh toán');
+            onPaymentError({ message: 'Vui lòng chọn phương thức thanh toán' });
             return;
         }
 
         setLoading(true);
         
         try {
-            const token = localStorage.getItem('authToken');
-            const paymentData = {
-                orderId: orderData.orderId,
-                amount: orderData.totalAmount,
-                orderInfo: `Thanh toán đơn hàng ${orderData.orderId} - Balan Coffee & Roastery`,
-                bankCode: selectedMethod === 'vnpay' ? selectedBank : undefined
+            // Call the orderData function to get order details
+            const orderDetails = await orderData();
+            
+            // Add payment method to order
+            const orderPayload = {
+                ...orderDetails,
+                paymentMethod: selectedMethod
             };
 
-            const response = await axios.post(
-                `/api/payments/${selectedMethod}/create`,
-                paymentData,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            // Create order via API
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(orderPayload)
+            });
 
-            if (response.data.success) {
-                // Redirect to payment gateway
-                window.location.href = response.data.payUrl;            } else {
-                onPaymentError(response.data.message || 'Không thể tạo giao dịch thanh toán');
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Không thể tạo đơn hàng');
             }
+
+            // Clear cart after successful order creation
+            await clearCart();
+
+            // Handle different payment methods
+            if (selectedMethod === 'ipos' && result.order.iposData) {
+                // Redirect to payment page with QR code
+                navigate('/payment/qr', { 
+                    state: { 
+                        order: result.order,
+                        iposData: result.order.iposData
+                    }
+                });
+            } else if (selectedMethod === 'cod') {
+                // Redirect to success page for COD
+                navigate('/payment/result', { 
+                    state: { 
+                        order: result.order,
+                        paymentMethod: 'cod',
+                        success: true
+                    }
+                });
+            }
+
         } catch (error) {
-            console.error('Payment error:', error);
-            onPaymentError(error.response?.data?.message || 'Đã xảy ra lỗi trong quá trình thanh toán');
+            console.error('Order creation failed:', error);
+            onPaymentError({ 
+                message: error.message || 'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.' 
+            });
         } finally {
             setLoading(false);
         }
-    };
-
-    return (        <div className="bg-white rounded-lg shadow-sm border border-cream-200 p-6">
+    };    return (
+        <div className="bg-white rounded-lg shadow-sm border border-cream-200 p-6">
             <h3 className="text-lg font-semibold text-coffee-800 mb-4">
                 Chọn phương thức thanh toán
             </h3>
@@ -88,7 +112,7 @@ const PaymentMethods = ({ orderData, onPaymentError }) => {
                             name="paymentMethod"
                             value={method.id}
                             checked={selectedMethod === method.id}
-                            onChange={(e) => setSelectedMethod(e.target.value)}
+                            onChange={(e) => handlePaymentMethodChange(e.target.value)}
                             className="sr-only"
                         />
                         <label
@@ -104,7 +128,14 @@ const PaymentMethods = ({ orderData, onPaymentError }) => {
                                     {method.icon}
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="font-medium text-coffee-800">{method.name}</h4>
+                                    <div className="flex items-center">
+                                        <h4 className="font-medium text-coffee-800">{method.name}</h4>
+                                        {method.popular && (
+                                            <span className="ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
+                                                Phổ biến
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-sm text-coffee-600">{method.description}</p>
                                 </div>
                                 <div className={`w-4 h-4 rounded-full border-2 ${
@@ -122,73 +153,62 @@ const PaymentMethods = ({ orderData, onPaymentError }) => {
                 ))}
             </div>
 
-            {/* VNPay bank selection */}
-            {selectedMethod === 'vnpay' && (                <div className="mb-6">
-                    <label className="block text-sm font-medium text-coffee-700 mb-2">
-                        Chọn ngân hàng
-                    </label>
-                    <select
-                        value={selectedBank}
-                        onChange={(e) => setSelectedBank(e.target.value)}
-                        className="w-full p-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500"
-                    >
-                        {vnpayBanks.map((bank) => (
-                            <option key={bank.code} value={bank.code}>
-                                {bank.name}
-                            </option>
-                        ))}
-                    </select>
+            {/* Payment method details */}
+            {selectedMethod === 'ipos' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                        <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h4 className="font-medium text-blue-800 mb-1">Thanh toán QR Code</h4>
+                            <p className="text-sm text-blue-700">
+                                Sau khi đặt hàng, bạn sẽ được chuyển đến trang hiển thị mã QR. 
+                                Sử dụng ứng dụng ngân hàng để quét mã và hoàn tất thanh toán.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* Order summary */}            <div className="bg-cream-50 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold text-coffee-800 mb-3">Tóm tắt đơn hàng</h4>
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-coffee-600">Mã đơn hàng:</span>
-                        <span className="font-medium text-coffee-800">{orderData.orderId}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-coffee-600">Tạm tính:</span>
-                        <span className="text-coffee-800">{orderData.subtotal?.toLocaleString('vi-VN')} VND</span>
-                    </div>
-                    {orderData.shippingFee > 0 && (
-                        <div className="flex justify-between">
-                            <span className="text-coffee-600">Phí vận chuyển:</span>
-                            <span className="text-coffee-800">{orderData.shippingFee.toLocaleString('vi-VN')} VND</span>
+            {selectedMethod === 'cod' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                        <svg className="w-5 h-5 text-green-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <div>
+                            <h4 className="font-medium text-green-800 mb-1">Thanh toán khi nhận hàng</h4>
+                            <p className="text-sm text-green-700">
+                                Bạn sẽ thanh toán bằng tiền mặt khi nhận hàng. 
+                                Đơn hàng sẽ được xác nhận và giao đến địa chỉ của bạn.
+                            </p>
                         </div>
-                    )}
-                    {orderData.discount > 0 && (
-                        <div className="flex justify-between">
-                            <span className="text-coffee-600">Giảm giá:</span>
-                            <span className="text-green-600">-{orderData.discount.toLocaleString('vi-VN')} VND</span>
-                        </div>
-                    )}
-                    <div className="flex justify-between font-semibold text-base pt-2 border-t border-cream-200">
-                        <span className="text-coffee-800">Tổng cộng:</span>
-                        <span className="text-coffee-800">{orderData.totalAmount.toLocaleString('vi-VN')} VND</span>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Payment button */}
             <button
-                onClick={handlePayment}
+                onClick={handleSubmitOrder}
                 disabled={!selectedMethod || loading}
                 className={`w-full py-3 px-4 rounded-lg font-medium transition duration-200 ${
                     !selectedMethod || loading
                         ? 'bg-cream-300 text-cream-500 cursor-not-allowed'
                         : 'bg-coffee-600 text-white hover:bg-coffee-700'
                 }`}
-            >                {loading ? (
+            >
+                {loading ? (
                     <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                         Đang xử lý...
                     </div>
                 ) : (
-                    'Tiến hành thanh toán'
+                    selectedMethod === 'ipos' ? 'Tạo mã QR thanh toán' : 'Đặt hàng'
                 )}
-            </button>            {/* Security notice */}
+            </button>
+
+            {/* Security notice */}
             <div className="mt-4 text-center">
                 <div className="flex items-center justify-center text-sm text-coffee-600">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

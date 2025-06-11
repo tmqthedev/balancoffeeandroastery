@@ -64,9 +64,7 @@ const Register = () => {
         }
 
         return newErrors;
-    };
-
-    const handleSubmit = async (e) => {
+    };    const handleSubmit = async (e) => {
         e.preventDefault();
         
         const validationErrors = validateForm();
@@ -89,7 +87,7 @@ const Register = () => {
             navigate('/');
         } catch (error) {
             setErrors({ 
-                submit: error.response?.data?.message || 'Đăng ký thất bại' 
+                submit: error.message || 'Đăng ký thất bại' 
             });
         } finally {
             setLoading(false);

@@ -140,24 +140,41 @@ export const AuthProvider = ({ children }) => {
             return { success: true };
         } catch (error) {
             console.error('Registration failed:', error);
-            const errorMessage = error.response?.data?.error || 'Đăng ký thất bại';
+            
+            // Handle different error response formats
+            let errorMessage = 'Đăng ký thất bại';
+            
+            if (error.response?.data) {
+                const { data } = error.response;
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.errors && Array.isArray(data.errors)) {
+                    // Handle validation errors from validateRequest middleware
+                    errorMessage = data.errors.map(err => err.message || err.msg).join(', ');
+                } else if (data.message) {
+                    errorMessage = data.message;
+                }
+            }
+            
             throw new Error(errorMessage);
         } finally {
             setLoading(false);
         }
-    };
-
-    // Update user info
+    };    // Update user info
     const updateUserInfo = async (userData) => {
         setLoading(true);
         try {
-            const response = await api.put('/auth/profile', userData);
-            setUser(response.data.user);
-            return { success: true };
+            const response = await api.put('/users/profile', userData);
+            if (response.data.success) {
+                setUser(response.data.user);
+                return { success: true, message: response.data.message };
+            } else {
+                throw new Error(response.data.message || 'Cập nhật thông tin thất bại');
+            }
         } catch (error) {
             console.error('Update profile failed:', error);
-            const errorMessage = error.response?.data?.error || 'Cập nhật thông tin thất bại';
-            throw new Error(errorMessage);
+            const errorMessage = error.response?.data?.error || error.message || 'Cập nhật thông tin thất bại';
+            return { success: false, message: errorMessage };
         } finally {
             setLoading(false);
         }
