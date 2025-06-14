@@ -144,5 +144,11 @@ module.exports = {
   execute,
   close,
   testConnection,
-  sql
+  sql,
+  get mockData() {
+    return mockDb?.mockData || {};
+  },
+  isMockMode() {
+    return useMockDb;
+  }
 };

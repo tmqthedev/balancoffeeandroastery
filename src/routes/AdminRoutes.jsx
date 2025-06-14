@@ -18,6 +18,13 @@ const AdminCustomers = React.lazy(() => import('../pages/admin/AdminCustomers'))
 const AdminBlogs = React.lazy(() => import('../pages/admin/AdminBlogs'));
 const AdminContacts = React.lazy(() => import('../pages/admin/AdminContacts'));
 
+// CRM Pages
+const CRMDashboard = React.lazy(() => import('../pages/admin/CRMDashboard'));
+const CRMUserManagement = React.lazy(() => import('../pages/admin/CRMUserManagement'));
+const CRMCustomerManagement = React.lazy(() => import('../pages/admin/CRMCustomerManagement'));
+const CRMSalesManagement = React.lazy(() => import('../pages/admin/CRMSalesManagement'));
+const CRMSystemConfig = React.lazy(() => import('../pages/admin/CRMSystemConfig'));
+
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -55,11 +62,46 @@ const AdminRoutes = () => {
             <AdminBlogs />
           </Suspense>
         </AdminRoute>
-      } />
-      <Route path="/contacts" element={
+      } />      <Route path="/contacts" element={
         <AdminRoute>
           <Suspense fallback={<AdminLoadingSpinner />}>
             <AdminContacts />
+          </Suspense>
+        </AdminRoute>
+      } />
+      
+      {/* CRM Routes */}
+      <Route path="/crm" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <CRMDashboard />
+          </Suspense>
+        </AdminRoute>
+      } />
+      <Route path="/crm/users" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <CRMUserManagement />
+          </Suspense>
+        </AdminRoute>
+      } />      <Route path="/crm/customers" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <CRMCustomerManagement />
+          </Suspense>
+        </AdminRoute>
+      } />
+      <Route path="/crm/sales" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <CRMSalesManagement />
+          </Suspense>
+        </AdminRoute>
+      } />
+      <Route path="/crm/system" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <CRMSystemConfig />
           </Suspense>
         </AdminRoute>
       } />

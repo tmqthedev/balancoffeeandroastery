@@ -2,13 +2,22 @@
 class MockDatabase {
   constructor() {
     this.mockData = {
-      users: [        {
+      // Extended users with CRM fields
+      users: [
+        {
           id: 1,
           email: 'admin@balancoffee.com',
           password: '$2b$12$v.Asbvx1DxwYFel57uUu.eUFA3GuowvuNVyfdPV194acvto6woacu', // password123
           firstName: 'Admin',
           lastName: 'User',
           role: 'admin',
+          roleId: 1, // Super Admin
+          department: 'Management',
+          manager: null,
+          territories: '["all"]',
+          salesQuota: null,
+          lastLoginAt: new Date(),
+          isOnline: true,
           isActive: true,
           emailVerified: true,
           createdAt: new Date('2024-01-01')
@@ -20,11 +29,147 @@ class MockDatabase {
           firstName: 'John',
           lastName: 'Doe',
           role: 'customer',
+          roleId: null,
+          department: null,
+          manager: null,
+          territories: null,
+          salesQuota: null,
+          lastLoginAt: new Date('2024-02-01'),
+          isOnline: false,
           isActive: true,
           emailVerified: true,
           createdAt: new Date('2024-01-15')
+        },
+        {
+          id: 3,
+          email: 'sales@balancoffee.com',
+          password: '$2b$12$v.Asbvx1DxwYFel57uUu.eUFA3GuowvuNVyfdPV194acvto6woacu',
+          firstName: 'Sales',
+          lastName: 'Manager',
+          role: 'admin',
+          roleId: 2, // Sales Manager
+          department: 'Sales',
+          manager: 1,
+          territories: '["HCM", "Hanoi"]',
+          salesQuota: 100000000,
+          lastLoginAt: new Date('2024-06-14'),
+          isOnline: true,
+          isActive: true,
+          emailVerified: true,
+          createdAt: new Date('2024-01-05')
         }
       ],
+      
+      // User roles
+      userRoles: [
+        {
+          id: 1,
+          name: 'Super Admin',
+          nameVi: 'Quản trị viên tối cao',
+          description: 'Full system access',
+          descriptionVi: 'Quyền truy cập toàn hệ thống',
+          permissions: '["*"]',
+          isActive: true,
+          createdAt: new Date('2024-01-01')
+        },
+        {
+          id: 2,
+          name: 'Sales Manager',
+          nameVi: 'Quản lý bán hàng',
+          description: 'Sales team management',
+          descriptionVi: 'Quản lý đội ngũ bán hàng',
+          permissions: '["sales.*", "customers.read", "customers.update", "reports.sales"]',
+          isActive: true,
+          createdAt: new Date('2024-01-01')
+        }
+      ],
+      
+      // Customer segments
+      customerSegments: [
+        {
+          id: 1,
+          name: 'VIP Customers',
+          nameVi: 'Khách hàng VIP',
+          description: 'High-value customers',
+          descriptionVi: 'Khách hàng có giá trị cao',
+          criteria: '{"total_orders": {">=": 10}, "total_spent": {">=": 5000000}}',
+          isActive: true,
+          createdAt: new Date('2024-01-01')
+        }
+      ],
+      
+      // Sales opportunities
+      salesOpportunities: [
+        {
+          id: 1,
+          title: 'Corporate Coffee Supply Contract',
+          description: 'Monthly coffee supply for 500 employee office',
+          customerId: 2,
+          value: 50000000,
+          probability: 75,
+          stage: 'Negotiation',
+          status: 'open',
+          expectedCloseDate: new Date('2024-07-01'),
+          assignedTo: 3,
+          createdBy: 3,
+          createdAt: new Date('2024-06-01')
+        }
+      ],
+      
+      // Support tickets
+      supportTickets: [
+        {
+          id: 1,
+          ticketNumber: 'TK-2024-001',
+          subject: 'Coffee quality inquiry',
+          description: 'Customer asking about roast date',
+          customerId: 2,
+          assignedTo: 1,
+          status: 'open',
+          priority: 'medium',
+          category: 'Product Quality',
+          createdAt: new Date('2024-06-10')
+        }
+      ],
+      
+      // System configurations
+      systemConfigurations: [
+        {
+          id: 1,
+          module: 'general',
+          configKey: 'company_name',
+          configValue: 'Balan Coffee & Roastery',
+          dataType: 'string',
+          description: 'Company name',
+          updatedBy: 1,
+          createdAt: new Date('2024-01-01')
+        },
+        {
+          id: 2,
+          module: 'sales',
+          configKey: 'default_currency',
+          configValue: 'VND',
+          dataType: 'string',
+          description: 'Default currency',
+          updatedBy: 1,
+          createdAt: new Date('2024-01-01')
+        }
+      ],
+      
+      // User activity logs
+      userActivityLogs: [
+        {
+          id: 1,
+          userId: 1,
+          action: 'login',
+          description: 'User logged in',
+          ipAddress: '192.168.1.1',
+          userAgent: 'Mozilla/5.0...',
+          metadata: '{"loginMethod": "password"}',
+          createdAt: new Date()
+        }
+      ],
+
       products: [
         {
           id: 1,
@@ -508,7 +653,13 @@ class MockDatabase {
       return { rowsAffected: [1] };
     }
 
-    return { recordset: [] };}
+    return { recordset: [] };
+  }
+
+  // Helper method to check if we're in mock mode
+  isMockMode() {
+    return true;
+  }
 }
 
 module.exports = MockDatabase;

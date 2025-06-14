@@ -68,7 +68,7 @@ db.connect().then(() => {
 
 // TEST ROUTE DIRECTLY IN SERVER
 app.get('/api/test-direct', (req, res) => {
-  console.log('🎯 Direct test route hit!');
+  console.log('📡 Direct test route hit');
   res.json({ success: true, message: 'Direct route works!' });
 });
 
@@ -120,7 +120,45 @@ try {
 } catch (error) {
   console.error('❌ Error loading iPOS payment router:', error.message);
 }
-app.use('/api/admin', require('./routes/admin'));
+
+// Load CRM routes
+try {
+  console.log('🔍 About to load CRM router...');
+  app.use('/api/admin', require('./routes/admin'));
+  app.use('/api/crm', require('./routes/crm'));
+  console.log('✅ CRM router mounted successfully');
+} catch (error) {
+  console.error('❌ Error loading CRM router:', error.message);
+}
+
+// Import CRM service for direct integration
+const CRMService = require('./services/crmService');
+const { authenticateToken, requireAdmin } = require('./middleware/auth');
+
+// Direct CRM routes for testing
+app.get('/api/crm/test-direct', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('📡 Direct CRM route hit');
+    res.json({
+      success: true,
+      message: 'CRM system is working!',
+      user: req.user,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/crm/dashboard/metrics', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('📊 CRM Dashboard metrics requested');
+    const metrics = await CRMService.getDashboardMetrics();
+    res.json({ success: true, data: metrics });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
