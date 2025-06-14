@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { AuthContext, useAuth } from './authConstants';
+import { handleAPIError } from '../utils/errorHandler';
 
 // Configure axios defaults
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';

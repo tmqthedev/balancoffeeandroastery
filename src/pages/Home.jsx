@@ -1,197 +1,277 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import SEOHelmet from '../components/common/SEOHelmet';
 
 const Home = () => {
-    const structuredData = {
+    const homeStructuredData = {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "Balan Coffee & Roastery",
-        "url": window.location.origin,
-        "logo": `${window.location.origin}/logo.png`,
+        "url": "https://balancoffee.com",
+        "logo": "https://balancoffee.com/logo.png",
         "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng beans",
         "address": {
             "@type": "PostalAddress",
+            "streetAddress": "123 Đường Cà Phê",
+            "addressLocality": "Quận 1", 
+            "addressRegion": "TP.HCM",
+            "postalCode": "700000",
             "addressCountry": "VN"
+        },
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+84-123-456-789",
+            "contactType": "customer service",
+            "email": "info@balancoffee.com",
+            "availableLanguage": ["vi", "en"]
         },
         "sameAs": [
             "https://facebook.com/balancoffee",
-            "https://instagram.com/balancoffee"
-        ]
-    };    return (
-        <>
-            <Helmet>
-                <title>Balan Coffee & Roastery - Cà phê rang mộc chất lượng cao</title>
-                <meta name="description" content="Cà phê rang mộc chất lượng cao từ Việt Nam. Chuyên về Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Mua hạt cà phê nguyên chất online." />
-                <meta name="keywords" content="cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất" />
-                <meta property="og:title" content="Balan Coffee & Roastery - Cà phê rang mộc chất lượng cao" />
-                <meta property="og:description" content="Cà phê rang mộc chất lượng cao từ Việt Nam. Chuyên về Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Mua hạt cà phê nguyên chất online." />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content={window.location.href} />
-                <link rel="canonical" href={window.location.href} />
-                <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-            </Helmet>
+            "https://instagram.com/balancoffee",
+            "https://www.tiktok.com/@blan.vin"
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "127"
+        },
+        "priceRange": "$$"
+    };
 
-            <div className="min-h-screen">
-                {/* Hero Section */}
-                <section className="relative bg-gradient-to-br from-coffee-800 via-coffee-700 to-coffee-900 text-white">
-                    <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                    <div className="relative container mx-auto px-4 py-20 md:py-32">                        <div className="max-w-4xl mx-auto text-center">
-                            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                                Cà phê rang mộc chất lượng cao
-                            </h1>
-                            <p className="text-xl md:text-2xl mb-4 text-cream-100 opacity-90">
-                                Từ những vùng đất tốt nhất Việt Nam
-                            </p>
-                            <p className="text-lg mb-8 text-cream-200 max-w-2xl mx-auto leading-relaxed">
-                                Khám phá hương vị cà phê rang mộc đặc biệt từ Việt Nam. Chúng tôi tự hào mang đến những hạt cà phê chất lượng cao được chọn lọc kỹ càng.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">                                <Link
-                                    to="/products"
-                                    className="bg-coffee-500 hover:bg-coffee-400 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors duration-200 shadow-lg"
-                                >
-                                    Mua ngay
-                                </Link>
-                                <Link
-                                    to="/about"
-                                    className="bg-transparent border-2 border-cream-200 hover:bg-white hover:text-coffee-800 text-cream-100 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-200"
-                                >
-                                    Tìm hiểu thêm
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Coffee Bean Decoration */}
-                    <div className="absolute bottom-0 left-0 w-full overflow-hidden">
-                        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-16 md:h-20">
-                            <path d="M0,96L1200,0L1200,120L0,120Z" fill="rgb(254, 252, 232)"></path>
-                        </svg>
+    return (
+        <>
+            <SEOHelmet
+                title="Balan Coffee & Roastery - Cà phê rang mộc chất lượng cao từ Việt Nam"
+                description="Khám phá hương vị cà phê rang mộc đặc biệt từ Việt Nam. Chuyên về Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Mua hạt cà phê nguyên chất online với chất lượng cao nhất."
+                keywords="cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất, cà phê Việt Nam, coffee Vietnam, roasted coffee beans, specialty coffee"
+                canonicalUrl="https://balancoffee.com/"
+                structuredData={homeStructuredData}
+            /><div className="min-h-screen bg-brand-white">                {/* Hero Section */}
+                <section className="relative h-screen bg-cover bg-center flex items-center justify-center" style={{backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("https://images.unsplash.com/photo-1447933601403-0c6688de566e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80")'}}>
+                    <div className="text-center px-4 max-w-4xl mx-auto">
+                        <h1 className="text-6xl font-bold text-brand-white mb-6 tracking-wide">
+                            Balan Coffee – Natural Flavor
+                        </h1>
+                        <p className="text-xl text-brand-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
+                            Khám phá hương vị tự nhiên từ những hạt cà phê chất lượng cao được chọn lọc kỹ càng từ các vùng đất tốt nhất Việt Nam
+                        </p>
+                        <a 
+                            href="#products"
+                            className="inline-block bg-brand-secondary hover:bg-brand-primary text-black hover:text-brand-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
+                            aria-label="Khám phá sản phẩm cà phê của chúng tôi"
+                        >
+                            Explore Now
+                        </a>
                     </div>
                 </section>
 
-                {/* Featured Products Section */}
-                <section className="py-16 bg-cream-50">
-                    <div className="container mx-auto px-4">                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-coffee-800 mb-4">
-                                Sản phẩm nổi bật
+                {/* About Section */}
+                <section id="about" className="py-20 bg-brand-white">
+                    <div className="container mx-auto px-4">                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">                            {/* Image placeholder */}
+                            <div className="h-80 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500" aria-label="Hình ảnh minh họa về quy trình rang cà phê tại Balan Coffee & Roastery">
+                                <div className="text-center">
+                                    <span className="text-4xl block mb-2" aria-hidden="true">📷</span>
+                                    <span className="text-sm">Placeholder Image 500x300px</span>
+                                    <p className="text-xs mt-1 text-gray-400">Coffee roasting process image</p>
+                                </div>
+                            </div>
+                            
+                            {/* Content */}
+                            <div>
+                                <h2 className="text-3xl font-bold text-brand-primary mb-6 tracking-wide">
+                                    About Balan Coffee
+                                </h2>
+                                <p className="text-lg text-black mb-6 leading-relaxed">
+                                    Chúng tôi là những người đam mê cà phê, cam kết mang đến những hạt cà phê chất lượng cao nhất từ những vùng đất tốt nhất của Việt Nam. Từ những vùng cao mù sương đến tách cà phê của bạn, mỗi hạt cà phê đều kể một câu chuyện về đam mê và sự xuất sắc.
+                                </p>
+                                <p className="text-lg text-black mb-8 leading-relaxed">
+                                    Các phương pháp canh tác bền vững và mối quan hệ thương mại trực tiếp của chúng tôi đảm bảo chất lượng tốt nhất đồng thời hỗ trợ cộng đồng địa phương.
+                                </p>
+                                <Link
+                                    to="/about"
+                                    className="inline-block bg-brand-secondary hover:bg-brand-primary text-black hover:text-brand-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-md"
+                                >
+                                    Learn More
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Products Section */}
+                <section id="products" className="py-20 bg-brand-white">
+                    <div className="container mx-auto px-4">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-bold text-brand-primary mb-6 tracking-wide">
+                                Our Products
                             </h2>
-                            <p className="text-lg text-coffee-600 max-w-2xl mx-auto">
-                                Khám phá bộ sưu tập cà phê rang mộc chất lượng cao từ các vùng đất tốt nhất
-                            </p>
                         </div>
 
-                        {/* Product Categories */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                                <div className="h-48 bg-gradient-to-br from-coffee-200 to-coffee-300 flex items-center justify-center">
-                                    <span className="text-6xl">☕</span>
-                                </div>                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-coffee-800 mb-2">Arabica</h3>
-                                    <p className="text-coffee-600 mb-4">Cà phê Arabica cao cấp từ vùng cao Việt Nam</p>
-                                    <Link
-                                        to="/products?category=arabica"
-                                        className="text-coffee-600 hover:text-coffee-800 font-medium"
-                                    >
-                                        Xem chi tiết →
-                                    </Link>
+                        {/* Product Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+                            {/* Product 1 */}
+                            <div className="bg-brand-white border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                                <div className="h-64 bg-gray-200 flex items-center justify-center text-gray-500">
+                                    <div className="text-center">
+                                        <span className="text-4xl block mb-2">📷</span>
+                                        <span className="text-sm">Placeholder 300x300px</span>
+                                    </div>
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-bold text-brand-primary mb-2">Arabica Cầu Đất</h3>
+                                    <p className="text-black mb-4">Cà phê Arabica cao cấp từ vùng cao Việt Nam với hương vị tinh tế và thanh mát.</p>
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                                <div className="h-48 bg-gradient-to-br from-coffee-300 to-coffee-400 flex items-center justify-center">
-                                    <span className="text-6xl">🌱</span>
-                                </div>                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-coffee-800 mb-2">Robusta</h3>
-                                    <p className="text-coffee-600 mb-4">Cà phê Robusta mạnh mẽ từ Lâm Đồng</p>
-                                    <Link
-                                        to="/products?category=robusta"
-                                        className="text-coffee-600 hover:text-coffee-800 font-medium"
-                                    >
-                                        Xem chi tiết →
-                                    </Link>
+                            {/* Product 2 */}
+                            <div className="bg-brand-white border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                                <div className="h-64 bg-gray-200 flex items-center justify-center text-gray-500">
+                                    <div className="text-center">
+                                        <span className="text-4xl block mb-2">📷</span>
+                                        <span className="text-sm">Placeholder 300x300px</span>
+                                    </div>
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-bold text-brand-primary mb-2">Robusta Lâm Đồng</h3>
+                                    <p className="text-black mb-4">Cà phê Robusta mạnh mẽ từ Lâm Đồng với hương vị đậm đà và caffeine cao.</p>
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                                <div className="h-48 bg-gradient-to-br from-coffee-400 to-coffee-500 flex items-center justify-center">
-                                    <span className="text-6xl">🔥</span>
-                                </div>                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-coffee-800 mb-2">Blend</h3>
-                                    <p className="text-coffee-600 mb-4">Hỗn hợp cà phê được pha chế chuyên nghiệp</p>
-                                    <Link
-                                        to="/products?category=blend"
-                                        className="text-coffee-600 hover:text-coffee-800 font-medium"
-                                    >
-                                        Xem chi tiết →
-                                    </Link>
+                            {/* Product 3 */}
+                            <div className="bg-brand-white border border-gray-200 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                                <div className="h-64 bg-gray-200 flex items-center justify-center text-gray-500">
+                                    <div className="text-center">
+                                        <span className="text-4xl block mb-2">�</span>
+                                        <span className="text-sm">Placeholder 300x300px</span>
+                                    </div>
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-bold text-brand-primary mb-2">Special Blend</h3>
+                                    <p className="text-black mb-4">Hỗn hợp cà phê được pha chế chuyên nghiệp tạo nên hương vị độc đáo.</p>
                                 </div>
                             </div>
-                        </div>                        <div className="text-center">
+                        </div>
+
+                        <div className="text-center">
                             <Link
                                 to="/products"
-                                className="bg-coffee-600 hover:bg-coffee-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200 inline-block"
+                                className="inline-block bg-brand-secondary hover:bg-brand-primary text-black hover:text-brand-white px-8 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-md"
                             >
-                                Xem tất cả sản phẩm
+                                View All Products
                             </Link>
                         </div>
                     </div>
                 </section>
 
-                {/* About Section */}
-                <section className="py-16 bg-white">
+                {/* Contact Section */}
+                <section id="contact" className="py-20 bg-brand-white">
                     <div className="container mx-auto px-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">                            <div>
-                                <h2 className="text-3xl md:text-4xl font-bold text-coffee-800 mb-6">
-                                    Về chúng tôi
-                                </h2>
-                                <p className="text-lg text-coffee-600 mb-6 leading-relaxed">
-                                    Chúng tôi là những người đam mê cà phê, cam kết mang đến những hạt cà phê chất lượng cao nhất từ những vùng đất tốt nhất của Việt Nam.
-                                </p>                                <p className="text-coffee-600 mb-8 leading-relaxed">
-                                    Từ những vùng cao mù sương của Việt Nam đến tách cà phê của bạn, chúng tôi đảm bảo mỗi hạt cà phê đều kể một câu chuyện về đam mê, truyền thống và sự xuất sắc. Các phương pháp canh tác bền vững và mối quan hệ thương mại trực tiếp của chúng tôi đảm bảo chất lượng tốt nhất đồng thời hỗ trợ cộng đồng địa phương.
-                                </p>
-                                <Link
-                                    to="/about"
-                                    className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 inline-block"
-                                >
-                                    Tìm hiểu thêm
-                                </Link>
-                            </div>                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-coffee-100 rounded-lg p-6 text-center">
-                                    <div className="text-3xl font-bold text-coffee-800 mb-2">100%</div>
-                                    <div className="text-coffee-600">Cà phê Việt Nam</div>
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-bold text-brand-primary mb-6 tracking-wide">
+                                Contact Us
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">                            {/* Contact Form */}
+                            <div>
+                                <form className="space-y-6" name="contact" method="post" data-netlify="true" data-netlify-honeypot="bot-field">
+                                    <input type="hidden" name="form-name" value="contact" />
+                                    <div aria-hidden="true" style={{display: 'none'}}>
+                                        <label htmlFor="bot-field">Don't fill this out if you're human:</label>
+                                        <input id="bot-field" name="bot-field" />
+                                    </div>
+                                    
+                                    <div>
+                                        <label htmlFor="contact-name" className="block text-black font-medium mb-2">
+                                            Name <span className="text-red-500" aria-label="required">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="contact-name"
+                                            name="name"
+                                            required
+                                            aria-required="true"
+                                            className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:border-brand-secondary focus:outline-none transition-colors duration-200"
+                                            placeholder="Tên của bạn"
+                                            autoComplete="name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="contact-email" className="block text-black font-medium mb-2">
+                                            Email <span className="text-red-500" aria-label="required">*</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="contact-email"
+                                            name="email"
+                                            required
+                                            aria-required="true"
+                                            className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:border-brand-secondary focus:outline-none transition-colors duration-200"
+                                            placeholder="email@example.com"
+                                            autoComplete="email"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="contact-message" className="block text-black font-medium mb-2">
+                                            Message <span className="text-red-500" aria-label="required">*</span>
+                                        </label>
+                                        <textarea
+                                            id="contact-message"
+                                            name="message"
+                                            rows="5"
+                                            required
+                                            aria-required="true"
+                                            className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:border-brand-secondary focus:outline-none transition-colors duration-200 resize-none"
+                                            placeholder="Tin nhắn của bạn..."
+                                        ></textarea>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-brand-secondary hover:bg-brand-primary text-black hover:text-brand-white py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-md"
+                                        aria-label="Gửi tin nhắn liên hệ"
+                                    >
+                                        Send
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Contact Information */}
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-brand-primary mb-4">Thông tin liên hệ</h3>
                                 </div>
-                                <div className="bg-coffee-100 rounded-lg p-6 text-center">
-                                    <div className="text-3xl font-bold text-coffee-800 mb-2">50+</div>
-                                    <div className="text-coffee-600">Giống cà phê</div>
-                                </div>
-                                <div className="bg-coffee-100 rounded-lg p-6 text-center">
-                                    <div className="text-3xl font-bold text-coffee-800 mb-2">15+</div>
-                                    <div className="text-coffee-600">Năm kinh nghiệm</div>
-                                </div>
-                                <div className="bg-coffee-100 rounded-lg p-6 text-center">
-                                    <div className="text-3xl font-bold text-coffee-800 mb-2">1000+</div>
-                                    <div className="text-coffee-600">Khách hàng hài lòng</div>
+                                <div className="space-y-4">
+                                    <div className="flex items-start space-x-3">
+                                        <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-medium text-black">Địa chỉ</p>
+                                            <p className="text-black">123 Đường Cà Phê, Quận 1, TP.HCM</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start space-x-3">
+                                        <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-medium text-black">Số điện thoại</p>
+                                            <p className="text-black">+84 123 456 789</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start space-x-3">
+                                        <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-medium text-black">Email</p>
+                                            <p className="text-black">info@balancoffee.com</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-
-                {/* CTA Section */}
-                <section className="py-16 bg-coffee-800 text-white">                    <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                            Sẵn sàng trải nghiệm cà phê Việt Nam cao cấp?
-                        </h2>
-                        <p className="text-xl text-cream-100 mb-8 max-w-2xl mx-auto">
-                            Tham gia cùng hàng nghìn người yêu cà phê tin tưởng chúng tôi cho ly cà phê hàng ngày. Bắt đầu hành trình cà phê của bạn ngay hôm nay.
-                        </p>
-                        <Link
-                            to="/products"
-                            className="bg-coffee-500 hover:bg-coffee-400 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors duration-200 inline-block"
-                        >
-                            Mua ngay
-                        </Link>
                     </div>
                 </section>
             </div>

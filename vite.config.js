@@ -16,6 +16,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // Disable sourcemaps in production to reduce size
+    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -27,7 +28,7 @@ export default defineConfig({
             if (id.includes('axios') || id.includes('prop-types')) {
               return 'utils';
             }
-            if (id.includes('react-helmet-async')) {
+            if (id.includes('react-helmet')) {
               return 'ui';
             }
             // Other node_modules go to vendor
@@ -56,7 +57,7 @@ export default defineConfig({
         },
         entryFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
-          const fileName = assetInfo.names ? assetInfo.names[0] : (assetInfo.originalFileName || 'asset');
+          const fileName = assetInfo.names?.[0] || 'asset';
           const info = fileName.split('.');
           const ext = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
@@ -77,8 +78,6 @@ export default defineConfig({
         drop_console: true, // Remove console.log in production
         drop_debugger: true
       }
-    },
-    // Increase chunk size warning limit
-    chunkSizeWarningLimit: 1000
+    }
   }
 });

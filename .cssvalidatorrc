@@ -1,0 +1,12 @@
+{
+  "ignore": [
+    "unknown-at-rule",
+    "property-unknown",
+    "selector-type-no-unknown"
+  ],
+  "rules": {
+    "at-rule-no-unknown": [true, {
+      "ignoreAtRules": ["tailwind", "apply", "layer", "screen"]
+    }]
+  }
+}

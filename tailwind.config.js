@@ -4,9 +4,15 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  theme: {
-    extend: {
+  theme: {    extend: {
       colors: {
+        // New brand colors
+        brand: {
+          primary: '#1A3C34',    // Xanh đậm
+          secondary: '#FFC107',  // Vàng sáng
+          white: '#FFFFFF',      // Trắng
+        },
+        // Keep coffee colors for compatibility
         coffee: {
           50: '#faf7f2',
           100: '#f4ede2',
@@ -35,9 +41,12 @@ export default {
         }
       },
       fontFamily: {
-        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+        'sans': ['Roboto', 'Inter', 'ui-sans-serif', 'system-ui'],
         'serif': ['Playfair Display', 'ui-serif', 'Georgia'],
-      }
+      },
+      letterSpacing: {
+        'wide-light': '0.5px',
+      },
     },
   },
   plugins: [],

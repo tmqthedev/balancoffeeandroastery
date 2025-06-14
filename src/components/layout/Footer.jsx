@@ -30,59 +30,55 @@ const Footer = () => {
                 </svg>
             )
         }
-    ];
-
-    return (
-        <footer className="bg-coffee-900 text-white">
+    ];    return (
+        <footer className="bg-brand-primary text-brand-white">
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Logo and Company Info */}
-                    <div className="col-span-1 md:col-span-2">                        <Link to="/" className="flex items-center space-x-3 mb-4">
-                            <img 
-                                src="/logo.png" 
-                                alt="Balan Coffee & Roastery" 
-                                className="h-12 w-auto"
-                                style={{ filter: 'brightness(0) invert(1)' }}
-                                onError={(e) => {
-                                    e.target.style.filter = 'none';
-                                    e.target.style.opacity = '0.8';
-                                }}
-                            />
-                        </Link>                        <p className="text-cream-300 mb-4 max-w-md">
+                    <div className="col-span-1 md:col-span-2">
+                        <Link to="/" className="flex items-center space-x-3 mb-4">
+                            <img src="logo.png" alt="Balan Coffee Logo" className='h-12 w-24 object-cover'/>  
+                        </Link>
+                        <p className="text-brand-white/80 mb-4 max-w-md">
                             Cà phê rang mộc chất lượng cao từ những vùng đất tốt nhất Việt Nam. Chúng tôi mang đến cho bạn hương vị cà phê đậm đà và tinh túy.
-                        </p><div className="flex space-x-4">
+                        </p>
+                        <div className="flex space-x-4">
                             {socialLinks.map((social) => (
                                 <a 
                                     key={social.name}
                                     href={social.url} 
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-cream-300 hover:text-white transition-colors"
+                                    className="text-brand-white hover:text-brand-secondary transition-colors duration-300"
                                     aria-label={`Follow us on ${social.name}`}
                                 >
                                     {social.icon}
                                 </a>
                             ))}
                         </div>
-                    </div>                    {/* Quick Links */}
+                    </div>
+
+                    {/* Quick Links */}
                     <div>
-                        <h4 className="text-lg font-semibold mb-4">Liên kết nhanh</h4>
+                        <h4 className="text-lg font-semibold mb-4 text-brand-white">Liên kết nhanh</h4>
                         <ul className="space-y-2">
-                            <li><Link to="/products" className="text-cream-300 hover:text-white transition-colors">Sản phẩm</Link></li>
-                            <li><Link to="/about" className="text-cream-300 hover:text-white transition-colors">Giới thiệu</Link></li>
-                            <li><Link to="/blog" className="text-cream-300 hover:text-white transition-colors">Blog</Link></li>
-                            <li><Link to="/contact" className="text-cream-300 hover:text-white transition-colors">Liên hệ</Link></li>
+                            <li><Link to="/products" className="text-brand-white/80 hover:text-brand-secondary transition-colors duration-300">Sản phẩm</Link></li>
+                            <li><Link to="/about" className="text-brand-white/80 hover:text-brand-secondary transition-colors duration-300">Giới thiệu</Link></li>
+                            <li><Link to="/blog" className="text-brand-white/80 hover:text-brand-secondary transition-colors duration-300">Blog</Link></li>
+                            <li><Link to="/contact" className="text-brand-white/80 hover:text-brand-secondary transition-colors duration-300">Liên hệ</Link></li>
                         </ul>
-                    </div>                    {/* Contact Info */}
+                    </div>
+
+                    {/* Contact Info */}
                     <div>
-                        <h4 className="text-lg font-semibold mb-4">Thông tin liên hệ</h4>
-                        <div className="space-y-2 text-cream-300">
+                        <h4 className="text-lg font-semibold mb-4 text-brand-white">Thông tin liên hệ</h4>
+                        <div className="space-y-2 text-brand-white/80">
                             <p className="flex items-center">
                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                123 Coffee Street, Ho Chi Minh City
+                                123 Đường Cà Phê, Quận 1, TP.HCM
                             </p>
                             <p className="flex items-center">
                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,15 +96,16 @@ const Footer = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-coffee-700 mt-8 pt-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center">                        <p className="text-cream-300 text-sm">
-                            © 2024 Balan Coffee & Roastery. Tất cả quyền được bảo lưu.
+                <div className="border-t border-brand-white/20 mt-8 pt-8">
+                    <div className="flex flex-col md:flex-row justify-between items-center">
+                        <p className="text-brand-white/80 text-sm">
+                            © 2023 Balan Coffee & Roastery. Tất cả quyền được bảo lưu.
                         </p>
                         <div className="flex space-x-6 mt-4 md:mt-0">
-                            <Link to="/privacy" className="text-cream-300 hover:text-white text-sm transition-colors">
+                            <Link to="/privacy" className="text-brand-white/80 hover:text-brand-secondary text-sm transition-colors duration-300">
                                 Chính sách bảo mật
                             </Link>
-                            <Link to="/terms" className="text-cream-300 hover:text-white text-sm transition-colors">
+                            <Link to="/terms" className="text-brand-white/80 hover:text-brand-secondary text-sm transition-colors duration-300">
                                 Điều khoản sử dụng
                             </Link>
                         </div>

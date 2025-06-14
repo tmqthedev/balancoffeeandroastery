@@ -190,19 +190,96 @@ class MockDatabase {
         }
       ],
       contacts: [],
-      orders: []
+      orders: [
+        {
+          id: 1,
+          orderNumber: 'TEST001',
+          userId: 2,
+          customerEmail: 'user@example.com',
+          customerName: 'John Doe',
+          customerPhone: '0901234567',
+          shippingAddress: '123 Test Street, District 1',
+          shippingCity: 'Ho Chi Minh City',
+          shippingPostalCode: '70000',
+          shippingProvince: 'Ho Chi Minh',
+          billingAddress: '123 Test Street, District 1',
+          billingCity: 'Ho Chi Minh City',
+          billingPostalCode: '70000',
+          billingProvince: 'Ho Chi Minh',
+          subtotal: 100000.00,
+          shippingFee: 0.00,
+          tax: 0.00,
+          discount: 0.00,
+          total: 100000.00,
+          status: 'pending',
+          paymentMethod: 'ipos',
+          paymentStatus: 'pending',
+          iposOrderId: null,
+          qrCode: null,
+          qrCodeUrl: null,
+          paymentUrl: null,
+          transactionId: null,
+          paidAt: null,
+          expiresAt: null,
+          notes: 'Test order for iPOS integration',
+          createdAt: new Date('2025-06-14T10:00:00'),
+          updatedAt: new Date('2025-06-14T10:00:00')
+        },
+        {
+          id: 2,
+          orderNumber: 'ORD202506140001',
+          userId: 2,
+          customerEmail: 'user@example.com',
+          customerName: 'John Doe',
+          customerPhone: '0901234567',
+          shippingAddress: '456 Coffee Street, District 3',
+          shippingCity: 'Ho Chi Minh City',
+          shippingPostalCode: '70000',
+          shippingProvince: 'Ho Chi Minh',
+          billingAddress: '456 Coffee Street, District 3',
+          billingCity: 'Ho Chi Minh City',
+          billingPostalCode: '70000',
+          billingProvince: 'Ho Chi Minh',
+          subtotal: 259.90,
+          shippingFee: 30.00,
+          tax: 0.00,
+          discount: 10.00,
+          total: 279.90,
+          status: 'confirmed',
+          paymentMethod: 'cod',
+          paymentStatus: 'pending',
+          iposOrderId: null,
+          qrCode: null,
+          qrCodeUrl: null,
+          paymentUrl: null,
+          transactionId: null,
+          paidAt: null,
+          expiresAt: null,
+          notes: 'Customer requested fast delivery',
+          createdAt: new Date('2025-06-14T08:30:00'),
+          updatedAt: new Date('2025-06-14T09:15:00')
+        }
+      ]
     };
   }
 
   async query(sql, params = {}) {
     console.log('Mock DB Query:', sql.substring(0, 100) + '...');
-    console.log('Mock DB Params:', params);
-
-    if (sql.includes('SELECT') && sql.includes('Products')) {
+    console.log('Mock DB Params:', params);    if (sql.includes('SELECT') && sql.includes('Products')) {
       // Handle product filtering and pagination
       let products = [...this.mockData.products];
       
-      // Apply filters
+      // Handle single product by ID query (most specific filter first)
+      if (sql.includes('WHERE p.id = @id') && params.id) {
+        const productId = parseInt(params.id, 10);
+        if (isNaN(productId)) {
+          // If ID is not a valid number (like "test-simple"), return empty array
+          return [];
+        }
+        products = products.filter(p => p.id === productId);
+      }
+      
+      // Apply other filters
       if (sql.includes('price >= @minPrice') && params.minPrice) {
         products = products.filter(p => p.price >= params.minPrice);
       }
@@ -320,13 +397,68 @@ class MockDatabase {
       }
       if (sql.includes('WHERE id = @userId')) {
         return this.mockData.users.filter(u => u.id === params.userId);
+      }      return [...this.mockData.users];
+    }
+
+    // Handle Orders queries
+    if (sql.includes('SELECT') && sql.includes('Orders')) {
+      let orders = [...this.mockData.orders];
+      
+      // Filter by orderNumber
+      if (sql.includes('WHERE o.orderNumber = @orderId') && params.orderId) {
+        orders = orders.filter(o => o.orderNumber === params.orderId);
       }
-      return [...this.mockData.users];
+      
+      // Filter by userId
+      if (sql.includes('AND o.userId = @userId') && params.userId) {
+        orders = orders.filter(o => o.userId === params.userId);
+      }
+      
+      // Filter by status
+      if (sql.includes('AND o.status = @status') && params.status) {
+        orders = orders.filter(o => o.status === params.status);
+      }
+      
+      if (sql.includes("AND o.status = 'pending'")) {
+        orders = orders.filter(o => o.status === 'pending');
+      }
+      
+      // Join with Users table if needed
+      if (sql.includes('JOIN Users u ON o.userId = u.id')) {
+        orders = orders.map(order => {
+          const user = this.mockData.users.find(u => u.id === order.userId);
+          if (user) {
+            return {
+              ...order,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName
+            };
+          }
+          return order;
+        });
+      }
+      
+      // Handle pagination if needed
+      if (sql.includes('OFFSET') && sql.includes('FETCH NEXT')) {
+        const offset = params.offset || 0;
+        const limit = params.limit || 10;
+        orders = orders.slice(offset, offset + limit);
+      }
+      
+      return orders;
     }
 
     return [];
   }  async execute(sql, params = {}) {
     console.log('Mock DB Execute:', sql.substring(0, 100) + '...');
+    console.log('Mock DB Execute Params:', params);
+
+    // For SELECT queries, use the query method and wrap in recordset format
+    if (sql.trim().toUpperCase().startsWith('SELECT')) {
+      const result = await this.query(sql, params);
+      return { recordset: result };
+    }
     
     if (sql.includes('INSERT INTO Users')) {
       const newUser = {
@@ -339,6 +471,35 @@ class MockDatabase {
       return { recordset: [newUser] };
     }
 
+    if (sql.includes('INSERT INTO Orders')) {
+      const newOrder = {
+        id: this.mockData.orders.length + 1,
+        ...params,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.mockData.orders.push(newOrder);
+      return { recordset: [newOrder] };
+    }
+
+    if (sql.includes('UPDATE Orders')) {
+      // Find and update order
+      const orderIndex = this.mockData.orders.findIndex(o => 
+        (params.orderId && o.orderNumber === params.orderId) ||
+        (params.id && o.id === params.id)
+      );
+      
+      if (orderIndex !== -1) {
+        this.mockData.orders[orderIndex] = {
+          ...this.mockData.orders[orderIndex],
+          ...params,
+          updatedAt: new Date()
+        };
+        return { recordset: [this.mockData.orders[orderIndex]], rowsAffected: [1] };
+      }
+      return { rowsAffected: [0] };
+    }
+
     if (sql.includes('UPDATE Products SET views')) {
       return { rowsAffected: [1] };
     }
@@ -347,7 +508,7 @@ class MockDatabase {
       return { rowsAffected: [1] };
     }
 
-    return { recordset: [] };  }
+    return { recordset: [] };}
 }
 
 module.exports = MockDatabase;

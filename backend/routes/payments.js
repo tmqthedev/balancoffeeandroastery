@@ -3,7 +3,16 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { authenticateToken } = require('../middleware/auth');
 const { execute, query } = require('../config/database');
+const iposService = require('../services/iposService');
 const router = express.Router();
+
+console.log('✅ Payments router loaded successfully');
+
+// SIMPLE TEST ROUTE - FIRST THING
+router.get('/simple-test', (req, res) => {
+    console.log('🎯 Simple test route hit!');
+    res.json({ message: 'Simple test works!' });
+});
 
 // Momo Payment Configuration
 const MOMO_CONFIG = {
@@ -36,6 +45,18 @@ const IPOS_CONFIG = {
     redirectUrl: process.env.IPOS_REDIRECT_URL || 'http://localhost:3000/payment/result',
     ipnUrl: process.env.IPOS_IPN_URL || 'http://localhost:5000/api/payments/ipos/callback'
 };
+
+// Test route to check if payments router is working
+router.get('/test', (req, res) => {
+    console.log('Test route hit!');
+    res.json({ success: true, message: 'Payments router is working!', timestamp: new Date().toISOString() });
+});
+
+// Test route without authentication
+router.post('/test-no-auth', (req, res) => {
+    console.log('Test no-auth route hit!', req.body);
+    res.json({ success: true, message: 'No auth test working!', body: req.body });
+});
 
 // Create Momo Payment
 router.post('/momo/create', authenticateToken, async (req, res) => {
@@ -302,59 +323,72 @@ router.get('/status/:orderId', authenticateToken, async (req, res) => {
 // iPOS API - Create Momo QR Payment (as per SDD requirements)
 router.post('/ipos/create-qr', authenticateToken, async (req, res) => {
     try {
+        console.log('iPOS Payment Request:', { 
+            body: req.body, 
+            user: { userId: req.user.userId, email: req.user.email } 
+        });
+        
         const { orderId, amount, orderInfo } = req.body;        // Validate order belongs to user
         const orderQuery = `
             SELECT o.*, u.email, u.firstName, u.lastName 
             FROM Orders o 
             JOIN Users u ON o.userId = u.id 
             WHERE o.orderNumber = @orderId AND o.userId = @userId AND o.status = 'pending'
-        `;        const orderResult = await execute(orderQuery, { orderId, userId: req.user.userId });
+        `;        
+        
+        console.log('Executing order query with params:', { orderId, userId: req.user.userId });
+        const orderResult = await execute(orderQuery, { orderId, userId: req.user.userId });
+        
+        console.log('Order query result:', { 
+            length: orderResult?.recordset?.length || orderResult?.length || 0,
+            result: orderResult 
+        });
 
         if (orderResult.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found or already processed' });
         }
 
+        // Extract order data from result
+        const order = orderResult[0] || (orderResult.recordset && orderResult.recordset[0]);
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order data not found' });
+        }
+
+        // Send request to iPOS API using service
+        const orderData = {
+            orderNumber: orderId,
+            total: amount,
+            customerName: `${order.firstName || ''} ${order.lastName || ''}`.trim() || 'Customer',
+            customerEmail: order.email || order.customerEmail || 'customer@example.com',
+            customerPhone: order.customerPhone || order.phone || '',
+            items: [] // This would normally come from OrderProducts join
+        };        const response = await iposService.createPaymentOrder(orderData);
         const requestId = `IPOS_${orderId}_${Date.now()}`;
-        const timestamp = Math.floor(Date.now() / 1000);
 
-        // Create signature for iPOS API
-        const signatureString = `${IPOS_CONFIG.partnerCode}${requestId}${amount}${orderId}${timestamp}`;
-        const signature = crypto.createHmac('sha256', IPOS_CONFIG.secretKey).update(signatureString).digest('hex');
-
-        const requestBody = {
-            partnerCode: IPOS_CONFIG.partnerCode,
-            accessKey: IPOS_CONFIG.accessKey,
-            requestId: requestId,
-            orderId: orderId,
-            amount: amount,
-            orderInfo: orderInfo,
-            redirectUrl: IPOS_CONFIG.redirectUrl,
-            ipnUrl: IPOS_CONFIG.ipnUrl,
-            timestamp: timestamp,
-            signature: signature,
-            paymentMethod: 'MOMO_QR'
-        };
-
-        // Send request to iPOS API
-        const response = await axios.post(`${IPOS_CONFIG.apiUrl}/v1/payment/create`, requestBody, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${IPOS_CONFIG.accessKey}`
-            }
-        });
-
-        if (response.data.success) {
+        if (response.success) {
             // Update order with payment info
             await execute(`
                 UPDATE Orders 
-                SET paymentMethod = 'ipos_momo_qr', paymentReference = @requestId, updatedAt = GETDATE()
-                WHERE id = @orderId
-            `, { requestId, orderId });
+                SET paymentMethod = 'ipos_momo_qr', 
+                    iposOrderId = @paymentId,
+                    qrCode = @qrCode,
+                    paymentUrl = @paymentUrl,
+                    expiresAt = @expiresAt,
+                    updatedAt = GETDATE()
+                WHERE orderNumber = @orderId
+            `, { 
+                paymentId: response.data.payment_id,
+                qrCode: response.data.qr_code,
+                paymentUrl: response.data.payment_url,
+                expiresAt: response.data.expires_at,
+                orderId 
+            });
 
             res.json({
                 success: true,
-                qrCode: response.data.qrCode,
-                paymentUrl: response.data.paymentUrl,
+                qrCode: response.data.qr_code,
+                paymentUrl: response.data.payment_url,
                 requestId: requestId,
                 expiryTime: response.data.expiryTime
             });
@@ -472,5 +506,7 @@ function sortObject(obj) {
     });
     return sorted;
 }
+
+console.log('✅ Payments router: All routes registered successfully');
 
 module.exports = router;

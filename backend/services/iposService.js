@@ -11,9 +11,17 @@ class IPosService {
         this.apiKey = process.env.IPOS_API_KEY;
         this.secretKey = process.env.IPOS_SECRET_KEY;
         this.merchantId = process.env.IPOS_MERCHANT_ID;
+        this.useMockMode = process.env.USE_MOCK_DB === 'true'; // Use mock mode when mock DB is enabled
         
         if (!this.apiKey || !this.secretKey || !this.merchantId) {
             console.warn('iPOS credentials not configured. Payment features may not work.');
+            if (!this.useMockMode) {
+                console.warn('💡 Tip: Set USE_MOCK_DB=true to enable mock payment mode for development');
+            }
+        }
+
+        if (this.useMockMode) {
+            console.log('🔄 iPOS Mock Mode enabled for development');
         }
 
         this.client = axios.create({
@@ -39,6 +47,33 @@ class IPosService {
      */
     async createPaymentOrder(orderData) {
         try {
+            // Mock mode for development
+            if (this.useMockMode) {
+                console.log('🔄 Using iPOS Mock Mode for order:', orderData.orderNumber);
+                
+                // Generate mock response similar to real iPOS
+                const mockResponse = {
+                    success: true,
+                    data: {
+                        order_id: orderData.orderNumber,
+                        payment_id: `MOCK_${orderData.orderNumber}_${Date.now()}`,
+                        qr_code: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==`, // 1x1 transparent PNG
+                        payment_url: `http://localhost:3000/payment/mock?orderId=${orderData.orderNumber}`,
+                        expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes from now
+                        amount: Math.round(orderData.total),
+                        currency: 'VND',
+                        status: 'pending'
+                    },
+                    message: 'Mock payment order created successfully'
+                };
+
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                return mockResponse;
+            }
+
+            // Real iPOS API call
             const timestamp = Date.now().toString();
             const payload = {
                 merchant_id: this.merchantId,
