@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AuthContext } from '../../context/AuthContext';
+import AdminDebugInfo from '../common/AdminDebugInfo';
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
@@ -198,12 +199,23 @@ const AdminLayout = ({ children }) => {
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
-                </button>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {navigation.find(item => {
-                    const isActive = location.pathname === item.href || 
-                      (item.href === '/admin' && location.pathname === '/admin/dashboard');
-                    return isActive;                  })?.name || 'Dashboard'}
+                </button>                <h1 className="text-2xl font-bold text-gray-900">
+                  {(() => {
+                    // Check main navigation first
+                    const mainNavItem = navigation.find(item => {
+                      const isActive = location.pathname === item.href || 
+                        (item.href === '/admin' && location.pathname === '/admin/dashboard');
+                      return isActive;
+                    });
+                    
+                    if (mainNavItem) return mainNavItem.name;
+                    
+                    // Check CRM navigation
+                    const crmNavItem = crmNavigation.find(item => location.pathname === item.href);
+                    if (crmNavItem) return crmNavItem.name;
+                    
+                    return 'Dashboard';
+                  })()}
                 </h1>
               </div>
               
@@ -217,14 +229,15 @@ const AdminLayout = ({ children }) => {
               </div>
             </div>
           </div>
-        </header>
-
-        {/* Page content */}
+        </header>        {/* Page content */}
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>
-    </div>  );
+      
+      {/* Debug info for admin users */}
+      <AdminDebugInfo />
+    </div>);
 };
 
 AdminLayout.propTypes = {

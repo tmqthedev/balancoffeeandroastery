@@ -3,6 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
+import { formatVND } from '../utils/currency';
+
+// Configure axios defaults
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -15,21 +19,18 @@ const ProductDetail = () => {
     const [error, setError] = useState('');
     const [quantity, setQuantity] = useState(1);
     const [selectedWeight, setSelectedWeight] = useState('250g');
-    const [addingToCart, setAddingToCart] = useState(false);
-
-    const weights = ['100g', '250g', '500g', '1kg'];    useEffect(() => {
-        fetchProduct();
-    }, [fetchProduct]);const fetchProduct = useCallback(async () => {
+    const [addingToCart, setAddingToCart] = useState(false);    const weights = ['100g', '250g', '500g', '1kg'];    const fetchProduct = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`/api/products/${id}`);
+            const response = await axios.get(`${API_BASE_URL}/api/products/${id}`);
             setProduct(response.data.product);
             
             // Fetch related products
             if (response.data.product.category_id) {
-                const relatedResponse = await axios.get(`/api/products?category=${response.data.product.category_id}&limit=4&exclude=${id}`);
+                const relatedResponse = await axios.get(`${API_BASE_URL}/api/products?category=${response.data.product.category_id}&limit=4&exclude=${id}`);
                 setRelatedProducts(relatedResponse.data.products);
-            }        } catch (error) {
+            }
+        } catch (error) {
             console.error('Failed to fetch product:', error);
             if (error.response?.status === 404) {
                 setError('Không tìm thấy sản phẩm');
@@ -40,6 +41,10 @@ const ProductDetail = () => {
             setLoading(false);
         }
     }, [id]);
+
+    useEffect(() => {
+        fetchProduct();
+    }, [fetchProduct]);
 
     const handleAddToCart = async () => {
         if (!product) return;
@@ -98,9 +103,8 @@ const ProductDetail = () => {
                 <meta property="og:title" content={`${product.name} - Balan Coffee`} />
                 <meta property="og:description" content={product.description} />
                 <meta property="og:type" content="product" />
-                <meta property="og:image" content={product.image_url} />
-                <meta property="product:price:amount" content={product.price} />
-                <meta property="product:price:currency" content="USD" />
+                <meta property="og:image" content={product.image_url} />                <meta property="product:price:amount" content={product.price} />
+                <meta property="product:price:currency" content="VND" />
                 <link rel="canonical" href={window.location.href} />
                 
                 {/* Structured Data */}
@@ -116,9 +120,8 @@ const ProductDetail = () => {
                             "name": "Balan Coffee"
                         },
                         "offers": {
-                            "@type": "Offer",
-                            "price": product.price,
-                            "priceCurrency": "USD",
+                            "@type": "Offer",                            "price": product.price,
+                            "priceCurrency": "VND",
                             "availability": product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
                         }
                     })}
@@ -166,12 +169,10 @@ const ProductDetail = () => {
                                         {product.category_name}
                                     </p>
                                 )}
-                            </div>
-
-                            <div className="flex items-center space-x-4">
+                            </div>                            <div className="flex items-center space-x-4">
                                 <span className="text-3xl font-bold text-coffee-800">
-                                    ${product.price}
-                                </span>                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                    {formatVND(product.price)}
+                                </span><span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                     product.stock_quantity > 0 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
@@ -211,12 +212,11 @@ const ProductDetail = () => {
                                         <p className="text-coffee-800">{product.processing_method}</p>
                                     </div>
                                 )}
-                            </div>
-
-                            {/* Weight Selection */}                            <div>
-                                <label className="block text-sm font-medium text-coffee-700 mb-2">
+                            </div>                            {/* Weight Selection */}
+                            <div>
+                                <span className="block text-sm font-medium text-coffee-700 mb-2">
                                     Trọng lượng:
-                                </label>
+                                </span>
                                 <div className="grid grid-cols-4 gap-2">
                                     {weights.map(weight => (
                                         <button
@@ -232,39 +232,48 @@ const ProductDetail = () => {
                                         </button>
                                     ))}
                                 </div>
-                            </div>
-
-                            {/* Quantity and Add to Cart */}
-                            <div className="space-y-4">                                <div>
-                                    <label className="block text-sm font-medium text-coffee-700 mb-2">
+                            </div>                            {/* Quantity and Add to Cart */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="quantity-input" className="block text-sm font-medium text-coffee-700 mb-2">
                                         Số lượng:
                                     </label>
                                     <div className="flex items-center border border-coffee-300 rounded-lg w-32">
                                         <button
                                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                             className="px-3 py-2 text-coffee-600 hover:bg-coffee-50"
+                                            aria-label="Giảm số lượng"
                                         >
                                             -
-                                        </button>
-                                        <span className="px-4 py-2 border-x border-coffee-300 text-center min-w-[3rem]">
-                                            {quantity}
+                                        </button>                                        <span className="px-4 py-2 border-x border-coffee-300 text-center min-w-[3rem]">
+                                            <input
+                                                id="quantity-input"
+                                                type="number"
+                                                value={quantity}
+                                                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                                                className="w-full text-center border-none bg-transparent outline-none"
+                                                min="1"
+                                            />
                                         </span>
                                         <button
                                             onClick={() => setQuantity(quantity + 1)}
                                             className="px-3 py-2 text-coffee-600 hover:bg-coffee-50"
+                                            aria-label="Tăng số lượng"
                                         >
                                             +
                                         </button>
                                     </div>
-                                </div>
-
-                                <div className="space-y-3">                                    <button
+                                </div>                                <div className="space-y-3">
+                                    <button
                                         onClick={handleAddToCart}
                                         disabled={product.stock_quantity === 0 || addingToCart}
                                         className="w-full bg-coffee-600 hover:bg-coffee-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:bg-coffee-300 disabled:cursor-not-allowed"
                                     >
-                                        {addingToCart ? 'Đang thêm...' : 
-                                         inCart ? `Trong giỏ (${cartQuantity})` : 'Thêm vào giỏ'}
+                                        {(() => {
+                                            if (addingToCart) return 'Đang thêm...';
+                                            if (inCart) return `Trong giỏ (${cartQuantity})`;
+                                            return 'Thêm vào giỏ';
+                                        })()}
                                     </button>
                                     
                                     <button
@@ -328,9 +337,8 @@ const ProductDetail = () => {
                                         <div className="p-4">
                                             <h3 className="text-lg font-semibold text-coffee-800 mb-2">
                                                 {relatedProduct.name}
-                                            </h3>
-                                            <p className="text-xl font-bold text-coffee-800">
-                                                ${relatedProduct.price}
+                                            </h3>                                            <p className="text-xl font-bold text-coffee-800">
+                                                {formatVND(relatedProduct.price)}
                                             </p>
                                         </div>
                                     </Link>

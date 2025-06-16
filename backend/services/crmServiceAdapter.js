@@ -6,7 +6,7 @@ class CRMService {
   static async executeQuery(query, params = {}) {
     try {
       // Check if we're in mock mode first
-      if (db.isMockMode && typeof db.isMockMode === 'function' && db.isMockMode()) {
+      if (db.isMockMode?.()) {
         // Mock database mode
         return this.handleMockQuery(query, params);
       } else {
@@ -108,7 +108,7 @@ class CRMService {
   // User Management
   static async getAllUsers(filters = {}) {
     try {
-      if (db.isMockMode && db.isMockMode()) {
+      if (db.isMockMode?.()) {
         let users = db.mockData?.users || [];
         
         // Apply filters
@@ -185,7 +185,7 @@ class CRMService {
         const users = db.mockData?.users || [];
         const user = users.find(u => u.id == userId);
         
-        if (user && user.roleId) {
+        if (user?.roleId) {
           const userRoles = db.mockData?.userRoles || [];
           const role = userRoles.find(r => r.id === user.roleId);
           user.roleName = role?.name || null;

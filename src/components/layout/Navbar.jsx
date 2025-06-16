@@ -28,7 +28,7 @@ const Navbar = () => {
             <div className="container mx-auto px-4 lg:px-8">
                 <div className="flex items-center justify-between h-16">                    {/* Logo */}
                     <div className="flex-shrink-0">
-                        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary rounded-lg">
+                        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity focus:outline-none">
                             <img src="logo.png" alt="Balan Coffee Logo" className='h-12 w-24 object-cover'/>                      
                         </Link>
                     </div>
@@ -66,7 +66,7 @@ const Navbar = () => {
                     <div className="flex items-center space-x-3 flex-shrink-0 ml-auto lg:ml-0">                        {/* Cart Icon */}
                         <Link 
                             to="/cart" 
-                            className="relative p-2 text-brand-white hover:text-brand-secondary hover:bg-brand-primary/10 rounded-lg transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary"
+                            className="relative p-2 text-brand-white hover:text-brand-secondary hover:bg-brand-primary/10 rounded-lg transition-all duration-200 group focus:outline-none "
                             aria-label="Shopping Cart"
                         ><svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h7.5" />
@@ -79,7 +79,7 @@ const Navbar = () => {
                         </Link>                        {/* User Account */}
                         {isAuthenticated ? (
                             <div className="relative group">
-                                <button className="flex items-center space-x-2 p-2 text-brand-white hover:text-brand-secondary hover:bg-brand-primary/10 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary">
+                                <button className="flex items-center space-x-2 p-2 text-brand-white hover:text-brand-secondary hover:bg-brand-primary/10 rounded-lg transition-all duration-200 focus:outline-none ">
                                     <div className="w-8 h-8 bg-brand-secondary rounded-full flex items-center justify-center text-black text-sm font-medium shadow-sm">
                                         {user?.firstName?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>

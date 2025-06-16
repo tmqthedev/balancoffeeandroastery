@@ -161,7 +161,7 @@ const Auth = () => {
                     <div className="text-center mb-8">
                         <Link to="/" className="inline-block">
                             <img 
-                                src="/logo.png" 
+                                src="/title.jpg" 
                                 alt="Balan Coffee" 
                                 className="h-16 w-16 mx-auto mb-4"
                                 onError={(e) => {

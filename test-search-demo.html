@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Search Features - Balan Coffee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .highlight {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-amber-50">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-amber-900 mb-8">🔍 Test Advanced Search Features</h1>
+        
+        <!-- Test Search Input -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Advanced Search Test</h2>
+            <input 
+                type="text" 
+                id="searchInput"
+                placeholder="Tìm kiếm: arabica, robusta, cà phê rang mộc..."
+                class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <div id="suggestions" class="mt-2"></div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Search Results</h2>
+            <div id="searchStats" class="text-sm text-gray-600 mb-4"></div>
+            <div id="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Test History -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Search History</h2>
+            <div id="history" class="flex flex-wrap gap-2"></div>
+            <button onclick="clearHistory()" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                Clear History
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Mock data for testing
+        const mockProducts = [
+            {
+                id: 1,
+                name: "Arabica Cầu Đất",
+                description: "Cà phê Arabica nguyên chất từ Cầu Đất, Lâm Đồng với hương vị đậm đà",
+                price: 25,
+                image_url: "",
+                stock_quantity: 50
+            },
+            {
+                id: 2,
+                name: "Robusta Lâm Đồng",
+                description: "Hạt cà phê Robusta chất lượng cao từ vùng cao nguyên Lâm Đồng",
+                price: 22,
+                image_url: "",
+                stock_quantity: 30
+            },
+            {
+                id: 3,
+                name: "Blend Đặc Biệt",
+                description: "Pha trộn độc đáo giữa Arabica và Robusta, rang mộc truyền thống",
+                price: 28,
+                image_url: "",
+                stock_quantity: 25
+            },
+            {
+                id: 4,
+                name: "Arabica Typica Kongo",
+                description: "Dòng cà phê Arabica Typica Kongo cổ điển với hương thơm đặc trưng",
+                price: 30,
+                image_url: "",
+                stock_quantity: 15
+            }
+        ];
+
+        // Search utilities (copied from searchUtils.js)
+        function highlightText(text, searchTerm) {
+            if (!searchTerm || !text) return text;
+            
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        function getSearchHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('coffee-search-history') || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function saveSearchHistory(term) {
+            if (!term.trim()) return;
+            
+            const history = getSearchHistory();
+            const newHistory = [term, ...history.filter(h => h !== term)].slice(0, 10);
+            localStorage.setItem('coffee-search-history', JSON.stringify(newHistory));
+            displayHistory();
+        }
+
+        function sortSearchResults(products, searchTerm) {
+            return [...products].sort((a, b) => {
+                const aNameMatch = a.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const bNameMatch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
+                
+                if (aNameMatch && !bNameMatch) return -1;
+                if (!aNameMatch && bNameMatch) return 1;
+                
+                const aDescMatch = a.description.toLowerCase().includes(searchTerm.toLowerCase());
+                const bDescMatch = b.description.toLowerCase().includes(searchTerm.toLowerCase());
+                
+                if (aDescMatch && !bDescMatch) return -1;
+                if (!aDescMatch && bDescMatch) return 1;
+                
+                return 0;
+            });
+        }
+
+        // Search functionality
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value;
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch(searchTerm);
+            }, 300);
+        });
+
+        function performSearch(searchTerm) {
+            const startTime = performance.now();
+            
+            let results = mockProducts;
+            
+            if (searchTerm.trim()) {
+                results = mockProducts.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                
+                results = sortSearchResults(results, searchTerm);
+                saveSearchHistory(searchTerm.trim());
+            }
+            
+            const endTime = performance.now();
+            const searchTime = endTime - startTime;
+            
+            displayResults(results, searchTerm);
+            displaySearchStats(results.length, searchTime, searchTerm);
+        }
+
+        function displayResults(products, searchTerm) {
+            const resultsContainer = document.getElementById('results');
+            
+            if (products.length === 0) {
+                resultsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Không tìm thấy sản phẩm nào</div>';
+                return;
+            }
+            
+            resultsContainer.innerHTML = products.map(product => `
+                <div class="border border-amber-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="h-32 bg-amber-100 rounded mb-3 flex items-center justify-center">
+                        <span class="text-4xl">☕</span>
+                    </div>
+                    <h3 class="font-semibold text-amber-900 mb-2">
+                        ${highlightText(product.name, searchTerm)}
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-3">
+                        ${highlightText(product.description, searchTerm)}
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-amber-800">${(product.price * 25000).toLocaleString('vi-VN')}đ</span>
+                        <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
+                            ${product.stock_quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displaySearchStats(count, time, searchTerm) {
+            const statsContainer = document.getElementById('searchStats');
+            
+            if (searchTerm.trim()) {
+                statsContainer.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <span>🔍 Tìm thấy <strong>${count}</strong> sản phẩm cho "<strong>${searchTerm}</strong>"</span>
+                        <span class="text-xs">⏱️ ${time.toFixed(1)}ms</span>
+                        <button onclick="clearSearch()" class="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                            ✕ Xóa tìm kiếm
+                        </button>
+                    </div>
+                `;
+            } else {
+                statsContainer.innerHTML = `<span>Hiển thị tất cả ${count} sản phẩm</span>`;
+            }
+        }
+
+        function displayHistory() {
+            const historyContainer = document.getElementById('history');
+            const history = getSearchHistory();
+            
+            historyContainer.innerHTML = history.map(term => `
+                <button 
+                    onclick="searchFromHistory('${term}')"
+                    class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm hover:bg-amber-200"
+                >
+                    ${term}
+                </button>
+            `).join('');
+        }
+
+        function searchFromHistory(term) {
+            searchInput.value = term;
+            performSearch(term);
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            performSearch('');
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('coffee-search-history');
+            displayHistory();
+        }
+
+        // Initialize
+        performSearch('');
+        displayHistory();
+
+        // Demo suggestions
+        const suggestions = ['arabica', 'robusta', 'cà phê rang mộc', 'blend đặc biệt', 'typica kongo'];
+        const suggestionsContainer = document.getElementById('suggestions');
+        
+        searchInput.addEventListener('focus', () => {
+            if (!searchInput.value) {
+                suggestionsContainer.innerHTML = `
+                    <div class="mt-2 p-2 border border-amber-200 rounded bg-amber-50">
+                        <div class="text-xs text-gray-600 mb-2">Gợi ý tìm kiếm:</div>
+                        <div class="flex flex-wrap gap-1">
+                            ${suggestions.map(term => `
+                                <button 
+                                    onclick="searchFromHistory('${term}')"
+                                    class="px-2 py-1 bg-white border border-amber-200 rounded text-xs hover:bg-amber-100"
+                                >
+                                    ${term}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        searchInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                suggestionsContainer.innerHTML = '';
+            }, 200);
+        });
+    </script>
+</body>
+</html>

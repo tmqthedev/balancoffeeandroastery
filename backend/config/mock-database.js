@@ -168,17 +168,15 @@ class MockDatabase {
           metadata: '{"loginMethod": "password"}',
           createdAt: new Date()
         }
-      ],
-
-      products: [
+      ],      products: [
         {
           id: 1,
           name: 'Arabica Cầu Đất Premium',
           nameVi: 'Arabica Cầu Đất Cao Cấp',
           description: 'Premium Arabica coffee beans from Cau Dat plateau, known for its rich flavor and aromatic profile.',
           descriptionVi: 'Hạt cà phê Arabica cao cấp từ cao nguyên Cầu Đất, nổi tiếng với hương vị đậm đà và thơm ngon.',
-          price: 25.99,
-          comparePrice: 29.99,
+          price: 650000,
+          comparePrice: 750000,
           stockQuantity: 50,
           image_url: '/images/arabica-cau-dat.jpg',
           isFeatured: true,
@@ -192,7 +190,7 @@ class MockDatabase {
           nameVi: 'Robusta Lâm Đồng',
           description: 'Strong and bold Robusta coffee beans from Lam Dong province, perfect for espresso.',
           descriptionVi: 'Hạt cà phê Robusta mạnh mẽ từ tỉnh Lâm Đồng, hoàn hảo cho espresso.',
-          price: 18.99,
+          price: 450000,
           comparePrice: null,
           stockQuantity: 75,
           image_url: '/images/robusta-lam-dong.jpg',
@@ -207,22 +205,21 @@ class MockDatabase {
           nameVi: 'Blend Đặc Biệt',
           description: 'A carefully crafted blend of Arabica and Robusta beans for balanced flavor.',
           descriptionVi: 'Hỗn hợp được pha chế cẩn thận từ hạt Arabica và Robusta cho hương vị cân bằng.',
-          price: 22.50,
-          comparePrice: 25.00,
+          price: 550000,
+          comparePrice: 620000,
           stockQuantity: 30,
           image_url: '/images/specialty-blend.jpg',
           isFeatured: false,
           isActive: true,
           views: 85,
           createdAt: new Date('2024-01-10')
-        },
-        {
+        },        {
           id: 4,
           name: 'Dark Roast Supreme',
           nameVi: 'Rang Đậm Cao Cấp',
           description: 'Intense dark roast coffee with rich, smoky flavors and low acidity.',
           descriptionVi: 'Cà phê rang đậm đặc với hương vị đậm đà, khói và độ axit thấp.',
-          price: 24.99,
+          price: 600000,
           comparePrice: null,
           stockQuantity: 40,
           image_url: '/images/dark-roast.jpg',
@@ -237,7 +234,7 @@ class MockDatabase {
           nameVi: 'Rang Vừa Cổ Điển',
           description: 'Classic medium roast with balanced flavor, perfect for all brewing methods.',
           descriptionVi: 'Rang vừa cổ điển với hương vị cân bằng, phù hợp với mọi phương pháp pha.',
-          price: 21.99,
+          price: 520000,
           comparePrice: null,
           stockQuantity: 60,
           image_url: '/images/medium-roast.jpg',
@@ -457,8 +454,7 @@ class MockDatabase {
       } else if (sql.includes('ORDER BY p.views DESC')) {
         products.sort((a, b) => b.views - a.views);
       }
-      
-      // Handle count query
+        // Handle count query
       if (sql.includes('COUNT')) {
         return [{ total: products.length }];
       }
@@ -468,6 +464,14 @@ class MockDatabase {
         const offset = params.offset || 0;
         const limit = params.limit || 12;
         products = products.slice(offset, offset + limit);
+      }
+      
+      // Handle aliases in SELECT statement
+      if (sql.includes('as stock_quantity')) {
+        products = products.map(product => ({
+          ...product,
+          stock_quantity: product.stockQuantity
+        }));
       }
       
       return products;

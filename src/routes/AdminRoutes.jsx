@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import AdminRoute from '../components/auth/AdminRoute';
+import AdminLayout from '../components/admin/AdminLayout';
 
 // Loading component for admin routes
 const AdminLoadingSpinner = () => (
@@ -25,16 +26,20 @@ const CRMCustomerManagement = React.lazy(() => import('../pages/admin/CRMCustome
 const CRMSalesManagement = React.lazy(() => import('../pages/admin/CRMSalesManagement'));
 const CRMSystemConfig = React.lazy(() => import('../pages/admin/CRMSystemConfig'));
 
+// Test page
+const TestAdminPage = React.lazy(() => import('../pages/admin/TestAdminPage'));
+
 const AdminRoutes = () => {
   return (
-    <Routes>
-      <Route path="/" element={
-        <AdminRoute>
-          <Suspense fallback={<AdminLoadingSpinner />}>
-            <AdminDashboard />
-          </Suspense>
-        </AdminRoute>
-      } />
+    <AdminLayout>
+      <Routes>
+        <Route path="/" element={
+          <AdminRoute>
+            <Suspense fallback={<AdminLoadingSpinner />}>
+              <AdminDashboard />
+            </Suspense>
+          </AdminRoute>
+        } />
       <Route path="/products" element={
         <AdminRoute>
           <Suspense fallback={<AdminLoadingSpinner />}>
@@ -69,8 +74,14 @@ const AdminRoutes = () => {
           </Suspense>
         </AdminRoute>
       } />
-      
-      {/* CRM Routes */}
+        {/* CRM Routes */}
+      <Route path="/test" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <TestAdminPage />
+          </Suspense>
+        </AdminRoute>
+      } />
       <Route path="/crm" element={
         <AdminRoute>
           <Suspense fallback={<AdminLoadingSpinner />}>
@@ -103,9 +114,9 @@ const AdminRoutes = () => {
           <Suspense fallback={<AdminLoadingSpinner />}>
             <CRMSystemConfig />
           </Suspense>
-        </AdminRoute>
-      } />
+        </AdminRoute>      } />
     </Routes>
+    </AdminLayout>
   );
 };
 

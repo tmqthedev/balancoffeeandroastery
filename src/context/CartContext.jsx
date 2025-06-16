@@ -28,7 +28,9 @@ export { useCart } from './cartConstants';
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { isAuthenticated } = useAuth();    // Load cart on mount
+    const { isAuthenticated } = useAuth();
+
+    // Load cart on mount
     useEffect(() => {
         loadCart();
     }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -49,7 +51,7 @@ export const CartProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Failed to load cart:', error);
-            // Fallback to localStorage
+            // Fallback to localStorage for guests
             const savedCart = localStorage.getItem('cart');
             if (savedCart) {
                 setCartItems(JSON.parse(savedCart));
@@ -57,12 +59,12 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Save cart to localStorage or API
+    // Save cart to localStorage (guest) or API (authenticated user)
     const saveCart = async (items) => {
         try {
             if (isAuthenticated) {
                 // Save to API for authenticated users
-                await api.post('/cart/sync', { items });
+                await api.post('/cart', { items });
             } else {
                 // Save to localStorage for guests
                 localStorage.setItem('cart', JSON.stringify(items));
@@ -72,13 +74,16 @@ export const CartProvider = ({ children }) => {
             // Fallback to localStorage
             localStorage.setItem('cart', JSON.stringify(items));
         }
-    };    // Add item to cart
+    };
+
+    // Add item to cart
     const addToCart = async (product, quantity = 1) => {
-        setLoading(true);
         try {
+            setLoading(true);
             const productId = product.product_id || product.id;
             const newItems = (() => {
                 const existingItem = cartItems.find(item => (item.product_id || item.id) === productId);
+                
                 if (existingItem) {
                     return cartItems.map(item =>
                         (item.product_id || item.id) === productId
@@ -86,10 +91,10 @@ export const CartProvider = ({ children }) => {
                             : item
                     );
                 } else {
-                    return [...cartItems, { ...product, product_id: productId, quantity }];
+                    return [...cartItems, { ...product, quantity, product_id: productId }];
                 }
             })();
-
+            
             setCartItems(newItems);
             await saveCart(newItems);
         } catch (error) {
@@ -97,10 +102,12 @@ export const CartProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };    // Remove item from cart
+    };
+
+    // Remove item from cart
     const removeFromCart = async (productId) => {
-        setLoading(true);
         try {
+            setLoading(true);
             const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
             setCartItems(newItems);
             await saveCart(newItems);
@@ -109,18 +116,23 @@ export const CartProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };    // Update item quantity
-    const updateQuantity = async (productId, quantity) => {
-        if (quantity <= 0) {
-            await removeFromCart(productId);
-            return;
-        }
+    };
 
-        setLoading(true);
+    // Update item quantity
+    const updateQuantity = async (productId, quantity) => {
         try {
+            setLoading(true);
+            if (quantity <= 0) {
+                await removeFromCart(productId);
+                return;
+            }
+            
             const newItems = cartItems.map(item =>
-                (item.product_id || item.id) === productId ? { ...item, quantity } : item
+                (item.product_id || item.id) === productId
+                    ? { ...item, quantity }
+                    : item
             );
+            
             setCartItems(newItems);
             await saveCart(newItems);
         } catch (error) {
@@ -132,8 +144,8 @@ export const CartProvider = ({ children }) => {
 
     // Clear cart
     const clearCart = async () => {
-        setLoading(true);
         try {
+            setLoading(true);
             setCartItems([]);
             await saveCart([]);
         } catch (error) {
@@ -141,11 +153,13 @@ export const CartProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };    // Get cart totals
+    };
+
+    // Get cart totals
     const getCartTotals = () => {
         const itemCount = cartItems.reduce((total, item) => total + (Number(item.quantity) || 0), 0);
         const subtotal = cartItems.reduce((total, item) => {
-            const price = (Number(item.price) || 0) * 1000; // Convert USD to VND (approximate)
+            const price = Number(item.price) || 0; // Price is already in VND
             const quantity = Number(item.quantity) || 0;
             return total + (price * quantity);
         }, 0);
@@ -161,7 +175,20 @@ export const CartProvider = ({ children }) => {
             tax: tax || 0, 
             total: total || 0
         };
-    };const value = useMemo(() => ({
+    };
+
+    // Check if product is in cart
+    const isInCart = (productId) => {
+        return cartItems.some(item => (item.product_id || item.id) === productId);
+    };
+
+    // Get quantity of specific item in cart
+    const getItemQuantity = (productId) => {
+        const item = cartItems.find(item => (item.product_id || item.id) === productId);
+        return item ? item.quantity : 0;
+    };
+
+    const value = useMemo(() => ({
         cartItems,
         loading,
         addToCart,
@@ -169,6 +196,8 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         clearCart,
         getCartTotals,
+        isInCart,
+        getItemQuantity,
         loadCart
     }), [cartItems, loading]);
 

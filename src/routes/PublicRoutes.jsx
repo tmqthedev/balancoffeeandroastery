@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import AdminRoutes from './AdminRoutes';
 
 // Loading component for public routes
 const PublicLoadingSpinner = () => (
@@ -59,12 +60,14 @@ const PublicRoutes = () => {
           <ProtectedRoute>
             <PaymentResult />
           </ProtectedRoute>
-        } />
-        <Route path="/account/*" element={
+        } />        <Route path="/account/*" element={
           <ProtectedRoute>
             <Account />
           </ProtectedRoute>
         } />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/*" element={<AdminRoutes />} />
         
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />

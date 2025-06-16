@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { formatVND } from '../utils/currency';
 
 const Cart = () => {
     const navigate = useNavigate();
@@ -127,7 +128,7 @@ const Cart = () => {
                                                                         : item.description
                                                                     }
                                                                 </p>                                                                <p className="text-coffee-800 font-semibold mt-2">
-                                                                    {(item.price * 1000).toLocaleString('vi-VN')}đ mỗi sản phẩm
+                                                                    {formatVND(item.price)} mỗi sản phẩm
                                                                 </p>
                                                             </div>
                                                             
@@ -151,7 +152,7 @@ const Cart = () => {
                                                                     </button>
                                                                 </div>                                                                  <div className="text-right">
                                                                     <p className="text-lg font-semibold text-coffee-800">
-                                                                        {(item.price * item.quantity * 1000).toLocaleString('vi-VN')}đ
+                                                                        {formatVND(item.price * item.quantity)}
                                                                     </p>
                                                                 </div>
                                                                 
@@ -195,33 +196,33 @@ const Cart = () => {
                                     <div className="space-y-4">
                                         <div className="flex justify-between">
                                             <span className="text-coffee-600">Tạm tính</span>
-                                            <span className="font-semibold text-coffee-800">{subtotal.toLocaleString('vi-VN')}đ</span>
+                                            <span className="font-semibold text-coffee-800">{formatVND(subtotal)}</span>
                                         </div>
                                         
                                         <div className="flex justify-between">
                                             <span className="text-coffee-600">Phí vận chuyển</span>
                                             <span className="font-semibold text-coffee-800">
-                                                {shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')}đ`}
+                                                {shipping === 0 ? 'Miễn phí' : formatVND(shipping)}
                                             </span>
                                         </div>
                                         
                                         <div className="flex justify-between">
                                             <span className="text-coffee-600">Thuế</span>
-                                            <span className="font-semibold text-coffee-800">{tax.toLocaleString('vi-VN')}đ</span>
+                                            <span className="font-semibold text-coffee-800">{formatVND(tax)}</span>
                                         </div>
                                         
                                         <hr className="border-coffee-200" />
                                         
                                         <div className="flex justify-between text-lg">
                                             <span className="font-semibold text-coffee-800">Tổng cộng</span>
-                                            <span className="font-bold text-coffee-800">{total.toLocaleString('vi-VN')}đ</span>
+                                            <span className="font-bold text-coffee-800">{formatVND(total)}</span>
                                         </div>
                                     </div>
                                       {/* Shipping Notice */}
                                     {subtotal < 1000000 && (
                                         <div className="mt-4 p-3 bg-coffee-50 border border-coffee-200 rounded-lg">
                                             <p className="text-sm text-coffee-700">
-                                                Thêm {(1000000 - subtotal).toLocaleString('vi-VN')}đ nữa để được miễn phí vận chuyển!
+                                                Thêm {formatVND(1000000 - subtotal)} nữa để được miễn phí vận chuyển!
                                             </p>
                                         </div>
                                     )}
