@@ -1,19 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SEOHelmet from '../../components/common/SEOHelmet';
 
-const CRMDashboard = () => {
-  const [dashboardData, setDashboardData] = useState(null);
+const CRMDashboard = () => {  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [dateRange]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/crm/analytics/dashboard?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`, {
@@ -25,13 +20,15 @@ const CRMDashboard = () => {
         setDashboardData(data.data);
       } else {
         console.error('Failed to fetch dashboard data');
-      }
-    } catch (error) {
+      }    } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(false);    }
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData, dateRange]);
 
   const handleDateRangeChange = (e) => {
     setDateRange({

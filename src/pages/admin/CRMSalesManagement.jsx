@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SEOHelmet from '../../components/common/SEOHelmet';
 
 const CRMSalesManagement = () => {
@@ -11,12 +11,11 @@ const CRMSalesManagement = () => {
     stageId: ''
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
-
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [fetchData, filters]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -37,8 +36,7 @@ const CRMSalesManagement = () => {
         ]);
         
         setOpportunities(opportunitiesData.data);
-        setPipelineStages(stagesData.data);
-      } else {
+        setPipelineStages(stagesData.data);      } else {
         console.error('Failed to fetch data');
       }
     } catch (error) {
@@ -46,7 +44,7 @@ const CRMSalesManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     setFilters({

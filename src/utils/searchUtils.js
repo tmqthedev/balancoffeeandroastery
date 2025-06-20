@@ -5,8 +5,7 @@ export const highlightSearchTerm = (text, searchTerm) => {
   
   const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
   const parts = text.split(regex);
-  
-  return parts.map((part, index) => {
+    return parts.map((part) => {
     if (part.toLowerCase() === searchTerm.toLowerCase()) {
       return `<mark class="bg-yellow-200 font-semibold px-1 rounded">${part}</mark>`;
     }

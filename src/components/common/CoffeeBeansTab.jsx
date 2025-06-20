@@ -10,8 +10,6 @@ const CoffeeBeansTab = ({
     searchTerm, 
     searchTime, 
     totalProducts, 
-    displayedProductsCount,
-    onAddToCart, 
     onClearSearch,
     handleAddToCart,
     clearFilters 
@@ -143,13 +141,10 @@ const CoffeeBeansTab = ({
 
 CoffeeBeansTab.propTypes = {
     products: PropTypes.array.isRequired,
-    loading: PropTypes.bool.isRequired,
-    error: PropTypes.string,
+    loading: PropTypes.bool.isRequired,    error: PropTypes.string,
     searchTerm: PropTypes.string,
     searchTime: PropTypes.number,
     totalProducts: PropTypes.number.isRequired,
-    displayedProductsCount: PropTypes.number.isRequired,
-    onAddToCart: PropTypes.func.isRequired,
     onClearSearch: PropTypes.func.isRequired,
     handleAddToCart: PropTypes.func.isRequired,
     clearFilters: PropTypes.func.isRequired

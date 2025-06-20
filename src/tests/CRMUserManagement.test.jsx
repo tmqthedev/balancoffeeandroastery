@@ -1,3 +1,4 @@
+/* eslint-env vitest */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -5,7 +6,7 @@ import CRMUserManagement from '../pages/admin/CRMUserManagement.jsx';
 import { AuthContext } from '../context/AuthContext.jsx';
 
 // Mock fetch API
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 const mockAuthContext = {
   user: {

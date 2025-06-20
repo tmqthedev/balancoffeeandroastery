@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SEOHelmet from '../../components/common/SEOHelmet';
 
 const CRMSystemConfig = () => {
@@ -16,12 +16,11 @@ const CRMSystemConfig = () => {
     { value: 'support', label: 'Hỗ trợ khách hàng' },
     { value: 'system', label: 'Hệ thống' }
   ];
-
   useEffect(() => {
     fetchConfigurations();
-  }, [selectedModule]);
+  }, [fetchConfigurations, selectedModule]);
 
-  const fetchConfigurations = async () => {
+  const fetchConfigurations = useCallback(async () => {
     try {
       setLoading(true);
       const url = selectedModule ? 
@@ -37,13 +36,12 @@ const CRMSystemConfig = () => {
         setConfigurations(data.data);
       } else {
         console.error('Failed to fetch configurations');
-      }
-    } catch (error) {
+      }    } catch (error) {
       console.error('Error fetching configurations:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedModule]);
 
   const handleModuleChange = (e) => {
     setSelectedModule(e.target.value);

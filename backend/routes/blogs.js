@@ -98,7 +98,69 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single blog post by slug
+// Get blog categories (must be before /:slug route)
+router.get('/categories', async (req, res) => {
+  try {
+    // For mock database, return simple categories
+    const categories = [
+      { id: 1, name: 'Coffee Culture', nameVi: 'Văn Hóa Cà Phê', slug: 'coffee-culture' },
+      { id: 2, name: 'Brewing Techniques', nameVi: 'Kỹ Thuật Pha Chế', slug: 'brewing-techniques' },
+      { id: 3, name: 'Health & Wellness', nameVi: 'Sức Khỏe', slug: 'health-wellness' },
+      { id: 4, name: 'Coffee Roasting', nameVi: 'Nghệ Thuật Rang', slug: 'coffee-roasting' }
+    ];
+    
+    res.json(categories);
+  } catch (error) {
+    console.error('Get blog categories error:', error);
+    res.status(500).json({ error: 'Failed to fetch blog categories' });
+  }
+});
+
+// Get featured blog posts
+router.get('/featured/list', async (req, res) => {
+  try {
+    const { limit = 6, lang = 'en' } = req.query;
+
+    const query = `
+      SELECT TOP (@limit)
+        b.id,
+        b.title,
+        b.titleVi,
+        b.slug,
+        b.excerpt,
+        b.excerptVi,
+        b.featuredImage,
+        b.publishedAt,
+        b.viewCount,
+        u.firstName + ' ' + u.lastName as authorName
+      FROM Blogs b
+      INNER JOIN Users u ON b.authorId = u.id
+      WHERE b.status = 'published'
+      ORDER BY b.viewCount DESC, b.publishedAt DESC
+    `;
+
+    const blogs = await db.query(query, { limit: parseInt(limit) });
+
+    // Localize content
+    const localizedBlogs = blogs.map(blog => ({
+      id: blog.id,
+      title: lang === 'vi' ? blog.titleVi : blog.title,
+      slug: blog.slug,
+      excerpt: lang === 'vi' ? blog.excerptVi : blog.excerpt,
+      featuredImage: blog.featuredImage,
+      publishedAt: blog.publishedAt,
+      viewCount: blog.viewCount,
+      authorName: blog.authorName
+    }));
+
+    res.json(localizedBlogs);
+  } catch (error) {
+    console.error('Get featured blogs error:', error);
+    res.status(500).json({ error: 'Failed to fetch featured blog posts' });
+  }
+});
+
+// Get single blog post by slug (must be after specific routes)
 router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
@@ -183,51 +245,6 @@ router.get('/:slug', async (req, res) => {
   } catch (error) {
     console.error('Get blog error:', error);
     res.status(500).json({ error: 'Failed to fetch blog post' });
-  }
-});
-
-// Get featured blog posts
-router.get('/featured/list', async (req, res) => {
-  try {
-    const { limit = 6, lang = 'en' } = req.query;
-
-    const query = `
-      SELECT TOP (@limit)
-        b.id,
-        b.title,
-        b.titleVi,
-        b.slug,
-        b.excerpt,
-        b.excerptVi,
-        b.featuredImage,
-        b.publishedAt,
-        b.viewCount,
-        u.firstName + ' ' + u.lastName as authorName
-      FROM Blogs b
-      INNER JOIN Users u ON b.authorId = u.id
-      WHERE b.status = 'published'
-      ORDER BY b.viewCount DESC, b.publishedAt DESC
-    `;
-
-    const blogs = await db.query(query, { limit: parseInt(limit) });
-
-    // Localize content
-    const localizedBlogs = blogs.map(blog => ({
-      id: blog.id,
-      title: lang === 'vi' ? blog.titleVi : blog.title,
-      slug: blog.slug,
-      excerpt: lang === 'vi' ? blog.excerptVi : blog.excerpt,
-      featuredImage: blog.featuredImage,
-      publishedAt: blog.publishedAt,
-      viewCount: blog.viewCount,
-      authorName: blog.authorName
-    }));
-
-    res.json(localizedBlogs);
-
-  } catch (error) {
-    console.error('Get featured blogs error:', error);
-    res.status(500).json({ error: 'Failed to fetch featured blog posts' });
   }
 });
 

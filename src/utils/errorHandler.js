@@ -1,6 +1,6 @@
 // Error logger utility for production
 const logError = (error, errorInfo = {}) => {
-  if (process.env.NODE_ENV === 'production') {
+  if (import.meta.env.PROD) {
     // In production, send errors to monitoring service
     // For now, we'll use a simple console.error with structured data
     const errorData = {

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 // Simple error logger for development
 const logError = (error, errorInfo = {}) => {
-  if (process.env.NODE_ENV === 'production') {
+  if (import.meta.env.PROD) {
     // In production, you can integrate with error reporting services
     console.error('Production Error:', {
       message: error.message,
@@ -22,7 +22,7 @@ class ErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     // Update state so the next render will show the fallback UI
     return { hasError: true };
   }
@@ -80,7 +80,7 @@ class ErrorBoundary extends React.Component {
               </a>
             </div>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {!import.meta.env.PROD && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 mb-2">
                   Chi tiết lỗi (development only)

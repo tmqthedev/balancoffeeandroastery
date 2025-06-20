@@ -13,13 +13,18 @@ const Blog = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [categories, setCategories] = useState([]);  const blogsPerPage = 6;  useEffect(() => {
+  const [categories, setCategories] = useState([]);
+
+  const blogsPerPage = 6;
+  useEffect(() => {
     fetchBlogs();
-  }, [currentPage, searchTerm, selectedCategory]); // Direct dependencies
+  }, [fetchBlogs, currentPage, searchTerm, selectedCategory]);
 
   useEffect(() => {
     fetchCategories();
-  }, []); // Only run onceconst fetchBlogs = useCallback(async () => {
+  }, [fetchCategories]);
+
+  const fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/api/blogs`, {
@@ -27,22 +32,31 @@ const Blog = () => {
           page: currentPage,
           limit: blogsPerPage,
           search: searchTerm,
-          category: selectedCategory,          lang: 'vi'
+          category: selectedCategory,
+          lang: 'vi'
         }
       });
-      setBlogs(response.data.blogs);
-      setTotalPages(response.data.totalPages);
+      
+      console.log('Blog response:', response.data);
+      
+      setBlogs(response.data.blogs || []);
+      setTotalPages(response.data.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Error fetching blogs:', error);
+      setBlogs([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, selectedCategory];  const fetchCategories = useCallback(async () => {
+  }, [currentPage, searchTerm, selectedCategory]);
+
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/blogs/categories`);
-      setCategories(response.data);
+      setCategories(response.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategories([]);
     }
   }, []);
 
@@ -52,203 +66,193 @@ const Blog = () => {
     fetchBlogs();
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const handleCategoryFilter = (category) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
   };
 
-  const truncateContent = (content, maxLength = 150) => {
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
-    <>      <Helmet>
+    <div className="min-h-screen bg-gray-50">
+      <Helmet>
         <title>Blog - Balan Coffee & Roastery</title>
-        <meta name="description" content="Khám phá thế giới cà phê qua blog của chúng tôi với những bài viết về cách pha chế, kiến thức về hạt cà phê và xu hướng cà phê mới nhất" />
-        <meta name="keywords" content="blog cà phê, cách pha cà phê, kiến thức cà phê, arabica, robusta, cà phê rang mộc" />
-        <link rel="canonical" href={`${window.location.origin}/blog`} />
-        <meta property="og:title" content="Blog - Balan Coffee & Roastery" />
-        <meta property="og:description" content="Khám phá thế giới cà phê qua blog của chúng tôi với những bài viết về cách pha chế, kiến thức về hạt cà phê và xu hướng cà phê mới nhất" />
-        <meta property="og:url" content={`${window.location.origin}/blog`} />
-        <meta property="og:type" content="website" />
+        <meta name="description" content="Khám phá thế giới cà phê qua những bài viết chuyên sâu về văn hóa, kỹ thuật và nghệ thuật pha chế cà phê." />
+        <meta name="keywords" content="blog cà phê, văn hóa cà phê, kỹ thuật pha chế, nghệ thuật rang cà phê" />
       </Helmet>
 
-      <div className="min-h-screen bg-cream-50">
-        {/* Hero Section */}
-        <div className="bg-coffee-800 text-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Blog Cà Phê
-              </h1>
-              <p className="text-xl text-coffee-200 max-w-3xl mx-auto">
-                Khám phá thế giới cà phê qua những bài viết về cách pha chế, kiến thức về hạt cà phê và xu hướng mới nhất
-              </p>
+      {/* Hero Section */}
+      <div className="bg-coffee-800 text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              ☕ Blog Cà Phê
+            </h1>
+            <p className="text-xl text-coffee-100 max-w-2xl mx-auto">
+              Khám phá thế giới cà phê qua những câu chuyện, kiến thức và trải nghiệm từ các chuyên gia
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12">
+        {/* Search and Filter */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Form */}
+            <form onSubmit={handleSearch} className="flex-1">
+              <div className="flex">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm bài viết..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-coffee-600 text-white rounded-r-lg hover:bg-coffee-700 transition-colors"
+                >
+                  🔍 Tìm kiếm
+                </button>
+              </div>
+            </form>
+
+            {/* Category Filter */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleCategoryFilter('')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === ''
+                    ? 'bg-coffee-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Tất cả
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryFilter(category.slug)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === category.slug
+                      ? 'bg-coffee-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {category.nameVi || category.name}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Search and Filter Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Search */}
-              <form onSubmit={handleSearch} className="flex-1">
-                <div className="flex">                  <input
-                    type="text"
-                    placeholder="Tìm kiếm bài viết..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                  />
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-coffee-600 text-white rounded-r-md hover:bg-coffee-700 transition-colors"
-                  >
-                    Tìm kiếm
-                  </button>
-                </div>
-              </form>
-
-              {/* Category Filter */}
-              <select
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
-              >                <option value="">Tất cả danh mục</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name_vi || category.name_en}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Blog Posts Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
           </div>
-
-          {/* Blog Grid */}
-          {loading ? (            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map(() => (
-                <div key={`blog-skeleton-${Math.random().toString(36).slice(2, 9)}`} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-300"></div>
-                  <div className="p-6">
-                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-6 bg-gray-300 rounded mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-300 rounded"></div>
-                      <div className="h-3 bg-gray-300 rounded"></div>
-                      <div className="h-3 bg-gray-300 rounded w-2/3"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : blogs.length === 0 ? (            <div className="text-center py-12">
-              <div className="text-6xl text-gray-400 mb-4">📝</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                Không tìm thấy bài viết nào
-              </h3>
-              <p className="text-gray-500">
-                Không có bài viết nào phù hợp với tiêu chí tìm kiếm của bạn
-              </p>
-            </div>
-          ) : (
+        ) : blogs.length === 0 ? (
+          <div className="text-center py-16">
+            <h3 className="text-2xl font-semibold text-gray-600 mb-4">
+              Không tìm thấy bài viết nào
+            </h3>
+            <p className="text-gray-500">
+              {searchTerm ? 'Thử tìm kiếm với từ khóa khác' : 'Chưa có bài viết nào được đăng'}
+            </p>
+          </div>
+        ) : (
+          <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogs.map((blog) => (
                 <article
                   key={blog.id}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
                 >
-                  {/* Blog Image */}
                   <Link to={`/blog/${blog.slug}`}>
-                    <div className="h-48 overflow-hidden">                      <img
-                        src={blog.image_url || '/images/blog/default-blog.jpg'}
-                        alt={blog.title_vi || blog.title_en}
+                    <div className="h-48 bg-gray-200 overflow-hidden">
+                      <img
+                        src={blog.featuredImage || '/images/blog/default.jpg'}
+                        alt={blog.title}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = '/images/blog/default.jpg';
+                        }}
                       />
                     </div>
-                  </Link>
-
-                  <div className="p-6">
-                    {/* Category and Date */}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">                      <span className="bg-coffee-100 text-coffee-800 px-2 py-1 rounded-full">
-                        {blog.category && (blog.category.name_vi || blog.category.name_en)}
-                      </span>
-                      <time dateTime={blog.created_at}>
-                        {formatDate(blog.created_at)}
-                      </time>
+                    <div className="p-6">
+                      <h2 className="text-xl font-bold text-coffee-800 mb-3 line-clamp-2 hover:text-coffee-600 transition-colors">
+                        {blog.title}
+                      </h2>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {blog.excerpt}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <span>{blog.authorName || 'Admin'}</span>
+                        <span>{new Date(blog.publishedAt).toLocaleDateString('vi-VN')}</span>
+                      </div>
+                      {blog.tags && blog.tags.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1">
+                          {blog.tags.slice(0, 3).map((tag, index) => (
+                            <span
+                              key={index}
+                              className="text-xs bg-coffee-100 text-coffee-700 px-2 py-1 rounded"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-
-                    {/* Title */}                    <h2 className="text-xl font-semibold text-gray-900 mb-3 hover:text-coffee-600 transition-colors">
-                      <Link to={`/blog/${blog.slug}`}>
-                        {blog.title_vi || blog.title_en}
-                      </Link>
-                    </h2>
-
-                    {/* Excerpt */}
-                    <p className="text-gray-600 mb-4">
-                      {truncateContent(blog.excerpt_vi || blog.excerpt_en)}
-                    </p>
-
-                    {/* Read More */}
-                    <Link                      to={`/blog/${blog.slug}`}
-                      className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium transition-colors"
-                    >
-                      Đọc thêm
-                      <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </div>
+                  </Link>
                 </article>
               ))}
             </div>
-          )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-12">
-              <nav className="flex items-center space-x-2">                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Trước
-                </button>
-
-                {[...Array(totalPages)].map((_, index) => (
-                  <button
-                    key={index + 1}
-                    onClick={() => setCurrentPage(index + 1)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
-                      currentPage === index + 1
-                        ? 'bg-coffee-600 text-white'
-                        : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Tiếp
-                </button>
-              </nav>
-            </div>
-          )}
-        </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center">
+                <div className="flex space-x-2">
+                  {currentPage > 1 && (
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      « Trước
+                    </button>
+                  )}
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        currentPage === page
+                          ? 'bg-coffee-600 text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  
+                  {currentPage < totalPages && (
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Sau »
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

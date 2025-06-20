@@ -12,14 +12,6 @@ import { sortSearchResults, saveSearchHistory } from '../utils/searchUtils';
 // Configure axios defaults
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// Format currency to VND
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(amount); // Direct VND amount
-};
-
 const Products = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { addToCart } = useCart();
@@ -28,7 +20,6 @@ const Products = () => {
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'coffee-beans');
     
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
@@ -80,11 +71,10 @@ const Products = () => {
     // Memoized filtered products count
     const displayedProductsCount = useMemo(() => {
         return Math.min(products.length, productsPerPage);
-    }, [products.length]);    useEffect(() => {
-        if (activeTab === 'coffee-beans') {
+    }, [products.length]);    useEffect(() => {        if (activeTab === 'coffee-beans') {
             fetchProducts();
         }
-    }, [filters, sortBy, currentPage, activeTab]);
+    }, [fetchProducts, filters, sortBy, currentPage, activeTab]);
 
     useEffect(() => {
         // Always fetch categories on component mount
@@ -166,23 +156,26 @@ const Products = () => {
             setTotalProducts(0);
             setTotalPages(1);
         } finally {
-            setLoading(false);
-        }
-    }, [filters, sortBy, currentPage]);    const fetchCategories = async () => {
+            setLoading(false);        }
+    }, [filters, sortBy, currentPage]);
+    
+    const fetchCategories = async () => {
         try {
             console.log('🔍 Fetching categories from:', `${API_BASE_URL}/api/categories`);
             const response = await axios.get(`${API_BASE_URL}/api/categories`, { timeout: 5000 });
             console.log('📦 Categories response:', response.data);
             if (response.data?.categories) {
                 console.log('✅ Setting categories:', response.data.categories);
-                setCategories(response.data.categories);
+                // Categories are fetched but not stored in state since they're not used
             } else {
                 console.log('❌ No categories in response');
             }
         } catch (error) {
             console.error('❌ Failed to fetch categories:', error);
         }
-    };    const handleFilterChange = useCallback((key, value) => {
+    };
+    
+    const handleFilterChange = useCallback((key, value) => {
         console.log('🔧 Filter change:', key, '=', value);
         setFilters(prev => {
             const newFilters = { ...prev, [key]: value };

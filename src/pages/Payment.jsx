@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
 const Payment = () => {
-    const location = useLocation();
     const navigate = useNavigate();
     const { cartItems, clearCart, getCartTotals } = useCart();
     const { user } = useAuth();
@@ -13,11 +12,8 @@ const Payment = () => {
     const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [iposOrderId, setIposOrderId] = useState('');
     const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, success, failed
-    const [orderData, setOrderData] = useState(null);
 
-    const { totalPrice } = getCartTotals();
-
-    useEffect(() => {
+    const { totalPrice } = getCartTotals();    useEffect(() => {
         // Redirect if cart is empty or user not logged in
         if (!cartItems.length || !user) {
             navigate('/cart');
@@ -26,7 +22,7 @@ const Payment = () => {
 
         // Create order and get QR code from iPOS API
         createPaymentOrder();
-    }, []);
+    }, [cartItems.length, user, navigate, createPaymentOrder]);
 
     useEffect(() => {
         // Check payment status every 5 seconds
@@ -37,9 +33,9 @@ const Payment = () => {
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [iposOrderId, paymentStatus]);
+    }, [iposOrderId, paymentStatus, checkPaymentStatus]);
 
-    const createPaymentOrder = async () => {
+    const createPaymentOrder = useCallback(async () => {
         setLoading(true);
         try {
             const orderPayload = {
@@ -66,25 +62,22 @@ const Payment = () => {
                 body: JSON.stringify(orderPayload)
             });
 
-            const data = await response.json();
-
-            if (data.success) {
-                setOrderData(data.order);
+            const data = await response.json();            if (data.success) {
+                // setOrderData(data.order); // Removed unused state
                 setIposOrderId(data.ipos_order_id);
                 setQrCodeUrl(data.qr_code_url);
             } else {
                 throw new Error(data.message || 'Không thể tạo đơn hàng');
             }
-        } catch (error) {
-            console.error('Error creating payment order:', error);
+        } catch (error) {            console.error('Error creating payment order:', error);
             alert('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
             navigate('/cart');
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, cartItems, totalPrice, navigate]);
 
-    const checkPaymentStatus = async () => {
+    const checkPaymentStatus = useCallback(async () => {
         try {
             const response = await fetch(`/api/orders/payment-status/${iposOrderId}`, {
                 headers: {
@@ -101,14 +94,13 @@ const Payment = () => {
                     navigate('/account', { 
                         state: { message: 'Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.' }
                     });
-                }, 3000);
-            } else if (data.status === 'failed') {
+                }, 3000);            } else if (data.status === 'failed') {
                 setPaymentStatus('failed');
             }
         } catch (error) {
             console.error('Error checking payment status:', error);
         }
-    };
+    }, [iposOrderId, clearCart, navigate]);
 
     const handleCancelPayment = () => {
         if (window.confirm('Bạn có chắc chắn muốn hủy thanh toán?')) {

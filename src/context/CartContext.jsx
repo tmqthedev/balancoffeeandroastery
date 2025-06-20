@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { CartContext } from './cartConstants';
@@ -30,13 +30,8 @@ export const CartProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const { isAuthenticated } = useAuth();
 
-    // Load cart on mount
-    useEffect(() => {
-        loadCart();
-    }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
-
     // Load cart from localStorage (guest) or API (authenticated user)
-    const loadCart = async () => {
+    const loadCart = useCallback(async () => {
         try {
             if (isAuthenticated) {
                 // Load from API for authenticated users
@@ -48,19 +43,22 @@ export const CartProvider = ({ children }) => {
                 if (savedCart) {
                     setCartItems(JSON.parse(savedCart));
                 }
-            }
-        } catch (error) {
+            }        } catch (error) {
             console.error('Failed to load cart:', error);
             // Fallback to localStorage for guests
             const savedCart = localStorage.getItem('cart');
             if (savedCart) {
                 setCartItems(JSON.parse(savedCart));
-            }
-        }
-    };
+            }        }
+    }, [isAuthenticated]);
+
+    // Load cart on mount
+    useEffect(() => {
+        loadCart();
+    }, [loadCart, isAuthenticated]);
 
     // Save cart to localStorage (guest) or API (authenticated user)
-    const saveCart = async (items) => {
+    const saveCart = useCallback(async (items) => {
         try {
             if (isAuthenticated) {
                 // Save to API for authenticated users
@@ -74,10 +72,10 @@ export const CartProvider = ({ children }) => {
             // Fallback to localStorage
             localStorage.setItem('cart', JSON.stringify(items));
         }
-    };
+    }, [isAuthenticated]);
 
     // Add item to cart
-    const addToCart = async (product, quantity = 1) => {
+    const addToCart = useCallback(async (product, quantity = 1) => {
         try {
             setLoading(true);
             const productId = product.product_id || product.id;
@@ -94,32 +92,28 @@ export const CartProvider = ({ children }) => {
                     return [...cartItems, { ...product, quantity, product_id: productId }];
                 }
             })();
-            
-            setCartItems(newItems);
+              setCartItems(newItems);
             await saveCart(newItems);
         } catch (error) {
-            console.error('Failed to add to cart:', error);
-        } finally {
+            console.error('Failed to add to cart:', error);        } finally {
             setLoading(false);
         }
-    };
+    }, [cartItems, saveCart]);
 
     // Remove item from cart
-    const removeFromCart = async (productId) => {
+    const removeFromCart = useCallback(async (productId) => {
         try {
             setLoading(true);
             const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
             setCartItems(newItems);
-            await saveCart(newItems);
-        } catch (error) {
-            console.error('Failed to remove from cart:', error);
-        } finally {
+            await saveCart(newItems);        } catch (error) {
+            console.error('Failed to remove from cart:', error);        } finally {
             setLoading(false);
         }
-    };
+    }, [cartItems, saveCart]);
 
     // Update item quantity
-    const updateQuantity = async (productId, quantity) => {
+    const updateQuantity = useCallback(async (productId, quantity) => {
         try {
             setLoading(true);
             if (quantity <= 0) {
@@ -133,30 +127,28 @@ export const CartProvider = ({ children }) => {
                     : item
             );
             
-            setCartItems(newItems);
-            await saveCart(newItems);
+            setCartItems(newItems);            await saveCart(newItems);
         } catch (error) {
             console.error('Failed to update quantity:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [cartItems, removeFromCart, saveCart]);
 
     // Clear cart
-    const clearCart = async () => {
+    const clearCart = useCallback(async () => {
         try {
             setLoading(true);
             setCartItems([]);
-            await saveCart([]);
-        } catch (error) {
+            await saveCart([]);        } catch (error) {
             console.error('Failed to clear cart:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [saveCart]);
 
     // Get cart totals
-    const getCartTotals = () => {
+    const getCartTotals = useCallback(() => {
         const itemCount = cartItems.reduce((total, item) => total + (Number(item.quantity) || 0), 0);
         const subtotal = cartItems.reduce((total, item) => {
             const price = Number(item.price) || 0; // Price is already in VND
@@ -170,36 +162,34 @@ export const CartProvider = ({ children }) => {
         
         return { 
             itemCount: itemCount || 0, 
-            subtotal: subtotal || 0, 
-            shipping: shipping || 0, 
+            subtotal: subtotal || 0,            shipping: shipping || 0, 
             tax: tax || 0, 
             total: total || 0
         };
-    };
+    }, [cartItems]);
 
     // Check if product is in cart
-    const isInCart = (productId) => {
+    const isInCart = useCallback((productId) => {
         return cartItems.some(item => (item.product_id || item.id) === productId);
-    };
+    }, [cartItems]);
 
     // Get quantity of specific item in cart
-    const getItemQuantity = (productId) => {
+    const getItemQuantity = useCallback((productId) => {
         const item = cartItems.find(item => (item.product_id || item.id) === productId);
         return item ? item.quantity : 0;
-    };
+    }, [cartItems]);
 
     const value = useMemo(() => ({
         cartItems,
         loading,
-        addToCart,
-        removeFromCart,
+        addToCart,        removeFromCart,
         updateQuantity,
         clearCart,
         getCartTotals,
         isInCart,
         getItemQuantity,
         loadCart
-    }), [cartItems, loading]);
+    }), [cartItems, loading, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotals, isInCart, getItemQuantity, loadCart]);
 
     return (
         <CartContext.Provider value={value}>

@@ -1,22 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import SEOHelmet from '../../components/common/SEOHelmet';
 
 const CRMUserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    role: '',
-    isActive: '',
+    role: '',    isActive: '',
     search: ''
   });
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [filters]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
@@ -28,8 +24,7 @@ const CRMUserManagement = () => {
       const response = await fetch(`/api/crm/users?${queryParams}`, {
         credentials: 'include'
       });
-      
-      if (response.ok) {
+        if (response.ok) {
         const data = await response.json();
         setUsers(data.data);
       } else {
@@ -38,9 +33,12 @@ const CRMUserManagement = () => {
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(false);    }
+  }, [filters]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers, filters]);
 
   const handleFilterChange = (e) => {
     setFilters({
@@ -123,8 +121,10 @@ const CRMUserManagement = () => {
                   Quản lý tài khoản người dùng và phân quyền hệ thống
                 </p>
               </div>
-              
-              <button className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                <button 
+                className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                aria-label="Thêm người dùng mới"
+              >
                 Thêm người dùng
               </button>
             </div>
@@ -187,12 +187,11 @@ const CRMUserManagement = () => {
                 onChange={handleFilterChange}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-            </div>
-
-            <div className="flex items-end">
+            </div>            <div className="flex items-end">
               <button
                 onClick={() => setFilters({ role: '', isActive: '', search: '' })}
                 className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                aria-label="Xóa tất cả bộ lọc"
               >
                 Xóa bộ lọc
               </button>
@@ -207,10 +206,8 @@ const CRMUserManagement = () => {
               Danh sách người dùng ({users.length})
             </h3>
           </div>
-          
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+            {loading ? (            <div className="p-8 text-center" aria-live="polite">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto" aria-hidden="true"></div>
               <p className="mt-2 text-sm text-gray-500">Đang tải...</p>
             </div>
           ) : (
@@ -278,15 +275,18 @@ const CRMUserManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      </td>                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleEditUser(user)}
                           className="text-amber-600 hover:text-amber-900 mr-3"
+                          aria-label={`Chỉnh sửa người dùng ${user.firstName} ${user.lastName}`}
                         >
                           Chỉnh sửa
                         </button>
-                        <button className="text-blue-600 hover:text-blue-900">
+                        <button 
+                          className="text-blue-600 hover:text-blue-900"
+                          aria-label={`Xem chi tiết người dùng ${user.firstName} ${user.lastName}`}
+                        >
                           Xem chi tiết
                         </button>
                       </td>
@@ -329,6 +329,20 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     isActive: user.isActive
   });
 
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [onClose]);
+
   const handleInputChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setFormData({
@@ -336,25 +350,45 @@ const EditUserModal = ({ user, onClose, onSave }) => {
       [e.target.name]: value
     });
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
-  };
-
+    
+    // Basic validation
+    if (!formData.firstName || !formData.lastName || !formData.email) {
+      alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert('Định dạng email không hợp lệ');
+      return;
+    }
+    
+    onSave(formData);  };
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div 
+      className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 id="modal-title" className="text-lg font-medium text-gray-900">
               Chỉnh sửa người dùng
             </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
+              aria-label="Đóng modal"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -482,13 +516,28 @@ const EditUserModal = ({ user, onClose, onSave }) => {
                 className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
               >
                 Lưu thay đổi
-              </button>
-            </div>
+              </button>            </div>
           </form>
         </div>
       </div>
     </div>
   );
+};
+
+// PropTypes validation for EditUserModal
+EditUserModal.propTypes = {
+  user: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
+    email: PropTypes.string,
+    phone: PropTypes.string,
+    role: PropTypes.string,
+    department: PropTypes.string,
+    isActive: PropTypes.bool
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired
 };
 
 export default CRMUserManagement;

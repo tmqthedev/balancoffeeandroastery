@@ -64,17 +64,7 @@ const CRMCustomerManagement = () => {
     setSelectedCustomer(null);
     setCustomerProfile(null);
   };
-
-  const getCustomerSegmentBadges = (segments) => {
-    return segments?.map((segment, index) => (
-      <span
-        key={index}
-        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1"
-      >
-        {segment.nameVi || segment.name}
-      </span>
-    ));
-  };
+  // Removed unused function getCustomerSegmentBadges
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
