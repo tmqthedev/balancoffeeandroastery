@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 // Configure axios defaults
@@ -12,9 +12,9 @@ const BlogPost = () => {
   const [blog, setBlog] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);  useEffect(() => {
-    fetchBlogPost();
-  }, [fetchBlogPost]);  const fetchBlogPost = useCallback(async () => {
+  const [error, setError] = useState(null);
+
+  const fetchBlogPost = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -36,6 +36,10 @@ const BlogPost = () => {
       setLoading(false);
     }
   }, [slug]);
+
+  useEffect(() => {
+    fetchBlogPost();
+  }, [fetchBlogPost]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 // Configure axios defaults
@@ -16,13 +16,6 @@ const Blog = () => {
   const [categories, setCategories] = useState([]);
 
   const blogsPerPage = 6;
-  useEffect(() => {
-    fetchBlogs();
-  }, [fetchBlogs, currentPage, searchTerm, selectedCategory]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
 
   const fetchBlogs = useCallback(async () => {
     try {
@@ -34,12 +27,17 @@ const Blog = () => {
           search: searchTerm,
           category: selectedCategory,
           lang: 'vi'
+        },
+        // Disable cache to ensure fresh data
+        headers: {
+          'Cache-Control': 'no-cache'
         }
       });
       
-      console.log('Blog response:', response.data);
       
-      setBlogs(response.data.blogs || []);
+      const blogsData = response.data.blogs || [];
+      
+      setBlogs(blogsData);
       setTotalPages(response.data.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Error fetching blogs:', error);
@@ -59,6 +57,14 @@ const Blog = () => {
       setCategories([]);
     }
   }, []);
+
+  useEffect(() => {
+    fetchBlogs();
+  }, [fetchBlogs]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -175,23 +181,23 @@ const Blog = () => {
                     <div className="h-48 bg-gray-200 overflow-hidden">
                       <img
                         src={blog.featuredImage || '/images/blog/default.jpg'}
-                        alt={blog.title}
+                        alt={blog.title || 'Blog post'}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          e.target.src = '/images/blog/default.jpg';
+                          e.target.src = '/title.jpg'; // Fallback to existing image
                         }}
                       />
                     </div>
                     <div className="p-6">
                       <h2 className="text-xl font-bold text-coffee-800 mb-3 line-clamp-2 hover:text-coffee-600 transition-colors">
-                        {blog.title}
+                        {blog.title || 'Untitled'}
                       </h2>
                       <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {blog.excerpt}
+                        {blog.excerpt || 'Không có mô tả'}
                       </p>
                       <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>{blog.authorName || 'Admin'}</span>
-                        <span>{new Date(blog.publishedAt).toLocaleDateString('vi-VN')}</span>
+                        <span>{blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString('vi-VN') : 'Không rõ ngày'}</span>
                       </div>
                       {blog.tags && blog.tags.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1">

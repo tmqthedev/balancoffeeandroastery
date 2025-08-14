@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -328,14 +328,16 @@ const Account = () => {
 
                       <div>
                         <label htmlFor="user-email-acc" className="block text-sm font-medium text-gray-700 mb-2">
-                          Email
+                          Email (không thể thay đổi)
                         </label>
                         <input
                           id="user-email-acc"
                           type="email"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                          readOnly
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                          title="Email không thể thay đổi vì lý do bảo mật"
                         />
                       </div>
 
@@ -525,3 +527,4 @@ const Account = () => {
 };
 
 export default Account;
+

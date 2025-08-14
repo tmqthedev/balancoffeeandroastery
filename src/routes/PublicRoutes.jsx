@@ -15,7 +15,7 @@ const PublicLoadingSpinner = () => (
 const Products = React.lazy(() => import('../pages/Products'));
 const ProductDetail = React.lazy(() => import('../pages/ProductDetail'));
 const Cart = React.lazy(() => import('../pages/Cart'));
-const Blog = React.lazy(() => import('../pages/BlogSimple'));
+const Blog = React.lazy(() => import('../pages/Blog'));
 const BlogPost = React.lazy(() => import('../pages/BlogPost'));
 const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));

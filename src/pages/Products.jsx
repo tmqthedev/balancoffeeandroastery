@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import AdvancedSearch from '../components/common/AdvancedSearch';
@@ -71,33 +71,7 @@ const Products = () => {
     // Memoized filtered products count
     const displayedProductsCount = useMemo(() => {
         return Math.min(products.length, productsPerPage);
-    }, [products.length]);    useEffect(() => {        if (activeTab === 'coffee-beans') {
-            fetchProducts();
-        }
-    }, [fetchProducts, filters, sortBy, currentPage, activeTab]);
-
-    useEffect(() => {
-        // Always fetch categories on component mount
-        fetchCategories();
-    }, []);
-
-    useEffect(() => {
-        // Update URL params when filters change
-        const params = new URLSearchParams();
-        
-        // Add tab to URL params
-        if (activeTab !== 'coffee-beans') params.set('tab', activeTab);
-        
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value && value !== '') {
-                params.set(key, value.toString());
-            }
-        });
-        if (sortBy !== 'newest') params.set('sortBy', sortBy);
-        if (currentPage > 1) params.set('page', currentPage.toString());
-        
-        setSearchParams(params);
-    }, [filters, sortBy, currentPage, activeTab, setSearchParams]);
+    }, [products.length]);
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -156,8 +130,38 @@ const Products = () => {
             setTotalProducts(0);
             setTotalPages(1);
         } finally {
-            setLoading(false);        }
+            setLoading(false);
+        }
     }, [filters, sortBy, currentPage]);
+
+    useEffect(() => {
+        if (activeTab === 'coffee-beans') {
+            fetchProducts();
+        }
+    }, [fetchProducts, filters, sortBy, currentPage, activeTab]);
+
+    useEffect(() => {
+        // Always fetch categories on component mount
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        // Update URL params when filters change
+        const params = new URLSearchParams();
+        
+        // Add tab to URL params
+        if (activeTab !== 'coffee-beans') params.set('tab', activeTab);
+        
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value && value !== '') {
+                params.set(key, value.toString());
+            }
+        });
+        if (sortBy !== 'newest') params.set('sortBy', sortBy);
+        if (currentPage > 1) params.set('page', currentPage.toString());
+        
+        setSearchParams(params);
+    }, [filters, sortBy, currentPage, activeTab, setSearchParams]);
     
     const fetchCategories = async () => {
         try {

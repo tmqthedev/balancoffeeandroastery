@@ -69,9 +69,9 @@ router.get('/', async (req, res) => {
     // Localize content based on language
     const localizedBlogs = blogs.map(blog => ({
       id: blog.id,
-      title: lang === 'vi' ? blog.titleVi : blog.title,
+      title: (lang === 'vi' ? blog.titleVi || blog.title : blog.title) || 'Untitled',
       slug: blog.slug,
-      excerpt: lang === 'vi' ? blog.excerptVi : blog.excerpt,
+      excerpt: (lang === 'vi' ? blog.excerptVi || blog.excerpt : blog.excerpt) || 'Không có mô tả',
       featuredImage: blog.featuredImage,
       publishedAt: blog.publishedAt,
       tags: blog.tags ? blog.tags.split(',') : [],

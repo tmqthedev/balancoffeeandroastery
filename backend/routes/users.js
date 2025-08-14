@@ -47,7 +47,6 @@ router.get('/profile', authenticateToken, async (req, res) => {
 router.put('/profile', authenticateToken, [
   body('first_name').trim().isLength({ min: 1 }).withMessage('First name is required'),
   body('last_name').trim().isLength({ min: 1 }).withMessage('Last name is required'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('phone').optional().isMobilePhone('vi-VN').withMessage('Invalid phone number'),
 ], async (req, res) => {
   try {
@@ -56,29 +55,23 @@ router.put('/profile', authenticateToken, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { first_name, last_name, email, phone, date_of_birth, gender } = req.body;
-
-    // Check if email is already used by another user
-    const existingUsers = await db.query(
-      'SELECT id FROM Users WHERE email = @email AND id != @userId AND is_active = 1',
-      { email, userId: req.user.userId }
-    );
-
-    if (existingUsers.length > 0) {
-      return res.status(400).json({ error: 'Email already in use by another account' });
+    const { first_name, last_name, phone, date_of_birth, gender } = req.body;
+    
+    // Email is not allowed to be updated for security reasons
+    if (req.body.email) {
+      return res.status(400).json({ error: 'Email cannot be updated for security reasons' });
     }
 
-    // Update user profile
+    // Update user profile (excluding email)
     await db.execute(
       `UPDATE Users 
-       SET first_name = @firstName, last_name = @lastName, email = @email, 
-           phone = @phone, date_of_birth = @dateOfBirth, gender = @gender, 
-           updated_at = GETDATE()
+       SET firstName = @firstName, lastName = @lastName, 
+           phone = @phone, dateOfBirth = @dateOfBirth, gender = @gender, 
+           updatedAt = GETDATE()
        WHERE id = @userId`,
       {
         firstName: first_name,
         lastName: last_name,
-        email,
         phone: phone || null,
         dateOfBirth: date_of_birth || null,
         gender: gender || null,
@@ -88,7 +81,7 @@ router.put('/profile', authenticateToken, [
 
     // Fetch updated user data
     const users = await db.query(
-      'SELECT id, email, first_name, last_name, phone, date_of_birth, gender, role, created_at FROM Users WHERE id = @userId AND is_active = 1',
+      'SELECT id, email, firstName, lastName, phone, dateOfBirth, gender, role, createdAt FROM Users WHERE id = @userId AND isActive = 1',
       { userId: req.user.userId }
     );
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
 
 const Register = () => {
@@ -308,3 +308,4 @@ const Register = () => {
 };
 
 export default Register;
+

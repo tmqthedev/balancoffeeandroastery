@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { formatVND } from '../utils/currency';
@@ -353,3 +353,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+

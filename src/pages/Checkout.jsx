@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import PaymentMethods from '../components/payment/PaymentMethods';
@@ -637,3 +637,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
+

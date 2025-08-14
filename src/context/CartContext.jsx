@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { CartContext } from './cartConstants';
+import { CartContext } from '../constants/cartConstants';
 import { useAuth } from './AuthContext';
 
 // Configure axios for cart API
@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
 });
 
 // Re-export the useCart hook
-export { useCart } from './cartConstants';
+export { useCart } from '../constants/cartConstants';
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);

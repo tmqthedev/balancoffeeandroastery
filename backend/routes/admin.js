@@ -486,4 +486,68 @@ router.delete('/newsletters/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// CMS Content Management Routes
+router.get('/cms/content', authenticateAdmin, async (req, res) => {
+  try {
+    // In a real implementation, this would fetch from a CMS table
+    // For now, return default content structure
+    const defaultContent = {
+      homepage_hero: {
+        title: 'Khám phá hương vị cà phê Việt Nam thuần khiết',
+        subtitle: 'Từ những hạt cà phê Arabica Cầu Đất cao cấp đến Robusta Lâm Đồng đậm đà',
+        cta_text: 'Khám phá sản phẩm',
+        cta_link: '/products'
+      },
+      homepage_features: {
+        title: 'Tại sao chọn Balan Coffee?',
+        feature1_title: 'Hạt cà phê nguyên chất 100%',
+        feature1_desc: 'Chúng tôi chỉ sử dụng những hạt cà phê chất lượng cao nhất từ các vùng trồng uy tín.',
+        feature2_title: 'Rang mộc thủ công',
+        feature2_desc: 'Quy trình rang mộc thủ công giữ nguyên hương vị tự nhiên của cà phê.',
+        feature3_title: 'Giao hàng tận nơi',
+        feature3_desc: 'Giao hàng nhanh chóng toàn quốc, đảm bảo độ tươi của sản phẩm.'
+      },
+      about_page: {
+        hero_title: 'Câu chuyện của chúng tôi',
+        hero_subtitle: 'Hành trình mang đến những hạt cà phê Việt Nam chất lượng nhất',
+        story_title: 'Khởi nguồn từ tình yêu cà phê',
+        story_content: 'Balan Coffee được thành lập với niềm đam mê mang đến cho khách hàng những sản phẩm cà phê chất lượng cao nhất từ đất Việt.',
+        mission_title: 'Sứ mệnh của chúng tôi',
+        mission_content: 'Quảng bá văn hóa cà phê Việt Nam ra thế giới thông qua những sản phẩm chất lượng cao.'
+      },
+      contact_info: {
+        address: '123 Đường Cà Phê, Quận 1, TP.HCM',
+        phone: '0901234567',
+        email: 'hello@balancoffee.com',
+        working_hours: 'Thứ 2 - Chủ nhật: 7:00 - 22:00',
+        facebook_url: 'https://facebook.com/balancoffee',
+        instagram_url: 'https://instagram.com/balancoffee'
+      }
+    };
+
+    res.json({ content: defaultContent });
+  } catch (error) {
+    console.error('Get CMS content error:', error);
+    res.status(500).json({ error: 'Failed to fetch CMS content' });
+  }
+});
+
+router.put('/cms/content', authenticateAdmin, async (req, res) => {
+  try {
+    const { section, content } = req.body;
+    
+    // In a real implementation, this would update the CMS content in database
+    // For now, just return success
+    console.log(`📝 CMS Update - Section: ${section}`, content);
+    
+    res.json({ 
+      success: true, 
+      message: `Content section '${section}' updated successfully` 
+    });
+  } catch (error) {
+    console.error('Update CMS content error:', error);
+    res.status(500).json({ error: 'Failed to update CMS content' });
+  }
+});
+
 module.exports = router;

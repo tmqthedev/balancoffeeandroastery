@@ -18,6 +18,7 @@ const AdminOrders = React.lazy(() => import('../pages/admin/AdminOrders'));
 const AdminCustomers = React.lazy(() => import('../pages/admin/AdminCustomers'));
 const AdminBlogs = React.lazy(() => import('../pages/admin/AdminBlogs'));
 const AdminContacts = React.lazy(() => import('../pages/admin/AdminContacts'));
+const AdminCMS = React.lazy(() => import('../pages/admin/AdminCMS'));
 
 // CRM Pages
 const CRMDashboard = React.lazy(() => import('../pages/admin/CRMDashboard'));
@@ -71,6 +72,13 @@ const AdminRoutes = () => {
         <AdminRoute>
           <Suspense fallback={<AdminLoadingSpinner />}>
             <AdminContacts />
+          </Suspense>
+        </AdminRoute>
+      } />
+      <Route path="/cms" element={
+        <AdminRoute>
+          <Suspense fallback={<AdminLoadingSpinner />}>
+            <AdminCMS />
           </Suspense>
         </AdminRoute>
       } />

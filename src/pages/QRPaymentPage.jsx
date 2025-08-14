@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
 const QRPaymentPage = () => {
     const location = useLocation();
@@ -261,3 +261,4 @@ const QRPaymentPage = () => {
 };
 
 export default QRPaymentPage;
+

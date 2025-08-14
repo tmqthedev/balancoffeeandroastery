@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { AuthContext, useAuth } from './authConstants';
+import { AuthContext, useAuth } from '../constants/authConstants';
 
 // Configure axios defaults
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -164,7 +164,14 @@ export const AuthProvider = ({ children }) => {
     const updateUserInfo = async (userData) => {
         setLoading(true);
         try {
-            const response = await api.put('/users/profile', userData);
+            // Remove email from userData to prevent updating it
+            const { email, ...updateData } = userData;
+            
+            const response = await api.put('/api/users/profile', updateData, {
+                headers: { 
+                    Authorization: `Bearer ${localStorage.getItem('authToken')}` 
+                }
+            });
             if (response.data.success) {
                 setUser(response.data.user);
                 return { success: true, message: response.data.message };

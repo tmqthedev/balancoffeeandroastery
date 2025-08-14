@@ -649,6 +649,27 @@ class MockDatabase {
       return { rowsAffected: [0] };
     }
 
+    // Handle Users UPDATE
+    if (sql.includes('UPDATE Users') && sql.includes('WHERE id = @userId')) {
+      const userIndex = this.mockData.users.findIndex(u => u.id === params.userId);
+      if (userIndex !== -1) {
+        // Update user fields
+        this.mockData.users[userIndex] = {
+          ...this.mockData.users[userIndex],
+          firstName: params.firstName || this.mockData.users[userIndex].firstName,
+          lastName: params.lastName || this.mockData.users[userIndex].lastName,
+          email: params.email || this.mockData.users[userIndex].email,
+          phone: params.phone !== undefined ? params.phone : this.mockData.users[userIndex].phone,
+          dateOfBirth: params.dateOfBirth !== undefined ? params.dateOfBirth : this.mockData.users[userIndex].dateOfBirth,
+          gender: params.gender !== undefined ? params.gender : this.mockData.users[userIndex].gender,
+          updatedAt: new Date()
+        };
+        console.log('✅ Mock DB: Updated user:', this.mockData.users[userIndex]);
+        return { rowsAffected: [1] };
+      }
+      return { rowsAffected: [0] };
+    }
+
     if (sql.includes('UPDATE Products SET views')) {
       return { rowsAffected: [1] };
     }
