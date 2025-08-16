@@ -60,16 +60,10 @@ const db = require('./config/database');
 
 // Initialize database connection
 db.connect().then(() => {
-  console.log('✅ Connected to MSSQL database');
+  console.log('✅ Connected to Firebase database');
 }).catch(err => {
   console.error('❌ Database connection failed:', err.message);
   process.exit(1);
-});
-
-// TEST ROUTE DIRECTLY IN SERVER
-app.get('/api/test-direct', (req, res) => {
-  console.log('📡 Direct test route hit');
-  res.json({ success: true, message: 'Direct route works!' });
 });
 
 // Passport configuration
@@ -77,49 +71,17 @@ require('./config/passport');
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
-
 app.use('/api/users', require('./routes/users'));
 app.use('/api/cart', require('./routes/cart'));
-app.use('/api/products', require('./routes/products')); // Back to original router
-
+app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
-console.log('🔍 About to load contacts router...');
-try {
-  const contactsRouter = require('./routes/contacts');
-  app.use('/api/contacts', contactsRouter);
-  console.log('✅ Contacts router mounted successfully');
-} catch (error) {
-  console.error('❌ Error loading contacts router:', error.message);
-  console.error(error.stack);
-}
-console.log('🔍 About to load payments router...');
-try {
-  const paymentsRouter = require('./routes/payments');
-  app.use('/api/payments', paymentsRouter);
-  console.log('✅ Payments router mounted successfully');
-} catch (error) {
-  console.error('❌ Error loading payments router:', error.message);
-}
+app.use('/api/contacts', require('./routes/contacts'));
+app.use('/api/payments', require('./routes/payments'));
 
-console.log('🔍 About to load TEST payments router...');
-try {
-  const testPaymentsRouter = require('./routes/payments-test');
-  app.use('/api/payments-test', testPaymentsRouter);
-  console.log('✅ Test payments router mounted successfully');
-} catch (error) {
-  console.error('❌ Error loading test payments router:', error.message);
-}
-
-console.log('🔍 About to load iPOS payment router...');
-try {
-  const iposPaymentRouter = require('./routes/ipos-payment');
-  app.use('/api/ipos', iposPaymentRouter);
-  console.log('✅ iPOS payment router mounted successfully');
-} catch (error) {
-  console.error('❌ Error loading iPOS payment router:', error.message);
-}
+// MoMo payment routes
+app.use('/api/payments/momo', require('./routes/momo-payment'));
 
 // Load CRM routes
 try {

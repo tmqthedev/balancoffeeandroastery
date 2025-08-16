@@ -22,6 +22,7 @@ const Contact = React.lazy(() => import('../pages/Contact'));
 const Auth = React.lazy(() => import('../pages/auth/Auth'));
 const FacebookCallback = React.lazy(() => import('../pages/auth/FacebookCallback'));
 const QRPaymentPage = React.lazy(() => import('../pages/QRPaymentPage'));
+const MoMoPayment = React.lazy(() => import('../pages/MoMoPayment'));
 const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 // Protected pages
@@ -54,6 +55,11 @@ const PublicRoutes = () => {
         <Route path="/payment/qr" element={
           <ProtectedRoute>
             <QRPaymentPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment/momo" element={
+          <ProtectedRoute>
+            <MoMoPayment />
           </ProtectedRoute>
         } />
         <Route path="/payment/result" element={

@@ -15,40 +15,55 @@
 ## Cách Sử Dụng
 
 ### Đăng Nhập Admin
-1. Truy cập: `http://localhost:3000/login`
+1. Truy cập: `http://localhost:5173/login`
 2. Nhập email: `admin@balancoffee.com`
 3. Nhập password: `password123`
 4. Sau khi đăng nhập, sẽ được chuyển hướng đến admin dashboard
 
 ### Đăng Nhập Customer
-1. Truy cập: `http://localhost:3000/login`
+1. Truy cập: `http://localhost:5173/login`
 2. Nhập email: `user@example.com`
 3. Nhập password: `password123`
 4. Sau khi đăng nhập, sẽ được chuyển hướng đến trang chủ
 
 ### Đăng Ký Tài Khoản Mới
-1. Truy cập: `http://localhost:3000/register`
+1. Truy cập: `http://localhost:5173/register`
 2. Điền thông tin cần thiết
 3. Tích chọn "Tôi đồng ý với Terms & Conditions"
 4. Nhấn "Đăng ký"
 
-## Cấu Hình Database
+## Cấu Hình Database 🔥
 
-### Azure SQL Database (Hiện tại - ACTIVE)
-- File cấu hình: `backend/.env`
-- Setting: `USE_MOCK_DB=false`
-- Connection: Azure SQL Database (balancoffee.database.windows.net)
-- Status: ✅ **CONNECTED & WORKING**
+### Firebase Firestore (Hiện tại - ACTIVE)
+- **Type**: Cloud NoSQL Database (Free Tier)
+- **Project**: balancoffeeandroastery  
+- **Collections**: users, products, orders, categories, etc.
+- **Features**: Real-time updates, offline support, auto-scaling
+- **Cost**: FREE up to 1GB storage, 50K reads/day, 20K writes/day
+- **Status**: ✅ **CONNECTED & WORKING**
 
-### Mock Database (Backup)
-- File cấu hình: `backend/.env`
-- Setting: `USE_MOCK_DB=true`
-- Data file: `backend/config/mock-database.js`
-- Status: 💤 **DISABLED** (chỉ dùng khi Azure SQL không khả dụng)
+### Environment Setup
+```env
+# Frontend (.env)
+VITE_FIREBASE_API_KEY=AIzaSyAt8-MxL3Vix8ioizBoEiwqRJ0hG5siJEE
+VITE_FIREBASE_PROJECT_ID=balancoffeeandroastery
+
+# Backend (backend/.env)  
+FIREBASE_PROJECT_ID=balancoffeeandroastery
+FIREBASE_SERVICE_ACCOUNT_PATH=./config/firebase-service-account.json
+```
+
+## Key Benefits
+- ✅ **Zero Cost**: Complete free tier usage
+- ✅ **Real-time**: Live data synchronization  
+- ✅ **Scalable**: Auto-scaling based on usage
+- ✅ **Secure**: Built-in authentication & rules
+- ✅ **Global**: CDN and multi-region support
 
 ## Lưu Ý
-- **Azure SQL Database đang được sử dụng** - tất cả dữ liệu được lưu trữ persistent
-- Mock database chỉ được dùng backup khi Azure SQL Database không khả dụng
+- **Firebase Firestore đang được sử dụng** - tất cả dữ liệu real-time và persistent
+- Không sử dụng Firebase Storage để tránh chi phí - images lưu local
+- Toàn bộ mock database đã được loại bỏ khỏi hệ thống
 - Tất cả tài khoản mặc định đều có password: `password123`
 - Để chuyển về mock database (nếu cần), đổi `USE_MOCK_DB=true` trong `backend/.env`
 - ✅ **System Status**: Azure SQL Database connection ACTIVE & STABLE

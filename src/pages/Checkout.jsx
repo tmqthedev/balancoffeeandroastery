@@ -159,24 +159,35 @@ const Checkout = () => {
         }).format(amount);
     };    const createOrder = async () => {
         try {
-            const orderData = {
-                items: cartItems.map(item => ({
-                    productId: item.product_id,
-                    quantity: item.quantity,
-                    price: item.price * 25000 // Convert to VND
-                })),
-                billing: formData.billing,
-                shipping: formData.shipping.sameAsBilling ? formData.billing : formData.shipping,
-                subtotal,
-                shippingFee: shipping,
-                tax,
-                total,
-                notes: formData.notes,
-                paymentMethod: formData.paymentMethod
+            // Prepare customer info according to new API structure
+            const customerInfo = {
+                name: `${formData.billing.firstName} ${formData.billing.lastName}`.trim(),
+                email: formData.billing.email,
+                phone: formData.billing.phone,
+                address: `${formData.billing.address}, ${formData.billing.city}, ${formData.billing.province}`.trim()
             };
 
+            // Prepare items for new API
+            const items = cartItems.map(item => ({
+                productId: item.product_id,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price * 25000, // Convert to VND
+                total: item.quantity * item.price * 25000
+            }));
+
+            const orderData = {
+                customerInfo,
+                items,
+                total: Math.round(total), // Ensure integer for payment gateway
+                paymentMethod: formData.paymentMethod || 'cod', // Default to COD
+                notes: formData.notes || ''
+            };
+
+            console.log('Creating order with data:', orderData);
+
             // Call API to create order
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -185,11 +196,13 @@ const Checkout = () => {
                 body: JSON.stringify(orderData)
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
-                throw new Error('Không thể tạo đơn hàng. Vui lòng thử lại.');
+                throw new Error(result.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
             }
 
-            const result = await response.json();
+            console.log('Order created successfully:', result);
             return result;
         } catch (error) {
             console.error('Order creation failed:', error);
@@ -209,9 +222,9 @@ const Checkout = () => {
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
 
-            <div className="min-h-screen bg-cream-50">
+            <div className="min-h-screen bg-brand-white">
                 {/* Header */}
-                <div className="bg-coffee-800 text-white py-12">
+                <div className="bg-brand-primary text-white py-12">
                     <div className="container mx-auto px-4">
                         <h1 className="text-3xl md:text-4xl font-bold">
                             Thanh toán
@@ -227,8 +240,8 @@ const Checkout = () => {
                                 <div key={step.number} className="flex items-center">
                                     <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
                                         currentStep >= step.number
-                                            ? 'bg-coffee-600 border-coffee-600 text-white'
-                                            : 'border-coffee-300 text-coffee-400'
+                                            ? 'bg-brand-primary border-brand-primary text-white'
+                                            : 'border-gray-300 text-gray-400'
                                     }`}>
                                         {currentStep > step.number ? (
                                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,13 +252,13 @@ const Checkout = () => {
                                         )}
                                     </div>
                                     <span className={`ml-2 text-sm font-medium ${
-                                        currentStep >= step.number ? 'text-coffee-800' : 'text-coffee-400'
+                                        currentStep >= step.number ? 'text-brand-primary' : 'text-gray-400'
                                     }`}>
                                         {step.title}
                                     </span>
                                     {index < steps.length - 1 && (
                                         <div className={`w-16 h-0.5 ml-4 ${
-                                            currentStep > step.number ? 'bg-coffee-600' : 'bg-coffee-300'
+                                            currentStep > step.number ? 'bg-brand-primary' : 'bg-gray-300'
                                         }`} />
                                     )}
                                 </div>
@@ -259,20 +272,20 @@ const Checkout = () => {
                             <div className="bg-white rounded-lg shadow-md p-6">
                                 {/* Step 1: Billing Information */}
                                 {currentStep === 1 && (
-                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-coffee-800">
+                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-brand-primary">
                                             Thông tin thanh toán
                                         </h2>
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Họ *
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={formData.billing.firstName}
                                                     onChange={(e) => handleInputChange('billing', 'firstName', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                        errors['billing.firstName'] ? 'border-red-300' : 'border-coffee-300'
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.firstName'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
                                                 {errors['billing.firstName'] && (
@@ -280,15 +293,15 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Tên *
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={formData.billing.lastName}
                                                     onChange={(e) => handleInputChange('billing', 'lastName', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                        errors['billing.lastName'] ? 'border-red-300' : 'border-coffee-300'
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.lastName'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
                                                 {errors['billing.lastName'] && (
@@ -298,15 +311,15 @@ const Checkout = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Email *
                                                 </label>
                                                 <input
                                                     type="email"
                                                     value={formData.billing.email}
                                                     onChange={(e) => handleInputChange('billing', 'email', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                        errors['billing.email'] ? 'border-red-300' : 'border-coffee-300'
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.email'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
                                                 {errors['billing.email'] && (
@@ -314,15 +327,15 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Số điện thoại *
                                                 </label>
                                                 <input
                                                     type="tel"
                                                     value={formData.billing.phone}
                                                     onChange={(e) => handleInputChange('billing', 'phone', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                        errors['billing.phone'] ? 'border-red-300' : 'border-coffee-300'
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.phone'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
                                                 {errors['billing.phone'] && (
@@ -331,15 +344,15 @@ const Checkout = () => {
                                             </div>
                                         </div>
 
-                                        <div>                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                        <div>                                            <label className="block text-sm font-medium text-brand-primary mb-1">
                                                 Địa chỉ *
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formData.billing.address}
                                                 onChange={(e) => handleInputChange('billing', 'address', e.target.value)}
-                                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                    errors['billing.address'] ? 'border-red-300' : 'border-coffee-300'
+                                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                    errors['billing.address'] ? 'border-red-300' : 'border-gray-300'
                                                 }`}
                                                 placeholder="Street address"
                                             />
@@ -349,15 +362,15 @@ const Checkout = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Thành phố *
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={formData.billing.city}
                                                     onChange={(e) => handleInputChange('billing', 'city', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                        errors['billing.city'] ? 'border-red-300' : 'border-coffee-300'
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.city'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
                                                 {errors['billing.city'] && (
@@ -365,14 +378,14 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Tỉnh/Thành phố *
                                                 </label>
                                                 <select
                                                     value={formData.billing.province}
                                                     onChange={(e) => handleInputChange('billing', 'province', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                        errors['billing.province'] ? 'border-red-300' : 'border-coffee-300'
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.province'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 >
                                                     <option value="">Select Province</option>
@@ -385,14 +398,14 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Mã bưu điện
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={formData.billing.postalCode}
                                                     onChange={(e) => handleInputChange('billing', 'postalCode', e.target.value)}
-                                                    className="w-full px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                                                 />
                                             </div>
                                         </div>
@@ -401,7 +414,7 @@ const Checkout = () => {
 
                                 {/* Step 2: Shipping Information */}
                                 {currentStep === 2 && (
-                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-coffee-800">
+                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-brand-primary">
                                             Thông tin giao hàng
                                         </h2>
                                         
@@ -411,8 +424,8 @@ const Checkout = () => {
                                                     type="checkbox"
                                                     checked={formData.shipping.sameAsBilling}
                                                     onChange={(e) => handleSameAsBillingChange(e.target.checked)}
-                                                    className="h-4 w-4 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded"
-                                                />                                                <span className="ml-2 text-sm text-coffee-700">
+                                                    className="h-4 w-4 text-gray-600 focus:ring-brand-primary border-gray-300 rounded"
+                                                />                                                <span className="ml-2 text-sm text-brand-primary">
                                                     Giống như thông tin thanh toán
                                                 </span>
                                             </label>
@@ -421,15 +434,15 @@ const Checkout = () => {
                                         {!formData.shipping.sameAsBilling && (
                                             <>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    <div>                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
                                                             Họ *
                                                         </label>
                                                         <input
                                                             type="text"
                                                             value={formData.shipping.firstName}
                                                             onChange={(e) => handleInputChange('shipping', 'firstName', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                                errors['shipping.firstName'] ? 'border-red-300' : 'border-coffee-300'
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                                errors['shipping.firstName'] ? 'border-red-300' : 'border-gray-300'
                                                             }`}
                                                         />
                                                         {errors['shipping.firstName'] && (
@@ -437,15 +450,15 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>                                                        <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    <div>                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
                                                             Tên *
                                                         </label>
                                                         <input
                                                             type="text"
                                                             value={formData.shipping.lastName}
                                                             onChange={(e) => handleInputChange('shipping', 'lastName', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                                errors['shipping.lastName'] ? 'border-red-300' : 'border-coffee-300'
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                                errors['shipping.lastName'] ? 'border-red-300' : 'border-gray-300'
                                                             }`}
                                                         />
                                                         {errors['shipping.lastName'] && (
@@ -454,15 +467,15 @@ const Checkout = () => {
                                                     </div>
                                                 </div>
 
-                                                <div>                                                    <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                <div>                                                    <label className="block text-sm font-medium text-brand-primary mb-1">
                                                         Địa chỉ *
                                                     </label>
                                                     <input
                                                         type="text"
                                                         value={formData.shipping.address}
                                                         onChange={(e) => handleInputChange('shipping', 'address', e.target.value)}
-                                                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                            errors['shipping.address'] ? 'border-red-300' : 'border-coffee-300'
+                                                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                            errors['shipping.address'] ? 'border-red-300' : 'border-gray-300'
                                                         }`}
                                                         placeholder="Street address"
                                                     />
@@ -472,15 +485,15 @@ const Checkout = () => {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>                                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
                                                                 Thành phố *
                                                             </label>
                                                             <input
                                                                 type="text"
                                                                 value={formData.shipping.city}
                                                             onChange={(e) => handleInputChange('shipping', 'city', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                                errors['shipping.city'] ? 'border-red-300' : 'border-coffee-300'
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                                errors['shipping.city'] ? 'border-red-300' : 'border-gray-300'
                                                             }`}
                                                         />
                                                         {errors['shipping.city'] && (
@@ -488,14 +501,14 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>                                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
                                                                 Tỉnh/Thành phố *
                                                             </label>
                                                             <select
                                                                 value={formData.shipping.province}
                                                             onChange={(e) => handleInputChange('shipping', 'province', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500 ${
-                                                                errors['shipping.province'] ? 'border-red-300' : 'border-coffee-300'
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                                errors['shipping.province'] ? 'border-red-300' : 'border-gray-300'
                                                             }`}
                                                         >
                                                             <option value="">Select Province</option>
@@ -508,14 +521,14 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>                                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                                    <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
                                                                 Mã bưu điện
                                                             </label>
                                                             <input
                                                                 type="text"
                                                                 value={formData.shipping.postalCode}
                                                             onChange={(e) => handleInputChange('shipping', 'postalCode', e.target.value)}
-                                                            className="w-full px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500"
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                                                         />
                                                     </div>
                                                 </div>
@@ -523,14 +536,14 @@ const Checkout = () => {
                                         )}
 
                                         <div>
-                                            <label className="block text-sm font-medium text-coffee-700 mb-1">
+                                            <label className="block text-sm font-medium text-brand-primary mb-1">
                                                 Order Notes (Optional)
                                             </label>
                                             <textarea
                                                 value={formData.notes}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                                                 rows={3}
-                                                className="w-full px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-coffee-500 focus:border-coffee-500"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                                                 placeholder="Any special instructions for your order..."
                                             />
                                         </div>
@@ -539,7 +552,7 @@ const Checkout = () => {
 
                                 {/* Step 3: Payment Method */}
                                 {currentStep === 3 && (
-                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-coffee-800">
+                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-brand-primary">
                                             Phương thức thanh toán
                                         </h2>
                                         
@@ -555,11 +568,11 @@ const Checkout = () => {
                                 )}
 
                                 {/* Navigation Buttons */}
-                                <div className="flex justify-between mt-8 pt-6 border-t border-coffee-200">
+                                <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
                                     <button
                                         onClick={handlePrevious}
                                         disabled={currentStep === 1}
-                                        className="bg-coffee-100 hover:bg-coffee-200 text-coffee-800 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-gray-100 hover:bg-gray-200 text-brand-primary px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Quay lại
                                     </button>
@@ -567,7 +580,7 @@ const Checkout = () => {
                                     {currentStep < 3 && (
                                         <button
                                             onClick={handleNext}
-                                            className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                            className="bg-brand-primary hover:bg-brand-primary text-white px-6 py-2 rounded-lg font-medium transition-colors"
                                         >
                                             Tiếp tục
                                         </button>
@@ -578,7 +591,7 @@ const Checkout = () => {
 
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                <h3 className="text-xl font-semibold text-coffee-800 mb-6">
+                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                <h3 className="text-xl font-semibold text-brand-primary mb-6">
                                     Tóm tắt đơn hàng
                                 </h3>
                                 
@@ -586,44 +599,44 @@ const Checkout = () => {
                                     {cartItems.map((item) => (
                                         <div key={item.product_id} className="flex justify-between items-center">
                                             <div className="flex-1">
-                                                <h4 className="text-sm font-medium text-coffee-800">{item.name}</h4>
-                                                <p className="text-sm text-coffee-600">Qty: {item.quantity}</p>
-                                            </div>                                            <span className="text-sm font-semibold text-coffee-800">
+                                                <h4 className="text-sm font-medium text-brand-primary">{item.name}</h4>
+                                                <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                                            </div>                                            <span className="text-sm font-semibold text-brand-primary">
                                                 {formatCurrency(item.price * item.quantity * 25000)}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
                                 
-                                <hr className="my-4 border-coffee-200" />
+                                <hr className="my-4 border-gray-200" />
                                 
                                 <div className="space-y-2">                                    <div className="flex justify-between">
-                                        <span className="text-coffee-600">Tạm tính</span>
-                                        <span className="font-semibold text-coffee-800">{formatCurrency(subtotal)}</span>
+                                        <span className="text-gray-600">Tạm tính</span>
+                                        <span className="font-semibold text-brand-primary">{formatCurrency(subtotal)}</span>
                                     </div>
                                     
                                     <div className="flex justify-between">
-                                        <span className="text-coffee-600">Phí vận chuyển</span>
-                                        <span className="font-semibold text-coffee-800">
+                                        <span className="text-gray-600">Phí vận chuyển</span>
+                                        <span className="font-semibold text-brand-primary">
                                             {shipping === 0 ? 'Miễn phí' : formatCurrency(shipping)}
                                         </span>
                                     </div>
                                     
                                     <div className="flex justify-between">
-                                        <span className="text-coffee-600">Thuế</span>
-                                        <span className="font-semibold text-coffee-800">{formatCurrency(tax)}</span>
+                                        <span className="text-gray-600">Thuế</span>
+                                        <span className="font-semibold text-brand-primary">{formatCurrency(tax)}</span>
                                     </div>
                                     
-                                    <hr className="border-coffee-200" />
+                                    <hr className="border-gray-200" />
                                     
                                     <div className="flex justify-between text-lg">
-                                        <span className="font-semibold text-coffee-800">Tổng cộng</span>
-                                        <span className="font-bold text-coffee-800">{formatCurrency(total)}</span>
+                                        <span className="font-semibold text-brand-primary">Tổng cộng</span>
+                                        <span className="font-bold text-brand-primary">{formatCurrency(total)}</span>
                                     </div>
                                 </div>
                                 
-                                <div className="mt-6 p-3 bg-coffee-50 border border-coffee-200 rounded-lg">
-                                    <p className="text-sm text-coffee-700 text-center">
+                                <div className="mt-6 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <p className="text-sm text-brand-primary text-center">
                                         🔒 Giao dịch được bảo mật an toàn
                                     </p>
                                 </div>

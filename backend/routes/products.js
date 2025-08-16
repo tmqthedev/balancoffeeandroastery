@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
-const iposService = require('../services/iposService');
 
-console.log('🛒 Products router loading with iPOS payment support');
+console.log('🛒 Products router loading with Momo and COD payment support');
 
 // Search suggestions endpoint
 router.get('/search-suggestions', async (req, res) => {
@@ -217,87 +216,9 @@ router.get('/working-test', (req, res) => {
     res.json({ success: true, message: 'NEW test route works!', timestamp: new Date().toISOString() });
 });
 
-// TEMPORARY: iPOS Payment endpoint (until payments router issue is resolved)
-router.post('/payment/ipos/create-qr', authenticateToken, async (req, res) => {
-    try {
-        console.log('💳 iPOS Payment Request via Products Router:', { 
-            body: req.body, 
-            user: { userId: req.user.userId, email: req.user.email } 
-        });
-        
-        const { orderId, amount } = req.body;
-
-        // Validate order belongs to user
-        const orderQuery = `
-            SELECT o.*, u.email, u.firstName, u.lastName 
-            FROM Orders o 
-            JOIN Users u ON o.userId = u.id 
-            WHERE o.orderNumber = @orderId AND o.userId = @userId AND o.status = 'pending'
-        `;        
-        
-        console.log('🔍 Executing order query:', { orderId, userId: req.user.userId });
-        const orderResult = await db.execute(orderQuery, { orderId, userId: req.user.userId });
-        
-        console.log('📊 Order query result:', { 
-            hasRecordset: !!orderResult.recordset,
-            recordsetLength: orderResult.recordset?.length || 0
-        });
-
-        // Handle both mock DB (recordset) and real DB (direct array) formats
-        const orders = orderResult.recordset || orderResult;
-        
-        if (!orders || orders.length === 0) {
-            return res.status(404).json({ success: false, message: 'Order not found or already processed' });
-        }
-
-        const order = orders[0];
-        console.log('📝 Found order:', { orderNumber: order.orderNumber, status: order.status });
-
-        // Send request to iPOS API using service
-        const orderData = {
-            orderNumber: orderId,
-            total: amount,
-            customerName: `${order.firstName || ''} ${order.lastName || ''}`.trim() || 'Customer',
-            customerEmail: order.email || order.customerEmail || 'customer@example.com',
-            customerPhone: order.customerPhone || order.phone || '',
-            items: []
-        };        
-
-        console.log('📤 Calling iPOS service...');
-        const response = await iposService.createPaymentOrder(orderData);
-        console.log('📥 iPOS response:', response);
-        
-        const requestId = `IPOS_${orderId}_${Date.now()}`;
-
-        if (response.success) {
-            console.log('✅ iPOS payment created successfully');
-            
-            res.json({
-                success: true,
-                qrCode: response.data.qr_code,
-                paymentUrl: response.data.payment_url,
-                requestId: requestId,
-                expiryTime: response.data.expiryTime || 900,
-                message: 'Payment QR generated successfully',
-                mockMode: process.env.USE_MOCK_DB === 'true'
-            });
-        } else {
-            console.log('❌ iPOS payment creation failed');
-            res.status(400).json({
-                success: false,
-                message: 'Failed to create iPOS payment',
-                error: response.message || 'Unknown error'
-            });
-        }
-    } catch (error) {
-        console.error('❌ iPOS payment error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Internal server error',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
+// Payment endpoints removed - use dedicated payment service
+// Payment endpoints removed - use dedicated payment service
+// Only Momo and COD payment methods are supported
 
 // Debug endpoint to check ProductCategories data
 router.get('/debug/categories', async (req, res) => {

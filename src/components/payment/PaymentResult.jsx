@@ -18,7 +18,7 @@ const PaymentResult = () => {
     useEffect(() => {
         const checkPaymentStatus = async () => {
             try {
-                // If we have state data (from iPOS QR page), use it directly
+                // If we have state data (from payment flow), use it directly
                 if (stateOrder && stateSuccess !== undefined) {
                     setOrderDetails(stateOrder);
                     setPaymentStatus(stateSuccess ? 'success' : 'failed');
@@ -26,8 +26,10 @@ const PaymentResult = () => {
                     return;  
                 }
 
-                // Get order ID from URL params or search params
-                const orderId = searchParams.get('orderId') || searchParams.get('vnp_TxnRef');
+                // Get order info from URL params
+                const orderId = searchParams.get('orderId') || searchParams.get('orderNumber');
+                const resultCode = searchParams.get('resultCode'); // For MoMo
+                const vnpResponseCode = searchParams.get('vnp_ResponseCode'); // For VNPay (future)
                 
                 if (!orderId) {
                     setPaymentStatus('error');
@@ -35,25 +37,38 @@ const PaymentResult = () => {
                     return;
                 }
 
-                // For VNPay, handle the return URL directly
-                if (searchParams.get('vnp_ResponseCode')) {
-                    const responseCode = searchParams.get('vnp_ResponseCode');
-                    if (responseCode === '00') {
+                // Handle MoMo return
+                if (resultCode !== null) {
+                    if (resultCode === '0') {
                         setPaymentStatus('success');
                     } else {
                         setPaymentStatus('failed');
                     }
                 }
 
-                // Fetch order details
+                // Handle VNPay return (for future use)
+                if (vnpResponseCode) {
+                    if (vnpResponseCode === '00') {
+                        setPaymentStatus('success');
+                    } else {
+                        setPaymentStatus('failed');
+                    }
+                }
+
+                // Fetch order details using new API
                 const token = localStorage.getItem('authToken');
-                const response = await axios.get(`/api/payments/status/${orderId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/orders/public/${orderId}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
 
-                if (response.data.success) {
-                    setOrderDetails(response.data.order);
-                    setPaymentStatus(response.data.order.payment_status === 'completed' ? 'success' : 'failed');
+                const result = await response.json();
+
+                if (result.success) {
+                    setOrderDetails(result.data);
+                    // Determine status based on payment status or URL params
+                    if (paymentStatus === 'processing') {
+                        setPaymentStatus(result.data.paymentStatus === 'completed' ? 'success' : 'failed');
+                    }
                 } else {
                     setPaymentStatus('error');
                 }
@@ -76,14 +91,12 @@ const PaymentResult = () => {
 
     const getPaymentMethodName = () => {
         switch (paymentMethod) {
-            case 'ipos':
-                return 'iPOS QR Code';
+            case 'momo':
+                return 'Ví điện tử MoMo';
             case 'cod':
                 return 'Thanh toán khi nhận hàng';
             case 'vnpay':
                 return 'VNPay';
-            case 'momo':
-                return 'Momo';
             default:
                 return 'Khác';
         }

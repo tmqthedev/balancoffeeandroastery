@@ -5,16 +5,16 @@ import { useCart } from '../../context/CartContext';
 const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) => {
     const navigate = useNavigate();
     const { clearCart } = useCart();
-    const [selectedMethod, setSelectedMethod] = useState('ipos');
+    const [selectedMethod, setSelectedMethod] = useState('momo');
     const [loading, setLoading] = useState(false);
 
     const paymentMethods = [
         {
-            id: 'ipos',
-            name: 'Thanh toán QR iPOS',
-            description: 'Quét mã QR để thanh toán nhanh chóng',
-            icon: '📱',
-            color: 'bg-blue-500',
+            id: 'momo',
+            name: 'Ví điện tử MoMo',
+            description: 'Thanh toán nhanh chóng qua ví MoMo',
+            icon: '🪙',
+            color: 'bg-pink-500',
             popular: true
         },
         {
@@ -51,7 +51,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             };
 
             // Create order via API
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,21 +63,66 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.error || 'Không thể tạo đơn hàng');
+                throw new Error(result.message || 'Không thể tạo đơn hàng');
             }
+
+            console.log('Order created:', result);
 
             // Clear cart after successful order creation
             await clearCart();
 
             // Handle different payment methods
-            if (selectedMethod === 'ipos' && result.order.iposData) {
-                // Redirect to payment page with QR code
-                navigate('/payment/qr', { 
-                    state: { 
-                        order: result.order,
-                        iposData: result.order.iposData
+            if (selectedMethod === 'momo') {
+                // Check if MoMo data is already included in order response
+                if (result.order && result.order.momoData) {
+                    // Redirect to MoMo payment page
+                    if (result.order.momoData.payUrl) {
+                        window.location.href = result.order.momoData.payUrl;
+                    } else {
+                        // For development mode, show QR code
+                        navigate('/payment/momo', { 
+                            state: { 
+                                order: result.order,
+                                momoData: result.order.momoData
+                            }
+                        });
                     }
-                });
+                } else {
+                    // Fallback - create separate MoMo payment request
+                    console.warn('No MoMo data in order response, creating separate payment');
+                    
+                    const momoResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/payments/momo/create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({
+                            orderNumber: result.order.orderNumber,
+                            total: result.order.total,
+                            customerInfo: result.order.customerInfo,
+                            items: result.order.items
+                        })
+                    });
+
+                    const momoResult = await momoResponse.json();
+
+                    if (!momoResponse.ok) {
+                        throw new Error(momoResult.message || 'Không thể tạo thanh toán MoMo');
+                    }
+
+                    // Redirect to MoMo payment page
+                    if (momoResult.data.payUrl) {
+                        window.location.href = momoResult.data.payUrl;
+                    } else {
+                        navigate('/payment/momo', { 
+                            state: { 
+                                order: result.order,
+                                momoData: momoResult.data
+                            }
+                        });
+                    }
+                }
             } else if (selectedMethod === 'cod') {
                 // Redirect to success page for COD
                 navigate('/payment/result', { 
@@ -154,17 +199,17 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             </div>
 
             {/* Payment method details */}
-            {selectedMethod === 'ipos' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            {selectedMethod === 'momo' && (
+                <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-6">
                     <div className="flex items-start">
-                        <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg className="w-5 h-5 text-pink-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
                         <div>
-                            <h4 className="font-medium text-blue-800 mb-1">Thanh toán QR Code</h4>
-                            <p className="text-sm text-blue-700">
-                                Sau khi đặt hàng, bạn sẽ được chuyển đến trang hiển thị mã QR. 
-                                Sử dụng ứng dụng ngân hàng để quét mã và hoàn tất thanh toán.
+                            <h4 className="font-medium text-pink-800 mb-1">Thanh toán MoMo</h4>
+                            <p className="text-sm text-pink-700">
+                                Sau khi đặt hàng, bạn sẽ được chuyển đến trang thanh toán MoMo. 
+                                Sử dụng ứng dụng MoMo hoặc quét mã QR để hoàn tất thanh toán.
                             </p>
                         </div>
                     </div>
@@ -204,7 +249,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                         Đang xử lý...
                     </div>
                 ) : (
-                    selectedMethod === 'ipos' ? 'Tạo mã QR thanh toán' : 'Đặt hàng'
+                    selectedMethod === 'momo' ? 'Thanh toán qua MoMo' : 'Đặt hàng'
                 )}
             </button>
 

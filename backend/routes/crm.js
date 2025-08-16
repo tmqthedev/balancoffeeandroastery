@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
-const CRMService = require('../services/simpleCrmService'); // Use simple service for testing
+const CRMService = require('../services/crmService'); // Use main CRM service
 const multer = require('multer');
 const path = require('path');
 

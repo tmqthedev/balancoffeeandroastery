@@ -1,24 +1,24 @@
-# Balan Coffee & Roastery
+# Balan Coffee & Roastery - E-commerce Platform
 
-Website thương mại điện tử và blog cho cửa hàng cà phê rang mộc Balan Coffee & Roastery.
+🌟 **Vietnamese Coffee E-commerce Website** - Nền tảng thương mại điện tử cho cà phê rang mộc Việt Nam
 
-## Tính năng
+## 🚀 Tính năng chính
 
-### Frontend
-- Giao diện người dùng bằng tiếng Việt, thiết kế responsive
-- Danh sách sản phẩm cà phê có bộ lọc và tìm kiếm
-- Giỏ hàng và quy trình thanh toán đầy đủ
-- Blog tin tức về cà phê và sản phẩm
-- Trang tài khoản người dùng để quản lý đơn hàng
-- Tối ưu hóa SEO cho các công cụ tìm kiếm
+### ✅ Frontend Features
+- **Giao diện người dùng** - Thiết kế responsive bằng tiếng Việt
+- **Danh mục sản phẩm** - Bộ lọc và tìm kiếm thông minh  
+- **Giỏ hàng** - Quy trình thanh toán hoàn chỉnh
+- **Blog system** - Tin tức và nội dung về cà phê
+- **Tài khoản người dùng** - Quản lý đơn hàng cá nhân
+- **SEO tối ưu** - Thân thiện với công cụ tìm kiếm
 
-### Backend
-- API RESTful đầy đủ chức năng
-- Xác thực người dùng với JWT và OAuth (Facebook)
-- Tích hợp thanh toán với Momo và VN-Pay
-- Quản lý sản phẩm, đơn hàng, và người dùng
-- Tính năng blog với chức năng quản lý nội dung
-- Biện pháp bảo mật: CORS, Rate Limiting, Input Validation
+### 🔧 Backend Features  
+- **API RESTful** - Backend đầy đủ chức năng
+- **Xác thực JWT** - Bảo mật người dùng an toàn
+- **Thanh toán MoMo** - Tích hợp ví điện tử
+- **Thanh toán COD** - Thanh toán khi nhận hàng
+- **Firebase Firestore** - Database NoSQL hiệu năng cao
+- **Bảo mật nâng cao** - CORS, Rate Limiting, Validation
 
 ## Công nghệ sử dụng
 
