@@ -67,22 +67,23 @@ const ProductDetail = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
             </div>
         );
     }
 
     if (error || !product) {
         return (
-            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-6xl mb-4">☕</div>                    <h2 className="text-2xl font-semibold text-coffee-800 mb-4">
+                    <div className="text-6xl mb-4">☕</div>
+                    <h2 className="text-2xl font-semibold text-brand-primary mb-4">
                         {error || 'Không tìm thấy sản phẩm'}
                     </h2>
                     <Link
                         to="/products"
-                        className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                        className="bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
                     >
                         Xem sản phẩm
                     </Link>
@@ -128,14 +129,15 @@ const ProductDetail = () => {
                 </script>
             </Helmet>
 
-            <div className="min-h-screen bg-cream-50">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
                 {/* Breadcrumb */}
-                <div className="container mx-auto px-4 py-4">                    <nav className="flex items-center space-x-2 text-sm text-coffee-600">
-                        <Link to="/" className="hover:text-coffee-800">Trang chủ</Link>
+                <div className="container mx-auto px-4 py-4">
+                    <nav className="flex items-center space-x-2 text-sm text-brand-primary/70">
+                        <Link to="/" className="hover:text-brand-primary transition-colors">Trang chủ</Link>
                         <span>/</span>
-                        <Link to="/products" className="hover:text-coffee-800">Sản phẩm</Link>
+                        <Link to="/products" className="hover:text-brand-primary transition-colors">Sản phẩm</Link>
                         <span>/</span>
-                        <span className="text-coffee-800 font-medium">{product.name}</span>
+                        <span className="text-brand-primary font-medium">{product.name}</span>
                     </nav>
                 </div>
 
@@ -143,16 +145,16 @@ const ProductDetail = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                         {/* Product Images */}
                         <div className="space-y-4">
-                            <div className="aspect-square bg-gradient-to-br from-coffee-200 to-coffee-300 rounded-lg overflow-hidden">
+                            <div className="aspect-square bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 rounded-xl overflow-hidden shadow-lg">
                                 {product.image_url ? (
                                     <img
                                         src={product.image_url}
                                         alt={product.name}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                        <span className="text-8xl">☕</span>
+                                        <span className="text-8xl text-brand-primary/50">☕</span>
                                     </div>
                                 )}
                             </div>
@@ -161,18 +163,21 @@ const ProductDetail = () => {
                         {/* Product Info */}
                         <div className="space-y-6">
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-bold text-coffee-800 mb-2">
+                                <h1 className="text-3xl md:text-4xl font-bold text-brand-primary mb-2">
                                     {product.name}
                                 </h1>
                                 {product.category_name && (
-                                    <p className="text-coffee-600 font-medium">
+                                    <p className="text-brand-primary/70 font-medium">
                                         {product.category_name}
                                     </p>
                                 )}
-                            </div>                            <div className="flex items-center space-x-4">
-                                <span className="text-3xl font-bold text-coffee-800">
+                            </div>
+
+                            <div className="flex items-center space-x-4">
+                                <span className="text-3xl font-bold text-brand-primary">
                                     {formatVND(product.price)}
-                                </span><span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                </span>
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                     product.stock_quantity > 0 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
@@ -181,40 +186,41 @@ const ProductDetail = () => {
                                 </span>
                             </div>
 
-                            <div className="prose prose-coffee max-w-none">
-                                <p className="text-coffee-700 leading-relaxed">
+                            <div className="prose prose-lg max-w-none">
+                                <p className="text-gray-700 leading-relaxed">
                                     {product.description}
                                 </p>
                             </div>
 
                             {/* Product Details */}
-                            <div className="grid grid-cols-2 gap-4 py-4 border-t border-coffee-200">                                {product.origin && (
+                            <div className="grid grid-cols-2 gap-4 py-4 border-t border-gray-200">
+                                {product.origin && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">Xuất xứ:</span>
-                                        <p className="text-coffee-800">{product.origin}</p>
+                                        <span className="text-sm font-medium text-brand-primary/70">Xuất xứ:</span>
+                                        <p className="text-brand-primary">{product.origin}</p>
                                     </div>
                                 )}
                                 {product.roast_level && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">Độ rang:</span>
-                                        <p className="text-coffee-800">{product.roast_level}</p>
+                                        <span className="text-sm font-medium text-brand-primary/70">Độ rang:</span>
+                                        <p className="text-brand-primary">{product.roast_level}</p>
                                     </div>
                                 )}
                                 {product.flavor_profile && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">Hương vị:</span>
-                                        <p className="text-coffee-800">{product.flavor_profile}</p>
+                                        <span className="text-sm font-medium text-brand-primary/70">Hương vị:</span>
+                                        <p className="text-brand-primary">{product.flavor_profile}</p>
                                     </div>
                                 )}
                                 {product.processing_method && (
                                     <div>
-                                        <span className="text-sm font-medium text-coffee-600">Phương pháp chế biến:</span>
-                                        <p className="text-coffee-800">{product.processing_method}</p>
+                                        <span className="text-sm font-medium text-brand-primary/70">Phương pháp chế biến:</span>
+                                        <p className="text-brand-primary">{product.processing_method}</p>
                                     </div>
                                 )}
                             </div>                            {/* Weight Selection */}
                             <div>
-                                <span className="block text-sm font-medium text-coffee-700 mb-2">
+                                <span className="block text-sm font-medium text-brand-primary/70 mb-2">
                                     Trọng lượng:
                                 </span>
                                 <div className="grid grid-cols-4 gap-2">
@@ -222,10 +228,10 @@ const ProductDetail = () => {
                                         <button
                                             key={weight}
                                             onClick={() => setSelectedWeight(weight)}
-                                            className={`py-2 px-4 border rounded-lg text-sm font-medium transition-colors ${
+                                            className={`py-2 px-4 border rounded-lg text-sm font-medium transition-all duration-200 ${
                                                 selectedWeight === weight
-                                                    ? 'border-coffee-600 bg-coffee-600 text-white'
-                                                    : 'border-coffee-300 text-coffee-700 hover:border-coffee-400'
+                                                    ? 'border-brand-primary bg-brand-primary text-brand-white shadow-lg transform scale-105'
+                                                    : 'border-gray-300 text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5'
                                             }`}
                                         >
                                             {weight}
@@ -235,39 +241,44 @@ const ProductDetail = () => {
                             </div>                            {/* Quantity and Add to Cart */}
                             <div className="space-y-4">
                                 <div>
-                                    <label htmlFor="quantity-input" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="quantity-input" className="block text-sm font-medium text-brand-primary/70 mb-2">
                                         Số lượng:
                                     </label>
-                                    <div className="flex items-center border border-coffee-300 rounded-lg w-32">
+                                    <div className="flex items-center border border-gray-300 rounded-lg w-32 bg-white">
                                         <button
                                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                            className="px-3 py-2 text-coffee-600 hover:bg-coffee-50"
+                                            className="px-3 py-2 text-brand-primary hover:bg-brand-primary/5 transition-colors rounded-l-lg"
                                             aria-label="Giảm số lượng"
                                         >
-                                            -
-                                        </button>                                        <span className="px-4 py-2 border-x border-coffee-300 text-center min-w-[3rem]">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                            </svg>
+                                        </button>
+                                        <span className="px-4 py-2 border-x border-gray-300 text-center min-w-[3rem]">
                                             <input
                                                 id="quantity-input"
                                                 type="number"
                                                 value={quantity}
                                                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                                                className="w-full text-center border-none bg-transparent outline-none"
+                                                className="w-full text-center border-none bg-transparent outline-none text-brand-primary font-semibold"
                                                 min="1"
                                             />
                                         </span>
                                         <button
                                             onClick={() => setQuantity(quantity + 1)}
-                                            className="px-3 py-2 text-coffee-600 hover:bg-coffee-50"
+                                            className="px-3 py-2 text-brand-primary hover:bg-brand-primary/5 transition-colors rounded-r-lg"
                                             aria-label="Tăng số lượng"
                                         >
-                                            +
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </div>                                <div className="space-y-3">
                                     <button
                                         onClick={handleAddToCart}
                                         disabled={product.stock_quantity === 0 || addingToCart}
-                                        className="w-full bg-coffee-600 hover:bg-coffee-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:bg-coffee-300 disabled:cursor-not-allowed"
+                                        className="w-full bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
                                         {(() => {
                                             if (addingToCart) return 'Đang thêm...';
@@ -279,7 +290,7 @@ const ProductDetail = () => {
                                     <button
                                         onClick={handleBuyNow}
                                         disabled={product.stock_quantity === 0 || addingToCart}
-                                        className="w-full bg-coffee-800 hover:bg-coffee-900 text-white py-3 px-6 rounded-lg font-semibold transition-colors disabled:bg-coffee-300 disabled:cursor-not-allowed"
+                                        className="w-full bg-gradient-to-r from-brand-secondary to-brand-secondary/90 hover:from-brand-secondary/90 hover:to-brand-secondary text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
                                         Mua ngay
                                     </button>
@@ -287,21 +298,22 @@ const ProductDetail = () => {
                             </div>
 
                             {/* Additional Info */}
-                            <div className="border-t border-coffee-200 pt-6">                                <div className="space-y-3 text-sm text-coffee-600">
+                            <div className="border-t border-gray-200 pt-6">
+                                <div className="space-y-3 text-sm text-brand-primary/70">
                                     <div className="flex items-center">
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 mr-2 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                         </svg>
                                         Miễn phí vận chuyển cho đơn hàng trên 1,000,000đ
                                     </div>
                                     <div className="flex items-center">
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 mr-2 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         Rang mộc tươi theo đơn hàng
                                     </div>
                                     <div className="flex items-center">
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 mr-2 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                         </svg>
                                         Đảm bảo hài lòng 100%
@@ -313,7 +325,8 @@ const ProductDetail = () => {
 
                     {/* Related Products */}
                     {relatedProducts.length > 0 && (
-                        <div className="mt-16">                            <h2 className="text-2xl font-bold text-coffee-800 mb-8 text-center">
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-bold text-brand-primary mb-8 text-center">
                                 Sản phẩm liên quan
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -321,9 +334,9 @@ const ProductDetail = () => {
                                     <Link
                                         key={relatedProduct.id}
                                         to={`/products/${relatedProduct.id}`}
-                                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                                        className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                                     >
-                                        <div className="h-48 bg-gradient-to-br from-coffee-200 to-coffee-300 flex items-center justify-center">
+                                        <div className="h-48 bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 flex items-center justify-center">
                                             {relatedProduct.image_url ? (
                                                 <img
                                                     src={relatedProduct.image_url}
@@ -331,13 +344,14 @@ const ProductDetail = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <span className="text-4xl">☕</span>
+                                                <span className="text-4xl text-brand-primary/50">☕</span>
                                             )}
                                         </div>
                                         <div className="p-4">
-                                            <h3 className="text-lg font-semibold text-coffee-800 mb-2">
+                                            <h3 className="text-lg font-semibold text-brand-primary mb-2 line-clamp-2">
                                                 {relatedProduct.name}
-                                            </h3>                                            <p className="text-xl font-bold text-coffee-800">
+                                            </h3>
+                                            <p className="text-xl font-bold text-brand-primary">
                                                 {formatVND(relatedProduct.price)}
                                             </p>
                                         </div>

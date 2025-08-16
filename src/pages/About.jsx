@@ -136,7 +136,7 @@ const About = () => {
             </p>
             <Link
               to="/products"
-              className="inline-block bg-coffee-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-coffee-700 transition-colors"
+              className="inline-block bg-brand-primary text-brand-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-brand-primary/90 transition-colors"
             >
               Khám phá sản phẩm
             </Link>
@@ -175,7 +175,7 @@ const About = () => {
                   alt="Coffee processing"
                   className="rounded-lg shadow-xl"
                 />
-                <div className="absolute -bottom-6 -left-6 bg-coffee-600 text-white p-6 rounded-lg">
+                <div className="absolute -bottom-6 -left-6 bg-brand-primary text-brand-white p-6 rounded-lg">
                   <div className="text-3xl font-bold">25+</div>
                   <div className="text-sm">Năm kinh nghiệm</div>
                 </div>
@@ -222,17 +222,17 @@ const About = () => {
 
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-coffee-200"></div>              {milestones.map((milestone, index) => (
+              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-primary/20"></div>              {milestones.map((milestone, index) => (
                 <div key={milestone.year} className={`relative flex items-center mb-12 ${
                   index % 2 === 0 ? 'justify-start' : 'justify-end'
                 }`}>
                   {/* Timeline dot */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-coffee-600 rounded-full border-4 border-white shadow-lg z-10"></div>
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-brand-primary rounded-full border-4 border-white shadow-lg z-10"></div>
                   
                   {/* Content */}
                   <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-right' : 'pl-8'}`}>
                     <div className="bg-cream-50 p-6 rounded-lg shadow-md">
-                      <div className="text-2xl font-bold text-coffee-600 mb-2">
+                      <div className="text-2xl font-bold text-brand-primary mb-2">
                         {milestone.year}
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -272,7 +272,7 @@ const About = () => {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       {member.name}
                     </h3>
-                    <div className="text-coffee-600 font-medium mb-3">
+                    <div className="text-brand-primary font-medium mb-3">
                       {member.position}
                     </div>
                     <p className="text-gray-600 text-sm">
@@ -286,24 +286,24 @@ const About = () => {
         </section>
 
         {/* Statistics Section */}
-        <section className="py-20 bg-coffee-800 text-white">
+        <section className="py-20 bg-brand-primary text-brand-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
               <div>
                 <div className="text-5xl font-bold mb-2">25+</div>
-                <div className="text-coffee-200">Năm kinh nghiệm</div>
+                <div className="text-brand-white/80">Năm kinh nghiệm</div>
               </div>
               <div>
                 <div className="text-5xl font-bold mb-2">50+</div>
-                <div className="text-coffee-200">Loại cà phê đặc sản</div>
+                <div className="text-brand-white/80">Loại cà phê đặc sản</div>
               </div>
               <div>
                 <div className="text-5xl font-bold mb-2">10K+</div>
-                <div className="text-coffee-200">Khách hàng hài lòng</div>
+                <div className="text-brand-white/80">Khách hàng hài lòng</div>
               </div>
               <div>
                 <div className="text-5xl font-bold mb-2">100%</div>
-                <div className="text-coffee-200">Cà phê nguyên chất</div>
+                <div className="text-brand-white/80">Cà phê nguyên chất</div>
               </div>
             </div>
           </div>
@@ -358,23 +358,24 @@ const About = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-coffee-600 text-white">          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+        <section className="py-20 bg-brand-primary text-brand-white">
+          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
             <h2 className="text-4xl font-bold mb-6">
               Hãy trở thành một phần của hành trình
             </h2>
-            <p className="text-xl text-coffee-100 mb-8">
+            <p className="text-xl text-brand-white/80 mb-8">
               Khám phá những dòng cà phê đặc sản được chế tác từ tâm huyết
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/products"
-                className="inline-block bg-white text-coffee-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-cream-100 transition-colors"
+                className="inline-block bg-brand-white text-brand-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
               >
                 Mua sắm ngay
               </Link>
               <Link
                 to="/contact"
-                className="inline-block border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-coffee-600 transition-colors"
+                className="inline-block border-2 border-brand-white text-brand-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-brand-white hover:text-brand-primary transition-colors"
               >
                 Liên hệ
               </Link>

@@ -1,551 +1,317 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import axios from 'axios';
-import { useCart } from '../context/CartContext';
-import AdvancedSearch from '../components/common/AdvancedSearch';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import SEOHelmet from '../components/common/SEOHelmet';
 import CoffeeBeansTab from '../components/common/CoffeeBeansTab';
 import BeveragesTab from '../components/common/BeveragesTab';
 import ServicesTab from '../components/common/ServicesTab';
-import { sortSearchResults, saveSearchHistory } from '../utils/searchUtils';
-
-// Configure axios defaults
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { useCart } from '../context/CartContext';
 
 const Products = () => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const { addToCart } = useCart();
-    
-    // Tab management
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'coffee-beans');
-    
+    const [activeTab, setActiveTab] = useState('coffee-beans');
     const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isScrolled, setIsScrolled] = useState(false);
     const [filters, setFilters] = useState({
-        category: searchParams.get('category') || '',
-        minPrice: searchParams.get('minPrice') || '',
-        maxPrice: searchParams.get('maxPrice') || '',
-        inStock: searchParams.get('inStock') === 'true',
-        search: searchParams.get('search') || ''
+        search: '',
+        category: '',
+        minPrice: '',
+        maxPrice: '',
+        inStock: false
     });
-    const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'newest');
-    const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalProducts, setTotalProducts] = useState(0);
-    const [searchTime, setSearchTime] = useState(null);
+    const [sortBy, setSortBy] = useState('newest');
+    
+    // Ref for the tab navigation section
+    const tabNavigationRef = useRef(null);
+
+    // Cart functionality
+    const { addToCart } = useCart();
 
     const productsPerPage = 12;
 
-    // Tabs configuration
+    // Handle scroll effect for tab navigation
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.scrollY;
+            setIsScrolled(scrollTop > 100);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     const tabs = [
         {
             id: 'coffee-beans',
             name: 'Cà phê hạt',
             icon: '☕',
-            description: 'Hạt cà phê nguyên chất, rang mộc từ các vùng miền khác nhau'
+            description: 'Arabica & Robusta nguyên chất'
         },
         {
             id: 'beverages',
-            name: 'Menu thức uống',
+            name: 'Thức uống',
             icon: '🥤',
-            description: 'Các loại thức uống cà phê và đồ uống khác'
+            description: 'Menu đa dạng & sáng tạo'
         },
         {
             id: 'services',
             name: 'Dịch vụ',
             icon: '🏪',
-            description: 'Setup quán cà phê, training nhân viên và tư vấn kinh doanh'
+            description: 'Setup & Training chuyên nghiệp'
         }
     ];
 
-    // Debounced search function
-    const debouncedSearch = useCallback((searchTerm) => {
-        const timeoutId = setTimeout(() => {
-            setFilters(prev => ({ ...prev, search: searchTerm }));
-            setCurrentPage(1);
-        }, 500);
-        return () => clearTimeout(timeoutId);
-    }, []);
-
-    // Memoized filtered products count
-    const displayedProductsCount = useMemo(() => {
-        return Math.min(products.length, productsPerPage);
-    }, [products.length]);
-
+    // Fetch products function
     const fetchProducts = useCallback(async () => {
+        if (activeTab !== 'coffee-beans') return;
+        
+        setLoading(true);
+        setError(null);
+        
         try {
-            setLoading(true);
-            setError(null);
+            const params = new URLSearchParams();
+            if (filters.search) params.append('search', filters.search);
+            if (filters.category) params.append('category', filters.category);
+            if (filters.minPrice) params.append('minPrice', filters.minPrice);
+            if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+            if (filters.inStock) params.append('inStock', 'true');
+            params.append('page', currentPage.toString());
+            params.append('limit', productsPerPage.toString());
+            params.append('sortBy', sortBy);
             
-            // Start timing search
-            const startTime = performance.now();
+            const response = await fetch(`/api/products?${params}`);
+            if (!response.ok) throw new Error('Failed to fetch products');
             
-            const params = {
-                ...filters,
-                sortBy,
-                page: currentPage,
-                limit: productsPerPage
-            };
-            
-            // Clean up empty params
-            Object.keys(params).forEach(key => {
-                if (params[key] === '' || params[key] === null || params[key] === undefined) {
-                    delete params[key];
-                }
-            });
-            
-            const response = await axios.get(`${API_BASE_URL}/api/products`, { 
-                params,
-                timeout: 10000
-            });
-            
-            // Calculate search time
-            const endTime = performance.now();
-            const searchDuration = endTime - startTime;
-            setSearchTime(searchDuration);
-            
-            if (response.data?.products) {
-                let processedProducts = response.data.products;
-                
-                // Sort by relevance if searching
-                if (filters.search?.trim()) {
-                    processedProducts = sortSearchResults(processedProducts, filters.search);
-                    // Save search history
-                    saveSearchHistory(filters.search.trim());
-                }
-                
-                setProducts(processedProducts);
-                setTotalProducts(response.data.total || 0);
-                setTotalPages(Math.ceil((response.data.total || 0) / productsPerPage));
-            } else {
-                setProducts([]);
-                setTotalProducts(0);
-                setTotalPages(1);
-            }
-        } catch (error) {
-            console.error('Failed to fetch products:', error);
-            setError(error.response?.data?.message || 'Lỗi khi tải danh sách sản phẩm');
+            const data = await response.json();
+            setProducts(data.products || []);
+        } catch (err) {
+            console.error('Error fetching products:', err);
+            setError('Failed to load products');
             setProducts([]);
-            setTotalProducts(0);
-            setTotalPages(1);
         } finally {
             setLoading(false);
         }
-    }, [filters, sortBy, currentPage]);
+    }, [activeTab, filters, currentPage, sortBy]);
 
     useEffect(() => {
-        if (activeTab === 'coffee-beans') {
-            fetchProducts();
-        }
-    }, [fetchProducts, filters, sortBy, currentPage, activeTab]);
+        fetchProducts();
+    }, [fetchProducts]);
 
-    useEffect(() => {
-        // Always fetch categories on component mount
-        fetchCategories();
-    }, []);
+    const totalProducts = useMemo(() => products.length, [products]);
+    const totalPages = useMemo(() => Math.ceil(totalProducts / productsPerPage), [totalProducts]);
 
-    useEffect(() => {
-        // Update URL params when filters change
-        const params = new URLSearchParams();
-        
-        // Add tab to URL params
-        if (activeTab !== 'coffee-beans') params.set('tab', activeTab);
-        
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value && value !== '') {
-                params.set(key, value.toString());
-            }
-        });
-        if (sortBy !== 'newest') params.set('sortBy', sortBy);
-        if (currentPage > 1) params.set('page', currentPage.toString());
-        
-        setSearchParams(params);
-    }, [filters, sortBy, currentPage, activeTab, setSearchParams]);
-    
-    const fetchCategories = async () => {
+    // Cart functionality
+    const handleAddToCart = (product) => {
         try {
-            console.log('🔍 Fetching categories from:', `${API_BASE_URL}/api/categories`);
-            const response = await axios.get(`${API_BASE_URL}/api/categories`, { timeout: 5000 });
-            console.log('📦 Categories response:', response.data);
-            if (response.data?.categories) {
-                console.log('✅ Setting categories:', response.data.categories);
-                // Categories are fetched but not stored in state since they're not used
-            } else {
-                console.log('❌ No categories in response');
-            }
+            addToCart({
+                id: product.id,
+                name: product.nameVi || product.name,
+                price: product.price,
+                image_url: product.image_url,
+                stock_quantity: product.stock_quantity
+            }, 1);
         } catch (error) {
-            console.error('❌ Failed to fetch categories:', error);
+            console.error('Error adding to cart:', error);
         }
     };
-    
-    const handleFilterChange = useCallback((key, value) => {
-        console.log('🔧 Filter change:', key, '=', value);
-        setFilters(prev => {
-            const newFilters = { ...prev, [key]: value };
-            console.log('🔧 New filters:', newFilters);
-            return newFilters;
-        });
+
+    // Clear search functionality
+    const handleClearSearch = () => {
+        setFilters(prev => ({ ...prev, search: '' }));
         setCurrentPage(1);
-        setError(null);
-    }, []);
-
-    const handleSearchChange = useCallback((value) => {
-        setFilters(prev => ({ ...prev, search: value }));
-        const cleanup = debouncedSearch(value);
-        return cleanup;
-    }, [debouncedSearch]);
-
-    const handleAddToCart = async (product) => {
-        try {
-            await addToCart(product, 1);
-        } catch (error) {
-            console.error('Failed to add to cart:', error);
-            setError('Lỗi khi thêm sản phẩm vào giỏ hàng');
-        }
     };
 
-    const clearFilters = useCallback(() => {
+    // Clear all filters
+    const clearFilters = () => {
         setFilters({
+            search: '',
             category: '',
             minPrice: '',
             maxPrice: '',
-            inStock: false,
-            search: ''
+            inStock: false
         });
-        setSortBy('newest');
         setCurrentPage(1);
-        setError(null);
-    }, []);
+    };
 
-    const handleTabChange = useCallback((tabId) => {
+    const handleTabChange = (tabId) => {
         setActiveTab(tabId);
         setCurrentPage(1);
-        // Clear search when switching tabs
-        setFilters(prev => ({ ...prev, search: '' }));
-        setError(null);
-    }, []);
-
-    const handlePageChange = useCallback((page) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
-
-    // Generate pagination numbers with ellipsis
-    const paginationNumbers = useMemo(() => {
-        const delta = 2;
-        const range = [];
-        const rangeWithDots = [];
-
-        for (let i = Math.max(2, currentPage - delta); 
-             i <= Math.min(totalPages - 1, currentPage + delta); 
-             i++) {
-            range.push(i);
-        }
-
-        if (currentPage - delta > 2) {
-            rangeWithDots.push(1, '...');
-        } else {
-            rangeWithDots.push(1);
-        }
-
-        rangeWithDots.push(...range);
-
-        if (currentPage + delta < totalPages - 1) {
-            rangeWithDots.push('...', totalPages);
-        } else if (totalPages > 1) {
-            rangeWithDots.push(totalPages);
-        }
-
-        return rangeWithDots;
-    }, [currentPage, totalPages]);
-
-    const structuredData = {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": "Sản phẩm cà phê",
-        "description": "Premium Vietnamese coffee beans including Arabica Cầu Đất, Robusta Lâm Đồng",
-        "url": window.location.href,
-        "mainEntity": {
-            "@type": "ItemList",
-            "numberOfItems": totalProducts,
-            "itemListElement": products.map((product, index) => ({
-                "@type": "Product",
-                "position": index + 1,
-                "name": product.name,
-                "description": product.description,
-                "image": product.image_url,                "offers": {
-                    "@type": "Offer",
-                    "price": product.price,
-                    "priceCurrency": "VND",
-                    "availability": product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-                }
-            }))
+        setFilters({
+            search: '',
+            category: '',
+            minPrice: '',
+            maxPrice: '',
+            inStock: false
+        });
+        
+        // Scroll to the top of the tab navigation, accounting for the fixed header
+        if (tabNavigationRef.current) {
+            const navTop = tabNavigationRef.current.offsetTop;
+            const headerHeight = 64; // Height of the fixed header (h-16 = 64px)
+            window.scrollTo({
+                top: navTop - headerHeight - 10, // Account for header height + small padding
+                behavior: 'smooth'
+            });
         }
     };
 
     return (
-        <>
-            <Helmet>
-                <title>Sản phẩm - Balan Coffee & Roastery</title>
-                <meta name="description" content="Khám phá cà phê hạt nguyên chất, menu thức uống đa dạng và dịch vụ setup quán cà phê chuyên nghiệp. Từ Arabica Cầu Đất đến training nhân viên." />
-                <meta name="keywords" content="cà phê rang mộc, Arabica Cầu Đất, Robusta Lâm Đồng, menu thức uống, setup quán cà phê, training nhân viên, dịch vụ cà phê" />
-                <meta property="og:title" content="Sản phẩm & Dịch vụ - Balan Coffee & Roastery" />
-                <meta property="og:description" content="Khám phá cà phê hạt nguyên chất, menu thức uống đa dạng và dịch vụ setup quán cà phê chuyên nghiệp." />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content={window.location.href} />
-                <meta name="twitter:card" content="summary_large_image" />
-                <link rel="canonical" href={window.location.href} />
-                <script type="application/ld+json">
-                    {JSON.stringify(structuredData)}
-                </script>
-            </Helmet>
+        <div className="min-h-screen bg-white">
+            <SEOHelmet
+                title="Sản phẩm cà phê chất lượng cao - Balan Coffee & Roastery"
+                description="Khám phá bộ sưu tập cà phê nguyên chất từ Đắk Lắk. Arabica Cầu Đất, Robusta Lâm Đồng và các dòng cà phê đặc biệt từ Balan Coffee & Roastery."
+                keywords="cà phê rang mộc, Arabica Cầu Đất, Robusta Lâm Đồng, cà phê Đắk Lắk, cà phê chất lượng cao"
+                canonical="https://balancoffeeandroastery.com/products"
+            />
 
-            <div className="min-h-screen bg-cream-50">
-                {/* Header */}
-                <div className="bg-coffee-800 text-white py-16">
-                    <div className="container mx-auto px-4 text-center">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                            Sản phẩm & Dịch vụ
-                        </h1>
-                        <p className="text-xl text-cream-200 max-w-2xl mx-auto mb-8">
-                            Từ hạt cà phê nguyên chất đến dịch vụ setup quán chuyên nghiệp
-                        </p>
-                        
-                        {/* Main Search Bar */}
-                        <div className="max-w-2xl mx-auto">
-                            <AdvancedSearch
-                                value={filters.search}
-                                onChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
-                                onSearch={handleSearchChange}
-                                placeholder="Tìm kiếm cà phê, thức uống, dịch vụ..."
-                                showSuggestions={true}
-                                className="w-full"
-                            />
-                        </div>
-                    </div>
+            {/* Hero Section */}
+            <section className="bg-brand-primary text-brand-white py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
+                <div className="text-center">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-white">
+                        Sản phẩm của chúng tôi
+                    </h1>
+                    <p className="text-xl text-brand-white/80 max-w-3xl mx-auto">
+                        Khám phá bộ sưu tập cà phê nguyên chất, thức uống độc đáo và dịch vụ chuyên nghiệp từ Balan Coffee & Roastery
+                    </p>
                 </div>
+            </div>
+            </section>
 
-                {/* Tabs Navigation */}
-                <div className="bg-white border-b border-coffee-200">                    <div className="container mx-auto px-4">
-                        <div className="flex flex-wrap justify-center lg:justify-start">
+            {/* Enhanced Sticky Tab Navigation - Always Visible Below Header */}
+            <div 
+                ref={tabNavigationRef}
+                className={`bg-white shadow-lg border-b border-gray-200 sticky top-16 z-40 transition-all duration-300 ${
+                    isScrolled 
+                        ? 'backdrop-blur-md bg-white/98 shadow-xl border-gray-300' 
+                        : 'backdrop-blur-sm bg-white/95 shadow-md border-gray-200'
+                }`}
+            >
+                <div className="container mx-auto px-4">
+                    {/* Desktop Tab Navigation */}
+                    <div className="hidden md:flex justify-center">
+                        <div className={`inline-flex bg-gray-50/90 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-gray-200/50 transition-all duration-300 ${
+                            isScrolled ? 'm-3 scale-95' : 'm-4 scale-100'
+                        }`}>
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id)}
-                                    className={`flex-1 lg:flex-none flex flex-col items-center justify-center px-4 py-6 lg:px-8 lg:py-4 border-b-2 font-medium transition-colors duration-200 min-w-0 ${
+                                    className={`relative px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 group min-w-[140px] tab-button-enhanced ${
                                         activeTab === tab.id
-                                            ? 'border-coffee-600 text-coffee-600 bg-coffee-50'
-                                            : 'border-transparent text-coffee-500 hover:text-coffee-600 hover:border-coffee-300'
+                                            ? 'bg-white text-brand-primary shadow-lg border border-gray-100/50 scale-105 active'
+                                            : 'text-gray-600 hover:text-brand-primary hover:bg-white/80 hover:shadow-md'
                                     }`}
-                                    aria-selected={activeTab === tab.id}
-                                    role="tab"
                                 >
-                                    <span className="text-2xl lg:text-xl mb-2 lg:mb-0 lg:mr-2">{tab.icon}</span>
-                                    <div className="text-center lg:text-left">
-                                        <div className="font-semibold text-sm lg:text-base">{tab.name}</div>
-                                        <div className="text-xs text-coffee-400 hidden lg:block mt-1">
-                                            {tab.description}
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <span className={`text-lg transition-all duration-300 ${
+                                            activeTab === tab.id 
+                                                ? 'scale-110 drop-shadow-sm filter brightness-110' 
+                                                : 'group-hover:scale-105'
+                                        }`}>
+                                            {tab.icon}
+                                        </span>
+                                        <div className="text-center">
+                                            <div className="font-semibold tracking-wide whitespace-nowrap">{tab.name}</div>
+                                            <div className={`text-xs transition-opacity duration-300 whitespace-nowrap ${
+                                                activeTab === tab.id ? 'opacity-80' : 'opacity-60'
+                                            } ${isScrolled ? 'hidden' : 'block'}`}>
+                                                {tab.description}
+                                            </div>
                                         </div>
                                     </div>
+                                    
+                                    {/* Enhanced Active glow effect */}
+                                    {activeTab === tab.id && (
+                                        <>
+                                            <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/5 via-brand-secondary/5 to-brand-primary/5 rounded-xl pointer-events-none"></div>
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-brand-primary/10 to-brand-secondary/10 rounded-xl blur-sm pointer-events-none"></div>
+                                        </>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Mobile Tab Navigation - Enhanced */}
+                    <div className="md:hidden px-2 py-3">
+                        <div className={`flex justify-between bg-gray-50/90 backdrop-blur-sm rounded-xl p-1.5 border border-gray-200/50 shadow-md transition-all duration-300 ${
+                            isScrolled ? 'scale-95' : 'scale-100'
+                        }`}>
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => handleTabChange(tab.id)}
+                                    className={`flex-1 py-3 px-1 rounded-lg font-medium text-xs transition-all duration-300 tab-button-enhanced ${
+                                        isScrolled ? 'min-h-[50px]' : 'min-h-[60px]'
+                                    } ${
+                                        activeTab === tab.id
+                                            ? 'bg-white text-brand-primary shadow-lg scale-105 active'
+                                            : 'text-gray-600 hover:text-brand-primary hover:bg-white/70 hover:shadow-sm'
+                                    }`}
+                                >
+                                    <div className="flex flex-col items-center justify-center space-y-1">
+                                        <span className={`text-lg transition-all duration-300 ${
+                                            activeTab === tab.id ? 'scale-110 drop-shadow-sm' : ''
+                                        }`}>
+                                            {tab.icon}
+                                        </span>
+                                        <div className={`font-semibold whitespace-nowrap text-center px-1 ${
+                                            isScrolled ? 'text-xs leading-tight' : 'text-xs'
+                                        }`}>{tab.name}</div>
+                                    </div>
+                                    
+                                    {/* Mobile active indicator */}
+                                    {activeTab === tab.id && (
+                                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-brand-primary rounded-full"></div>
+                                    )}
                                 </button>
                             ))}
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div className="container mx-auto px-4 py-8">
-                    <div className="flex flex-col lg:flex-row gap-8">
-                        {/* Filters Sidebar - Only show for coffee beans */}
-                        {activeTab === 'coffee-beans' && (
-                            <aside className="lg:w-1/4">
-                                <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-lg font-semibold text-coffee-800">
-                                            Bộ lọc
-                                        </h2>
-                                        <button
-                                            onClick={clearFilters}
-                                            className="text-sm text-coffee-600 hover:text-coffee-800 transition-colors"
-                                            aria-label="Clear all filters"
-                                        >
-                                            Xóa tất cả
-                                        </button>
-                                    </div>
+            {/* Content Area with Enhanced Spacing */}
+            <div className="container mx-auto px-4 py-8 md:py-12">
+                {/* Tab Content Transition */}
+                <div className="transition-all duration-500 ease-in-out">
+                    {/* Coffee Beans Tab */}
+                    {activeTab === 'coffee-beans' && (
+                        <div className="animate-fadeIn">
+                            <CoffeeBeansTab
+                                products={products}
+                                loading={loading}
+                                error={error}
+                                searchTerm={filters.search}
+                                searchTime={0}
+                                totalProducts={totalProducts}
+                                onClearSearch={handleClearSearch}
+                                handleAddToCart={handleAddToCart}
+                                clearFilters={clearFilters}
+                            />
+                        </div>
+                    )}
 
-                                    {/* Advanced Search */}
-                                    <div className="mb-6">
-                                        <div className="block text-sm font-medium text-coffee-700 mb-2">
-                                            Tìm kiếm
-                                        </div>
-                                        <AdvancedSearch
-                                            value={filters.search}
-                                            onChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
-                                            onSearch={handleSearchChange}
-                                            placeholder="Tìm kiếm sản phẩm cà phê..."
-                                            showSuggestions={true}
-                                            className="w-full"
-                                        />
-                                    </div>                                    {/* Categories */}
-                                    <div className="mb-6">
-                                        
-                                    </div>{/* Price Range */}
-                                    <div className="mb-6">
-                                        <span className="block text-sm font-medium text-coffee-700 mb-2">
-                                            Khoảng giá (VND)
-                                        </span>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <input
-                                                type="number"
-                                                placeholder="Tối thiểu"
-                                                value={filters.minPrice}
-                                                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                                                className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
-                                                min="0"
-                                                step="1000"
-                                                aria-label="Giá tối thiểu"
-                                            />                                            <input
-                                                type="number"
-                                                placeholder="Tối đa"
-                                                value={filters.maxPrice}
-                                                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                                                className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
-                                                min="0"
-                                                step="1000"
-                                                aria-label="Giá tối đa"
-                                            />
-                                        </div>
-                                    </div>
+                    {/* Beverages Tab */}
+                    {activeTab === 'beverages' && (
+                        <div className="animate-fadeIn">
+                            <BeveragesTab 
+                                searchTerm={filters.search}
+                                onClearSearch={handleClearSearch}
+                            />
+                        </div>
+                    )}
 
-                                    {/* In Stock */}
-                                    <div className="mb-6">
-                                        <label className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={filters.inStock}
-                                                onChange={(e) => handleFilterChange('inStock', e.target.checked)}
-                                                className="h-4 w-4 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded"
-                                            />
-                                            <span className="ml-2 text-sm text-coffee-700">
-                                                Chỉ hiển thị còn hàng
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </aside>
-                        )}
-
-                        {/* Main Content */}
-                        <main className={activeTab === 'coffee-beans' ? 'lg:w-3/4' : 'w-full'}>
-                            {/* Tab Content */}
-                            {activeTab === 'coffee-beans' && (
-                                <CoffeeBeansTab
-                                    products={products}
-                                    loading={loading}
-                                    error={error}
-                                    searchTerm={filters.search}
-                                    searchTime={searchTime}
-                                    totalProducts={totalProducts}
-                                    displayedProductsCount={displayedProductsCount}
-                                    onClearSearch={() => handleFilterChange('search', '')}
-                                    handleAddToCart={handleAddToCart}
-                                    clearFilters={clearFilters}
-                                />
-                            )}
-
-                            {activeTab === 'beverages' && (
-                                <BeveragesTab
-                                    searchTerm={filters.search}
-                                    onClearSearch={() => handleFilterChange('search', '')}
-                                />
-                            )}
-
-                            {activeTab === 'services' && (
-                                <ServicesTab
-                                    searchTerm={filters.search}
-                                    onClearSearch={() => handleFilterChange('search', '')}
-                                />
-                            )}
-
-                            {/* Sort and Pagination for Coffee Beans only */}
-                            {activeTab === 'coffee-beans' && !loading && !error && products.length > 0 && (
-                                <>
-                                    {/* Sort and Results */}
-                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 mt-8">
-                                        <div className="text-coffee-600">
-                                            {`Hiển thị ${displayedProductsCount} trong tổng số ${totalProducts} sản phẩm`}
-                                        </div>
-                                        
-                                        <div className="flex items-center space-x-4">
-                                            <label htmlFor="sort-select" className="text-sm font-medium text-coffee-700">
-                                                Sắp xếp theo:
-                                            </label>
-                                            <select
-                                                id="sort-select"
-                                                value={sortBy}
-                                                onChange={(e) => setSortBy(e.target.value)}
-                                                className="px-3 py-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
-                                            >
-                                                <option value="newest">Mới nhất</option>
-                                                <option value="name">Tên</option>
-                                                <option value="price_low">Giá thấp đến cao</option>
-                                                <option value="price_high">Giá cao đến thấp</option>
-                                                <option value="popularity">Phổ biến</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    {/* Pagination */}
-                                    {totalPages > 1 && (
-                                        <nav className="flex justify-center items-center space-x-2 mt-8" aria-label="Product pagination">
-                                            <button
-                                                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
-                                                disabled={currentPage === 1}
-                                                className="px-4 py-2 border border-coffee-300 rounded-lg text-coffee-700 hover:bg-coffee-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                                                aria-label="Go to previous page"
-                                            >
-                                                Trước
-                                            </button>
-                                            
-                                            {paginationNumbers.map((page, index) => (
-                                                page === '...' ? (
-                                                    <span key={`ellipsis-${currentPage}-${index}`} className="px-2 text-coffee-500">
-                                                        ...
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        key={page}
-                                                        onClick={() => handlePageChange(page)}
-                                                        className={`px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-coffee-500 ${
-                                                            currentPage === page
-                                                                ? 'bg-coffee-600 text-white border-coffee-600'
-                                                                : 'border-coffee-300 text-coffee-700 hover:bg-coffee-50'
-                                                        }`}
-                                                        aria-label={`Go to page ${page}`}
-                                                        aria-current={currentPage === page ? 'page' : undefined}
-                                                    >
-                                                        {page}
-                                                    </button>
-                                                )
-                                            ))}
-                                            
-                                            <button
-                                                onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
-                                                disabled={currentPage === totalPages}
-                                                className="px-4 py-2 border border-coffee-300 rounded-lg text-coffee-700 hover:bg-coffee-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                                                aria-label="Go to next page"
-                                            >
-                                                Sau
-                                            </button>
-                                        </nav>
-                                    )}
-                                </>
-                            )}
-                        </main>
-                    </div>
+                    {/* Services Tab */}
+                    {activeTab === 'services' && (
+                        <div className="animate-fadeIn">
+                            <ServicesTab />
+                        </div>
+                    )}
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

@@ -2,6 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const BeveragesTab = ({ searchTerm, onClearSearch }) => {
+    // Grab Food ordering URL
+    const GRAB_FOOD_URL = 'https://food.grab.com/vn/vi/restaurant/balan-coffee-roastery-delivery/5-C34UJ7M1PBBBET?';
+    
+    const handleOrderClick = () => {
+        window.open(GRAB_FOOD_URL, '_blank', 'noopener,noreferrer');
+    };
+
     const beverageCategories = [
         {
             name: 'Cà phê truyền thống',
@@ -59,10 +66,10 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
         <>
             {/* Beverages Header */}
             <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-coffee-800 mb-4">
+                <h2 className="text-3xl font-bold text-brand-primary mb-4">
                     🥤 Menu thức uống
                 </h2>
-                <p className="text-coffee-600 max-w-3xl mx-auto">
+                <p className="text-gray-700 max-w-3xl mx-auto">
                     Thưởng thức đa dạng các loại thức uống từ cà phê truyền thống Việt Nam đến các món 
                     hiện đại kiểu Âu. Mỗi ly đều được pha chế tỉ mỉ với nguyên liệu chất lượng cao.
                 </p>
@@ -70,14 +77,14 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
 
             {/* Search Results */}
             {searchTerm?.trim() && (
-                <div className="mb-6 bg-coffee-50 rounded-lg p-4">
+                <div className="mb-6 bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 rounded-xl p-4 border border-brand-primary/20">
                     <div className="flex items-center justify-between">
-                        <p className="text-coffee-700">
+                        <p className="text-brand-primary font-medium">
                             🔍 Tìm thấy <strong>{filteredCategories.reduce((total, cat) => total + cat.items.length, 0)}</strong> món cho "{searchTerm}"
                         </p>
                         <button
                             onClick={onClearSearch}
-                            className="text-sm px-3 py-1 bg-coffee-200 hover:bg-coffee-300 rounded transition-colors"
+                            className="text-sm px-3 py-2 bg-white/70 hover:bg-brand-primary hover:text-brand-white rounded-lg transition-all duration-200 border border-brand-primary/30"
                         >
                             ✕ Xóa tìm kiếm
                         </button>
@@ -89,15 +96,15 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
             {searchTerm?.trim() && filteredCategories.length === 0 && (
                 <div className="text-center py-16">
                     <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-semibold text-coffee-800 mb-2">
+                    <h3 className="text-xl font-semibold text-brand-primary mb-2">
                         Không tìm thấy thức uống phù hợp
                     </h3>
-                    <p className="text-coffee-600 mb-4">
+                    <p className="text-gray-700 mb-4">
                         Hãy thử tìm kiếm với từ khóa khác như "cà phê", "trà", "latte"...
                     </p>
                     <button
                         onClick={onClearSearch}
-                        className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg transition-colors"
+                        className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                     >
                         Xem tất cả menu
                     </button>
@@ -108,8 +115,8 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
             {filteredCategories.length > 0 && (                <div className="space-y-8">
                     {filteredCategories.map((category) => (
                         <div key={category.name} className="bg-white rounded-lg shadow-md overflow-hidden">
-                            <div className="bg-coffee-100 px-6 py-4 border-b border-coffee-200">
-                                <h3 className="text-xl font-bold text-coffee-800 flex items-center">
+                            <div className="bg-brand-primary/10 px-6 py-4 border-b border-brand-primary/20">
+                                <h3 className="text-xl font-bold text-brand-primary flex items-center">
                                     <span className="text-2xl mr-3">{category.icon}</span>
                                     {category.name}
                                 </h3>
@@ -117,34 +124,37 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
                             <div className="p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {category.items.map((item) => (
-                                        <div key={`${category.name}-${item.name}`} className="flex justify-between items-start p-4 border border-coffee-100 rounded-lg hover:bg-coffee-50 transition-colors">
+                                        <div key={`${category.name}-${item.name}`} className="flex justify-between items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors hover:border-brand-primary/30 hover:shadow-sm">
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-coffee-800 mb-1">
+                                                <h4 className="font-semibold text-brand-primary mb-1">
                                                     {searchTerm ? (
                                                         <span dangerouslySetInnerHTML={{
                                                             __html: item.name.replace(
                                                                 new RegExp(`(${searchTerm})`, 'gi'),
-                                                                '<mark class="bg-yellow-200 font-semibold px-1 rounded">$1</mark>'
+                                                                '<mark class="bg-brand-secondary text-brand-primary px-1 rounded">$1</mark>'
                                                             )
                                                         }} />
                                                     ) : item.name}
                                                 </h4>
-                                                <p className="text-sm text-coffee-600 mb-2">
+                                                <p className="text-sm text-gray-600 mb-2">
                                                     {searchTerm ? (
                                                         <span dangerouslySetInnerHTML={{
                                                             __html: item.description.replace(
                                                                 new RegExp(`(${searchTerm})`, 'gi'),
-                                                                '<mark class="bg-yellow-200 font-semibold px-1 rounded">$1</mark>'
+                                                                '<mark class="bg-brand-secondary text-brand-primary px-1 rounded">$1</mark>'
                                                             )
                                                         }} />
                                                     ) : item.description}
                                                 </p>
                                             </div>
                                             <div className="text-right ml-4">
-                                                <div className="font-bold text-coffee-800 text-lg">
+                                                <div className="font-bold text-brand-primary text-lg">
                                                     {item.price}
                                                 </div>
-                                                <button className="mt-2 px-3 py-1 bg-coffee-600 hover:bg-coffee-700 text-white text-sm rounded transition-colors">
+                                                <button 
+                                                    onClick={handleOrderClick}
+                                                    className="mt-2 px-4 py-2 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white text-sm rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                                                >
                                                     Đặt món
                                                 </button>
                                             </div>
@@ -157,37 +167,19 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
                 </div>
             )}
 
-            {/* Special Offers */}
-            <div className="mt-12 bg-gradient-to-r from-coffee-600 to-coffee-700 rounded-lg p-8 text-white">
-                <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-4">🎉 Ưu đãi đặc biệt</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white bg-opacity-10 rounded-lg p-4">
-                            <h4 className="font-semibold mb-2">Happy Hour</h4>
-                            <p className="text-sm text-cream-200">
-                                Giảm 20% tất cả đồ uống từ 14:00 - 16:00 hàng ngày
-                            </p>
-                        </div>
-                        <div className="bg-white bg-opacity-10 rounded-lg p-4">
-                            <h4 className="font-semibold mb-2">Combo tiết kiệm</h4>
-                            <p className="text-sm text-cream-200">
-                                Mua 2 ly cà phê bất kỳ, tặng 1 bánh ngọt
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Contact for Custom Orders */}
-            <div className="mt-8 bg-cream-100 rounded-lg p-6 text-center">
-                <h3 className="text-lg font-semibold text-coffee-800 mb-2">
-                    Cần đặt món cho sự kiện lớn?
+            <div className="mt-8 bg-gradient-to-r from-gray-50 to-brand-secondary/10 rounded-xl p-6 text-center border border-brand-primary/20">
+                <h3 className="text-lg font-semibold text-brand-primary mb-2">
+                    Đặt món ngay qua Grab Food
                 </h3>
-                <p className="text-coffee-600 mb-4">
-                    Liên hệ với chúng tôi để được tư vấn menu và giá ưu đãi cho đơn hàng lớn
+                <p className="text-gray-700 mb-4">
+                    Giao hàng tận nơi với đầy đủ menu thức uống và nhiều ưu đãi hấp dẫn
                 </p>
-                <button className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg transition-colors">
-                    📞 Liên hệ ngay
+                <button 
+                    onClick={handleOrderClick}
+                    className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg inline-flex items-center space-x-2"
+                >
+                    <span>Đặt món qua Grab</span>
                 </button>
             </div>
         </>

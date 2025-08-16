@@ -90,18 +90,18 @@ const Blog = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <div className="bg-coffee-800 text-white py-16">
-        <div className="container mx-auto px-4">
+      <section className="bg-brand-primary text-brand-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              ☕ Blog Cà Phê
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-white">
+              Blog Cà Phê
             </h1>
-            <p className="text-xl text-coffee-100 max-w-2xl mx-auto">
+            <p className="text-xl text-brand-white/80 max-w-3xl mx-auto">
               Khám phá thế giới cà phê qua những câu chuyện, kiến thức và trải nghiệm từ các chuyên gia
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="container mx-auto px-4 py-12">
         {/* Search and Filter */}
@@ -115,11 +115,11 @@ const Blog = () => {
                   placeholder="Tìm kiếm bài viết..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
                 />
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-coffee-600 text-white rounded-r-lg hover:bg-coffee-700 transition-colors"
+                  className="px-6 py-2 bg-brand-primary text-brand-white rounded-r-lg hover:bg-brand-primary/90 transition-colors"
                 >
                   🔍 Tìm kiếm
                 </button>
@@ -132,7 +132,7 @@ const Blog = () => {
                 onClick={() => handleCategoryFilter('')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedCategory === ''
-                    ? 'bg-coffee-600 text-white'
+                    ? 'bg-brand-primary text-brand-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
@@ -144,7 +144,7 @@ const Blog = () => {
                   onClick={() => handleCategoryFilter(category.slug)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCategory === category.slug
-                      ? 'bg-coffee-600 text-white'
+                      ? 'bg-brand-primary text-brand-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
@@ -158,7 +158,7 @@ const Blog = () => {
         {/* Blog Posts Grid */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
           </div>
         ) : blogs.length === 0 ? (
           <div className="text-center py-16">
@@ -189,7 +189,7 @@ const Blog = () => {
                       />
                     </div>
                     <div className="p-6">
-                      <h2 className="text-xl font-bold text-coffee-800 mb-3 line-clamp-2 hover:text-coffee-600 transition-colors">
+                      <h2 className="text-xl font-bold text-brand-primary mb-3 line-clamp-2 hover:text-brand-primary/80 transition-colors">
                         {blog.title || 'Untitled'}
                       </h2>
                       <p className="text-gray-600 text-sm mb-4 line-clamp-3">
@@ -204,7 +204,7 @@ const Blog = () => {
                           {blog.tags.slice(0, 3).map((tag, index) => (
                             <span
                               key={index}
-                              className="text-xs bg-coffee-100 text-coffee-700 px-2 py-1 rounded"
+                              className="text-xs bg-brand-primary/10 text-brand-primary px-2 py-1 rounded"
                             >
                               {tag}
                             </span>
@@ -236,7 +236,7 @@ const Blog = () => {
                       onClick={() => handlePageChange(page)}
                       className={`px-4 py-2 rounded-lg transition-colors ${
                         currentPage === page
-                          ? 'bg-coffee-600 text-white'
+                          ? 'bg-brand-primary text-brand-white'
                           : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >

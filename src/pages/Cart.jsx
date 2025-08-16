@@ -50,10 +50,11 @@ const Cart = () => {
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
 
-            <div className="min-h-screen bg-cream-50">
+            <div className="min-h-screen bg-gray-50">
                 {/* Header */}
-                <div className="bg-coffee-800 text-white py-12">
-                    <div className="container mx-auto px-4">                        <h1 className="text-3xl md:text-4xl font-bold">
+                <div className="bg-gradient-to-r from-brand-primary via-brand-primary/95 to-brand-primary/90 text-brand-white py-12">
+                    <div className="container mx-auto px-4">
+                        <h1 className="text-3xl md:text-4xl font-bold">
                             Giỏ hàng ({itemCount})
                         </h1>
                     </div>
@@ -61,17 +62,18 @@ const Cart = () => {
 
                 <div className="container mx-auto px-4 py-8">
                     {cartItems.length === 0 ? (
-                        /* Empty Cart */                        <div className="text-center py-16">
+                        /* Empty Cart */
+                        <div className="text-center py-16">
                             <div className="text-6xl mb-6">🛒</div>
-                            <h2 className="text-2xl font-semibold text-coffee-800 mb-4">
+                            <h2 className="text-2xl font-semibold text-brand-primary mb-4">
                                 Giỏ hàng trống
                             </h2>
-                            <p className="text-coffee-600 mb-8 max-w-md mx-auto">
+                            <p className="text-gray-600 mb-8 max-w-md mx-auto">
                                 Khám phá bộ sưu tập cà phê Việt Nam cao cấp và thêm một số loại hạt thơm ngon vào giỏ hàng của bạn.
                             </p>
                             <Link
                                 to="/products"
-                                className="bg-coffee-600 hover:bg-coffee-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
+                                className="bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                             >
                                 Tiếp tục mua sắm
                             </Link>
@@ -83,12 +85,12 @@ const Cart = () => {
                             <div className="lg:col-span-2">
                                 <div className="bg-white rounded-lg shadow-md">
                                     <div className="p-6 border-b border-coffee-100">                                        <div className="flex justify-between items-center">
-                                            <h2 className="text-xl font-semibold text-coffee-800">
+                                            <h2 className="text-xl font-semibold text-brand-primary">
                                                 Sản phẩm trong giỏ ({itemCount})
                                             </h2>
                                             <button
                                                 onClick={clearCart}
-                                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                                className="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
                                             >
                                                 Xóa giỏ hàng
                                             </button>
@@ -100,12 +102,12 @@ const Cart = () => {
                                             <div key={item.product_id} className="p-6">
                                                 <div className="flex flex-col sm:flex-row gap-4">
                                                     {/* Product Image */}
-                                                    <div className="w-24 h-24 bg-gradient-to-br from-coffee-200 to-coffee-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center flex-shrink-0">
                                                         {item.image_url ? (
                                                             <img
                                                                 src={item.image_url}
                                                                 alt={item.name}
-                                                                className="w-full h-full object-cover rounded-lg"
+                                                                className="w-full h-full object-cover rounded-xl"
                                                             />
                                                         ) : (
                                                             <span className="text-2xl">☕</span>
@@ -114,58 +116,72 @@ const Cart = () => {
                                                     
                                                     {/* Product Details */}
                                                     <div className="flex-grow">
-                                                        <div className="flex flex-col sm:flex-row justify-between">
-                                                            <div className="mb-2 sm:mb-0">
+                                                        <div className="flex flex-col sm:flex-row justify-between gap-4">
+                                                            <div className="flex-grow">
                                                                 <Link 
                                                                     to={`/products/${item.product_id}`}
-                                                                    className="text-lg font-semibold text-coffee-800 hover:text-coffee-600"
+                                                                    className="text-lg font-semibold text-brand-primary hover:text-brand-primary/80 transition-colors"
                                                                 >
                                                                     {item.name}
                                                                 </Link>
-                                                                <p className="text-coffee-600 text-sm mt-1">
+                                                                <p className="text-gray-600 text-sm mt-1">
                                                                     {item.description && item.description.length > 100 
                                                                         ? `${item.description.substring(0, 100)}...`
                                                                         : item.description
                                                                     }
-                                                                </p>                                                                <p className="text-coffee-800 font-semibold mt-2">
+                                                                </p>
+                                                                <p className="text-brand-primary font-semibold mt-2">
                                                                     {formatVND(item.price)} mỗi sản phẩm
                                                                 </p>
                                                             </div>
                                                             
-                                                            {/* Quantity and Remove */}
-                                                            <div className="flex items-center space-x-4">
-                                                                <div className="flex items-center border border-coffee-300 rounded-lg">
+                                                            {/* Quantity and Remove - Better organized */}
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                                                {/* Quantity Controls */}
+                                                                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
                                                                     <button
                                                                         onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
-                                                                        className="px-3 py-1 text-coffee-600 hover:bg-coffee-50"
+                                                                        className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200"
+                                                                        aria-label="Giảm số lượng"
                                                                     >
-                                                                        -
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                                                        </svg>
                                                                     </button>
-                                                                    <span className="px-4 py-1 border-x border-coffee-300 min-w-[3rem] text-center">
+                                                                    <span className="px-4 py-2 bg-white border-x border-gray-200 min-w-[3rem] text-center font-semibold text-brand-primary">
                                                                         {item.quantity}
                                                                     </span>
                                                                     <button
                                                                         onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
-                                                                        className="px-3 py-1 text-coffee-600 hover:bg-coffee-50"
+                                                                        className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200"
+                                                                        aria-label="Tăng số lượng"
                                                                     >
-                                                                        +
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                                        </svg>
                                                                     </button>
-                                                                </div>                                                                  <div className="text-right">
-                                                                    <p className="text-lg font-semibold text-coffee-800">
-                                                                        {formatVND(item.price * item.quantity)}
-                                                                    </p>
                                                                 </div>
                                                                 
+                                                                {/* Remove Button */}
                                                                 <button
                                                                     onClick={() => removeFromCart(item.product_id)}
-                                                                    className="text-red-600 hover:text-red-800 p-1"
-                                                                    aria-label="Remove item"
+                                                                    className="flex items-center space-x-2 text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-xl transition-all duration-200"
+                                                                    aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
                                                                 >
-                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                                     </svg>
+                                                                    <span className="text-sm font-medium">Xóa</span>
                                                                 </button>
                                                             </div>
+                                                        </div>
+                                                        
+                                                        {/* Subtotal for this item */}
+                                                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                                                            <span className="text-sm text-gray-600">Tổng phụ:</span>
+                                                            <span className="text-lg font-bold text-brand-primary">
+                                                                {formatVND(item.price * item.quantity)}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>

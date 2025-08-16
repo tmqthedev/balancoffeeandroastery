@@ -125,10 +125,10 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
         <>
             {/* Services Header */}
             <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-coffee-800 mb-4">
+                <h2 className="text-3xl font-bold text-brand-primary mb-4">
                     🏪 Dịch vụ chuyên nghiệp
                 </h2>
-                <p className="text-coffee-600 max-w-3xl mx-auto">
+                <p className="text-gray-700 max-w-3xl mx-auto">
                     Chúng tôi cung cấp các dịch vụ tư vấn và hỗ trợ toàn diện cho việc khởi nghiệp 
                     và phát triển mô hình kinh doanh cà phê. Từ setup quán mới đến đào tạo nhân viên chuyên nghiệp.
                 </p>
@@ -136,14 +136,14 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
 
             {/* Search Results */}
             {searchTerm?.trim() && (
-                <div className="mb-6 bg-coffee-50 rounded-lg p-4">
+                <div className="mb-6 bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 rounded-xl p-4 border border-brand-primary/20">
                     <div className="flex items-center justify-between">
-                        <p className="text-coffee-700">
+                        <p className="text-brand-primary font-medium">
                             🔍 Tìm thấy <strong>{filteredServices.length}</strong> dịch vụ cho "{searchTerm}"
                         </p>
                         <button
                             onClick={onClearSearch}
-                            className="text-sm px-3 py-1 bg-coffee-200 hover:bg-coffee-300 rounded transition-colors"
+                            className="text-sm px-3 py-2 bg-white/70 hover:bg-brand-primary hover:text-brand-white rounded-lg transition-all duration-200 border border-brand-primary/30"
                         >
                             ✕ Xóa tìm kiếm
                         </button>
@@ -155,15 +155,15 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
             {searchTerm?.trim() && filteredServices.length === 0 && (
                 <div className="text-center py-16">
                     <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-semibold text-coffee-800 mb-2">
+                    <h3 className="text-xl font-semibold text-brand-primary mb-2">
                         Không tìm thấy dịch vụ phù hợp
                     </h3>
-                    <p className="text-coffee-600 mb-4">
+                    <p className="text-gray-700 mb-4">
                         Hãy thử tìm kiếm với từ khóa khác như "setup", "training", "tư vấn"...
                     </p>
                     <button
                         onClick={onClearSearch}
-                        className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg transition-colors"
+                        className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                     >
                         Xem tất cả dịch vụ
                     </button>
@@ -179,14 +179,14 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                                 <div className="flex items-start mb-4">
                                     <span className="text-4xl mr-4">{service.icon}</span>
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-coffee-800 mb-2">
+                                        <h3 className="text-xl font-bold text-brand-primary mb-2">
                                             {searchTerm ? (
                                                 <span dangerouslySetInnerHTML={{
                                                     __html: highlightText(service.name, searchTerm)
                                                 }} />
                                             ) : service.name}
                                         </h3>
-                                        <p className="text-coffee-600 mb-4">
+                                        <p className="text-brand-primary/70 mb-4">
                                             {searchTerm ? (
                                                 <span dangerouslySetInnerHTML={{
                                                     __html: highlightText(service.description, searchTerm)
@@ -197,10 +197,11 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                                 </div>
 
                                 <div className="mb-4">
-                                    <h4 className="font-semibold text-coffee-800 mb-2">Dịch vụ bao gồm:</h4>                                    <ul className="text-sm text-coffee-600 space-y-1">
+                                    <h4 className="font-semibold text-brand-primary mb-2">Dịch vụ bao gồm:</h4>
+                                    <ul className="text-sm text-gray-600 space-y-1">
                                         {service.features.slice(0, 3).map((feature) => (
                                             <li key={feature} className="flex items-center">
-                                                <span className="text-green-500 mr-2">✓</span>
+                                                <span className="text-brand-secondary mr-2">✓</span>
                                                 {searchTerm ? (
                                                     <span dangerouslySetInnerHTML={{
                                                         __html: highlightText(feature, searchTerm)
@@ -209,7 +210,7 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                                             </li>
                                         ))}
                                         {service.features.length > 3 && (
-                                            <li className="text-coffee-500 text-xs">
+                                            <li className="text-gray-500 text-xs">
                                                 +{service.features.length - 3} dịch vụ khác...
                                             </li>
                                         )}
@@ -217,8 +218,8 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                                 </div>
 
                                 <div className="mb-4">
-                                    <div className="text-sm text-coffee-600 mb-2">Giá từ:</div>
-                                    <div className="text-2xl font-bold text-coffee-800">
+                                    <div className="text-sm text-gray-600 mb-2">Giá từ:</div>
+                                    <div className="text-2xl font-bold text-brand-primary">
                                         {service.packages[0].price}
                                     </div>
                                 </div>
@@ -226,11 +227,11 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                                 <div className="flex space-x-2">
                                     <button
                                         onClick={() => setSelectedService(service)}
-                                        className="flex-1 bg-coffee-600 hover:bg-coffee-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                        className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                                     >
                                         Xem chi tiết
                                     </button>
-                                    <button className="bg-coffee-100 hover:bg-coffee-200 text-coffee-800 py-2 px-4 rounded-lg transition-colors">
+                                    <button className="bg-gray-100 hover:bg-brand-primary hover:text-brand-white text-brand-primary py-2 px-4 rounded-lg transition-all duration-200 border border-brand-primary/20">
                                         📞 Liên hệ
                                     </button>
                                 </div>
@@ -284,10 +285,10 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                             </div>
 
                             <div className="flex space-x-4">
-                                <button className="bg-coffee-600 hover:bg-coffee-700 text-white py-2 px-6 rounded-lg transition-colors">
+                                <button className="bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
                                     Đặt lịch tư vấn
                                 </button>
-                                <button className="bg-coffee-100 hover:bg-coffee-200 text-coffee-800 py-2 px-6 rounded-lg transition-colors">
+                                <button className="bg-gray-100 hover:bg-brand-primary hover:text-brand-white text-brand-primary py-3 px-6 rounded-xl transition-all duration-200 border border-brand-primary/20">
                                     Tải brochure
                                 </button>
                             </div>

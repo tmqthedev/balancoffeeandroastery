@@ -98,14 +98,15 @@ const Contact = () => {
         </script>
       </Helmet>
 
-      <div className="min-h-screen bg-cream-50">
+      <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="bg-coffee-800 text-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <section className="bg-brand-primary text-brand-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-white">
                 Liên hệ với chúng tôi
               </h1>
-              <p className="text-xl text-coffee-200 max-w-3xl mx-auto">
+              <p className="text-xl text-brand-white/80 max-w-3xl mx-auto">
                 Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy liên hệ với chúng tôi để biết thêm thông tin về sản phẩm hoặc dịch vụ.
               </p>
             </div>
@@ -129,7 +130,7 @@ const Contact = () => {
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
-                    className="bg-coffee-600 text-white px-6 py-2 rounded-md hover:bg-coffee-700 transition-colors"
+                    className="bg-brand-primary text-brand-white px-6 py-2 rounded-md hover:bg-brand-primary/90 transition-colors"
                   >
                     Gửi tin nhắn khác
                   </button>
@@ -154,7 +155,7 @@ const Contact = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
                         placeholder="Nhập họ tên của bạn"
                       />
                     </div>
@@ -170,7 +171,7 @@ const Contact = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
                         placeholder="Nhập email của bạn"
                       />
                     </div>
@@ -187,7 +188,7 @@ const Contact = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
                         placeholder="Nhập số điện thoại của bạn"
                       />
                     </div>
@@ -202,7 +203,7 @@ const Contact = () => {
                         value={formData.subject}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
                       >                        <option value="">Chọn chủ đề</option>
                         <option value="general">Câu hỏi chung</option>
                         <option value="product">Thông tin sản phẩm</option>
@@ -224,7 +225,7 @@ const Contact = () => {
                       onChange={handleChange}
                       required
                       rows={6}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
                       placeholder="Nhập tin nhắn của bạn..."
                     ></textarea>
                   </div>
@@ -232,7 +233,7 @@ const Contact = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-coffee-600 text-white py-3 px-6 rounded-md hover:bg-coffee-700 focus:outline-none focus:ring-2 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full bg-brand-primary text-brand-white py-3 px-6 rounded-md hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {loading ? 'Đang gửi...' : 'Gửi tin nhắn'}
                   </button>
@@ -251,7 +252,7 @@ const Contact = () => {
                 <div className="space-y-6">
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
-                      <svg className="w-6 h-6 text-coffee-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
@@ -267,7 +268,7 @@ const Contact = () => {
 
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
-                      <svg className="w-6 h-6 text-coffee-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                     </div>
@@ -275,7 +276,7 @@ const Contact = () => {
                         Số điện thoại
                       </h3>
                       <p className="text-gray-600 mt-1">
-                        <a href={`tel:${storeInfo.phone}`} className="hover:text-coffee-600 transition-colors">
+                        <a href={`tel:${storeInfo.phone}`} className="hover:text-brand-primary transition-colors">
                           {storeInfo.phone}
                         </a>
                       </p>
@@ -284,7 +285,7 @@ const Contact = () => {
 
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
-                      <svg className="w-6 h-6 text-coffee-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -292,7 +293,7 @@ const Contact = () => {
                         Email
                       </h3>
                       <p className="text-gray-600 mt-1">
-                        <a href={`mailto:${storeInfo.email}`} className="hover:text-coffee-600 transition-colors">
+                        <a href={`mailto:${storeInfo.email}`} className="hover:text-brand-primary transition-colors">
                           {storeInfo.email}
                         </a>
                       </p>
@@ -301,7 +302,7 @@ const Contact = () => {
 
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
-                      <svg className="w-6 h-6 text-coffee-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
@@ -370,16 +371,16 @@ const Contact = () => {
               </div>
 
               {/* FAQ Link */}
-              <div className="bg-coffee-50 border border-coffee-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-coffee-800 mb-2">
+              <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-brand-primary mb-2">
                   Câu hỏi thường gặp
                 </h3>
-                <p className="text-coffee-700 text-sm mb-4">
+                <p className="text-gray-700 text-sm mb-4">
                   Tìm câu trả lời cho những thắc mắc phổ biến về sản phẩm và dịch vụ
                 </p>
                 <a
                   href="/faq"
-                  className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium transition-colors"
+                  className="inline-flex items-center text-brand-primary hover:text-brand-primary/80 font-medium transition-colors"
                 >
                   Xem câu hỏi thường gặp
                   <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
