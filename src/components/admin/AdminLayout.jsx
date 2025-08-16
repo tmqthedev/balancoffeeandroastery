@@ -84,7 +84,7 @@ const AdminLayout = ({ children }) => {
         <div className="flex items-center justify-center h-16 bg-coffee-800">
           <Link to="/admin" className="flex items-center space-x-2">
             <img 
-              src="/logo.png" 
+              src="/dist/logo.png" 
               alt="Balan Coffee & Roastery" 
               className="h-8 w-auto filter brightness-0 invert"
             />

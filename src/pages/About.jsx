@@ -81,7 +81,7 @@ const About = () => {
     "name": "Balan Coffee & Roastery",
     "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng",
     "url": window.location.origin,
-    "logo": `${window.location.origin}/logo.png`,
+    "logo": `${window.location.origin}/dist/logo.png`,
     "address": {
         "@type": "PostalAddress",
         "streetAddress": "123 Coffee Street",
@@ -353,32 +353,6 @@ const About = () => {
                 />
                 <h3 className="font-semibold text-gray-900">HACCP</h3>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-brand-primary text-brand-white">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-4xl font-bold mb-6">
-              Hãy trở thành một phần của hành trình
-            </h2>
-            <p className="text-xl text-brand-white/80 mb-8">
-              Khám phá những dòng cà phê đặc sản được chế tác từ tâm huyết
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/products"
-                className="inline-block bg-brand-white text-brand-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Mua sắm ngay
-              </Link>
-              <Link
-                to="/contact"
-                className="inline-block border-2 border-brand-white text-brand-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-brand-white hover:text-brand-primary transition-colors"
-              >
-                Liên hệ
-              </Link>
             </div>
           </div>
         </section>

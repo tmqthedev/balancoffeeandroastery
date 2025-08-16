@@ -155,28 +155,28 @@ const Auth = () => {
                 } />
             </Helmet>
 
-            <div className="min-h-screen bg-gradient-to-br from-coffee-50 to-amber-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-gradient-to-br from-brand-white to-brand-secondary/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full">
                     {/* Header */}
                     <div className="text-center mb-8">
                         <Link to="/" className="inline-block">
                             <img 
-                                src="/title.jpg" 
+                                src="/dist/title.png"
                                 alt="Balan Coffee" 
-                                className="h-16 w-16 mx-auto mb-4"
+                                className="h-16 w-auto mx-auto mb-4"
                                 onError={(e) => {
                                     e.target.style.display = 'none';
                                     e.target.nextSibling.style.display = 'flex';
                                 }}
                             />
-                            <div className="hidden h-16 w-16 mx-auto mb-4 bg-coffee-600 rounded-lg items-center justify-center">
-                                <span className="text-white font-bold text-2xl">B</span>
+                            <div className="hidden h-16 w-16 mx-auto mb-4 bg-brand-primary rounded-lg items-center justify-center">
+                                <span className="text-brand-white font-bold text-2xl">B</span>
                             </div>
                         </Link>
-                        <h2 className="text-3xl font-bold text-coffee-900 mb-2">
+                        <h2 className="text-3xl font-bold text-brand-primary mb-2">
                             {mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
                         </h2>
-                        <p className="text-coffee-600">
+                        <p className="text-gray-600">
                             {mode === 'login' ? 
                                 'Chào mừng bạn trở lại!' : 
                                 'Tham gia cộng đồng yêu cà phê của chúng tôi'
@@ -185,13 +185,13 @@ const Auth = () => {
                     </div>
 
                     {/* Mode Toggle */}
-                    <div className="flex bg-coffee-100 rounded-lg p-1 mb-6">
+                    <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
                         <button
                             onClick={() => switchMode('login')}
                             className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all duration-200 ${
                                 mode === 'login'
-                                    ? 'bg-white text-coffee-700 shadow-sm'
-                                    : 'text-coffee-600 hover:text-coffee-700'
+                                    ? 'bg-brand-white text-brand-primary shadow-sm'
+                                    : 'text-gray-600 hover:text-brand-primary'
                             }`}
                         >
                             Đăng nhập
@@ -200,8 +200,8 @@ const Auth = () => {
                             onClick={() => switchMode('register')}
                             className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all duration-200 ${
                                 mode === 'register'
-                                    ? 'bg-white text-coffee-700 shadow-sm'
-                                    : 'text-coffee-600 hover:text-coffee-700'
+                                    ? 'bg-brand-white text-brand-primary shadow-sm'
+                                    : 'text-gray-600 hover:text-brand-primary'
                             }`}
                         >
                             Đăng ký
@@ -209,7 +209,7 @@ const Auth = () => {
                     </div>
 
                     {/* Forms Container */}
-                    <div className="bg-white rounded-2xl shadow-xl p-8">
+                    <div className="bg-brand-white rounded-2xl shadow-xl p-8 border border-gray-100">
                         {/* Error Message */}
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -226,7 +226,7 @@ const Auth = () => {
                         {mode === 'login' && (
                             <form onSubmit={handleLoginSubmit} className="space-y-6">
                                 <div>
-                                    <label htmlFor="login-email" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="login-email" className="block text-sm font-medium text-brand-primary mb-2">
                                         Email
                                     </label>
                                     <input
@@ -236,13 +236,13 @@ const Auth = () => {
                                         required
                                         value={loginData.email}
                                         onChange={handleLoginChange}
-                                        className="w-full px-4 py-3 border border-coffee-300 rounded-lg focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
+                                        className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
                                         placeholder="Nhập email của bạn"
                                     />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="login-password" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="login-password" className="block text-sm font-medium text-brand-primary mb-2">
                                         Mật khẩu
                                     </label>
                                     <input
@@ -252,7 +252,7 @@ const Auth = () => {
                                         required
                                         value={loginData.password}
                                         onChange={handleLoginChange}
-                                        className="w-full px-4 py-3 border border-coffee-300 rounded-lg focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
+                                        className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
                                         placeholder="Nhập mật khẩu"
                                     />
                                 </div>
@@ -264,13 +264,13 @@ const Auth = () => {
                                             type="checkbox"
                                             checked={loginData.remember}
                                             onChange={handleLoginChange}
-                                            className="h-4 w-4 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded"
+                                            className="h-4 w-4 text-brand-primary focus:ring-brand-secondary border-brand-primary rounded"
                                         />
-                                        <span className="ml-2 text-sm text-coffee-700">Ghi nhớ đăng nhập</span>
+                                        <span className="ml-2 text-sm text-gray-700">Ghi nhớ đăng nhập</span>
                                     </label>
                                     <Link 
                                         to="/forgot-password" 
-                                        className="text-sm text-coffee-600 hover:text-coffee-800 font-medium"
+                                        className="text-sm text-brand-primary hover:text-brand-secondary font-medium transition-colors"
                                     >
                                         Quên mật khẩu?
                                     </Link>
@@ -279,7 +279,7 @@ const Auth = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-gradient-to-r from-coffee-600 to-coffee-700 text-white py-3 px-4 rounded-lg font-medium hover:from-coffee-700 hover:to-coffee-800 focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                                    className="w-full bg-brand-primary text-brand-white py-3 px-4 rounded-lg font-medium hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                                 >
                                     {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                                 </button>
@@ -287,19 +287,21 @@ const Auth = () => {
                                 {/* Social Login */}
                                 <div className="relative">
                                     <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-coffee-300" />
+                                        <div className="w-full border-t border-gray-300" />
                                     </div>
                                     <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-white text-coffee-500">Hoặc đăng nhập với</span>
+                                        <span className="px-2 bg-brand-white text-gray-500">Hoặc đăng nhập với</span>
                                     </div>
-                                </div>                                <button
+                                </div>
+
+                                <button
                                     type="button"
                                     onClick={handleFacebookLogin}
                                     disabled={facebookLoading || loading}
-                                    className="w-full flex items-center justify-center px-4 py-3 border border-coffee-300 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-lg bg-blue-600 text-brand-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                                 >
                                     {facebookLoading ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-white mr-2"></div>
                                     ) : (
                                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -315,7 +317,7 @@ const Auth = () => {
                             <form onSubmit={handleRegisterSubmit} className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label htmlFor="firstName" className="block text-sm font-medium text-coffee-700 mb-2">
+                                        <label htmlFor="firstName" className="block text-sm font-medium text-brand-primary mb-2">
                                             Họ *
                                         </label>
                                         <input
@@ -325,8 +327,8 @@ const Auth = () => {
                                             required
                                             value={registerData.firstName}
                                             onChange={handleRegisterChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-coffee-500 transition-colors ${
-                                                registerErrors.firstName ? 'border-red-500' : 'border-coffee-300 focus:border-coffee-500'
+                                            className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                                registerErrors.firstName ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
                                             }`}
                                             placeholder="Họ"
                                         />
@@ -336,7 +338,7 @@ const Auth = () => {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="lastName" className="block text-sm font-medium text-coffee-700 mb-2">
+                                        <label htmlFor="lastName" className="block text-sm font-medium text-brand-primary mb-2">
                                             Tên *
                                         </label>
                                         <input
@@ -346,8 +348,8 @@ const Auth = () => {
                                             required
                                             value={registerData.lastName}
                                             onChange={handleRegisterChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-coffee-500 transition-colors ${
-                                                registerErrors.lastName ? 'border-red-500' : 'border-coffee-300 focus:border-coffee-500'
+                                            className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                                registerErrors.lastName ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
                                             }`}
                                             placeholder="Tên"
                                         />
@@ -358,7 +360,7 @@ const Auth = () => {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="register-email" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="register-email" className="block text-sm font-medium text-brand-primary mb-2">
                                         Email *
                                     </label>
                                     <input
@@ -368,8 +370,8 @@ const Auth = () => {
                                         required
                                         value={registerData.email}
                                         onChange={handleRegisterChange}
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-coffee-500 transition-colors ${
-                                            registerErrors.email ? 'border-red-500' : 'border-coffee-300 focus:border-coffee-500'
+                                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                            registerErrors.email ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
                                         }`}
                                         placeholder="Nhập email của bạn"
                                     />
@@ -379,7 +381,7 @@ const Auth = () => {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="phone" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="phone" className="block text-sm font-medium text-brand-primary mb-2">
                                         Số điện thoại
                                     </label>
                                     <input
@@ -388,13 +390,13 @@ const Auth = () => {
                                         type="tel"
                                         value={registerData.phone}
                                         onChange={handleRegisterChange}
-                                        className="w-full px-4 py-3 border border-coffee-300 rounded-lg focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
+                                        className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
                                         placeholder="Nhập số điện thoại (tùy chọn)"
                                     />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="register-password" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="register-password" className="block text-sm font-medium text-brand-primary mb-2">
                                         Mật khẩu *
                                     </label>
                                     <input
@@ -404,8 +406,8 @@ const Auth = () => {
                                         required
                                         value={registerData.password}
                                         onChange={handleRegisterChange}
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-coffee-500 transition-colors ${
-                                            registerErrors.password ? 'border-red-500' : 'border-coffee-300 focus:border-coffee-500'
+                                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                            registerErrors.password ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
                                         }`}
                                         placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
                                     />
@@ -415,7 +417,7 @@ const Auth = () => {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-coffee-700 mb-2">
+                                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-primary mb-2">
                                         Xác nhận mật khẩu *
                                     </label>
                                     <input
@@ -425,8 +427,8 @@ const Auth = () => {
                                         required
                                         value={registerData.confirmPassword}
                                         onChange={handleRegisterChange}
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-coffee-500 transition-colors ${
-                                            registerErrors.confirmPassword ? 'border-red-500' : 'border-coffee-300 focus:border-coffee-500'
+                                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                            registerErrors.confirmPassword ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
                                         }`}
                                         placeholder="Nhập lại mật khẩu"
                                     />
@@ -442,17 +444,17 @@ const Auth = () => {
                                             type="checkbox"
                                             checked={registerData.agreeTerms}
                                             onChange={handleRegisterChange}
-                                            className={`h-4 w-4 mt-1 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded ${
+                                            className={`h-4 w-4 mt-1 text-brand-primary focus:ring-brand-secondary border-brand-primary rounded ${
                                                 registerErrors.agreeTerms ? 'border-red-500' : ''
                                             }`}
                                         />
-                                        <span className="ml-2 text-sm text-coffee-700">
+                                        <span className="ml-2 text-sm text-gray-700">
                                             Tôi đồng ý với{' '}
-                                            <Link to="/terms" className="text-coffee-600 hover:text-coffee-800 font-medium">
+                                            <Link to="/terms" className="text-brand-primary hover:text-brand-secondary font-medium transition-colors">
                                                 Điều khoản sử dụng
                                             </Link>
                                             {' '}và{' '}
-                                            <Link to="/privacy" className="text-coffee-600 hover:text-coffee-800 font-medium">
+                                            <Link to="/privacy" className="text-brand-primary hover:text-brand-secondary font-medium transition-colors">
                                                 Chính sách bảo mật
                                             </Link>
                                         </span>
@@ -463,7 +465,7 @@ const Auth = () => {
                                 </div>                                <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-gradient-to-r from-coffee-600 to-coffee-700 text-white py-3 px-4 rounded-lg font-medium hover:from-coffee-700 hover:to-coffee-800 focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                                    className="w-full bg-brand-primary text-brand-white py-3 px-4 rounded-lg font-medium hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                                 >
                                     {loading ? 'Đang đăng ký...' : 'Tạo tài khoản'}
                                 </button>
@@ -471,10 +473,10 @@ const Auth = () => {
                                 {/* Divider */}
                                 <div className="relative">
                                     <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-coffee-300" />
+                                        <div className="w-full border-t border-gray-300" />
                                     </div>
                                     <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-white text-coffee-500">Hoặc đăng ký với</span>
+                                        <span className="px-2 bg-brand-white text-gray-500">Hoặc đăng ký với</span>
                                     </div>
                                 </div>
 
@@ -482,10 +484,10 @@ const Auth = () => {
                                     type="button"
                                     onClick={handleFacebookLogin}
                                     disabled={facebookLoading || loading}
-                                    className="w-full flex items-center justify-center px-4 py-3 border border-coffee-300 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-lg bg-blue-600 text-brand-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                                 >
                                     {facebookLoading ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-white mr-2"></div>
                                     ) : (
                                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -501,7 +503,7 @@ const Auth = () => {
                     <div className="text-center mt-6">
                         <Link 
                             to="/" 
-                            className="inline-flex items-center text-coffee-600 hover:text-coffee-800 font-medium transition-colors"
+                            className="inline-flex items-center text-brand-primary hover:text-brand-secondary font-medium transition-colors"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

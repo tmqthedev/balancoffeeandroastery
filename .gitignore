@@ -12,6 +12,29 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+backend/.env
+backend/.env.local
+backend/.env.production
+backend/.env.development
+
+# Upload directories (for local development)
+backend/uploads/
+uploads/
+
+# Firebase private keys and service accounts
+*-service-account.json
+firebase-adminsdk-*.json
+
+# Database backups
+*.sql
+*.db
+*.sqlite
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -8,7 +8,7 @@ const Home = () => {
         "@type": "Organization",
         "name": "Balan Coffee & Roastery",
         "url": "https://balancoffee.com",
-        "logo": "https://balancoffee.com/logo.png",
+        "logo": "https://balancoffee.com/dist/logo.png",
         "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng beans",
         "address": {
             "@type": "PostalAddress",

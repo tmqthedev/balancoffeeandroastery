@@ -11,13 +11,13 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/dist/logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo.png",
+      "src": "/dist/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -34,14 +34,14 @@
       "short_name": "Products",
       "description": "Xem tất cả sản phẩm cà phê",
       "url": "/products",
-      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/dist/logo.png", "sizes": "96x96" }]
     },
     {
       "name": "Giỏ hàng",
       "short_name": "Cart",
       "description": "Xem giỏ hàng",
       "url": "/cart",
-      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/dist/logo.png", "sizes": "96x96" }]
     }
   ]
 }

@@ -146,7 +146,7 @@ const BlogPost = () => {
     "@type": "BlogPosting",
     "headline": blog?.title || blog?.title_vi,
     "description": blog?.excerpt || blog?.excerpt_vi,
-    "image": blog?.featured_image || "/logo.png",
+    "image": blog?.featured_image || "/dist/title.jpg",
     "datePublished": blog?.created_at,
     "dateModified": blog?.updated_at || blog?.created_at,
     "author": {
@@ -154,7 +154,7 @@ const BlogPost = () => {
         "name": "Balan Coffee & Roastery",
         "logo": {
             "@type": "ImageObject",
-            "url": `${window.location.origin}/logo.png`
+            "url": `${window.location.origin}/dist/logo.png`
         }
     },
     "publisher": {
@@ -162,7 +162,7 @@ const BlogPost = () => {
         "name": "Balan Coffee & Roastery",
         "logo": {
             "@type": "ImageObject",
-            "url": `${window.location.origin}/logo.png`
+            "url": `${window.location.origin}/dist/logo.png`
         }
     }
 };

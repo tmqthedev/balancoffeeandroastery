@@ -8,14 +8,18 @@
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "setup": "node setup-dev.js"
+    "setup": "node setup-dev.js",
+    "firebase:setup": "node scripts/setup-firebase-data.js",
+    "firebase:migrate": "node scripts/migrate-to-firebase.js migrate",
+    "firebase:verify": "node scripts/migrate-to-firebase.js verify"
   },
   "keywords": [
     "coffee",
     "ecommerce",
     "nodejs",
     "express",
-    "mssql"
+    "firebase",
+    "firestore"
   ],
   "author": "Balan Coffee & Roastery",
   "license": "ISC",
@@ -27,16 +31,18 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.2.1",
+    "firebase-admin": "^13.4.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "mssql": "^11.0.1",
-    "multer": "^2.0.1",
+    "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.3",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

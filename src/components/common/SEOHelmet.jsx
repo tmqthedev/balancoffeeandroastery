@@ -8,7 +8,7 @@ const SEOHelmet = ({
   keywords = "cà phê rang mộc, Arabica Cầu Đất, Arabica Typica Kongo, Robusta Lâm Đồng, coffee and roastery, mua hạt cà phê nguyên chất, cà phê Việt Nam",
   ogTitle,
   ogDescription,
-  ogImage = "/logo.png",
+  ogImage = "/dist/title.jpg",
   ogUrl,
   twitterTitle,
   twitterDescription,
