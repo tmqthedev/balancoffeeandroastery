@@ -132,6 +132,111 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       }
     }
   );
+
+  // Facebook token verification endpoint for SDK login
+  router.post('/facebook/token', async (req, res) => {
+    try {
+      const { accessToken, userID } = req.body;
+
+      if (!accessToken || !userID) {
+        return res.status(400).json({ error: 'Access token and user ID are required' });
+      }
+
+      // Verify the access token with Facebook
+      const response = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email,picture`);
+      const facebookUser = await response.json();
+
+      if (facebookUser.error) {
+        return res.status(401).json({ error: 'Invalid Facebook access token' });
+      }
+
+      if (facebookUser.id !== userID) {
+        return res.status(401).json({ error: 'User ID mismatch' });
+      }
+
+      // Check if user exists in database
+      let users = await db.query(
+        'SELECT * FROM Users WHERE facebookId = @facebookId AND isActive = 1',
+        { facebookId: facebookUser.id }
+      );
+
+      let user;
+
+      if (users.length > 0) {
+        // Existing user
+        user = users[0];
+      } else {
+        // Check if user exists with same email
+        if (facebookUser.email) {
+          const emailUsers = await db.query(
+            'SELECT * FROM Users WHERE email = @email AND isActive = 1',
+            { email: facebookUser.email }
+          );
+
+          if (emailUsers.length > 0) {
+            // Link Facebook to existing account
+            await db.execute(
+              'UPDATE Users SET facebookId = @facebookId, profileImage = @profileImage WHERE email = @email',
+              {
+                facebookId: facebookUser.id,
+                profileImage: facebookUser.picture?.data?.url || null,
+                email: facebookUser.email
+              }
+            );
+
+            const updatedUsers = await db.query(
+              'SELECT * FROM Users WHERE email = @email AND isActive = 1',
+              { email: facebookUser.email }
+            );
+            user = updatedUsers[0];
+          } else {
+            // Create new user
+            const nameParts = facebookUser.name?.split(' ') || ['Facebook', 'User'];
+            const firstName = nameParts[0] || 'Facebook';
+            const lastName = nameParts.slice(1).join(' ') || 'User';
+
+            const result = await db.execute(
+              `INSERT INTO Users (email, firstName, lastName, facebookId, profileImage, emailVerified, role, isActive)
+               OUTPUT INSERTED.* 
+               VALUES (@email, @firstName, @lastName, @facebookId, @profileImage, 1, 'customer', 1)`,
+              {
+                email: facebookUser.email,
+                firstName,
+                lastName,
+                facebookId: facebookUser.id,
+                profileImage: facebookUser.picture?.data?.url || null
+              }
+            );
+
+            user = result.recordset[0];
+          }
+        } else {
+          return res.status(400).json({ error: 'No email provided by Facebook' });
+        }
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      );
+
+      // Remove password from user object
+      const userWithoutPassword = { ...user };
+      delete userWithoutPassword.password;
+
+      res.json({
+        message: 'Facebook login successful',
+        token,
+        user: userWithoutPassword
+      });
+
+    } catch (error) {
+      console.error('Facebook token verification error:', error);
+      res.status(500).json({ error: 'Facebook authentication failed' });
+    }
+  });
 } else {
   // Provide alternative routes when Facebook OAuth is not configured
   router.get('/facebook', (req, res) => {
@@ -142,6 +247,13 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   });
 
   router.get('/facebook/callback', (req, res) => {
+    res.status(501).json({ 
+      error: 'Facebook OAuth not configured',
+      message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'
+    });
+  });
+
+  router.post('/facebook/token', (req, res) => {
     res.status(501).json({ 
       error: 'Facebook OAuth not configured',
       message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'

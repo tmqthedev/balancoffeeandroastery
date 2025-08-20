@@ -107,7 +107,7 @@ app.use('/api/products', (req, res, next) => {
   next();
 });
 
-app.use('/api/products', require('./routes/products-firebase'));
+app.use('/api/products', require('./routes/products-firestore'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
@@ -117,18 +117,18 @@ app.use('/api/payments', require('./routes/payments'));
 // MoMo payment routes
 app.use('/api/payments/momo', require('./routes/momo-payment'));
 
-// Load CRM routes
+// Load CRM routes (temporarily disabled for Firestore migration)
 try {
-  console.log('🔍 About to load CRM router...');
+  console.log('🔍 CRM router temporarily disabled during Firestore migration');
   app.use('/api/admin', require('./routes/admin'));
-  app.use('/api/crm', require('./routes/crm'));
-  console.log('✅ CRM router mounted successfully');
+  // app.use('/api/crm', require('./routes/crm')); // Temporarily disabled
+  console.log('⚠️ CRM router disabled - only admin routes loaded');
 } catch (error) {
-  console.error('❌ Error loading CRM router:', error.message);
+  console.error('❌ Error loading admin router:', error.message);
 }
 
-// Import CRM service for direct integration
-const CRMService = require('./services/crmService');
+// Import CRM service for direct integration (temporarily disabled)
+// const CRMService = require('./services/crmService');
 const { authenticateToken, requireAdmin } = require('./middleware/auth');
 
 // Direct CRM routes for testing

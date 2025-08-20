@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
+import facebookService from '../../services/facebookService';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -41,8 +42,68 @@ const Login = () => {
         }
     };
 
-    const handleFacebookLogin = () => {
-        window.location.href = '/api/auth/facebook';
+    const handleFacebookLogin = async () => {
+        try {
+            setLoading(true);
+            setError('');
+
+            // Try SDK approach first
+            try {
+                // Check if Facebook SDK is available
+                if (!facebookService.isReady()) {
+                    await facebookService.init();
+                }
+
+                // Attempt Facebook login
+                const loginResponse = await facebookService.login(['email', 'public_profile']);
+                
+                if (loginResponse.authResponse) {
+                    // Send the access token to your backend for verification
+                    const response = await fetch('/api/auth/facebook/token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            accessToken: loginResponse.authResponse.accessToken,
+                            userID: loginResponse.authResponse.userID
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Store token and redirect
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        navigate(from, { replace: true });
+                        return;
+                    } else {
+                        throw new Error('Server authentication failed');
+                    }
+                }
+            } catch (sdkError) {
+                console.log('SDK approach failed, falling back to redirect:', sdkError);
+                // Fall back to redirect approach
+                window.location.href = '/api/auth/facebook';
+                return;
+            }
+        } catch (error) {
+            console.error('Facebook login error:', error);
+            if (error.message === 'Facebook login was cancelled or failed') {
+                setError('Đăng nhập Facebook bị hủy');
+            } else if (error.message === 'Facebook SDK failed to load') {
+                setError('Không thể tải Facebook SDK. Đang chuyển hướng...');
+                // Fall back to redirect approach
+                setTimeout(() => {
+                    window.location.href = '/api/auth/facebook';
+                }, 1000);
+                return;
+            } else {
+                setError('Đăng nhập Facebook thất bại. Vui lòng thử lại.');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

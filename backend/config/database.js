@@ -1,315 +1,566 @@
-// Firebase Database Configuration
-const admin = require('firebase-admin');
+// Cloud Firestore Database Configuration for Balan Coffee & Roastery
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 
-// Initialize Firebase Admin (if not already initialized)
-if (!admin.apps.length) {
-  try {
-    // For development, use simplified initialization
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Using Firebase development mode...');
-      admin.initializeApp({
-        projectId: process.env.FIREBASE_PROJECT_ID || 'balancoffeeandroastery'
-      });
-    } else {
-      // Production mode with service account
-      const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_PATH 
-        ? require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
-        : {
-            type: "service_account",
-            project_id: process.env.FIREBASE_PROJECT_ID,
-            client_email: process.env.FIREBASE_CLIENT_EMAIL,
-            private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-          };
+let app;
+let db;
+let bucket;
 
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.FIREBASE_PROJECT_ID || 'balancoffeeandroastery'
-      });
-    }
+try {
+  if (process.env.NODE_ENV === 'production') {
+    // Production: sử dụng service account
+    const serviceAccount = {
+      type: "service_account",
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+      private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID,
+      auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
+      token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
+    };
 
-    console.log('✅ Firebase Admin SDK initialized successfully');
-  } catch (error) {
-    console.error('❌ Firebase Admin initialization failed:', error.message);
-    console.log('💡 Trying with mock data for development...');
+    app = initializeApp({
+      credential: cert(serviceAccount),
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: `${process.env.FIREBASE_PROJECT_ID}.appspot.com`
+    });
     
-    // Fallback for development
+    console.log('✅ Firebase Production mode initialized');
+  } else {
+    // Development: sử dụng application default credentials
+    app = initializeApp({
+      projectId: 'balancoffeeandroastery',
+      storageBucket: 'balancoffeeandroastery.appspot.com'
+    });
+    
+    console.log('🔄 Firebase Development mode initialized');
+  }
+
+  db = getFirestore(app);
+  bucket = getStorage(app).bucket();
+  
+  // Test connection
+  db.settings({
+    ignoreUndefinedProperties: true
+  });
+  
+  console.log('✅ Firebase Firestore & Storage initialized successfully');
+  
+} catch (error) {
+  console.error('❌ Firebase initialization failed:', error.message);
+  console.log('� Using Firestore mock for development');
+  
+  // Mock Firestore cho development
+  db = {
+    collection: (name) => ({
+      doc: (id) => ({
+        get: () => Promise.resolve({ 
+          exists: false, 
+          data: () => null,
+          id 
+        }),
+        set: (data) => Promise.resolve({ id }),
+        update: (data) => Promise.resolve(),
+        delete: () => Promise.resolve()
+      }),
+      get: () => Promise.resolve({ 
+        docs: [],
+        empty: true,
+        size: 0
+      }),
+      add: (data) => Promise.resolve({ 
+        id: `mock-${Date.now()}`,
+        data
+      }),
+      where: (field, op, value) => ({
+        get: () => Promise.resolve({ 
+          docs: [],
+          empty: true,
+          size: 0
+        }),
+        orderBy: (field, direction) => ({
+          get: () => Promise.resolve({ 
+            docs: [],
+            empty: true,
+            size: 0
+          }),
+          limit: (num) => ({
+            get: () => Promise.resolve({ 
+              docs: [],
+              empty: true,
+              size: 0
+            })
+          })
+        }),
+        limit: (num) => ({
+          get: () => Promise.resolve({ 
+            docs: [],
+            empty: true,
+            size: 0
+          })
+        })
+      }),
+      orderBy: (field, direction) => ({
+        get: () => Promise.resolve({ 
+          docs: [],
+          empty: true,
+          size: 0
+        }),
+        limit: (num) => ({
+          get: () => Promise.resolve({ 
+            docs: [],
+            empty: true,
+            size: 0
+          })
+        })
+      }),
+      limit: (num) => ({
+        get: () => Promise.resolve({ 
+          docs: [],
+          empty: true,
+          size: 0
+        })
+      })
+    })
+  };
+  
+  bucket = {
+    file: (name) => ({
+      save: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
+      getSignedUrl: () => Promise.resolve(['mock-url'])
+    })
+  };
+}
+
+// Firestore Collections Schema
+const COLLECTIONS = {
+  // Sản phẩm và danh mục
+  PRODUCTS: 'products',
+  CATEGORIES: 'categories',
+  PRODUCT_VARIANTS: 'product_variants',
+  
+  // Người dùng và xác thực
+  USERS: 'users',
+  USER_SESSIONS: 'user_sessions',
+  USER_PREFERENCES: 'user_preferences',
+  
+  // Đơn hàng và thanh toán
+  ORDERS: 'orders',
+  ORDER_ITEMS: 'order_items',
+  PAYMENTS: 'payments',
+  PAYMENT_METHODS: 'payment_methods',
+  INVOICES: 'invoices',
+  
+  // Giỏ hàng và wishlist
+  CARTS: 'carts',
+  CART_ITEMS: 'cart_items',
+  WISHLISTS: 'wishlists',
+  
+  // Blog và nội dung
+  BLOGS: 'blogs',
+  BLOG_CATEGORIES: 'blog_categories',
+  BLOG_TAGS: 'blog_tags',
+  COMMENTS: 'comments',
+  
+  // Liên hệ và CRM
+  CONTACTS: 'contacts',
+  CUSTOMERS: 'customers',
+  CUSTOMER_NOTES: 'customer_notes',
+  SUPPORT_TICKETS: 'support_tickets',
+  
+  // Cửa hàng và kho
+  STORES: 'stores',
+  INVENTORY: 'inventory',
+  STOCK_MOVEMENTS: 'stock_movements',
+  
+  // Marketing và khuyến mãi
+  COUPONS: 'coupons',
+  PROMOTIONS: 'promotions',
+  EMAIL_CAMPAIGNS: 'email_campaigns',
+  NEWSLETTERS: 'newsletters',
+  
+  // Analytics và báo cáo
+  ANALYTICS: 'analytics',
+  REPORTS: 'reports',
+  USER_ACTIVITY: 'user_activity',
+  SALES_DATA: 'sales_data',
+  
+  // Cấu hình hệ thống
+  SETTINGS: 'settings',
+  CONFIGURATIONS: 'configurations',
+  LOGS: 'logs'
+};
+
+// Firestore Service Class
+class FirestoreService {
+  constructor() {
+    this.db = db;
+    this.bucket = bucket;
+    this.collections = COLLECTIONS;
+  }
+
+  // Test connection
+  async connect() {
     try {
-      admin.initializeApp({
-        projectId: 'balancoffeeandroastery'
-      });
-      console.log('✅ Firebase initialized with minimal config');
-    } catch (fallbackError) {
-      console.error('❌ Firebase fallback failed:', fallbackError.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Development mode - using Firestore mock/real connection');
+        return true;
+      }
+      
+      // Test với một simple read
+      await this.db.collection('_health').doc('test').get();
+      console.log('✅ Firestore connection successful');
+      return true;
+    } catch (error) {
+      console.error('❌ Firestore connection failed:', error.message);
+      return false;
+    }
+  }
+
+  async close() {
+    console.log('🔄 Firestore connection closed gracefully');
+  }
+
+  // Generic CRUD operations
+  async create(collection, data, customId = null) {
+    try {
+      const docData = {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      if (customId) {
+        await this.db.collection(collection).doc(customId).set(docData);
+        return { id: customId, ...docData };
+      } else {
+        const docRef = await this.db.collection(collection).add(docData);
+        return { id: docRef.id, ...docData };
+      }
+    } catch (error) {
+      console.error(`Error creating document in ${collection}:`, error);
       throw error;
     }
   }
+
+  async findById(collection, id) {
+    try {
+      const doc = await this.db.collection(collection).doc(id).get();
+      if (!doc.exists) return null;
+      return { id: doc.id, ...doc.data() };
+    } catch (error) {
+      console.error(`Error finding document in ${collection}:`, error);
+      throw error;
+    }
+  }
+
+  async findAll(collection, options = {}) {
+    try {
+      let query = this.db.collection(collection);
+      
+      // Apply filters
+      if (options.where) {
+        options.where.forEach(([field, operator, value]) => {
+          query = query.where(field, operator, value);
+        });
+      }
+      
+      // Apply ordering
+      if (options.orderBy) {
+        const { field, direction = 'asc' } = options.orderBy;
+        query = query.orderBy(field, direction);
+      }
+      
+      // Apply limit
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+      
+      // Apply offset (startAfter for Firestore)
+      if (options.startAfter) {
+        query = query.startAfter(options.startAfter);
+      }
+      
+      const snapshot = await query.get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error(`Error finding documents in ${collection}:`, error);
+      throw error;
+    }
+  }
+
+  async update(collection, id, data) {
+    try {
+      const updateData = {
+        ...data,
+        updatedAt: new Date()
+      };
+      
+      await this.db.collection(collection).doc(id).update(updateData);
+      return { id, ...updateData };
+    } catch (error) {
+      console.error(`Error updating document in ${collection}:`, error);
+      throw error;
+    }
+  }
+
+  async delete(collection, id) {
+    try {
+      await this.db.collection(collection).doc(id).delete();
+      return true;
+    } catch (error) {
+      console.error(`Error deleting document in ${collection}:`, error);
+      throw error;
+    }
+  }
+
+  // Specialized methods for products
+  async getProducts(filters = {}) {
+    const options = {
+      where: [],
+      orderBy: { field: 'createdAt', direction: 'desc' },
+      limit: filters.limit || 12
+    };
+
+    // Status filter (default to active)
+    options.where.push(['status', '==', filters.status || 'active']);
+
+    // Category filter
+    if (filters.category) {
+      options.where.push(['category', '==', filters.category]);
+    }
+
+    // Type filter
+    if (filters.type) {
+      options.where.push(['type', '==', filters.type]);
+    }
+
+    // Featured filter
+    if (filters.featured) {
+      options.where.push(['featured', '==', true]);
+    }
+
+    // Apply sorting
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case 'price_asc':
+          options.orderBy = { field: 'price', direction: 'asc' };
+          break;
+        case 'price_desc':
+          options.orderBy = { field: 'price', direction: 'desc' };
+          break;
+        case 'name':
+          options.orderBy = { field: 'nameVi', direction: 'asc' };
+          break;
+        case 'newest':
+        default:
+          options.orderBy = { field: 'createdAt', direction: 'desc' };
+          break;
+      }
+    }
+
+    return await this.findAll(this.collections.PRODUCTS, options);
+  }
+
+  async getFeaturedProducts(limit = 4) {
+    return await this.findAll(this.collections.PRODUCTS, {
+      where: [
+        ['featured', '==', true],
+        ['status', '==', 'active']
+      ],
+      orderBy: { field: 'createdAt', direction: 'desc' },
+      limit
+    });
+  }
+
+  // Specialized methods for orders
+  async createOrder(orderData) {
+    const orderNumber = `BC${Date.now()}`;
+    const order = {
+      ...orderData,
+      orderNumber,
+      status: 'pending',
+      paymentStatus: 'pending'
+    };
+    
+    return await this.create(this.collections.ORDERS, order);
+  }
+
+  async getUserOrders(userId) {
+    return await this.findAll(this.collections.ORDERS, {
+      where: [['customerId', '==', userId]],
+      orderBy: { field: 'createdAt', direction: 'desc' }
+    });
+  }
+
+  // Image storage methods
+  async uploadImage(file, folder = 'general') {
+    try {
+      const fileName = `${folder}/${Date.now()}-${file.originalname}`;
+      const fileUpload = this.bucket.file(fileName);
+      
+      await fileUpload.save(file.buffer, {
+        metadata: {
+          contentType: file.mimetype
+        }
+      });
+
+      // Get public URL
+      const [url] = await fileUpload.getSignedUrl({
+        action: 'read',
+        expires: '03-01-2500'
+      });
+
+      return {
+        fileName,
+        url,
+        path: fileName
+      };
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  }
+
+  async deleteImage(filePath) {
+    try {
+      await this.bucket.file(filePath).delete();
+      return true;
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      return false;
+    }
+  }
+
+  // Specialized create methods for seeding
+  async createProduct(productData) {
+    return await this.create(COLLECTIONS.PRODUCTS, productData, productData.id);
+  }
+
+  async createCategory(categoryData) {
+    return await this.create(COLLECTIONS.CATEGORIES, categoryData, categoryData.id);
+  }
+
+  async createBlog(blogData) {
+    return await this.create(COLLECTIONS.BLOGS, blogData, blogData.id);
+  }
+
+  async createUser(userData) {
+    return await this.create(COLLECTIONS.USERS, userData, userData.id);
+  }
+
+  async getProduct(id) {
+    return await this.findById(COLLECTIONS.PRODUCTS, id);
+  }
+
+  async getUser(id) {
+    return await this.findById(COLLECTIONS.USERS, id);
+  }
+
+  async updateProduct(id, updateData) {
+    return await this.update(COLLECTIONS.PRODUCTS, id, updateData);
+  }
+
+  async deleteProduct(id) {
+    return await this.delete(COLLECTIONS.PRODUCTS, id);
+  }
+
+  async searchProducts(searchTerm, options = {}) {
+    // Simple search implementation
+    const products = await this.findAll(COLLECTIONS.PRODUCTS, {
+      where: [['status', '==', 'active']],
+      limit: options.limit || 10
+    });
+    
+    // Filter by search term (client-side for now)
+    const filtered = products.filter(product => 
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.nameVi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    
+    return { products: filtered };
+  }
 }
 
-const db = admin.firestore();
+// Legacy compatibility methods
+const firestoreService = new FirestoreService();
 
-// Database connection methods for Firebase
-const connect = async () => {
-  try {
-    // Test Firebase connection with fallback for development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Development mode - using mock Firebase connection');
-      return { 
-        collection: () => ({
-          doc: () => ({
-            get: async () => ({ exists: false, data: () => null }),
-            set: async () => ({ id: 'mock_id' }),
-            update: async () => ({ id: 'mock_id' }),
-            delete: async () => ({ id: 'mock_id' })
-          }),
-          get: async () => ({ docs: [], empty: true }),
-          add: async () => ({ id: 'mock_id' }),
-          where: () => ({
-            get: async () => ({ docs: [], empty: true })
-          })
-        })
-      };
-    }
-    
-    // Production Firebase connection
-    await db.collection('_test').limit(1).get();
-    console.log('✅ Firebase Firestore connection successful');
-    return db;
-  } catch (error) {
-    console.error('❌ Firebase connection failed, using mock data:', error.message);
-    
-    // Return mock database for development
-    return { 
-      collection: () => ({
-        doc: () => ({
-          get: async () => ({ exists: false, data: () => null }),
-          set: async () => ({ id: 'mock_id' }),
-          update: async () => ({ id: 'mock_id' }),
-          delete: async () => ({ id: 'mock_id' })
-        }),
-        get: async () => ({ docs: [], empty: true }),
-        add: async () => ({ id: 'mock_id' }),
-        where: () => ({
-          get: async () => ({ docs: [], empty: true })
-        })
-      })
-    };
+const connect = () => firestoreService.connect();
+const close = () => firestoreService.close();
+const query = (collection, conditions = {}) => {
+  const where = Object.entries(conditions).map(([field, value]) => [field, '==', value]);
+  return firestoreService.findAll(collection, { where });
+};
+const execute = async (operation, collection, data, docId = null) => {
+  switch (operation) {
+    case 'create':
+      return await firestoreService.create(collection, data, docId);
+    case 'update':
+      return await firestoreService.update(collection, docId, data);
+    case 'delete':
+      return await firestoreService.delete(collection, docId);
+    default:
+      throw new Error(`Unsupported operation: ${operation}`);
   }
 };
 
-// Utility method for SQL-like queries (for migration compatibility)
-const query = async (collectionName, conditions = {}) => {
-  try {
-    // Development mode mock
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔄 Mock query for ${collectionName}:`, conditions);
-      return []; // Return empty array for development
-    }
-    
-    let ref = db.collection(collectionName);
-    
-    // Apply conditions (simple where clauses)
-    Object.entries(conditions).forEach(([field, value]) => {
-      ref = ref.where(field, '==', value);
-    });
-    
-    const snapshot = await ref.get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
-    console.error(`Firebase query error for ${collectionName}:`, error);
-    // Return empty array on error for development
-    return [];
-  }
-};
-
-// Execute operations (create, update, delete)
-const execute = async (operation, collectionName, data, docId = null) => {
-  try {
-    // Development mode mock
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔄 Mock ${operation} for ${collectionName}:`, { data, docId });
-      return { id: docId || 'mock_id_' + Date.now(), success: true };
-    }
-    
-    const collection = db.collection(collectionName);
-    
-    switch (operation) {
-      case 'create':
-        if (docId) {
-          await collection.doc(docId).set(data);
-          return { id: docId, ...data };
-        } else {
-          const docRef = await collection.add(data);
-          return { id: docRef.id, ...data };
-        }
-      
-      case 'update':
-        if (!docId) throw new Error('Document ID required for update');
-        await collection.doc(docId).update(data);
-        return { id: docId, ...data };
-      
-      case 'delete':
-        if (!docId) throw new Error('Document ID required for delete');
-        await collection.doc(docId).delete();
-        return { id: docId, deleted: true };
-      
-      default:
-        throw new Error(`Unsupported operation: ${operation}`);
-    }
-  } catch (error) {
-    console.error(`Firebase execute error:`, error);
-    throw error;
-  }
-};
-
-const close = async () => {
-  // Firebase Admin SDK doesn't require explicit closing
-  console.log('✅ Firebase connection closed gracefully');
-};
-
-// Test connection
-const testConnection = async () => {
-  try {
-    await connect();
-    console.log('✅ Firebase database connection test successful');
-    return true;
-  } catch (err) {
-    console.error('❌ Firebase database connection test failed:', err.message);
-    return false;
-  }
-};
-
-// Get Firestore instance
-const getFirestore = () => db;
-
-// Order specific functions
-const createOrder = async (orderData) => {
-  try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Mock createOrder:', orderData);
-      return {
-        id: 'mock_order_' + Date.now(),
-        orderNumber: orderData.orderNumber || 'ORD' + Date.now(),
-        ...orderData,
-        createdAt: new Date().toISOString()
-      };
-    }
-    
-    const docRef = await db.collection('orders').add({
-      ...orderData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    return { id: docRef.id, ...orderData };
-  } catch (error) {
-    console.error('Create order error:', error);
-    throw error;
-  }
-};
-
+// Order specific functions for compatibility
+const createOrder = (orderData) => firestoreService.createOrder(orderData);
 const getOrder = async (orderNumber) => {
-  try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Mock getOrder:', orderNumber);
-      return {
-        id: 'mock_order_id',
-        orderNumber,
-        total: 100000,
-        status: 'pending',
-        customerInfo: {
-          name: 'Test Customer',
-          phone: '0123456789',
-          email: 'test@test.com'
-        },
-        items: []
-      };
-    }
-    
-    const snapshot = await db.collection('orders')
-      .where('orderNumber', '==', orderNumber)
-      .limit(1)
-      .get();
-    
-    if (snapshot.empty) {
-      return null;
-    }
-    
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() };
-  } catch (error) {
-    console.error('Get order error:', error);
-    throw error;
-  }
+  const orders = await firestoreService.findAll(COLLECTIONS.ORDERS, {
+    where: [['orderNumber', '==', orderNumber]],
+    limit: 1
+  });
+  return orders[0] || null;
 };
-
 const updateOrderPaymentInfo = async (orderNumber, paymentInfo) => {
-  try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Mock updateOrderPaymentInfo:', { orderNumber, paymentInfo });
-      return { success: true };
-    }
-    
-    const snapshot = await db.collection('orders')
-      .where('orderNumber', '==', orderNumber)
-      .limit(1)
-      .get();
-    
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      await doc.ref.update({
-        ...paymentInfo,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Update order payment info error:', error);
-    throw error;
+  const order = await getOrder(orderNumber);
+  if (order) {
+    await firestoreService.update(COLLECTIONS.ORDERS, order.id, paymentInfo);
   }
+  return { success: true };
+};
+const updateOrderPaymentStatus = async (orderNumber, status, additionalInfo = {}) => {
+  const order = await getOrder(orderNumber);
+  if (order) {
+    await firestoreService.update(COLLECTIONS.ORDERS, order.id, {
+      paymentStatus: status,
+      ...additionalInfo
+    });
+  }
+  return { success: true };
 };
 
-const updateOrderPaymentStatus = async (orderNumber, status, additionalInfo = {}) => {
-  try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Mock updateOrderPaymentStatus:', { orderNumber, status, additionalInfo });
-      return { success: true };
-    }
-    
-    const snapshot = await db.collection('orders')
-      .where('orderNumber', '==', orderNumber)
-      .limit(1)
-      .get();
-    
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      await doc.ref.update({
-        paymentStatus: status,
-        ...additionalInfo,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Update order payment status error:', error);
-    throw error;
-  }
-};
+const testConnection = () => firestoreService.connect();
+const getFirestoreDb = () => db;
+const isMockMode = () => process.env.NODE_ENV === 'development' && !db.collection;
 
 module.exports = {
+  // Firestore service instance
+  firestoreService,
+  
+  // Legacy compatibility
   connect,
   query,
   execute,
   close,
   testConnection,
-  getFirestore,
-  // Order functions
+  getFirestoreDb,
   createOrder,
   getOrder,
   updateOrderPaymentInfo,
   updateOrderPaymentStatus,
-  // Legacy compatibility
-  sql: null, // No longer using SQL
-  isMockMode: () => process.env.NODE_ENV === 'development',
-  mockData: {}, // No more mock data
+  isMockMode,
+  
+  // Collections
+  COLLECTIONS,
+  
+  // Direct access
+  db,
+  bucket,
+  app
 };

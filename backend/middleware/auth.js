@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const db = require('../config/database');
+const { firestoreService } = require('../config/database');
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
@@ -16,13 +16,10 @@ const authenticateToken = async (req, res, next) => {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        // Verify user still exists and is active
-        const userResult = await db.query(
-            'SELECT id, email, firstName, lastName, role, isActive FROM Users WHERE id = @userId AND isActive = 1',
-            { userId: decoded.userId }
-        );
+        // Verify user still exists and is active using Firestore
+        const user = await firestoreService.getUser(decoded.userId);
 
-        if (userResult.length === 0) {
+        if (!user || user.status !== 'active') {
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid token or user not found' 
@@ -30,11 +27,11 @@ const authenticateToken = async (req, res, next) => {
         }
 
         req.user = {
-            userId: userResult[0].id,
-            email: userResult[0].email,
-            firstName: userResult[0].firstName,
-            lastName: userResult[0].lastName,  
-            role: userResult[0].role
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,  
+            role: user.role || 'customer'
         };
 
         next();
