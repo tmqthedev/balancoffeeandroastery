@@ -3,77 +3,111 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const dotenv = require('dotenv');
 const path = require('path');
-const { accessLogger, errorLogger, errorHandler, requestTracker } = require('./middleware/logging');
-
-// Load environment variables
-dotenv.config();
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
+const db = require('./config/database');
 
 // Security middleware
 app.use(helmet({
+  crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
       scriptSrc: ["'self'"],
-    },
-  },
+      connectSrc: ["'self'", "https://api.payos.vn", "https://pay.payos.vn"]
+    }
+  }
 }));
 
 // CORS configuration
-const corsOptions = {
-  origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+}));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000, // 15 minutes
-  max: process.env.RATE_LIMIT_MAX || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.'
-  }
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
 });
-app.use(limiter);
+app.use('/api/', limiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging middleware
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
+app.use(morgan('combined'));
 
-// Database connection
-const db = require('./config/database');
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Root endpoint - API info
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'Balan Coffee & Roastery API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/health',
+      products: '/api/products',
+      featured: '/api/products/featured',
+      categories: '/api/categories',
+      orders: '/api/orders',
+      auth: '/api/auth',
+      payments: '/api/payments'
+    },
+    docs: 'API server for Balan Coffee e-commerce platform',
+    frontend: process.env.CORS_ORIGIN || 'http://localhost:5173'
+  });
+});
 
 // Initialize database connection
 db.connect().then(() => {
   console.log('✅ Connected to Firebase database');
 }).catch(err => {
   console.error('❌ Database connection failed:', err.message);
-  process.exit(1);
+  console.log('🔄 Continuing with mock data for development...');
 });
 
 // Passport configuration
 require('./config/passport');
 
-// Routes
+// Routes with request logging
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/cart', require('./routes/cart'));
-app.use('/api/products', require('./routes/products'));
+
+// Add request logging for products
+app.use('/api/products', (req, res, next) => {
+  console.log(`📝 Products API: ${req.method} ${req.originalUrl}`);
+  console.log('Query params:', req.query);
+  console.log('Headers:', req.headers);
+  console.log('User-Agent:', req.get('User-Agent'));
+  next();
+});
+
+app.use('/api/products', require('./routes/products-firebase'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
@@ -108,47 +142,28 @@ app.get('/api/crm/test-direct', authenticateToken, requireAdmin, async (req, res
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Direct CRM route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'CRM system error',
+      error: error.message
+    });
   }
 });
-
-app.get('/api/crm/dashboard/metrics', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    console.log('📊 CRM Dashboard metrics requested');
-    const metrics = await CRMService.getDashboardMetrics();
-    res.json({ success: true, data: metrics });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    version: require('./package.json').version
-  });
-});
-
-// Serve static files from frontend build (for production)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
-  });
-}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('❌ Server Error:', err.message);
+  console.error('Stack:', err.stack);
+  console.error('Request URL:', req.originalUrl);
+  console.error('Request Method:', req.method);
   
   if (process.env.NODE_ENV === 'development') {
     res.status(err.status || 500).json({
       error: err.message,
-      stack: err.stack
+      stack: err.stack,
+      url: req.originalUrl,
+      method: req.method
     });
   } else {
     res.status(err.status || 500).json({
@@ -159,8 +174,10 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
+  console.log('❌ 404 Not Found:', req.originalUrl);
   res.status(404).json({
-    error: 'Route not found'
+    error: 'Route not found',
+    url: req.originalUrl
   });
 });
 
@@ -178,7 +195,7 @@ process.on('SIGINT', () => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`📍 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
 });
-
-module.exports = app;

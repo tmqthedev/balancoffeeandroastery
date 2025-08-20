@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { formatVND } from '../utils/currency';
 
 // Configure axios defaults
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const ProductDetail = () => {
     const { id } = useParams();

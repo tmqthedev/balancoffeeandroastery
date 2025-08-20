@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 // Configure axios defaults
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);

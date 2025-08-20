@@ -5,6 +5,8 @@ import BeveragesTab from '../components/common/BeveragesTab';
 import ServicesTab from '../components/common/ServicesTab';
 import { useCart } from '../context/CartContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const Products = () => {
     const [activeTab, setActiveTab] = useState('coffee-beans');
     const [products, setProducts] = useState([]);
@@ -79,7 +81,7 @@ const Products = () => {
             params.append('limit', productsPerPage.toString());
             params.append('sortBy', sortBy);
             
-            const response = await fetch(`/api/products?${params}`);
+            const response = await fetch(`${API_BASE_URL}/api/products?${params}`);
             if (!response.ok) throw new Error('Failed to fetch products');
             
             const data = await response.json();
