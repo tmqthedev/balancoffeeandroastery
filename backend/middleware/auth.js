@@ -30,8 +30,7 @@ const authenticateToken = async (req, res, next) => {
             userId: user.id,
             email: user.email,
             firstName: user.firstName,
-            lastName: user.lastName,  
-            role: user.role || 'customer'
+            lastName: user.lastName
         };
 
         next();
@@ -57,17 +56,6 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-// Admin role middleware
-const requireAdmin = (req, res, next) => {
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ 
-            success: false, 
-            message: 'Admin access required' 
-        });
-    }
-    next();
-};
-
 // Optional authentication (for public endpoints that can benefit from user info)
 const optionalAuth = async (req, res, next) => {
     try {
@@ -80,21 +68,14 @@ const optionalAuth = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-        const userQuery = `
-            SELECT user_id, username, email, full_name, role, is_active 
-            FROM Users 
-            WHERE user_id = @userId AND is_active = 1
-        `;
-        const userResult = await executeQuery(userQuery, { userId: decoded.userId });
+        const user = await firestoreService.getUser(decoded.userId);
 
-        if (userResult.length > 0) {
+        if (user && user.status === 'active') {
             req.user = {
-                userId: userResult[0].user_id,
-                username: userResult[0].username,
-                email: userResult[0].email,
-                fullName: userResult[0].full_name,
-                role: userResult[0].role
+                userId: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName
             };
         } else {
             req.user = null;
@@ -110,6 +91,5 @@ const optionalAuth = async (req, res, next) => {
 
 module.exports = {
     authenticateToken,
-    requireAdmin,
     optionalAuth
 };

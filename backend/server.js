@@ -8,7 +8,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const db = require('./config/database');
+
+// Import MongoDB connection
+const { connectDB } = require('./config/database');
 
 // Security middleware
 app.use(helmet({
@@ -82,12 +84,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Initialize database connection
-db.connect().then(() => {
-  console.log('✅ Connected to Firebase database');
+// Initialize MongoDB connection
+connectDB().then(() => {
+  console.log('✅ Connected to MongoDB database');
 }).catch(err => {
-  console.error('❌ Database connection failed:', err.message);
-  console.log('🔄 Continuing with mock data for development...');
+  console.error('❌ MongoDB connection failed:', err.message);
+  process.exit(1);
 });
 
 // Passport configuration
@@ -107,7 +109,7 @@ app.use('/api/products', (req, res, next) => {
   next();
 });
 
-app.use('/api/products', require('./routes/products-firestore'));
+app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
@@ -117,39 +119,8 @@ app.use('/api/payments', require('./routes/payments'));
 // MoMo payment routes
 app.use('/api/payments/momo', require('./routes/momo-payment'));
 
-// Load CRM routes (temporarily disabled for Firestore migration)
-try {
-  console.log('🔍 CRM router temporarily disabled during Firestore migration');
-  app.use('/api/admin', require('./routes/admin'));
-  // app.use('/api/crm', require('./routes/crm')); // Temporarily disabled
-  console.log('⚠️ CRM router disabled - only admin routes loaded');
-} catch (error) {
-  console.error('❌ Error loading admin router:', error.message);
-}
-
-// Import CRM service for direct integration (temporarily disabled)
-// const CRMService = require('./services/crmService');
-const { authenticateToken, requireAdmin } = require('./middleware/auth');
-
-// Direct CRM routes for testing
-app.get('/api/crm/test-direct', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    console.log('📡 Direct CRM route hit');
-    res.json({
-      success: true,
-      message: 'CRM system is working!',
-      user: req.user,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Direct CRM route error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'CRM system error',
-      error: error.message
-    });
-  }
-});
+// Upload routes for file management
+app.use('/api/upload', require('./routes/upload'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -182,15 +153,17 @@ app.use((req, res) => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+const { mongoose } = require('./config/database');
+
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully');
-  db.close();
+  await mongoose.connection.close();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully');
-  db.close();
+  await mongoose.connection.close();
   process.exit(0);
 });
 
