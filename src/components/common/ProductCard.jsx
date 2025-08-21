@@ -19,7 +19,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     {product.image_url ? (
                         <img
                             src={product.image_url}
-                            alt={product.name}
+                            alt={product.name || 'Sản phẩm'}
                             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                             loading="lazy"
                         />
@@ -32,7 +32,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     )}
                     
                     {/* Stock Status */}
-                    {product.stockQuantity <= 0 && (
+                    {(product.stockQuantity || product.stock_quantity) <= 0 && (
                         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                             <span className="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">
                                 Hết hàng
@@ -47,7 +47,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2 line-clamp-2">
                         <span 
                             dangerouslySetInnerHTML={{
-                                __html: highlightSearchTerm(product.name, searchTerm)
+                                __html: highlightSearchTerm(product.name || 'Sản phẩm', searchTerm)
                             }}
                         />
                     </h3>
@@ -55,19 +55,27 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     {/* Price */}
                     <div className="flex items-baseline justify-between mb-4">
                         <div className="flex items-center space-x-2">
-                            <span className="text-xl font-bold text-brand-primary">
-                                {formatVND(product.price)}
-                            </span>
-                            {product.comparePrice && product.comparePrice > product.price && (
-                                <span className="text-sm text-gray-500 line-through">
-                                    {formatVND(product.comparePrice)}
+                            {product.weightPricing && product.weightPricing.length > 0 ? (
+                                // Weight-based pricing
+                                <div className="flex flex-col">
+                                    <span className="text-xl font-bold text-brand-primary">
+                                        {formatVND(product.weightPricing[0].price)}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        từ {product.weightPricing[0].weight}g
+                                    </span>
+                                </div>
+                            ) : (
+                                // Fixed pricing
+                                <span className="text-xl font-bold text-brand-primary">
+                                    {formatVND(product.price)}
                                 </span>
                             )}
                         </div>
                         
                         {/* Simple Stock Status */}
                         <span className="text-sm text-gray-600">
-                            {product.stock_quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
+                            {(product.stock_quantity || product.stockQuantity) > 0 ? 'Còn hàng' : 'Hết hàng'}
                         </span>
                     </div>
                 </div>
@@ -77,15 +85,15 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
             <div className="p-4 pt-0">
                 <button
                     onClick={handleAddToCart}
-                    disabled={product.stock_quantity <= 0}
+                    disabled={(product.stock_quantity || product.stockQuantity) <= 0}
                     className={`w-full py-2 px-4 rounded font-medium text-sm transition-colors duration-200 ${
-                        product.stock_quantity <= 0
+                        (product.stock_quantity || product.stockQuantity) <= 0
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                             : 'bg-brand-primary text-white hover:bg-brand-primary/90'
                     }`}
-                    aria-label={`Thêm ${product.nameVi || product.name} vào giỏ hàng`}
+                    aria-label={`Thêm ${product.name || 'sản phẩm'} vào giỏ hàng`}
                 >
-                    {product.stock_quantity <= 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+                    {(product.stock_quantity || product.stockQuantity) <= 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
                 </button>
             </div>
         </div>
@@ -95,14 +103,33 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
 ProductCard.propTypes = {
     product: PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        name: PropTypes.string,
+        _id: PropTypes.string,
+        name: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.shape({
+                vi: PropTypes.string,
+                en: PropTypes.string
+            })
+        ]),
         nameVi: PropTypes.string,
-        description: PropTypes.string,
+        description: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.shape({
+                vi: PropTypes.string,
+                en: PropTypes.string
+            })
+        ]),
         descriptionVi: PropTypes.string,
-        price: PropTypes.number.isRequired,
+        price: PropTypes.number,
+        weightPricing: PropTypes.arrayOf(PropTypes.shape({
+            weight: PropTypes.number,
+            price: PropTypes.number,
+            discount: PropTypes.number
+        })),
         comparePrice: PropTypes.number,
         image_url: PropTypes.string,
         stock_quantity: PropTypes.number,
+        stockQuantity: PropTypes.number,
         isFeatured: PropTypes.bool
     }).isRequired,
     searchTerm: PropTypes.string,

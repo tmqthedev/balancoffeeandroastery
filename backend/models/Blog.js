@@ -26,7 +26,7 @@ const blogSchema = new mongoose.Schema({
   
   // Categorization
   category: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed, // Allow both string and object
     default: 'Tin tức'
   },
   tags: [String],

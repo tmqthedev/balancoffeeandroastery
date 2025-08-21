@@ -139,7 +139,7 @@ const BlogPost = () => {
   }
   const title = blog?.title || 'Bài viết';
   const content = blog?.content || '';
-  const excerpt = blog?.excerpt || blog?.content?.substring(0, 160) || '';
+  const excerpt = blog?.excerpt || content?.substring(0, 160) || '';
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -339,7 +339,7 @@ const BlogPost = () => {
                       <div className="h-48 overflow-hidden">
                         <img
                           src={relatedBlog.image || '/images/blog/default-blog.jpg'}
-                          alt={relatedBlog.title}
+                          alt={relatedBlog.title || 'Blog image'}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
                       </div>
@@ -348,7 +348,7 @@ const BlogPost = () => {
                     <div className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-coffee-600 transition-colors">
                         <Link to={`/blog/${relatedBlog.slug}`}>
-                          {relatedBlog.title}
+                          {relatedBlog.title || 'Tiêu đề blog'}
                         </Link>
                       </h3>
                       

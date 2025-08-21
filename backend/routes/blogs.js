@@ -29,7 +29,18 @@ router.get('/', async (req, res) => {
     }
     
     if (category) {
-      filter.category = category;
+      console.log('🔍 Filtering by category:', category);
+      
+      // Normalize Unicode for Vietnamese characters
+      const normalizedCategory = category.normalize('NFC');
+      console.log('🔍 Normalized category:', normalizedCategory);
+      
+      // Handle both string and object category formats
+      filter.$or = [
+        { category: normalizedCategory }, // For string format
+        { 'category.name': normalizedCategory } // For object format {name: "category"}
+      ];
+      console.log('🔍 Filter object:', JSON.stringify(filter, null, 2));
     }
 
     // Build sort object (newest first)
@@ -51,6 +62,25 @@ router.get('/', async (req, res) => {
       .lean();
 
     console.log('📝 Blogs found:', blogs.length);
+    
+    // Debug: Log first few blogs with their categories
+    if (blogs.length > 0) {
+      console.log('🔍 Sample blog categories:');
+      blogs.slice(0, 2).forEach(blog => {
+        console.log(`- Blog: ${blog.title}`);
+        console.log(`  Category:`, blog.category);
+        console.log(`  Category type:`, typeof blog.category);
+      });
+    } else if (category) {
+      // If no results with filter, let's check what categories exist
+      console.log('🔍 No results found. Checking all published blogs...');
+      const allBlogs = await Blog.find({ status: 'published' }, 'title category').limit(5).lean();
+      allBlogs.forEach(blog => {
+        console.log(`- Blog: ${blog.title}`);
+        console.log(`  Category:`, blog.category);
+        console.log(`  Category type:`, typeof blog.category);
+      });
+    }
 
     res.json({
       success: true,
@@ -79,12 +109,32 @@ router.get('/categories', async (req, res) => {
   try {
     console.log('📁 Fetching blog categories...');
     
-    // Get unique categories from published blogs
-    const categories = await Blog.distinct('category', { status: 'published' });
+    // Get all published blogs and extract categories manually
+    const blogs = await Blog.find({ status: 'published' }, 'category').lean();
+    
+    const categoriesSet = new Set();
+    blogs.forEach(blog => {
+      if (blog.category) {
+        // Handle both string and object formats
+        if (typeof blog.category === 'string') {
+          categoriesSet.add(blog.category);
+        } else if (blog.category.name) {
+          // If category is object with name property
+          if (typeof blog.category.name === 'string') {
+            categoriesSet.add(blog.category.name);
+          } else if (blog.category.name.vi) {
+            // If name is object with vi property
+            categoriesSet.add(blog.category.name.vi);
+          }
+        }
+      }
+    });
+    
+    const categories = Array.from(categoriesSet).filter(cat => cat);
     
     console.log('📁 Blog categories found:', categories);
 
-    res.json(categories.filter(cat => cat)); // Return array directly
+    res.json(categories); // Return array of strings
 
   } catch (error) {
     console.error('❌ Error fetching blog categories:', error);

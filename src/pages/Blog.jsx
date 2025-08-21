@@ -159,19 +159,24 @@ const Blog = () => {
               >
                 Tất cả
               </button>
-              {Array.isArray(categories) && categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategory === category 
-                      ? 'bg-amber-600 text-white' 
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-amber-50'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+              {Array.isArray(categories) && categories.map((category, index) => {
+                const categoryValue = category; // Categories API returns strings
+                const categoryDisplay = category;
+                
+                return (
+                  <button
+                    key={categoryValue}
+                    onClick={() => handleCategoryChange(categoryValue)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      selectedCategory === categoryValue
+                        ? 'bg-amber-600 text-white' 
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-amber-50'
+                    }`}
+                  >
+                    {categoryDisplay}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -199,7 +204,7 @@ const Blog = () => {
                         <div className="h-48 bg-gray-200 overflow-hidden">
                           <img
                             src={blog.image}
-                            alt={blog.title}
+                            alt={blog.title || 'Blog image'}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
                               e.target.style.display = 'none';
@@ -211,7 +216,24 @@ const Blog = () => {
                       <div className="p-6">
                         <div className="flex items-center justify-between mb-3">
                           <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            {blog.category || 'Chung'}
+                            {(() => {
+                              // Handle different category formats
+                              if (!blog.category) return 'Chung';
+                              
+                              if (typeof blog.category === 'string') {
+                                return blog.category;
+                              } else if (typeof blog.category === 'object') {
+                                // Handle object format: {name: "Category"}
+                                if (blog.category.name) {
+                                  return blog.category.name;
+                                }
+                                // Handle object format: {vi: "Category"}
+                                if (blog.category.vi) {
+                                  return blog.category.vi;
+                                }
+                              }
+                              return 'Chung';
+                            })()}
                           </span>
                           <time className="text-gray-500 text-sm">
                             {formatDate(blog.publishedAt || blog.createdAt)}
@@ -219,7 +241,7 @@ const Blog = () => {
                         </div>
                         
                         <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                          {blog.title}
+                          {blog.title || 'Tiêu đề blog'}
                         </h2>
                         
                         <p className="text-gray-600 mb-4 line-clamp-3">
