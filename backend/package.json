@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seed-mongodb.js"
+    "seed": "node seed-mongodb.js",
+    "setup-production": "node setup-mongodb-production.js"
   },
   "keywords": [
     "coffee",
@@ -27,6 +28,7 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.18.0",
     "mongoose": "^8.17.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",

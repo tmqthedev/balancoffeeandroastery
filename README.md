@@ -2,23 +2,37 @@
 
 🌟 **Vietnamese Coffee E-commerce Website** - Nền tảng thương mại điện tử cho cà phê rang mộc Việt Nam
 
-## 🚀 Tính năng chính
+## ✅ Current Status (Updated)
 
-### ✅ Frontend Features
-- **Giao diện người dùng** - Thiết kế responsive bằng tiếng Việt
-- **Danh mục sản phẩm** - Bộ lọc và tìm kiếm thông minh  
-- **Giỏ hàng** - Quy trình thanh toán hoàn chỉnh
-- **Blog system** - Tin tức và nội dung về cà phê
-- **Tài khoản người dùng** - Quản lý đơn hàng cá nhân
-- **SEO tối ưu** - Thân thiện với công cụ tìm kiếm
+- ✅ **MongoDB Atlas Database** - Fully connected and operational
+- ✅ **Backend API** - Products, categories, authentication working
+- ✅ **Frontend React App** - Responsive design with Tailwind CSS
+- ✅ **CORS Configuration** - Supports multiple development ports
+- ✅ **Sample Data** - 4 products and 3 categories seeded
+- ✅ **Admin Removed** - All admin functionality cleaned up
+- ✅ **Production Ready** - Database and environment configured
 
-### 🔧 Backend Features  
-- **API RESTful** - Backend đầy đủ chức năng
-- **Xác thực JWT** - Bảo mật người dùng an toàn
-- **Thanh toán MoMo** - Tích hợp ví điện tử
-- **Thanh toán COD** - Thanh toán khi nhận hàng
-- **Firebase Firestore** - Database NoSQL hiệu năng cao
-- **Bảo mật nâng cao** - CORS, Rate Limiting, Validation
+## 🚀 Quick Start
+
+### Development Setup
+
+1. **Backend Server**
+```bash
+cd backend
+npm start
+# Runs on http://localhost:3000
+```
+
+2. **Frontend Development**
+```bash
+npm run dev  
+# Runs on http://localhost:5173 or 5174
+```
+
+3. **Database**
+- MongoDB Atlas already connected
+- Sample data populated
+- No additional setup needed
 
 ## Công nghệ sử dụng
 

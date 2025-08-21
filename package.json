@@ -4,16 +4,19 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "setup": "node setup.js",
     "dev": "node --max-old-space-size=4096 node_modules/vite/bin/vite.js",
-    "dev:legacy": "vite",
     "build": "vite build",
-    "build:analyze": "vite build --mode analyze",
+    "build:analyze": "vite build --mode analyze", 
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "backend:dev": "cd backend && npm run dev",
+    "backend:start": "cd backend && npm start",
+    "backend:seed": "cd backend && npm run seed",
+    "start:dev": "concurrently \"npm run backend:start\" \"npm run dev\"",
+    "deploy:build": "npm run build && cd backend && npm install --production"
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",

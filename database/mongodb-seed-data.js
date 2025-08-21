@@ -68,6 +68,12 @@ const SAMPLE_PRODUCTS = [
     shortDescription: 'Premium highland Arabica with chocolate and citrus notes',
     shortDescriptionVi: 'Arabica cao nguyên cao cấp với hương socola và cam chanh',
     price: 280000,
+    weightPricing: {
+      '100g': 120000,
+      '250g': 280000,
+      '500g': 520000,
+      '1kg': 980000
+    },
     originalPrice: 320000,
     costPrice: 200000,
     sku: 'ARB-CD-001',
@@ -137,6 +143,12 @@ const SAMPLE_PRODUCTS = [
     shortDescription: 'Bold Robusta from Lam Dong for traditional Vietnamese coffee',
     shortDescriptionVi: 'Robusta đậm đà từ Lâm Đồng cho cà phê truyền thống',
     price: 220000,
+    weightPricing: {
+      '100g': 95000,
+      '250g': 220000,
+      '500g': 410000,
+      '1kg': 780000
+    },
     originalPrice: 250000,
     costPrice: 160000,
     sku: 'ROB-LD-001',

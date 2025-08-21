@@ -29,10 +29,14 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    process.env.CORS_ORIGIN
+  ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'cache-control', 'pragma', 'expires']
 }));
 
 // Rate limiting
@@ -75,6 +79,7 @@ app.get('/', (req, res) => {
       products: '/api/products',
       featured: '/api/products/featured',
       categories: '/api/categories',
+      blogs: '/api/blogs',
       orders: '/api/orders',
       auth: '/api/auth',
       payments: '/api/payments'
@@ -97,23 +102,21 @@ require('./config/passport');
 
 // Routes with request logging
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/cart', require('./routes/cart'));
+// app.use('/api/users', require('./routes/users'));
+// app.use('/api/cart', require('./routes/cart'));
 
 // Add request logging for products
 app.use('/api/products', (req, res, next) => {
   console.log(`📝 Products API: ${req.method} ${req.originalUrl}`);
   console.log('Query params:', req.query);
-  console.log('Headers:', req.headers);
-  console.log('User-Agent:', req.get('User-Agent'));
   next();
 });
 
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
-app.use('/api/orders', require('./routes/orders'));
+// app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
-app.use('/api/contacts', require('./routes/contacts'));
+// app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/payments', require('./routes/payments'));
 
 // MoMo payment routes

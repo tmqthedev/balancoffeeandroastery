@@ -1,8 +1,8 @@
 // Frontend Image Service (không sử dụng Firebase Storage)
 class ImageService {
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-    this.imagesBaseUrl = import.meta.env.VITE_IMAGES_BASE_URL || 'http://localhost:3000';
+    this.baseUrl = 'http://localhost:3000/api';
+    this.imagesBaseUrl = 'http://localhost:3000';
   }
 
   // Upload product images

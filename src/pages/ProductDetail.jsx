@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { formatVND } from '../utils/currency';
 
 // Configure axios defaults
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:3000';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -19,16 +19,47 @@ const ProductDetail = () => {
     const [error, setError] = useState('');
     const [quantity, setQuantity] = useState(1);
     const [selectedWeight, setSelectedWeight] = useState('250g');
-    const [addingToCart, setAddingToCart] = useState(false);    const weights = ['100g', '250g', '500g', '1kg'];    const fetchProduct = useCallback(async () => {
+    const [addingToCart, setAddingToCart] = useState(false);
+
+    const weights = ['100g', '250g', '500g', '1kg'];
+
+    // Get price based on selected weight from product data
+    const getCurrentPrice = () => {
+        if (!product) return 0;
+        
+        // Use weightPricing from product data if available
+        if (product.weightPricing && product.weightPricing[selectedWeight]) {
+            return product.weightPricing[selectedWeight];
+        }
+        
+        // Fallback to default pricing for products without weightPricing
+        const defaultWeightPrices = {
+            '100g': 120000,   
+            '250g': 280000,   
+            '500g': 520000,   
+            '1kg': 980000     
+        };
+        
+        return defaultWeightPrices[selectedWeight] || product.price || 280000;
+    };
+
+    const fetchProduct = useCallback(async () => {
         try {
+            console.log('🔍 Fetching product with ID:', id);
+            if (!id || id === 'undefined') {
+                console.error('❌ Invalid product ID:', id);
+                setError('ID sản phẩm không hợp lệ');
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             const response = await axios.get(`${API_BASE_URL}/api/products/${id}`);
             setProduct(response.data.product);
             
             // Fetch related products
-            if (response.data.product.category_id) {
-                const relatedResponse = await axios.get(`${API_BASE_URL}/api/products?category=${response.data.product.category_id}&limit=4&exclude=${id}`);
-                setRelatedProducts(relatedResponse.data.products);
+            if (response.data.relatedProducts) {
+                setRelatedProducts(response.data.relatedProducts);
             }
         } catch (error) {
             console.error('Failed to fetch product:', error);
@@ -51,7 +82,14 @@ const ProductDetail = () => {
         
         setAddingToCart(true);
         try {
-            await addToCart(product.id, quantity, { weight: selectedWeight });
+            // Create product object with selected options
+            const productToAdd = {
+                ...product,
+                selectedWeight,
+                price: getCurrentPrice(), // Use current price based on weight
+                id: product.id || product._id
+            };
+            await addToCart(productToAdd, quantity);
             // Show success message or redirect
         } catch (error) {
             console.error('Failed to add to cart:', error);
@@ -92,8 +130,8 @@ const ProductDetail = () => {
         );
     }
 
-    const inCart = isInCart(product.id);
-    const cartQuantity = getItemQuantity(product.id);
+    const inCart = isInCart(product.id || product._id);
+    const cartQuantity = getItemQuantity(product.id || product._id);
 
     return (
         <>
@@ -104,7 +142,8 @@ const ProductDetail = () => {
                 <meta property="og:title" content={`${product.name} - Balan Coffee`} />
                 <meta property="og:description" content={product.description} />
                 <meta property="og:type" content="product" />
-                <meta property="og:image" content={product.image_url} />                <meta property="product:price:amount" content={product.price} />
+                <meta property="og:image" content={product.image_url} />
+                <meta property="product:price:amount" content={getCurrentPrice()} />
                 <meta property="product:price:currency" content="VND" />
                 <link rel="canonical" href={window.location.href} />
                 
@@ -121,9 +160,10 @@ const ProductDetail = () => {
                             "name": "Balan Coffee"
                         },
                         "offers": {
-                            "@type": "Offer",                            "price": product.price,
+                            "@type": "Offer",
+                            "price": getCurrentPrice(),
                             "priceCurrency": "VND",
-                            "availability": product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+                            "availability": product.stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
                         }
                     })}
                 </script>
@@ -175,14 +215,14 @@ const ProductDetail = () => {
 
                             <div className="flex items-center space-x-4">
                                 <span className="text-3xl font-bold text-brand-primary">
-                                    {formatVND(product.price)}
+                                    {formatVND(getCurrentPrice())}
                                 </span>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    product.stock_quantity > 0 
+                                    product.stockQuantity > 0 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
                                 }`}>
-                                    {product.stock_quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
+                                    {product.stockQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}
                                 </span>
                             </div>
 
@@ -277,7 +317,7 @@ const ProductDetail = () => {
                                 </div>                                <div className="space-y-3">
                                     <button
                                         onClick={handleAddToCart}
-                                        disabled={product.stock_quantity === 0 || addingToCart}
+                                        disabled={product.stockQuantity === 0 || addingToCart}
                                         className="w-full bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
                                         {(() => {
@@ -289,7 +329,7 @@ const ProductDetail = () => {
                                     
                                     <button
                                         onClick={handleBuyNow}
-                                        disabled={product.stock_quantity === 0 || addingToCart}
+                                        disabled={product.stockQuantity === 0 || addingToCart}
                                         className="w-full bg-gradient-to-r from-brand-secondary to-brand-secondary/90 hover:from-brand-secondary/90 hover:to-brand-secondary text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
                                         Mua ngay

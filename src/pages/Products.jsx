@@ -5,7 +5,7 @@ import BeveragesTab from '../components/common/BeveragesTab';
 import ServicesTab from '../components/common/ServicesTab';
 import { useCart } from '../context/CartContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:3000';
 
 const Products = () => {
     const [activeTab, setActiveTab] = useState('coffee-beans');

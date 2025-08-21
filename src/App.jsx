@@ -13,9 +13,6 @@ const PublicRoutes = React.lazy(() => import('./routes/PublicRoutes'));
 
 // Component to conditionally render navbar and footer
 const AppLayout = () => {
-  const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith('/admin');
-
   return (
     <div className="App min-h-screen">
       <Helmet>
@@ -23,9 +20,9 @@ const AppLayout = () => {
         <meta name="description" content="Cà phê rang mộc chất lượng cao từ Balan Coffee & Roastery. Arabica Cầu Đất, Robusta Lâm Đồng nguyên chất." />
       </Helmet>
       
-      {!isAdminRoute && <Navbar />}
+      <Navbar />
       
-      <main className={isAdminRoute ? '' : 'pt-16'}>
+      <main className="pt-16">
         <Routes>
           <Route path="/*" element={
             <Suspense fallback={<LoadingSpinner size="large" message="Đang tải trang..." fullScreen />}>
@@ -35,7 +32,7 @@ const AppLayout = () => {
         </Routes>
       </main>
       
-      {!isAdminRoute && <Footer />}
+      <Footer />
     </div>
   );
 };

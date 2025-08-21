@@ -4,10 +4,9 @@ require('dotenv').config();
 // Import models
 const Category = require('./models/Category');
 const Product = require('./models/Product');
-const Blog = require('./models/Blog');
 
 // Import seed data
-const { SAMPLE_CATEGORIES, SAMPLE_PRODUCTS, SAMPLE_BLOGS } = require('./seed-data.js');
+const { SAMPLE_CATEGORIES, SAMPLE_PRODUCTS } = require('./seed-data.js');
 
 // MongoDB connection
 const connectDB = async () => {
@@ -29,7 +28,6 @@ async function seedMongoDB() {
     console.log('🧹 Clearing existing data...');
     await Category.deleteMany({});
     await Product.deleteMany({});
-    await Blog.deleteMany({});
     console.log('✅ Existing data cleared');
 
     // Seed Categories
@@ -42,16 +40,10 @@ async function seedMongoDB() {
     await Product.insertMany(SAMPLE_PRODUCTS);
     console.log(`✅ Seeded ${SAMPLE_PRODUCTS.length} products`);
 
-    // Seed Blogs
-    console.log('📝 Seeding blogs...');
-    await Blog.insertMany(SAMPLE_BLOGS);
-    console.log(`✅ Seeded ${SAMPLE_BLOGS.length} blogs`);
-
     console.log('🎉 MongoDB seeding completed successfully!');
     console.log('\n📊 Summary:');
     console.log(`- Categories: ${SAMPLE_CATEGORIES.length}`);
     console.log(`- Products: ${SAMPLE_PRODUCTS.length}`);
-    console.log(`- Blogs: ${SAMPLE_BLOGS.length}`);
 
   } catch (error) {
     console.error('❌ Error seeding MongoDB:', error);

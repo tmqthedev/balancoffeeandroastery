@@ -1,16 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
+const Category = require('../models/Category');
 
 // Get all categories
 router.get('/', async (req, res) => {
   try {
-    const categories = await db.query(`
-      SELECT id, name, nameVi, slug, description
-      FROM Categories
-      WHERE isActive = 1
-      ORDER BY name ASC
-    `);
+    const categories = await Category.find({ 
+      isActive: true 
+    }).sort({ name: 1 }).lean();
 
     res.json({
       success: true,
@@ -18,11 +15,11 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get categories error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch categories',
-      categories: []
+    console.error('❌ Get categories error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi tải danh mục',
+      error: error.message
     });
   }
 });

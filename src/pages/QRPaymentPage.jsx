@@ -54,7 +54,7 @@ const QRPaymentPage = () => {
             try {
                 setChecking(true);
                 const response = await fetch(
-                    `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/${order.orderNumber}/payment-status`,
+                    `http://localhost:3000/api/orders/${order.orderNumber}/payment-status`,
                     {
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('authToken')}`

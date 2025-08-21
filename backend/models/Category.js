@@ -4,7 +4,7 @@ const categorySchema = new mongoose.Schema({
   _id: { type: String, required: true },
   name: { type: String, required: true },
   nameVi: { type: String, required: true },
-  slug: { type: String, required: true, unique: true },
+  slug: { type: String, required: true },
   description: String,
   descriptionVi: String,
   image: String,

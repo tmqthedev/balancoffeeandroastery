@@ -51,7 +51,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             };
 
             // Create order via API
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/orders`, {
+            const response = await fetch(`http://localhost:3000/api/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                     // Fallback - create separate MoMo payment request
                     console.warn('No MoMo data in order response, creating separate payment');
                     
-                    const momoResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/payments/momo/create`, {
+                    const momoResponse = await fetch(`http://localhost:3000/api/payments/momo/create`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

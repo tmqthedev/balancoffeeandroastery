@@ -1,6 +1,7 @@
 // Error logger utility for production
 const logError = (error, errorInfo = {}) => {
-  if (import.meta.env.PROD) {
+  const isProd = false; // Development mode
+  if (isProd) {
     // In production, send errors to monitoring service
     // For now, we'll use a simple console.error with structured data
     const errorData = {

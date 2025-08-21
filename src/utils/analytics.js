@@ -1,6 +1,6 @@
 // Google Analytics 4 Implementation
 export const initGA4 = () => {
-  const TRACKING_ID = import.meta.env.VITE_GA_TRACKING_ID;
+  const TRACKING_ID = null; // Disabled for development
   
   if (!TRACKING_ID) return;
   
@@ -28,7 +28,7 @@ export const initGA4 = () => {
 
 // Meta Pixel (Facebook) Implementation
 export const initMetaPixel = () => {
-  const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID;
+  const PIXEL_ID = null; // Disabled for development
   
   if (!PIXEL_ID) return;
   
@@ -67,7 +67,7 @@ export const initMetaPixel = () => {
 
 // TikTok Pixel Implementation
 export const initTikTokPixel = () => {
-  const TIKTOK_PIXEL_ID = import.meta.env.VITE_TIKTOK_PIXEL_ID;
+  const TIKTOK_PIXEL_ID = null; // Disabled for development
   
   if (!TIKTOK_PIXEL_ID) return;
   
@@ -123,8 +123,9 @@ export const initTikTokPixel = () => {
 
 // Initialize all analytics tools
 export const initAnalytics = () => {
-  // Only initialize in production or if explicitly enabled in other environments
-  if (import.meta.env.MODE === 'production' || import.meta.env.VITE_ENABLE_ANALYTICS === 'true') {
+  // Disabled for development
+  const enableAnalytics = false;
+  if (enableAnalytics) {
     initGA4();
     initMetaPixel();
     initTikTokPixel();
@@ -135,7 +136,7 @@ export const initAnalytics = () => {
 export const trackPageView = (path) => {
   // Track in GA4
   if (window.gtag) {
-    window.gtag('config', import.meta.env.VITE_GA_TRACKING_ID, {
+    window.gtag('config', 'GA_TRACKING_ID', {
       page_path: path
     });
   }

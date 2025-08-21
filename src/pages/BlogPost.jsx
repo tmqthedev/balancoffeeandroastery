@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 // Configure axios defaults
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:3000';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -51,7 +51,7 @@ const BlogPost = () => {
   };
   const handleShare = (platform) => {
     const url = window.location.href;
-    const title = blog.title_vi || blog.title_en;
+    const shareTitle = title || 'Bài viết từ Balan Coffee';
     
     let shareUrl = '';
     
@@ -60,7 +60,7 @@ const BlogPost = () => {
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
         break;
       case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareTitle)}`;
         break;
       case 'linkedin':
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
@@ -137,18 +137,18 @@ const BlogPost = () => {
       </div>
     );
   }
-  const title = blog.title_vi || blog.title_en;
-  const content = blog.content_vi || blog.content_en;
-  const excerpt = blog.excerpt_vi || blog.excerpt_en;
+  const title = blog?.title || 'Bài viết';
+  const content = blog?.content || '';
+  const excerpt = blog?.excerpt || blog?.content?.substring(0, 160) || '';
 
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": blog?.title || blog?.title_vi,
-    "description": blog?.excerpt || blog?.excerpt_vi,
-    "image": blog?.featured_image || "/dist/title.jpg",
-    "datePublished": blog?.created_at,
-    "dateModified": blog?.updated_at || blog?.created_at,
+    "headline": title,
+    "description": excerpt,
+    "image": blog?.image || "/dist/title.jpg",
+    "datePublished": blog?.publishedAt || blog?.createdAt,
+    "dateModified": blog?.updatedAt || blog?.createdAt,
     "author": {
         "@type": "Organization",
         "name": "Balan Coffee & Roastery",
@@ -170,27 +170,28 @@ const BlogPost = () => {
   return (
     <>
       <Helmet>
-        <title>{title} - Balan Coffee & Roastery</title>
-        <meta name="description" content={excerpt} />
-        <meta name="keywords" content={blog.meta_keywords || 'blog cà phê, cách pha cà phê, kiến thức cà phê, arabica, robusta, cà phê rang mộc'} />
-        <link rel="canonical" href={`${window.location.origin}/blog/${blog.slug}`} />
+        <title>{title || 'Bài viết'} - Balan Coffee & Roastery</title>
+        <meta name="description" content={excerpt || 'Bài viết về cà phê từ Balan Coffee & Roastery'} />
+        <meta name="keywords" content={blog?.keywords || 'blog cà phê, cách pha cà phê, kiến thức cà phê, arabica, robusta, cà phê rang mộc'} />
+        <link rel="canonical" href={`${window.location.origin}/blog/${blog?.slug || slug}`} />
         
         {/* Open Graph */}
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={excerpt} />
-        <meta property="og:url" content={`${window.location.origin}/blog/${blog.slug}`} />
+        <meta property="og:title" content={title || 'Bài viết'} />
+        <meta property="og:description" content={excerpt || 'Bài viết về cà phê từ Balan Coffee & Roastery'} />
+        <meta property="og:url" content={`${window.location.origin}/blog/${blog?.slug || slug}`} />
         <meta property="og:type" content="article" />
-        <meta property="og:image" content={blog.image_url || `${window.location.origin}/images/og-default.jpg`} />
-        <meta property="article:published_time" content={blog.created_at} />
-        <meta property="article:author" content={blog.author_name || 'Balan Coffee & Roastery'} />        {blog.category && (
-          <meta property="article:section" content={blog.category.name_vi || blog.category.name_en} />
+        <meta property="og:image" content={blog?.image || `${window.location.origin}/images/og-default.jpg`} />
+        <meta property="article:published_time" content={blog?.publishedAt || blog?.createdAt} />
+        <meta property="article:author" content="Balan Coffee & Roastery" />
+        {blog?.category && (
+          <meta property="article:section" content={blog.category} />
         )}
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={excerpt} />
-        <meta name="twitter:image" content={blog.image_url || `${window.location.origin}/images/og-default.jpg`} />
+        <meta name="twitter:title" content={title || 'Bài viết'} />
+        <meta name="twitter:description" content={excerpt || 'Bài viết về cà phê từ Balan Coffee & Roastery'} />
+        <meta name="twitter:image" content={blog?.image || `${window.location.origin}/images/og-default.jpg`} />
         
         {/* Structured Data */}
         <script type="application/ld+json">
@@ -219,9 +220,10 @@ const BlogPost = () => {
           {/* Header */}
           <header className="mb-8">
             {/* Category */}
-            {blog.category && (              <div className="mb-4">
+            {blog?.category && (
+              <div className="mb-4">
                 <span className="inline-block bg-coffee-100 text-coffee-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {blog.category.name_vi || blog.category.name_en}
+                  {blog.category}
                 </span>
               </div>
             )}
@@ -237,29 +239,30 @@ const BlogPost = () => {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                {blog.author_name || 'Balan Coffee & Roastery'}
+                Balan Coffee & Roastery
               </div>
               <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <time dateTime={blog.created_at}>
-                  {formatDate(blog.created_at)}
+                <time dateTime={blog?.publishedAt || blog?.createdAt}>
+                  {formatDate(blog?.publishedAt || blog?.createdAt)}
                 </time>
-              </div>              <div className="flex items-center">
+              </div>
+              <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {blog.read_time || 5} phút đọc
+                5 phút đọc
               </div>
             </div>
           </header>
 
           {/* Featured Image */}
-          {blog.image_url && (
+          {blog?.image && (
             <div className="mb-8">
               <img
-                src={blog.image_url}
+                src={blog.image}
                 alt={title}
                 className="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg"
               />
@@ -329,28 +332,31 @@ const BlogPost = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {relatedBlogs.map((relatedBlog) => (
                   <article
-                    key={relatedBlog.id}
+                    key={relatedBlog._id}
                     className="bg-cream-50 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
                   >
                     <Link to={`/blog/${relatedBlog.slug}`}>
-                      <div className="h-48 overflow-hidden">                        <img
-                          src={relatedBlog.image_url || '/images/blog/default-blog.jpg'}
-                          alt={relatedBlog.title_vi || relatedBlog.title_en}
+                      <div className="h-48 overflow-hidden">
+                        <img
+                          src={relatedBlog.image || '/images/blog/default-blog.jpg'}
+                          alt={relatedBlog.title}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                     </Link>
 
-                    <div className="p-6">                      <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-coffee-600 transition-colors">
+                    <div className="p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-coffee-600 transition-colors">
                         <Link to={`/blog/${relatedBlog.slug}`}>
-                          {relatedBlog.title_vi || relatedBlog.title_en}
+                          {relatedBlog.title}
                         </Link>
                       </h3>
                       
                       <p className="text-gray-600 text-sm mb-4">
-                        {formatDate(relatedBlog.created_at)}
+                        {formatDate(relatedBlog.publishedAt || relatedBlog.createdAt)}
                       </p>
-                        <Link
+                      
+                      <Link
                         to={`/blog/${relatedBlog.slug}`}
                         className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium text-sm transition-colors"
                       >

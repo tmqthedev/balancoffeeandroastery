@@ -19,7 +19,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     {product.image_url ? (
                         <img
                             src={product.image_url}
-                            alt={product.nameVi || product.name}
+                            alt={product.name}
                             className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                             loading="lazy"
                         />
@@ -32,7 +32,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     )}
                     
                     {/* Stock Status */}
-                    {product.stock_quantity <= 0 && (
+                    {product.stockQuantity <= 0 && (
                         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                             <span className="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">
                                 Hết hàng
@@ -47,7 +47,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                     <h3 className="text-lg font-medium text-gray-900 mb-2 line-clamp-2">
                         <span 
                             dangerouslySetInnerHTML={{
-                                __html: highlightSearchTerm(product.nameVi || product.name, searchTerm)
+                                __html: highlightSearchTerm(product.name, searchTerm)
                             }}
                         />
                     </h3>
