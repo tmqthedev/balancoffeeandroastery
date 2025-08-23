@@ -1,266 +1,211 @@
-// Firebase Authentication Service
-import { 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  sendPasswordResetEmail,
-  updateProfile,
-  sendEmailVerification,
-  FacebookAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
-import { COLLECTIONS } from '../../database/firestore-schema';
+// Authentication Service - API Integration
+const API_BASE_URL = '/api';
 
 class AuthService {
   // Register new user
   async register(userData) {
     try {
-      const { email, password, firstName, lastName, phone } = userData;
-      
-      // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Update profile with display name
-      await updateProfile(user, {
-        displayName: `${firstName} ${lastName}`
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
       });
 
-      // Create user document in Firestore
-      const userDoc = {
-        email: user.email,
-        firstName,
-        lastName,
-        phone: phone || '',
-        address: '',
-        city: '',
-        postalCode: '',
-        role: 'customer',
-        isActive: true,
-        emailVerified: false,
-        facebookId: '',
-        profileImage: '',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
 
-      await setDoc(doc(db, COLLECTIONS.USERS, user.uid), userDoc);
-
-      // Send email verification
-      await sendEmailVerification(user);
-
+      const data = await response.json();
       return {
         success: true,
-        user: {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          ...userDoc
-        }
+        user: data.user,
+        token: data.token
       };
     } catch (error) {
       console.error('Registration error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      throw new Error(error.message || 'Registration failed');
     }
   }
 
   // Login user
-  async login(email, password) {
+  async login(email, password, remember = false) {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, remember })
+      });
 
-      // Get user data from Firestore
-      const userDocRef = doc(db, COLLECTIONS.USERS, user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        throw new Error('User data not found');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
 
-      const userData = userDoc.data();
-
-      // Check if user is active
-      if (!userData.isActive) {
-        throw new Error('Account is deactivated');
-      }
-
+      const data = await response.json();
       return {
         success: true,
-        user: {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          ...userData
-        }
+        user: data.user,
+        token: data.token
       };
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error(this.getErrorMessage(error.code));
-    }
-  }
-
-  // Facebook login
-  async loginWithFacebook() {
-    try {
-      const provider = new FacebookAuthProvider();
-      provider.addScope('email');
-      
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // Check if user exists in Firestore
-      const userDocRef = doc(db, COLLECTIONS.USERS, user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      let userData;
-
-      if (!userDoc.exists()) {
-        // Create new user document
-        const names = user.displayName?.split(' ') || ['', ''];
-        userData = {
-          email: user.email,
-          firstName: names[0] || '',
-          lastName: names.slice(1).join(' ') || '',
-          phone: '',
-          address: '',
-          city: '',
-          postalCode: '',
-          role: 'customer',
-          isActive: true,
-          emailVerified: user.emailVerified,
-          facebookId: user.providerData[0]?.uid || '',
-          profileImage: user.photoURL || '',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-
-        await setDoc(userDocRef, userData);
-      } else {
-        userData = userDoc.data();
-        
-        // Update last login and profile image if needed
-        await updateDoc(userDocRef, {
-          updatedAt: new Date(),
-          profileImage: user.photoURL || userData.profileImage
-        });
-      }
-
-      return {
-        success: true,
-        user: {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          ...userData
-        }
-      };
-    } catch (error) {
-      console.error('Facebook login error:', error);
-      throw new Error(this.getErrorMessage(error.code));
+      throw new Error(error.message || 'Login failed');
     }
   }
 
   // Logout user
   async logout() {
     try {
-      await signOut(auth);
+      const token = localStorage.getItem('authToken');
+      
+      if (token) {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+      }
+
+      // Clear local storage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
-      throw new Error('Failed to logout');
+      // Still clear local storage even if API call fails
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      return { success: true };
     }
   }
 
   // Reset password
   async resetPassword(email) {
     try {
-      await sendPasswordResetEmail(auth, email);
-      return { success: true, message: 'Password reset email sent' };
-    } catch (error) {
-      console.error('Password reset error:', error);
-      throw new Error(this.getErrorMessage(error.code));
-    }
-  }
-
-  // Update user profile
-  async updateUserProfile(userId, userData) {
-    try {
-      const userDocRef = doc(db, COLLECTIONS.USERS, userId);
-      
-      await updateDoc(userDocRef, {
-        ...userData,
-        updatedAt: new Date()
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
       });
 
-      // Update Firebase Auth profile if name changed
-      if (userData.firstName || userData.lastName) {
-        await updateProfile(auth.currentUser, {
-          displayName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Password reset failed');
       }
 
       return { success: true };
     } catch (error) {
-      console.error('Profile update error:', error);
-      throw new Error('Failed to update profile');
+      console.error('Password reset error:', error);
+      throw new Error(error.message || 'Password reset failed');
     }
   }
 
-  // Get current user data
-  async getCurrentUserData() {
+  // Update user profile
+  async updateProfile(userData) {
     try {
-      const user = auth.currentUser;
-      if (!user) return null;
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
 
-      const userDocRef = doc(db, COLLECTIONS.USERS, user.uid);
-      const userDoc = await getDoc(userDocRef);
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+      });
 
-      if (!userDoc.exists()) return null;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Profile update failed');
+      }
 
+      const data = await response.json();
       return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        ...userDoc.data()
+        success: true,
+        user: data.user
       };
     } catch (error) {
-      console.error('Get user data error:', error);
+      console.error('Profile update error:', error);
+      throw new Error(error.message || 'Profile update failed');
+    }
+  }
+
+  // Get current user
+  async getCurrentUser() {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        return { success: false, user: null };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+        }
+        return { success: false, user: null };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        user: data.user
+      };
+    } catch (error) {
+      console.error('Get current user error:', error);
+      return { success: false, user: null };
+    }
+  }
+
+  // Check if user is authenticated
+  isAuthenticated() {
+    const token = localStorage.getItem('authToken');
+    return !!token;
+  }
+
+  // Get auth token
+  getToken() {
+    return localStorage.getItem('authToken');
+  }
+
+  // Store auth data
+  storeAuthData(token, user) {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
+  // Get stored user data
+  getStoredUser() {
+    try {
+      const userData = localStorage.getItem('user');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Error parsing stored user data:', error);
       return null;
     }
   }
-
-  // Auth state observer
-  onAuthStateChange(callback) {
-    return onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userData = await this.getCurrentUserData();
-        callback(userData);
-      } else {
-        callback(null);
-      }
-    });
-  }
-
-  // Get error message
-  getErrorMessage(errorCode) {
-    const errorMessages = {
-      'auth/user-not-found': 'Email không tồn tại',
-      'auth/wrong-password': 'Mật khẩu không đúng',
-      'auth/email-already-in-use': 'Email đã được sử dụng',
-      'auth/weak-password': 'Mật khẩu quá yếu (tối thiểu 6 ký tự)',
-      'auth/invalid-email': 'Email không hợp lệ',
-      'auth/user-disabled': 'Tài khoản đã bị vô hiệu hóa',
-      'auth/too-many-requests': 'Quá nhiều yêu cầu, vui lòng thử lại sau',
-      'auth/network-request-failed': 'Lỗi kết nối mạng',
-      'auth/popup-closed-by-user': 'Cửa sổ đăng nhập bị đóng'
-    };
-
-    return errorMessages[errorCode] || 'Đã xảy ra lỗi, vui lòng thử lại';
-  }
 }
 
+// Export singleton instance
 export default new AuthService();

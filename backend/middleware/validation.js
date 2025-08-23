@@ -124,7 +124,7 @@ const orderValidationRules = [
     .isInt({ min: 1 })
     .withMessage('Số lượng phải là số nguyên dương'),
   body('paymentMethod')
-    .isIn(['momo', 'vnpay', 'cod'])
+    .isIn(['momo', 'cod'])
     .withMessage('Phương thức thanh toán không hợp lệ')
 ];
 

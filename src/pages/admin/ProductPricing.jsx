@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { formatVND } from '../../utils/currency';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = '/api';
 
 const ProductPricing = () => {
     const [products, setProducts] = useState([]);
@@ -20,7 +20,7 @@ const ProductPricing = () => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_BASE_URL}/api/products`);
+            const response = await axios.get(`${API_BASE_URL}/products`);
             setProducts(response.data.products);
         } catch (error) {
             console.error('Failed to fetch products:', error);
@@ -33,7 +33,7 @@ const ProductPricing = () => {
     const updateProductPricing = async (productId, weightPricing) => {
         try {
             setSaving(true);
-            await axios.put(`${API_BASE_URL}/api/products/${productId}/pricing`, {
+            await axios.put(`${API_BASE_URL}/products/${productId}/pricing`, {
                 weightPricing
             });
             

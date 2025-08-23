@@ -1,104 +1,31 @@
-// Firebase Products Service
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  startAfter,
-  or,
-  and
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { COLLECTIONS } from '../../database/firestore-schema';
+// Product Service - API Integration
+const API_BASE_URL = '/api';
 
 class ProductService {
-  // Get all products with pagination and filters
+  // Get all products
   async getProducts(options = {}) {
     try {
-      const {
-        page = 1,
-        pageSize = 12,
-        category = null,
-        search = '',
-        sortBy = 'createdAt',
-        sortOrder = 'desc',
-        isActive = true,
-        isFeatured = null,
-        lastDoc = null
-      } = options;
+      const params = new URLSearchParams();
+      
+      if (options.category) params.append('category', options.category);
+      if (options.limit) params.append('limit', options.limit);
+      if (options.page) params.append('page', options.page);
+      if (options.sortBy) params.append('sortBy', options.sortBy);
+      if (options.order) params.append('order', options.order);
 
-      let q = collection(db, COLLECTIONS.PRODUCTS);
-      const constraints = [];
+      const response = await fetch(`${API_BASE_URL}/products?${params}`);
 
-      // Filter by active status
-      if (isActive !== null) {
-        constraints.push(where('isActive', '==', isActive));
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
       }
 
-      // Filter by featured status
-      if (isFeatured !== null) {
-        constraints.push(where('isFeatured', '==', isFeatured));
-      }
-
-      // Filter by category
-      if (category) {
-        constraints.push(where('categories', 'array-contains', category));
-      }
-
-      // Search functionality
-      if (search) {
-        // Firebase doesn't support full-text search, so we'll search by name
-        // For production, consider using Algolia or similar service
-        const searchLower = search.toLowerCase();
-        constraints.push(
-          or(
-            and(
-              where('name', '>=', searchLower),
-              where('name', '<=', searchLower + '\uf8ff')
-            ),
-            and(
-              where('nameVi', '>=', searchLower),
-              where('nameVi', '<=', searchLower + '\uf8ff')
-            )
-          )
-        );
-      }
-
-      // Add ordering
-      constraints.push(orderBy(sortBy, sortOrder));
-
-      // Add pagination
-      if (lastDoc) {
-        constraints.push(startAfter(lastDoc));
-      }
-      constraints.push(limit(pageSize));
-
-      q = query(q, ...constraints);
-      const snapshot = await getDocs(q);
-
-      const products = [];
-      snapshot.forEach(doc => {
-        products.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
+      const data = await response.json();
       return {
         success: true,
-        products,
-        hasMore: snapshot.docs.length === pageSize,
-        lastDoc: lastVisible,
-        total: snapshot.size
+        products: data.products,
+        total: data.total,
+        page: data.page,
+        totalPages: data.totalPages
       };
     } catch (error) {
       console.error('Get products error:', error);
@@ -107,81 +34,69 @@ class ProductService {
   }
 
   // Get product by ID
-  async getProductById(productId) {
+  async getProduct(id) {
     try {
-      const docRef = doc(db, COLLECTIONS.PRODUCTS, productId);
-      const docSnap = await getDoc(docRef);
+      const response = await fetch(`${API_BASE_URL}/products/${id}`);
 
-      if (!docSnap.exists()) {
-        throw new Error('Product not found');
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Product not found');
+        }
+        throw new Error('Failed to fetch product');
       }
 
+      const data = await response.json();
       return {
         success: true,
-        product: {
-          id: docSnap.id,
-          ...docSnap.data()
-        }
+        product: data.product
       };
     } catch (error) {
       console.error('Get product error:', error);
-      throw new Error('Failed to fetch product');
+      throw error;
     }
   }
 
-  // Get product by slug
-  async getProductBySlug(slug) {
+  // Search products
+  async searchProducts(query, options = {}) {
     try {
-      const q = query(
-        collection(db, COLLECTIONS.PRODUCTS),
-        where('slug', '==', slug),
-        where('isActive', '==', true)
-      );
+      const params = new URLSearchParams({ search: query });
       
-      const snapshot = await getDocs(q);
+      if (options.category) params.append('category', options.category);
+      if (options.limit) params.append('limit', options.limit);
+      if (options.page) params.append('page', options.page);
 
-      if (snapshot.empty) {
-        throw new Error('Product not found');
+      const response = await fetch(`${API_BASE_URL}/products/search?${params}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to search products');
       }
 
-      const doc = snapshot.docs[0];
+      const data = await response.json();
       return {
         success: true,
-        product: {
-          id: doc.id,
-          ...doc.data()
-        }
+        products: data.products,
+        total: data.total,
+        searchQuery: query
       };
     } catch (error) {
-      console.error('Get product by slug error:', error);
-      throw new Error('Failed to fetch product');
+      console.error('Search products error:', error);
+      throw new Error('Failed to search products');
     }
   }
 
   // Get featured products
-  async getFeaturedProducts(limitCount = 8) {
+  async getFeaturedProducts(limit = 6) {
     try {
-      const q = query(
-        collection(db, COLLECTIONS.PRODUCTS),
-        where('isActive', '==', true),
-        where('isFeatured', '==', true),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
+      const response = await fetch(`${API_BASE_URL}/products/featured?limit=${limit}`);
 
-      const snapshot = await getDocs(q);
-      const products = [];
+      if (!response.ok) {
+        throw new Error('Failed to fetch featured products');
+      }
 
-      snapshot.forEach(doc => {
-        products.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-
+      const data = await response.json();
       return {
         success: true,
-        products
+        products: data.products
       };
     } catch (error) {
       console.error('Get featured products error:', error);
@@ -190,29 +105,27 @@ class ProductService {
   }
 
   // Get products by category
-  async getProductsByCategory(categoryId, limitCount = 12) {
+  async getProductsByCategory(category, options = {}) {
     try {
-      const q = query(
-        collection(db, COLLECTIONS.PRODUCTS),
-        where('isActive', '==', true),
-        where('categories', 'array-contains', categoryId),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
+      const params = new URLSearchParams({ category });
+      
+      if (options.limit) params.append('limit', options.limit);
+      if (options.page) params.append('page', options.page);
+      if (options.sortBy) params.append('sortBy', options.sortBy);
+      if (options.order) params.append('order', options.order);
 
-      const snapshot = await getDocs(q);
-      const products = [];
+      const response = await fetch(`${API_BASE_URL}/products/category/${category}?${params}`);
 
-      snapshot.forEach(doc => {
-        products.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch products by category');
+      }
 
+      const data = await response.json();
       return {
         success: true,
-        products
+        products: data.products,
+        total: data.total,
+        category: category
       };
     } catch (error) {
       console.error('Get products by category error:', error);
@@ -220,150 +133,23 @@ class ProductService {
     }
   }
 
-  // Search products
-  async searchProducts(searchTerm, options = {}) {
+  // Get related products
+  async getRelatedProducts(productId, limit = 4) {
     try {
-      const { limitCount = 20 } = options;
-      
-      // For basic search, we'll search in name and nameVi fields
-      // For advanced search functionality, consider using Algolia
-      const searchLower = searchTerm.toLowerCase();
-      
-      const queries = [
-        query(
-          collection(db, COLLECTIONS.PRODUCTS),
-          where('isActive', '==', true),
-          where('name', '>=', searchLower),
-          where('name', '<=', searchLower + '\uf8ff'),
-          limit(limitCount)
-        ),
-        query(
-          collection(db, COLLECTIONS.PRODUCTS),
-          where('isActive', '==', true),
-          where('nameVi', '>=', searchLower),
-          where('nameVi', '<=', searchLower + '\uf8ff'),
-          limit(limitCount)
-        )
-      ];
+      const response = await fetch(`${API_BASE_URL}/products/${productId}/related?limit=${limit}`);
 
-      const results = await Promise.all(queries.map(q => getDocs(q)));
-      const productsMap = new Map();
+      if (!response.ok) {
+        throw new Error('Failed to fetch related products');
+      }
 
-      results.forEach(snapshot => {
-        snapshot.forEach(doc => {
-          productsMap.set(doc.id, {
-            id: doc.id,
-            ...doc.data()
-          });
-        });
-      });
-
-      const products = Array.from(productsMap.values());
-
+      const data = await response.json();
       return {
         success: true,
-        products,
-        total: products.length
+        products: data.products
       };
     } catch (error) {
-      console.error('Search products error:', error);
-      throw new Error('Failed to search products');
-    }
-  }
-
-  // Create product (Admin only)
-  async createProduct(productData) {
-    try {
-      const docRef = await addDoc(collection(db, COLLECTIONS.PRODUCTS), {
-        ...productData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      return {
-        success: true,
-        productId: docRef.id
-      };
-    } catch (error) {
-      console.error('Create product error:', error);
-      throw new Error('Failed to create product');
-    }
-  }
-
-  // Update product (Admin only)
-  async updateProduct(productId, productData) {
-    try {
-      const docRef = doc(db, COLLECTIONS.PRODUCTS, productId);
-      
-      await updateDoc(docRef, {
-        ...productData,
-        updatedAt: new Date()
-      });
-
-      return { success: true };
-    } catch (error) {
-      console.error('Update product error:', error);
-      throw new Error('Failed to update product');
-    }
-  }
-
-  // Delete product (Admin only)
-  async deleteProduct(productId) {
-    try {
-      const docRef = doc(db, COLLECTIONS.PRODUCTS, productId);
-      await deleteDoc(docRef);
-
-      return { success: true };
-    } catch (error) {
-      console.error('Delete product error:', error);
-      throw new Error('Failed to delete product');
-    }
-  }
-
-  // Update stock quantity
-  async updateStock(productId, quantity) {
-    try {
-      const docRef = doc(db, COLLECTIONS.PRODUCTS, productId);
-      
-      await updateDoc(docRef, {
-        stockQuantity: quantity,
-        updatedAt: new Date()
-      });
-
-      return { success: true };
-    } catch (error) {
-      console.error('Update stock error:', error);
-      throw new Error('Failed to update stock');
-    }
-  }
-
-  // Get low stock products (Admin only)
-  async getLowStockProducts(threshold = 10) {
-    try {
-      const q = query(
-        collection(db, COLLECTIONS.PRODUCTS),
-        where('isActive', '==', true),
-        where('stockQuantity', '<=', threshold),
-        orderBy('stockQuantity', 'asc')
-      );
-
-      const snapshot = await getDocs(q);
-      const products = [];
-
-      snapshot.forEach(doc => {
-        products.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-
-      return {
-        success: true,
-        products
-      };
-    } catch (error) {
-      console.error('Get low stock products error:', error);
-      throw new Error('Failed to fetch low stock products');
+      console.error('Get related products error:', error);
+      throw new Error('Failed to fetch related products');
     }
   }
 }

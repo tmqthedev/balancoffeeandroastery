@@ -29,7 +29,6 @@ const PaymentResult = () => {
                 // Get order info from URL params
                 const orderId = searchParams.get('orderId') || searchParams.get('orderNumber');
                 const resultCode = searchParams.get('resultCode'); // For MoMo
-                const vnpResponseCode = searchParams.get('vnp_ResponseCode'); // For VNPay (future)
                 
                 if (!orderId) {
                     setPaymentStatus('error');
@@ -46,18 +45,9 @@ const PaymentResult = () => {
                     }
                 }
 
-                // Handle VNPay return (for future use)
-                if (vnpResponseCode) {
-                    if (vnpResponseCode === '00') {
-                        setPaymentStatus('success');
-                    } else {
-                        setPaymentStatus('failed');
-                    }
-                }
-
                 // Fetch order details using new API
                 const token = localStorage.getItem('authToken');
-                const response = await fetch(`http://localhost:3000/api/orders/public/${orderId}`, {
+                const response = await fetch(`/api/orders/public/${orderId}`, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
 
@@ -95,8 +85,6 @@ const PaymentResult = () => {
                 return 'Ví điện tử MoMo';
             case 'cod':
                 return 'Thanh toán khi nhận hàng';
-            case 'vnpay':
-                return 'VNPay';
             default:
                 return 'Khác';
         }

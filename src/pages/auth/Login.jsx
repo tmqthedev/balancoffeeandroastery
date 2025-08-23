@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
-import facebookService from '../../services/facebookService';
+import FacebookLoginButton from '../../components/auth/FacebookLoginButton';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -15,6 +15,7 @@ const Login = () => {
         remember: false
     });
     const [loading, setLoading] = useState(false);
+    const [facebookLoading, setFacebookLoading] = useState(false);
     const [error, setError] = useState('');
 
     const from = location.state?.from?.pathname || '/';
@@ -42,68 +43,54 @@ const Login = () => {
         }
     };
 
-    const handleFacebookLogin = async () => {
+    // Handler for official Facebook Login Button
+    const handleFacebookLoginSuccess = async (facebookData) => {
         try {
-            setLoading(true);
+            setFacebookLoading(true);
             setError('');
-
-            // Try SDK approach first
-            try {
-                // Check if Facebook SDK is available
-                if (!facebookService.isReady()) {
-                    await facebookService.init();
-                }
-
-                // Attempt Facebook login
-                const loginResponse = await facebookService.login(['email', 'public_profile']);
+            
+            console.log('Facebook login success:', facebookData);
+            
+            // Send Facebook data to your backend for authentication
+            const authResponse = await fetch('/api/auth/facebook/callback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    accessToken: facebookData.authResponse.accessToken,
+                    userProfile: facebookData.userProfile
+                })
+            });
+            
+            if (authResponse.ok) {
+                const result = await authResponse.json();
+                console.log('Backend authentication success:', result);
                 
-                if (loginResponse.authResponse) {
-                    // Send the access token to your backend for verification
-                    const response = await fetch('/api/auth/facebook/token', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            accessToken: loginResponse.authResponse.accessToken,
-                            userID: loginResponse.authResponse.userID
-                        })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Store token and redirect
-                        localStorage.setItem('token', data.token);
-                        localStorage.setItem('user', JSON.stringify(data.user));
-                        navigate(from, { replace: true });
-                        return;
-                    } else {
-                        throw new Error('Server authentication failed');
-                    }
+                // Update auth context with user data
+                if (result.token && result.user) {
+                    localStorage.setItem('authToken', result.token);
+                    // You might want to update auth context here
                 }
-            } catch (sdkError) {
-                console.log('SDK approach failed, falling back to redirect:', sdkError);
-                // Fall back to redirect approach
-                window.location.href = '/api/auth/facebook';
-                return;
+                
+                // Navigate to the intended page or home
+                navigate(from, { replace: true });
+            } else {
+                const errorData = await authResponse.json();
+                setError(errorData.message || 'Đăng nhập Facebook thất bại');
             }
         } catch (error) {
             console.error('Facebook login error:', error);
-            if (error.message === 'Facebook login was cancelled or failed') {
-                setError('Đăng nhập Facebook bị hủy');
-            } else if (error.message === 'Facebook SDK failed to load') {
-                setError('Không thể tải Facebook SDK. Đang chuyển hướng...');
-                // Fall back to redirect approach
-                setTimeout(() => {
-                    window.location.href = '/api/auth/facebook';
-                }, 1000);
-                return;
-            } else {
-                setError('Đăng nhập Facebook thất bại. Vui lòng thử lại.');
-            }
+            setError('Có lỗi xảy ra khi đăng nhập với Facebook. Vui lòng thử lại.');
         } finally {
-            setLoading(false);
+            setFacebookLoading(false);
         }
+    };
+
+    const handleFacebookLoginError = (error) => {
+        console.error('Facebook login error:', error);
+        setError(error.message || 'Có lỗi xảy ra khi đăng nhập với Facebook');
+        setFacebookLoading(false);
     };
 
     return (
@@ -116,12 +103,8 @@ const Login = () => {
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     <Link to="/" className="flex justify-center items-center space-x-2 mb-6">
                         <div className="w-12 h-12 bg-coffee-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">B</span>
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-coffee-800">Balan Coffee</h1>
-                            <p className="text-sm text-coffee-600">& Roastery</p>
-                        </div>
+                            <img src="backend\public\images\logos\title.png" alt="Balan Coffee Logo" className='h-8 w-8 object-cover'/>
+                        </div>                        
                     </Link>
                     
                     <h2 className="text-center text-3xl font-bold text-coffee-800">
@@ -217,16 +200,16 @@ const Login = () => {
                                 </div>
 
                                 <div className="mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={handleFacebookLogin}
-                                        className="w-full inline-flex justify-center py-2 px-4 border border-coffee-300 rounded-lg shadow-sm bg-white text-sm font-medium text-coffee-700 hover:bg-coffee-50"
-                                    >
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                        </svg>
-                                        <span className="ml-2">Đăng nhập với Facebook</span>
-                                    </button>
+                                    {/* Official Facebook Login Button */}
+                                    <FacebookLoginButton
+                                        onLoginSuccess={handleFacebookLoginSuccess}
+                                        onLoginError={handleFacebookLoginError}
+                                        size="large"
+                                        buttonText="continue_with"
+                                        scope="email,public_profile"
+                                        disabled={facebookLoading || loading}
+                                        className="w-full"
+                                    />
                                 </div>
                             </div>
                         </form>

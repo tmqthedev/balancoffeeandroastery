@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
-import { useFacebook } from '../../hooks/useFacebook';
+import FacebookLoginButton from '../../components/auth/FacebookLoginButton';
 
 const Auth = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { login, register } = useAuth();
-    const { login: facebookLogin, loading: facebookSdkLoading } = useFacebook();
     
     // Determine initial mode based on URL
     const initialMode = location.pathname === '/register' ? 'register' : 'login';
@@ -133,46 +132,50 @@ const Auth = () => {
         } finally {
             setLoading(false);
         }
-    };    const handleFacebookLogin = async () => {
+    };
+
+    // Handler for official Facebook Login Button
+    const handleFacebookLoginSuccess = async (facebookData) => {
         try {
             setFacebookLoading(true);
             setError('');
             
-            // Login with Facebook SDK
-            const response = await facebookLogin(['email', 'public_profile']);
+            console.log('Facebook login success:', facebookData);
             
-            if (response.authResponse) {
-                // Get user profile from Facebook
-                const userProfile = await window.FB.api('/me', { 
-                    fields: 'id,name,email,picture' 
-                });
+            // Send Facebook data to your backend for authentication
+            const authResponse = await fetch('/api/auth/facebook/callback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    accessToken: facebookData.authResponse.accessToken,
+                    userProfile: facebookData.userProfile
+                })
+            });
+            
+            if (authResponse.ok) {
+                const result = await authResponse.json();
+                console.log('Backend authentication success:', result);
                 
-                // Send Facebook data to your backend for authentication
-                const authResponse = await fetch('/api/auth/facebook/callback', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        accessToken: response.authResponse.accessToken,
-                        userProfile: userProfile
-                    })
-                });
-                
-                if (authResponse.ok) {
-                    await authResponse.json(); // Process response but don't need to store
-                    // Handle successful login (update auth context)
-                    navigate(from, { replace: true });
-                } else {
-                    throw new Error('Xác thực Facebook thất bại');
-                }
+                // Navigate to the intended page or home
+                navigate(from, { replace: true });
+            } else {
+                const errorData = await authResponse.json();
+                setError(errorData.message || 'Đăng nhập Facebook thất bại');
             }
         } catch (error) {
             console.error('Facebook login error:', error);
-            setError(error.message || 'Đăng nhập Facebook thất bại');
+            setError('Có lỗi xảy ra khi đăng nhập với Facebook. Vui lòng thử lại.');
         } finally {
             setFacebookLoading(false);
         }
+    };
+
+    const handleFacebookLoginError = (error) => {
+        console.error('Facebook login error:', error);
+        setError(error.message || 'Có lỗi xảy ra khi đăng nhập với Facebook');
+        setFacebookLoading(false);
     };
 
     const switchMode = (newMode) => {
@@ -197,7 +200,7 @@ const Auth = () => {
                     <div className="text-center mb-8">
                         <Link to="/" className="inline-block">
                             <img 
-                                src="/dist/title.png"
+                                src="backend\public\images\logos\title.png"
                                 alt="Balan Coffee" 
                                 className="h-16 w-auto mx-auto mb-4"
                                 onError={(e) => {
@@ -330,21 +333,16 @@ const Auth = () => {
                                     </div>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={handleFacebookLogin}
-                                    disabled={facebookLoading || facebookSdkLoading || loading}
-                                    className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-lg bg-blue-600 text-brand-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-                                >
-                                    {(facebookLoading || facebookSdkLoading) ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-white mr-2"></div>
-                                    ) : (
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                        </svg>
-                                    )}
-                                    {(facebookLoading || facebookSdkLoading) ? 'Đang đăng nhập...' : 'Tiếp tục với Facebook'}
-                                </button>
+                                {/* Official Facebook Login Button */}
+                                <FacebookLoginButton
+                                    onLoginSuccess={handleFacebookLoginSuccess}
+                                    onLoginError={handleFacebookLoginError}
+                                    size="large"
+                                    buttonText="continue_with"
+                                    scope="email,public_profile"
+                                    disabled={facebookLoading || loading}
+                                    className="w-full"
+                                />
                             </form>
                         )}
 
@@ -516,21 +514,16 @@ const Auth = () => {
                                     </div>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={handleFacebookLogin}
-                                    disabled={facebookLoading || facebookSdkLoading || loading}
-                                    className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-lg bg-blue-600 text-brand-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-                                >
-                                    {(facebookLoading || facebookSdkLoading) ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-white mr-2"></div>
-                                    ) : (
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                        </svg>
-                                    )}
-                                    {(facebookLoading || facebookSdkLoading) ? 'Đang đăng nhập...' : 'Tiếp tục với Facebook'}
-                                </button>
+                                {/* Official Facebook Login Button */}
+                                <FacebookLoginButton
+                                    onLoginSuccess={handleFacebookLoginSuccess}
+                                    onLoginError={handleFacebookLoginError}
+                                    size="large"
+                                    buttonText="continue_with"
+                                    scope="email,public_profile"
+                                    disabled={facebookLoading || loading}
+                                    className="w-full"
+                                />
                             </form>
                         )}
                     </div>

@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { formatVND } from '../utils/currency';
 
 // Configure axios defaults
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = '/api';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -54,7 +54,7 @@ const ProductDetail = () => {
             }
 
             setLoading(true);
-            const response = await axios.get(`${API_BASE_URL}/api/products/${id}`);
+            const response = await axios.get(`${API_BASE_URL}/products/${id}`);
             setProduct(response.data.product);
             
             // Fetch related products

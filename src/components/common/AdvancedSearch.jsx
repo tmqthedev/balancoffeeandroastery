@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = '/api';
 
 const AdvancedSearch = ({ 
   value, 
@@ -56,7 +56,7 @@ const AdvancedSearch = ({
 
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/products/search-suggestions`, {
+      const response = await axios.get(`${API_BASE_URL}/products/search-suggestions`, {
         params: { q: searchTerm },
         timeout: 5000
       });

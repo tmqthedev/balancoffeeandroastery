@@ -9,9 +9,11 @@ import facebookService from '../services/facebookService';
 export const useFacebook = (options = {}) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIntoFacebook, setIsLoggedIntoFacebook] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loginStatus, setLoginStatus] = useState('unknown');
 
   useEffect(() => {
     const initializeFacebook = async () => {
@@ -25,34 +27,54 @@ export const useFacebook = (options = {}) => {
 
         // Check login status if requested
         if (options.checkLoginStatus !== false) {
-          const loginStatus = await facebookService.getLoginStatus();
+          const statusInfo = await facebookService.checkLoginStatus();
           
-          if (loginStatus.status === 'connected') {
-            setIsLoggedIn(true);
-            
-            // Get user profile if logged in
-            if (options.getUserProfile !== false) {
-              try {
-                const userProfile = await facebookService.getUserProfile();
-                setUser(userProfile);
-              } catch (profileError) {
-                console.warn('Could not fetch user profile:', profileError);
-              }
+          setLoginStatus(statusInfo.status);
+          setIsLoggedIn(statusInfo.isConnected);
+          setIsLoggedIntoFacebook(statusInfo.isLoggedIntoFacebook);
+          
+          // Get user profile if connected
+          if (statusInfo.isConnected && options.getUserProfile !== false) {
+            try {
+              const userProfile = await facebookService.getUserProfile();
+              setUser(userProfile);
+            } catch (profileError) {
+              console.warn('Could not fetch user profile:', profileError);
             }
-          } else {
-            setIsLoggedIn(false);
-            setUser(null);
           }
         }
       } catch (err) {
         setError(err.message);
-        console.error('Facebook initialization error:', err);
+        // Only log warning for SDK not available, not a full error
+        if (err.message.includes('Facebook SDK not available')) {
+          console.warn('Facebook login disabled:', err.message);
+        } else {
+          console.error('Facebook initialization error:', err);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     initializeFacebook();
+
+    // Listen for status changes
+    const handleStatusChange = (event) => {
+      const statusInfo = event.detail;
+      setLoginStatus(statusInfo.status);
+      setIsLoggedIn(statusInfo.isConnected);
+      setIsLoggedIntoFacebook(statusInfo.isLoggedIntoFacebook);
+      
+      if (!statusInfo.isConnected) {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('fb-status-change', handleStatusChange);
+
+    return () => {
+      window.removeEventListener('fb-status-change', handleStatusChange);
+    };
   }, [options.checkLoginStatus, options.getUserProfile]);
 
   /**
@@ -139,15 +161,18 @@ export const useFacebook = (options = {}) => {
     // State
     isLoaded,
     isLoggedIn,
+    isLoggedIntoFacebook,
     user,
     loading,
     error,
+    loginStatus,
     
     // Methods
     login,
     logout,
     share,
     getUserProfile,
+    checkLoginStatus: () => facebookService.checkLoginStatus(),
     
     // Service instance for advanced usage
     service: facebookService

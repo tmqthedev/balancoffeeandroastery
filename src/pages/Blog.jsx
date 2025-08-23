@@ -15,7 +15,7 @@ const Blog = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const API_BASE_URL = 'http://localhost:3000/api';
+  const API_BASE_URL = '/api';
 
   const fetchCategories = async () => {
     try {

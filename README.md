@@ -10,7 +10,7 @@
 - ✅ **Facebook SDK** - Complete login integration
 - ✅ **Environment Config** - Single .env file for both frontend & backend
 - ✅ **Production Ready** - Full configuration for deployment
-- ✅ **Payment Integration** - MoMo and VNPay support configured
+- ✅ **Payment Integration** - MoMo payment gateway configured
 
 ## 🚀 Quick Start
 

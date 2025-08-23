@@ -39,7 +39,7 @@ const MoMoPaymentPage = () => {
     const handleCheckPaymentStatus = async () => {
         try {
             const response = await fetch(
-                `http://localhost:3000/api/payments/momo/status/${momoData.requestId}`,
+                `/api/payments/momo/status/${momoData.requestId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('authToken')}`

@@ -5,7 +5,8 @@ import BeveragesTab from '../components/common/BeveragesTab';
 import ServicesTab from '../components/common/ServicesTab';
 import { useCart } from '../context/CartContext';
 
-const API_BASE_URL = 'http://localhost:3000';
+// Use Vite proxy instead of hardcoded URL
+const API_BASE_URL = '/api';
 
 const Products = () => {
     const [activeTab, setActiveTab] = useState('coffee-beans');
@@ -21,7 +22,7 @@ const Products = () => {
         maxPrice: '',
         inStock: false
     });
-    const [sortBy, setSortBy] = useState('newest');
+    const [sortBy, setSortBy] = useState('name');
     
     // Ref for the tab navigation section
     const tabNavigationRef = useRef(null);
@@ -81,7 +82,7 @@ const Products = () => {
             params.append('limit', productsPerPage.toString());
             params.append('sortBy', sortBy);
             
-            const response = await fetch(`${API_BASE_URL}/api/products?${params}`);
+            const response = await fetch(`${API_BASE_URL}/products?${params}`);
             if (!response.ok) throw new Error('Failed to fetch products');
             
             const data = await response.json();
@@ -93,14 +94,13 @@ const Products = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, filters, currentPage, sortBy]);
+    }, [activeTab, filters, currentPage]);
 
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
 
     const totalProducts = useMemo(() => products.length, [products]);
-    const totalPages = useMemo(() => Math.ceil(totalProducts / productsPerPage), [totalProducts]);
 
     // Cart functionality
     const handleAddToCart = (product) => {

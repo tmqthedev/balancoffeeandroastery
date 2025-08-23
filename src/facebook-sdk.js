@@ -3,13 +3,18 @@
  * This file initializes Facebook SDK with environment variables
  */
 
+/* global FB */
+
 // Initialize Facebook SDK when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   // Get Facebook App ID from environment variable
-  const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID || '1234567890';
+  const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
   
-  // Only initialize if we have a valid App ID
-  if (facebookAppId && facebookAppId !== 'your_facebook_app_id_here') {
+  // Only initialize if we have a valid App ID (not placeholder)
+  if (facebookAppId && 
+      facebookAppId !== 'your_facebook_app_id_here' && 
+      facebookAppId !== '1234567890' &&
+      facebookAppId.length > 10) {
     window.fbAsyncInit = function() {
       FB.init({
         appId      : facebookAppId,
@@ -33,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
        fjs.parentNode.insertBefore(js, fjs);
      }(document, 'script', 'facebook-jssdk'));
   } else {
-    console.warn('Facebook App ID not configured. Please set VITE_FACEBOOK_APP_ID in your .env.local file');
+    console.warn('Facebook App ID not configured properly. Current value:', facebookAppId);
+    console.warn('Please set a valid VITE_FACEBOOK_APP_ID in your .env or .env.local file');
   }
 });

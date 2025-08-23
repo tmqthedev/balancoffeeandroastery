@@ -50,7 +50,8 @@ class FacebookService {
       setTimeout(() => {
         if (!this.isInitialized) {
           window.removeEventListener('fb-sdk-ready', handleSdkReady);
-          reject(new Error('Facebook SDK failed to load. Please check if VITE_FACEBOOK_APP_ID is configured.'));
+          console.warn('Facebook SDK failed to load. Facebook login will be disabled. Check VITE_FACEBOOK_APP_ID configuration.');
+          reject(new Error('Facebook SDK not available'));
         }
       }, 10000); // 10 second timeout
 
@@ -67,11 +68,62 @@ class FacebookService {
   async getLoginStatus() {
     await this.init();
     
-    return new Promise((resolve) => {
-      window.FB.getLoginStatus((response) => {
-        resolve(response);
-      });
+    // Check if we're on HTTPS (required by Facebook)
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      console.warn('Facebook login requires HTTPS. Current protocol:', window.location.protocol);
+      throw new Error('Facebook login requires HTTPS. Please access the site via HTTPS.');
+    }
+    
+    return new Promise((resolve, reject) => {
+      try {
+        window.FB.getLoginStatus((response) => {
+          console.log('Facebook login status:', response);
+          resolve(response);
+        });
+      } catch (error) {
+        if (error.message && error.message.includes('http pages')) {
+          console.error('Facebook requires HTTPS for login functionality. Please access the site via HTTPS.');
+          reject(new Error('Facebook login requires HTTPS. Please access the site at https://localhost:5173'));
+        } else {
+          reject(error);
+        }
+      }
     });
+  }
+
+  /**
+   * Handle status change callback
+   * @param {Object} response - Facebook login status response
+   * @returns {Object} Processed status information
+   */
+  statusChangeCallback(response) {
+    console.log('Facebook status change:', response);
+    
+    const statusInfo = {
+      isConnected: response.status === 'connected',
+      isAuthorized: response.status === 'connected' || response.status === 'not_authorized',
+      isLoggedIntoFacebook: response.status === 'connected' || response.status === 'not_authorized',
+      status: response.status,
+      authResponse: response.authResponse || null,
+      userID: response.authResponse?.userID || null,
+      accessToken: response.authResponse?.accessToken || null
+    };
+
+    // Dispatch custom event for components to listen
+    window.dispatchEvent(new CustomEvent('fb-status-change', { 
+      detail: statusInfo 
+    }));
+
+    return statusInfo;
+  }
+
+  /**
+   * Check login status and trigger status change callback
+   * @returns {Promise<Object>} Login status information
+   */
+  async checkLoginStatus() {
+    const response = await this.getLoginStatus();
+    return this.statusChangeCallback(response);
   }
 
   /**
@@ -82,14 +134,27 @@ class FacebookService {
   async login(permissions = ['email', 'public_profile']) {
     await this.init();
     
+    // Check if we're on HTTPS (required by Facebook)
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      throw new Error('Facebook login requires HTTPS. Please access the site via HTTPS.');
+    }
+    
     return new Promise((resolve, reject) => {
-      window.FB.login((response) => {
-        if (response.authResponse) {
-          resolve(response);
+      try {
+        window.FB.login((response) => {
+          if (response.authResponse) {
+            resolve(response);
+          } else {
+            reject(new Error('Facebook login was cancelled or failed'));
+          }
+        }, { scope: permissions.join(',') });
+      } catch (error) {
+        if (error.message && error.message.includes('http pages')) {
+          reject(new Error('Facebook login requires HTTPS. Please access the site at https://localhost:5173'));
         } else {
-          reject(new Error('Facebook login was cancelled or failed'));
+          reject(error);
         }
-      }, { scope: permissions.join(',') });
+      }
     });
   }
 

@@ -237,6 +237,105 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       res.status(500).json({ error: 'Facebook authentication failed' });
     }
   });
+
+  // Facebook authentication for official login button (POST)
+  router.post('/facebook/callback', async (req, res) => {
+    try {
+      const { accessToken, userProfile } = req.body;
+
+      if (!accessToken || !userProfile) {
+        return res.status(400).json({ error: 'Access token and user profile are required' });
+      }
+
+      // Verify the access token with Facebook (optional extra security)
+      const verifyResponse = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email`);
+      const verifiedUser = await verifyResponse.json();
+
+      if (verifiedUser.error || verifiedUser.id !== userProfile.id) {
+        return res.status(401).json({ error: 'Invalid Facebook access token or user mismatch' });
+      }
+
+      // Use the userProfile data directly (already fetched by frontend)
+      const facebookUser = userProfile;
+
+      // Check if user exists in database
+      let users = await db.query(
+        'SELECT * FROM Users WHERE facebookId = @facebookId AND isActive = 1',
+        { facebookId: facebookUser.id }
+      );
+
+      let user;
+
+      if (users.length > 0) {
+        // Existing user
+        user = users[0];
+      } else {
+        // Check if user exists with same email
+        if (facebookUser.email) {
+          const emailUsers = await db.query(
+            'SELECT * FROM Users WHERE email = @email AND isActive = 1',
+            { email: facebookUser.email }
+          );
+
+          if (emailUsers.length > 0) {
+            // Link Facebook to existing account
+            await db.execute(
+              'UPDATE Users SET facebookId = @facebookId, profileImage = @profileImage WHERE email = @email',
+              {
+                facebookId: facebookUser.id,
+                profileImage: facebookUser.picture?.data?.url || null,
+                email: facebookUser.email
+              }
+            );
+
+            user = emailUsers[0];
+          } else {
+            // Create new user
+            const [firstName, ...lastNameParts] = (facebookUser.name || '').split(' ');
+            const lastName = lastNameParts.join(' ');
+
+            const result = await db.execute(
+              `INSERT INTO Users (email, firstName, lastName, facebookId, profileImage, emailVerified, role, isActive)
+               OUTPUT INSERTED.*
+               VALUES (@email, @firstName, @lastName, @facebookId, @profileImage, 1, 'customer', 1)`,
+              {
+                email: facebookUser.email,
+                firstName: firstName || 'Facebook',
+                lastName: lastName || 'User',
+                facebookId: facebookUser.id,
+                profileImage: facebookUser.picture?.data?.url || null
+              }
+            );
+
+            user = result.recordset[0];
+          }
+        } else {
+          return res.status(400).json({ error: 'No email provided by Facebook' });
+        }
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      );
+
+      // Remove password from user object
+      const userWithoutPassword = { ...user };
+      delete userWithoutPassword.password;
+
+      res.json({
+        message: 'Facebook login successful',
+        token,
+        user: userWithoutPassword
+      });
+
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      res.status(500).json({ error: 'Facebook authentication failed' });
+    }
+  });
 } else {
   // Provide alternative routes when Facebook OAuth is not configured
   router.get('/facebook', (req, res) => {

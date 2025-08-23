@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 // Configure axios defaults
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = '/api';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -19,7 +19,7 @@ const BlogPost = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`${API_BASE_URL}/api/blogs/${slug}`, {
+      const response = await axios.get(`${API_BASE_URL}/blogs/${slug}`, {
         params: { lang: 'vi' }
       });
       

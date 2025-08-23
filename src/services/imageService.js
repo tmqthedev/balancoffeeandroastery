@@ -1,8 +1,8 @@
 // Frontend Image Service (không sử dụng Firebase Storage)
 class ImageService {
   constructor() {
-    this.baseUrl = 'http://localhost:3000/api';
-    this.imagesBaseUrl = 'http://localhost:3000';
+    this.baseUrl = '/api';
+    this.imagesBaseUrl = '';
   }
 
   // Upload product images
