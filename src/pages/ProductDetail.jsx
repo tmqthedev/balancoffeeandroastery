@@ -28,7 +28,7 @@ const ProductDetail = () => {
         if (!product) return 0;
         
         // Use weightPricing from product data if available
-        if (product.weightPricing && product.weightPricing[selectedWeight]) {
+        if (product?.weightPricing?.[selectedWeight]) {
             return product.weightPricing[selectedWeight];
         }
         
@@ -137,10 +137,10 @@ const ProductDetail = () => {
         <>
             <Helmet>
                 <title>{product.name} - Balan Coffee</title>
-                <meta name="description" content={product.description} />
+                <meta name="description" content={Array.isArray(product.description) ? product.description.join(', ') : product.description} />
                 <meta name="keywords" content={`${product.name}, Vietnamese coffee, ${product.category_name || 'coffee'}, Balan Coffee`} />
                 <meta property="og:title" content={`${product.name} - Balan Coffee`} />
-                <meta property="og:description" content={product.description} />
+                <meta property="og:description" content={Array.isArray(product.description) ? product.description.join(', ') : product.description} />
                 <meta property="og:type" content="product" />
                 <meta property="og:image" content={product.image_url} />
                 <meta property="product:price:amount" content={getCurrentPrice()} />
@@ -153,7 +153,7 @@ const ProductDetail = () => {
                         "@context": "https://schema.org/",
                         "@type": "Product",
                         "name": product.name,
-                        "description": product.description,
+                        "description": Array.isArray(product.description) ? product.description.join(', ') : product.description,
                         "image": product.image_url,
                         "brand": {
                             "@type": "Brand",
@@ -163,7 +163,7 @@ const ProductDetail = () => {
                             "@type": "Offer",
                             "price": getCurrentPrice(),
                             "priceCurrency": "VND",
-                            "availability": product.stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+                            "availability": "https://schema.org/InStock"
                         }
                     })}
                 </script>
@@ -213,22 +213,19 @@ const ProductDetail = () => {
                                 )}
                             </div>
 
-                            <div className="flex items-center space-x-4">
-                                <span className="text-3xl font-bold text-brand-primary">
-                                    {formatVND(getCurrentPrice())}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    product.stockQuantity > 0 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
-                                    {product.stockQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}
-                                </span>
-                            </div>
-
-                            <div className="prose prose-lg max-w-none">
+            <div className="flex items-center space-x-4">
+                <span className="text-3xl font-bold text-brand-primary">
+                    {formatVND(getCurrentPrice())}
+                </span>
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    Còn hàng
+                </span>
+            </div>                            <div className="prose prose-lg max-w-none">
                                 <p className="text-gray-700 leading-relaxed">
-                                    {product.description}
+                                    {Array.isArray(product.description) 
+                                        ? product.description.join(', ')
+                                        : product.description
+                                    }
                                 </p>
                             </div>
 
@@ -249,13 +246,23 @@ const ProductDetail = () => {
                                 {product.flavor_profile && (
                                     <div>
                                         <span className="text-sm font-medium text-brand-primary/70">Hương vị:</span>
-                                        <p className="text-brand-primary">{product.flavor_profile}</p>
+                                        <p className="text-brand-primary">
+                                            {Array.isArray(product.flavor_profile) 
+                                                ? product.flavor_profile.join(', ')
+                                                : product.flavor_profile
+                                            }
+                                        </p>
                                     </div>
                                 )}
                                 {product.processing_method && (
                                     <div>
                                         <span className="text-sm font-medium text-brand-primary/70">Phương pháp chế biến:</span>
-                                        <p className="text-brand-primary">{product.processing_method}</p>
+                                        <p className="text-brand-primary">
+                                            {Array.isArray(product.processing_method) 
+                                                ? product.processing_method.join(', ')
+                                                : product.processing_method
+                                            }
+                                        </p>
                                     </div>
                                 )}
                             </div>                            {/* Weight Selection */}
@@ -294,16 +301,9 @@ const ProductDetail = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                                             </svg>
                                         </button>
-                                        <span className="px-4 py-2 border-x border-gray-300 text-center min-w-[3rem]">
-                                            <input
-                                                id="quantity-input"
-                                                type="number"
-                                                value={quantity}
-                                                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                                                className="w-full text-center border-none bg-transparent outline-none text-brand-primary font-semibold"
-                                                min="1"
-                                            />
-                                        </span>
+                                        <div className="px-4 py-2 border-x border-gray-300 text-center min-w-[3rem] text-brand-primary font-semibold">
+                                            {quantity}
+                                        </div>
                                         <button
                                             onClick={() => setQuantity(quantity + 1)}
                                             className="px-3 py-2 text-brand-primary hover:bg-brand-primary/5 transition-colors rounded-r-lg"
@@ -314,10 +314,12 @@ const ProductDetail = () => {
                                             </svg>
                                         </button>
                                     </div>
-                                </div>                                <div className="space-y-3">
+                                </div>
+
+                                <div className="space-y-3">
                                     <button
                                         onClick={handleAddToCart}
-                                        disabled={product.stockQuantity === 0 || addingToCart}
+                                        disabled={addingToCart}
                                         className="w-full bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
                                         {(() => {
@@ -329,7 +331,7 @@ const ProductDetail = () => {
                                     
                                     <button
                                         onClick={handleBuyNow}
-                                        disabled={product.stockQuantity === 0 || addingToCart}
+                                        disabled={addingToCart}
                                         className="w-full bg-gradient-to-r from-brand-secondary to-brand-secondary/90 hover:from-brand-secondary/90 hover:to-brand-secondary text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
                                         Mua ngay

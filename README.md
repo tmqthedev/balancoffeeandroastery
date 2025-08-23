@@ -4,35 +4,45 @@
 
 ## ✅ Current Status (Updated)
 
-- ✅ **MongoDB Atlas Database** - Fully connected and operational
-- ✅ **Backend API** - Products, categories, authentication working
+- ✅ **SQL Server Database** - Configured for production use
+- ✅ **Backend API** - Products, categories, authentication, Facebook login
 - ✅ **Frontend React App** - Responsive design with Tailwind CSS
-- ✅ **CORS Configuration** - Supports multiple development ports
-- ✅ **Sample Data** - 4 products and 3 categories seeded
-- ✅ **Admin Removed** - All admin functionality cleaned up
-- ✅ **Production Ready** - Database and environment configured
+- ✅ **Facebook SDK** - Complete login integration
+- ✅ **Environment Config** - Single .env file for both frontend & backend
+- ✅ **Production Ready** - Full configuration for deployment
+- ✅ **Payment Integration** - MoMo and VNPay support configured
 
 ## 🚀 Quick Start
 
-### Development Setup
+### Environment Setup
 
-1. **Backend Server**
+1. **Configure Environment**
+```bash
+# Edit .env file with your actual credentials:
+# - Facebook App ID & Secret
+# - Database connection details
+# - Payment gateway credentials (optional)
+```
+
+2. **Backend Server**
 ```bash
 cd backend
+npm install
 npm start
+# Runs on http://localhost:5000
+```
+
+3. **Frontend Development**
+```bash
+npm install
+npm run dev  
 # Runs on http://localhost:3000
 ```
 
-2. **Frontend Development**
-```bash
-npm run dev  
-# Runs on http://localhost:5173 or 5174
-```
-
-3. **Database**
-- MongoDB Atlas already connected
-- Sample data populated
-- No additional setup needed
+4. **Database**
+- Microsoft SQL Server configured
+- Update database credentials in .env
+- Run database setup scripts if needed
 
 ## Công nghệ sử dụng
 
@@ -45,10 +55,11 @@ npm run dev
 
 ### Backend
 - Node.js với Express
-- Microsoft SQL Server (MSSQL)
-- Passport.js (Xác thực)
+- Microsoft SQL Server (MSSQL)  
+- Passport.js (Facebook OAuth)
 - JWT (JSON Web Tokens)
 - Bcryptjs (Mã hóa mật khẩu)
+- Facebook SDK Integration
 
 ## Cài đặt
 

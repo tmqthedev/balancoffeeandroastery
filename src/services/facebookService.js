@@ -26,12 +26,22 @@ class FacebookService {
         return;
       }
 
-      // Wait for FB SDK to load
+      // Listen for SDK ready event
+      const handleSdkReady = () => {
+        this.isInitialized = true;
+        window.removeEventListener('fb-sdk-ready', handleSdkReady);
+        resolve();
+      };
+
+      window.addEventListener('fb-sdk-ready', handleSdkReady);
+
+      // Fallback: Check periodically for FB object
       const checkFB = () => {
         if (window.FB) {
           this.isInitialized = true;
+          window.removeEventListener('fb-sdk-ready', handleSdkReady);
           resolve();
-        } else {
+        } else if (!this.isInitialized) {
           setTimeout(checkFB, 100);
         }
       };
@@ -39,7 +49,8 @@ class FacebookService {
       // Set timeout to avoid infinite waiting
       setTimeout(() => {
         if (!this.isInitialized) {
-          reject(new Error('Facebook SDK failed to load'));
+          window.removeEventListener('fb-sdk-ready', handleSdkReady);
+          reject(new Error('Facebook SDK failed to load. Please check if VITE_FACEBOOK_APP_ID is configured.'));
         }
       }, 10000); // 10 second timeout
 

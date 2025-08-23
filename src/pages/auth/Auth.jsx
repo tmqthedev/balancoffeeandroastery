@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
+import { useFacebook } from '../../hooks/useFacebook';
 
 const Auth = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { login, register } = useAuth();
+    const { login: facebookLogin, loading: facebookSdkLoading } = useFacebook();
     
     // Determine initial mode based on URL
     const initialMode = location.pathname === '/register' ? 'register' : 'login';
@@ -131,12 +133,46 @@ const Auth = () => {
         } finally {
             setLoading(false);
         }
-    };    const handleFacebookLogin = () => {
-        setFacebookLoading(true);
-        // Store intended redirect location
-        sessionStorage.setItem('authRedirect', from);
-        // Redirect to Facebook OAuth
-        window.location.href = '/api/auth/facebook';
+    };    const handleFacebookLogin = async () => {
+        try {
+            setFacebookLoading(true);
+            setError('');
+            
+            // Login with Facebook SDK
+            const response = await facebookLogin(['email', 'public_profile']);
+            
+            if (response.authResponse) {
+                // Get user profile from Facebook
+                const userProfile = await window.FB.api('/me', { 
+                    fields: 'id,name,email,picture' 
+                });
+                
+                // Send Facebook data to your backend for authentication
+                const authResponse = await fetch('/api/auth/facebook/callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        accessToken: response.authResponse.accessToken,
+                        userProfile: userProfile
+                    })
+                });
+                
+                if (authResponse.ok) {
+                    await authResponse.json(); // Process response but don't need to store
+                    // Handle successful login (update auth context)
+                    navigate(from, { replace: true });
+                } else {
+                    throw new Error('Xác thực Facebook thất bại');
+                }
+            }
+        } catch (error) {
+            console.error('Facebook login error:', error);
+            setError(error.message || 'Đăng nhập Facebook thất bại');
+        } finally {
+            setFacebookLoading(false);
+        }
     };
 
     const switchMode = (newMode) => {
@@ -297,17 +333,17 @@ const Auth = () => {
                                 <button
                                     type="button"
                                     onClick={handleFacebookLogin}
-                                    disabled={facebookLoading || loading}
+                                    disabled={facebookLoading || facebookSdkLoading || loading}
                                     className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-lg bg-blue-600 text-brand-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                                 >
-                                    {facebookLoading ? (
+                                    {(facebookLoading || facebookSdkLoading) ? (
                                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-white mr-2"></div>
                                     ) : (
                                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                                         </svg>
                                     )}
-                                    {facebookLoading ? 'Đang chuyển hướng...' : 'Tiếp tục với Facebook'}
+                                    {(facebookLoading || facebookSdkLoading) ? 'Đang đăng nhập...' : 'Tiếp tục với Facebook'}
                                 </button>
                             </form>
                         )}
@@ -483,17 +519,17 @@ const Auth = () => {
                                 <button
                                     type="button"
                                     onClick={handleFacebookLogin}
-                                    disabled={facebookLoading || loading}
+                                    disabled={facebookLoading || facebookSdkLoading || loading}
                                     className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-600 rounded-lg bg-blue-600 text-brand-white hover:bg-blue-700 hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                                 >
-                                    {facebookLoading ? (
+                                    {(facebookLoading || facebookSdkLoading) ? (
                                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-white mr-2"></div>
                                     ) : (
                                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                                         </svg>
                                     )}
-                                    {facebookLoading ? 'Đang chuyển hướng...' : 'Tiếp tục với Facebook'}
+                                    {(facebookLoading || facebookSdkLoading) ? 'Đang đăng nhập...' : 'Tiếp tục với Facebook'}
                                 </button>
                             </form>
                         )}

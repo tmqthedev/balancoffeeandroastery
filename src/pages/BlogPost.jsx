@@ -184,7 +184,7 @@ const BlogPost = () => {
         <meta property="article:published_time" content={blog?.publishedAt || blog?.createdAt} />
         <meta property="article:author" content="Balan Coffee & Roastery" />
         {blog?.category && (
-          <meta property="article:section" content={blog.category} />
+          <meta property="article:section" content={typeof blog.category === 'object' ? blog.category.name : blog.category} />
         )}
         
         {/* Twitter Card */}
@@ -223,7 +223,7 @@ const BlogPost = () => {
             {blog?.category && (
               <div className="mb-4">
                 <span className="inline-block bg-coffee-100 text-coffee-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {blog.category}
+                  {typeof blog.category === 'object' ? blog.category.name : blog.category}
                 </span>
               </div>
             )}

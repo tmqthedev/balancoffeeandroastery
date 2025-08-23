@@ -34,7 +34,7 @@
     <!-- Additional SEO Meta Tags -->
     <meta name="theme-color" content="#1A3C34" />
     <meta name="msapplication-TileColor" content="#1A3C34" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Balan Coffee" />
     
@@ -81,29 +81,6 @@
   </head>
   <body>
     <div id="root"></div>
-    
-    <!-- Facebook SDK -->
-    <script>
-      window.fbAsyncInit = function() {
-        FB.init({
-          appId      : '1234567890', // Replace with your actual App ID
-          cookie     : true,
-          xfbml      : true,
-          version    : 'v18.0'
-        });
-          
-        FB.AppEvents.logPageView();   
-          
-      };
-
-      (function(d, s, id){
-         var js, fjs = d.getElementsByTagName(s)[0];
-         if (d.getElementById(id)) {return;}
-         js = d.createElement(s); js.id = id;
-         js.src = "https://connect.facebook.net/vi_VN/sdk.js"; // Using Vietnamese locale
-         fjs.parentNode.insertBefore(js, fjs);
-       }(document, 'script', 'facebook-jssdk'));
-    </script>
     
     <script type="module" src="/src/main.jsx"></script>
   </body>
