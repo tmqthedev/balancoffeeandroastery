@@ -125,7 +125,14 @@ export const AuthProvider = ({ children }) => {
                 password: userData.password,
                 firstName: userData.firstName,
                 lastName: userData.lastName,
-                phone: userData.phone
+                phone: userData.phone,
+                // Optional fields
+                dateOfBirth: userData.dateOfBirth,
+                gender: userData.gender,
+                address: userData.address,
+                city: userData.city,
+                province: userData.province,
+                postalCode: userData.postalCode
             });
 
             const { token, user: newUser } = response.data;

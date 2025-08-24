@@ -14,14 +14,14 @@ const Checkout = () => {
     const [formData, setFormData] = useState({
         // Billing Information
         billing: {
-            firstName: user?.first_name || '',
-            lastName: user?.last_name || '',
+            firstName: user?.firstName || '',
+            lastName: user?.lastName || '',
             email: user?.email || '',
             phone: user?.phone || '',
-            address: '',
-            city: '',
-            province: '',
-            postalCode: '',
+            address: user?.addresses?.find(addr => addr.isDefault)?.address1 || user?.addresses?.[0]?.address1 || '',
+            city: user?.addresses?.find(addr => addr.isDefault)?.city || user?.addresses?.[0]?.city || '',
+            province: user?.addresses?.find(addr => addr.isDefault)?.province || user?.addresses?.[0]?.province || '',
+            postalCode: user?.addresses?.find(addr => addr.isDefault)?.postalCode || user?.addresses?.[0]?.postalCode || '',
             country: 'Vietnam'
         },
         // Shipping Information
@@ -40,13 +40,45 @@ const Checkout = () => {
         notes: ''
     });    const [errors, setErrors] = useState({});
 
-    const { subtotal, shipping, tax, total } = getCartTotals();
+    const { subtotal, tax, total } = getCartTotals();
 
     useEffect(() => {
         if (cartItems.length === 0) {
             navigate('/cart');
         }
-    }, [cartItems, navigate]);    const steps = [
+    }, [cartItems, navigate]);
+
+    // Update form data when user info changes
+    useEffect(() => {
+        if (user) {
+            const defaultAddress = user.addresses?.find(addr => addr.isDefault) || user.addresses?.[0];
+            
+            setFormData(prev => ({
+                ...prev,
+                billing: {
+                    ...prev.billing,
+                    firstName: user.firstName || prev.billing.firstName,
+                    lastName: user.lastName || prev.billing.lastName,
+                    email: user.email || prev.billing.email,
+                    phone: user.phone || defaultAddress?.phone || prev.billing.phone,
+                    address: defaultAddress?.address1 || prev.billing.address,
+                    city: defaultAddress?.city || prev.billing.city,
+                    province: defaultAddress?.province || prev.billing.province,
+                    postalCode: defaultAddress?.postalCode || prev.billing.postalCode,
+                },
+                shipping: {
+                    ...prev.shipping,
+                    sameAsBilling: true,
+                    firstName: defaultAddress?.firstName || user.firstName || '',
+                    lastName: defaultAddress?.lastName || user.lastName || '',
+                    address: defaultAddress?.address1 || '',
+                    city: defaultAddress?.city || '',
+                    province: defaultAddress?.province || '',
+                    postalCode: defaultAddress?.postalCode || '',
+                }
+            }));
+        }
+    }, [user]);    const steps = [
         { number: 1, title: 'Thông tin thanh toán' },
         { number: 2, title: 'Thông tin giao hàng' },
         { number: 3, title: 'Phương thức thanh toán' }
@@ -159,9 +191,14 @@ const Checkout = () => {
         }).format(amount);
     };    const createOrder = async () => {
         try {
+            // Save address to account if requested
+            if (user && formData.saveToAccount) {
+                await saveAddressToAccount();
+            }
+
             // Prepare customer info according to new API structure
             const customerInfo = {
-                name: `${formData.billing.firstName} ${formData.billing.lastName}`.trim(),
+                name: `${formData.billing.lastName} ${formData.billing.firstName}`.trim(),
                 email: formData.billing.email,
                 phone: formData.billing.phone,
                 address: `${formData.billing.address}, ${formData.billing.city}, ${formData.billing.province}`.trim()
@@ -172,41 +209,58 @@ const Checkout = () => {
                 productId: item.product_id,
                 name: item.name,
                 quantity: item.quantity,
-                price: item.price * 25000, // Convert to VND
-                total: item.quantity * item.price * 25000
+                price: item.price, // Price is already in VND
+                total: item.quantity * item.price
             }));
 
             const orderData = {
                 customerInfo,
                 items,
                 total: Math.round(total), // Ensure integer for payment gateway
-                paymentMethod: formData.paymentMethod || 'cod', // Default to COD
                 notes: formData.notes || ''
             };
 
-            console.log('Creating order with data:', orderData);
+            console.log('Preparing order data:', orderData);
+            return orderData;
+        } catch (error) {
+            console.error('Order preparation failed:', error);
+            throw error;
+        }
+    };
 
-            // Call API to create order
-            const response = await fetch('/api/orders', {
+    // Function to save address to user account
+    const saveAddressToAccount = async () => {
+        try {
+            const addressData = {
+                firstName: formData.billing.firstName,
+                lastName: formData.billing.lastName,
+                address1: formData.billing.address,
+                city: formData.billing.city,
+                province: formData.billing.province,
+                postalCode: formData.billing.postalCode,
+                country: 'VN',
+                phone: formData.billing.phone,
+                type: 'both',
+                isDefault: !user.addresses || user.addresses.length === 0 // Set as default if no existing addresses
+            };
+
+            const response = await fetch('/api/users/addresses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
-                body: JSON.stringify(orderData)
+                body: JSON.stringify(addressData)
             });
 
-            const result = await response.json();
-
             if (!response.ok) {
-                throw new Error(result.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+                const error = await response.json();
+                console.error('Failed to save address:', error);
+            } else {
+                console.log('Address saved successfully to user account');
             }
-
-            console.log('Order created successfully:', result);
-            return result;
         } catch (error) {
-            console.error('Order creation failed:', error);
-            throw error;
+            console.error('Error saving address:', error);
         }
     };
 
@@ -276,25 +330,60 @@ const Checkout = () => {
                                             Thông tin thanh toán
                                         </h2>
                                         
+                                        {user && user.addresses && user.addresses.length > 0 && (
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                <h3 className="text-sm font-medium text-blue-900 mb-2">
+                                                    Sử dụng địa chỉ đã lưu
+                                                </h3>
+                                                <select
+                                                    onChange={(e) => {
+                                                        if (e.target.value) {
+                                                            const selectedAddress = user.addresses.find(addr => addr._id === e.target.value);
+                                                            if (selectedAddress) {
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    billing: {
+                                                                        ...prev.billing,
+                                                                        firstName: selectedAddress.firstName || prev.billing.firstName,
+                                                                        lastName: selectedAddress.lastName || prev.billing.lastName,
+                                                                        phone: selectedAddress.phone || prev.billing.phone,
+                                                                        address: selectedAddress.address1 || prev.billing.address,
+                                                                        city: selectedAddress.city || prev.billing.city,
+                                                                        province: selectedAddress.province || prev.billing.province,
+                                                                        postalCode: selectedAddress.postalCode || prev.billing.postalCode,
+                                                                    }
+                                                                }));
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                >
+                                                    <option value="">Chọn địa chỉ đã lưu...</option>
+                                                    {user.addresses.map(address => (
+                                                        <option key={address._id} value={address._id}>
+                                                            {`${address.firstName} ${address.lastName} - ${address.address1}, ${address.city}, ${address.province}`}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
+                                        {user && (
+                                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                                                <div className="flex items-center">
+                                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                    </svg>
+                                                    <span className="text-sm">
+                                                        Thông tin được tự động điền từ tài khoản của bạn. Bạn có thể chỉnh sửa nếu cần.
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Họ *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.billing.firstName}
-                                                    onChange={(e) => handleInputChange('billing', 'firstName', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                        errors['billing.firstName'] ? 'border-red-300' : 'border-gray-300'
-                                                    }`}
-                                                />
-                                                {errors['billing.firstName'] && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.firstName']}</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                    Tên *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -306,6 +395,22 @@ const Checkout = () => {
                                                 />
                                                 {errors['billing.lastName'] && (
                                                     <p className="mt-1 text-sm text-red-600">{errors['billing.lastName']}</p>
+                                                )}
+                                            </div>
+                                            
+                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                    Tên *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.billing.firstName}
+                                                    onChange={(e) => handleInputChange('billing', 'firstName', e.target.value)}
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.firstName'] ? 'border-red-300' : 'border-gray-300'
+                                                    }`}
+                                                />
+                                                {errors['billing.firstName'] && (
+                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.firstName']}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -363,7 +468,7 @@ const Checkout = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                    Thành phố *
+                                                    Phường/Xã *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -409,6 +514,25 @@ const Checkout = () => {
                                                 />
                                             </div>
                                         </div>
+
+                                        {user && (
+                                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                                <label className="flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.saveToAccount || false}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, saveToAccount: e.target.checked }))}
+                                                        className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
+                                                    />
+                                                    <span className="ml-2 text-sm text-brand-primary">
+                                                        Lưu thông tin này vào tài khoản của tôi
+                                                    </span>
+                                                </label>
+                                                <p className="mt-1 text-xs text-gray-600">
+                                                    Thông tin sẽ được lưu để sử dụng cho các đơn hàng tiếp theo
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -439,22 +563,6 @@ const Checkout = () => {
                                                         </label>
                                                         <input
                                                             type="text"
-                                                            value={formData.shipping.firstName}
-                                                            onChange={(e) => handleInputChange('shipping', 'firstName', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                                errors['shipping.firstName'] ? 'border-red-300' : 'border-gray-300'
-                                                            }`}
-                                                        />
-                                                        {errors['shipping.firstName'] && (
-                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.firstName']}</p>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    <div>                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                            Tên *
-                                                        </label>
-                                                        <input
-                                                            type="text"
                                                             value={formData.shipping.lastName}
                                                             onChange={(e) => handleInputChange('shipping', 'lastName', e.target.value)}
                                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
@@ -465,9 +573,26 @@ const Checkout = () => {
                                                             <p className="mt-1 text-sm text-red-600">{errors['shipping.lastName']}</p>
                                                         )}
                                                     </div>
+                                                    
+                                                    <div>                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                            Tên *
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.shipping.firstName}
+                                                            onChange={(e) => handleInputChange('shipping', 'firstName', e.target.value)}
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                                errors['shipping.firstName'] ? 'border-red-300' : 'border-gray-300'
+                                                            }`}
+                                                        />
+                                                        {errors['shipping.firstName'] && (
+                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.firstName']}</p>
+                                                        )}
+                                                    </div>
                                                 </div>
 
-                                                <div>                                                    <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                <div>                                                    
+                                                    <label className="block text-sm font-medium text-brand-primary mb-1">
                                                         Địa chỉ *
                                                     </label>
                                                     <input
@@ -486,7 +611,7 @@ const Checkout = () => {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                                Thành phố *
+                                                                Phường/Xã *
                                                             </label>
                                                             <input
                                                                 type="text"
@@ -521,7 +646,8 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                    <div>                                                            
+                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
                                                                 Mã bưu điện
                                                             </label>
                                                             <input
@@ -602,7 +728,7 @@ const Checkout = () => {
                                                 <h4 className="text-sm font-medium text-brand-primary">{item.name}</h4>
                                                 <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                                             </div>                                            <span className="text-sm font-semibold text-brand-primary">
-                                                {formatCurrency(item.price * item.quantity * 25000)}
+                                                {formatCurrency(item.price * item.quantity)}
                                             </span>
                                         </div>
                                     ))}
@@ -616,15 +742,8 @@ const Checkout = () => {
                                     </div>
                                     
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Phí vận chuyển</span>
-                                        <span className="font-semibold text-brand-primary">
-                                            {shipping === 0 ? 'Miễn phí' : formatCurrency(shipping)}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="flex justify-between">
                                         <span className="text-gray-600">Thuế</span>
-                                        <span className="font-semibold text-brand-primary">{formatCurrency(tax)}</span>
+                                        <span className="font-semibold text-brand-primary">Đã bao gồm</span>
                                     </div>
                                     
                                     <hr className="border-gray-200" />

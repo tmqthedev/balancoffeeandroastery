@@ -18,75 +18,31 @@ const ProductDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [quantity, setQuantity] = useState(1);
-    const [selectedWeight, setSelectedWeight] = useState('250g');
+    const [selectedWeight, setSelectedWeight] = useState('');
     const [addingToCart, setAddingToCart] = useState(false);
-
-    // Get available weights from product data or fallback to default
-    const getAvailableWeights = () => {
-        if (product?.pricingType === 'weight-based' && product?.weightPricing?.length > 0) {
-            return product.weightPricing
-                .filter(option => option.isAvailable !== false)
-                .map(option => option.weightDisplay)
-                .sort((a, b) => {
-                    // Sort by weight value
-                    const aNum = parseInt(a);
-                    const bNum = parseInt(b);
-                    return aNum - bNum;
-                });
-        }
-        return ['100g', '250g', '500g', '1kg']; // Fallback for fixed pricing
-    };
-
-    const weights = getAvailableWeights();
 
     // Get price based on selected weight from product data
     const getCurrentPrice = () => {
         if (!product) return 0;
         
-        // For weight-based products, find the matching weight option
-        if (product.pricingType === 'weight-based' && product.weightPricing?.length > 0) {
-            // Find price for selected weight
-            const weightOption = product.weightPricing.find(option => 
-                option.weightDisplay === selectedWeight && option.isAvailable !== false
-            );
+        // For weight-based pricing, find the corresponding weight option
+        if (product.pricingType === 'weight-based' && product.weightPricing && product.weightPricing.length > 0) {
+            // Convert selectedWeight to number (remove 'g' and convert)
+            const selectedWeightNum = parseInt(selectedWeight.replace('g', ''));
+            
+            // Find the matching weight option in database
+            const weightOption = product.weightPricing.find(option => option.weight === selectedWeightNum);
             
             if (weightOption) {
                 return weightOption.price;
             }
             
-            // If selectedWeight not found, use default option
-            const defaultOption = product.weightPricing.find(option => 
-                option.isDefault && option.isAvailable !== false
-            );
-            
-            if (defaultOption) {
-                return defaultOption.price;
-            }
-            
-            // If no default, use first available option
-            const firstAvailable = product.weightPricing.find(option => 
-                option.isAvailable !== false
-            );
-            
-            if (firstAvailable) {
-                return firstAvailable.price;
-            }
+            // If no exact match, return the first available option
+            return product.weightPricing[0].price;
         }
         
-        // For fixed pricing
-        if (product.price) {
-            return product.price;
-        }
-        
-        // Last resort fallback
-        const defaultWeightPrices = {
-            '100g': 120000,   
-            '250g': 280000,   
-            '500g': 520000,   
-            '1kg': 980000     
-        };
-        
-        return defaultWeightPrices[selectedWeight] || 280000;
+        // For fixed pricing, return the product price
+        return product.price || 0;
     };
 
     const fetchProduct = useCallback(async () => {
@@ -125,25 +81,28 @@ const ProductDetail = () => {
 
     // Set default selected weight when product is loaded
     useEffect(() => {
-        if (product && product.pricingType === 'weight-based' && product.weightPricing?.length > 0) {
-            // Find default option first
-            const defaultOption = product.weightPricing.find(option => 
-                option.isDefault && option.isAvailable !== false
-            );
-            
-            if (defaultOption) {
-                setSelectedWeight(defaultOption.weightDisplay);
-            } else {
-                // Use first available option
-                const firstAvailable = product.weightPricing.find(option => 
-                    option.isAvailable !== false
-                );
-                if (firstAvailable) {
-                    setSelectedWeight(firstAvailable.weightDisplay);
+        if (product && !selectedWeight) {
+            // Get available weights from product data
+            const getAvailableWeights = () => {
+                if (product?.pricingType === 'weight-based' && product?.weightPricing && product.weightPricing.length > 0) {
+                    return product.weightPricing
+                        .filter(option => option.isAvailable !== false) // Filter out unavailable options
+                        .map(option => `${option.weight}g`)
+                        .sort((a, b) => parseInt(a) - parseInt(b)); // Sort by weight
                 }
+                
+                // Default weights for fixed pricing or fallback
+                return ['250g'];
+            };
+            
+            const availableWeights = getAvailableWeights();
+            if (availableWeights.length > 0) {
+                // Set default to the first available weight, or find 250g if available
+                const defaultWeight = availableWeights.find(w => w === '250g') || availableWeights[0];
+                setSelectedWeight(defaultWeight);
             }
         }
-    }, [product]);
+    }, [product, selectedWeight]);
 
     const handleAddToCart = async () => {
         if (!product) return;
@@ -334,26 +293,46 @@ const ProductDetail = () => {
                                     </div>
                                 )}
                             </div>                            {/* Weight Selection */}
-                            <div>
-                                <span className="block text-sm font-medium text-brand-primary/70 mb-2">
-                                    Trọng lượng:
-                                </span>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {weights.map(weight => (
-                                        <button
-                                            key={weight}
-                                            onClick={() => setSelectedWeight(weight)}
-                                            className={`py-2 px-4 border rounded-lg text-sm font-medium transition-all duration-200 ${
-                                                selectedWeight === weight
-                                                    ? 'border-brand-primary bg-brand-primary text-brand-white shadow-lg transform scale-105'
-                                                    : 'border-gray-300 text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5'
-                                            }`}
-                                        >
-                                            {weight}
-                                        </button>
-                                    ))}
+                            {product.pricingType === 'weight-based' && product.weightPricing && product.weightPricing.length > 1 && (
+                                <div>
+                                    <span className="block text-sm font-medium text-brand-primary/70 mb-2">
+                                        Trọng lượng:
+                                    </span>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {product.weightPricing
+                                            .filter(option => option.isAvailable !== false)
+                                            .sort((a, b) => a.weight - b.weight)
+                                            .map(weightOption => {
+                                                const weight = `${weightOption.weight}g`;
+                                                const isAvailable = weightOption.isAvailable !== false;
+                                                
+                                                // Determine button style class
+                                                let buttonClass = 'py-2 px-4 border rounded-lg text-sm font-medium transition-all duration-200 ';
+                                                if (selectedWeight === weight && isAvailable) {
+                                                    buttonClass += 'border-brand-primary bg-brand-primary text-brand-white shadow-lg transform scale-105';
+                                                } else if (isAvailable) {
+                                                    buttonClass += 'border-gray-300 text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5';
+                                                } else {
+                                                    buttonClass += 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50';
+                                                }
+                                                
+                                                return (
+                                                    <button
+                                                        key={weight}
+                                                        onClick={() => isAvailable && setSelectedWeight(weight)}
+                                                        disabled={!isAvailable}
+                                                        className={buttonClass}
+                                                    >
+                                                        {weight}
+                                                        <div className="text-xs mt-1">
+                                                            {formatVND(weightOption.price)}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
                                 </div>
-                            </div>                            {/* Quantity and Add to Cart */}
+                            )}                            {/* Quantity and Add to Cart */}
                             <div className="space-y-4">
                                 <div>
                                     <label htmlFor="quantity-input" className="block text-sm font-medium text-brand-primary/70 mb-2">

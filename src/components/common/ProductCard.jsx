@@ -4,11 +4,74 @@ import { Link } from 'react-router-dom';
 import { highlightSearchTerm } from '../../utils/searchUtils';
 import { formatVND } from '../../utils/currency';
 
-const ProductCard = ({ product, searchTerm, onAddToCart }) => {
-    const handleAddToCart = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onAddToCart(product);
+const ProductCard = ({ product, searchTerm }) => {
+
+    const renderPrice = () => {
+        const isWeightBased = product.pricingType === 'weight-based' && 
+                              product.weightPricing && 
+                              product.weightPricing.length > 0;
+
+        if (isWeightBased) {
+            // Find min and max prices
+            const prices = product.weightPricing.map(option => option.price);
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+
+            // If min and max prices are the same, show only one price
+            if (minPrice === maxPrice) {
+                return (
+                    <span className="text-xl font-bold text-brand-primary">
+                        {formatVND(minPrice)}
+                    </span>
+                );
+            }
+
+            return (
+                <>
+                    <span className="text-xl font-bold text-brand-primary">
+                        {formatVND(minPrice)} - {formatVND(maxPrice)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                        250g - 1kg
+                    </span>
+                </>
+            );
+        }
+
+        if (product.price) {
+            return (
+                <span className="text-xl font-bold text-brand-primary">
+                    {formatVND(product.price)}
+                </span>
+            );
+        }
+
+        return (
+            <span className="text-sm text-gray-500">
+                Liên hệ để biết giá
+            </span>
+        );
+    };
+
+    const renderProductImage = () => {
+        if (product.image_url) {
+            return (
+                <img
+                    src={product.image_url}
+                    alt={product.name || 'Sản phẩm'}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                />
+            );
+        }
+
+        return (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+        );
     };
 
     return (
@@ -16,20 +79,7 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
             <Link to={`/products/${product.id}`} className="block">
                 {/* Product Image */}
                 <div className="relative h-48 bg-gray-100 overflow-hidden">
-                    {product.image_url ? (
-                        <img
-                            src={product.image_url}
-                            alt={product.name || 'Sản phẩm'}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                    )}
+                    {renderProductImage()}
                 </div>
             </Link>
 
@@ -47,46 +97,17 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                 {/* Price and Add to Cart */}
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                        {product.weightPricing && product.weightPricing.length > 0 ? (
-                            // Weight-based pricing - show default option or first available
-                            (() => {
-                                // Find default option first
-                                const defaultOption = product.weightPricing.find(option => 
-                                    option.isDefault && option.isAvailable !== false
-                                );
-                                
-                                // If no default, use first available option
-                                const displayOption = defaultOption || product.weightPricing.find(option => 
-                                    option.isAvailable !== false
-                                ) || product.weightPricing[0];
-                                
-                                return (
-                                    <>
-                                        <span className="text-xl font-bold text-brand-primary">
-                                            {formatVND(displayOption.price)}
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                            từ {displayOption.weightDisplay || `${displayOption.weight}g`}
-                                        </span>
-                                    </>
-                                );
-                            })()
-                        ) : (
-                            // Fixed pricing
-                            <span className="text-xl font-bold text-brand-primary">
-                                {formatVND(product.price)}
-                            </span>
-                        )}
+                        {renderPrice()}
                     </div>
                     
-                    {/* Add to Cart Button */}
-                    <button
-                        onClick={handleAddToCart}
-                        className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md"
-                        aria-label={`Thêm ${product.name || 'sản phẩm'} vào giỏ hàng`}
+                    {/* View Details Button */}
+                    <Link
+                        to={`/products/${product.id}`}
+                        className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md inline-block text-center"
+                        aria-label={`Xem chi tiết ${product.name || 'sản phẩm'}`}
                     >
-                        Thêm vào giỏ
-                    </button>
+                        Xem chi tiết
+                    </Link>
                 </div>
             </div>
         </div>
@@ -114,6 +135,7 @@ ProductCard.propTypes = {
         ]),
         descriptionVi: PropTypes.string,
         price: PropTypes.number,
+        pricingType: PropTypes.oneOf(['fixed', 'weight-based']),
         weightPricing: PropTypes.arrayOf(PropTypes.shape({
             weight: PropTypes.number,
             price: PropTypes.number,
@@ -125,8 +147,7 @@ ProductCard.propTypes = {
         stockQuantity: PropTypes.number,
         isFeatured: PropTypes.bool
     }).isRequired,
-    searchTerm: PropTypes.string,
-    onAddToCart: PropTypes.func.isRequired
+    searchTerm: PropTypes.string
 };
 
 ProductCard.defaultProps = {

@@ -79,6 +79,54 @@ const userValidationRules = [
     .optional()
     .matches(/^[0-9+\-\s()]{8,20}$/)
     .withMessage('Số điện thoại không hợp lệ'),
+  // Optional demographic fields
+  body('dateOfBirth')
+    .optional()
+    .isISO8601()
+    .withMessage('Ngày sinh không hợp lệ'),
+  body('gender')
+    .optional()
+    .isIn(['male', 'female', 'other'])
+    .withMessage('Giới tính không hợp lệ'),
+  body('occupation')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Nghề nghiệp không được quá 100 ký tự'),
+  body('coffeePreference')
+    .optional()
+    .isIn(['light', 'medium', 'dark', 'mixed'])
+    .withMessage('Sở thích cà phê không hợp lệ'),
+  body('marketingConsent')
+    .optional()
+    .isBoolean()
+    .withMessage('Đồng ý marketing phải là giá trị boolean'),
+  // Optional address fields
+  body('street')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Địa chỉ không được quá 255 ký tự'),
+  body('ward')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Phường/Xã không được quá 100 ký tự'),
+  body('district')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Quận/Huyện không được quá 100 ký tự'),
+  body('city')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Tỉnh/Thành phố không được quá 100 ký tự'),
+  body('postalCode')
+    .optional()
+    .trim()
+    .matches(/^[0-9]{5,6}$/)
+    .withMessage('Mã bưu điện phải có 5-6 chữ số'),
 ];
 
 // Login validation rules
@@ -188,6 +236,47 @@ const validatePagination = [
     .withMessage('Giới hạn phải là số nguyên dương và không quá 100')
 ];
 
+// Address validation rules
+const addressValidationRules = [
+  body('fullName')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Họ tên không được để trống và không quá 100 ký tự'),
+  body('phone')
+    .matches(/^[0-9+\-\s()]{8,20}$/)
+    .withMessage('Số điện thoại không hợp lệ'),
+  body('street')
+    .trim()
+    .isLength({ min: 1, max: 255 })
+    .withMessage('Địa chỉ không được để trống và không quá 255 ký tự'),
+  body('ward')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Phường/Xã không được để trống và không quá 100 ký tự'),
+  body('district')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Quận/Huyện không được để trống và không quá 100 ký tự'),
+  body('city')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Tỉnh/Thành phố không được để trống và không quá 100 ký tự'),
+  body('postalCode')
+    .optional()
+    .trim()
+    .matches(/^[0-9]{5,6}$/)
+    .withMessage('Mã bưu điện phải có 5-6 chữ số'),
+  body('label')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Nhãn địa chỉ không được quá 50 ký tự'),
+  body('isDefault')
+    .optional()
+    .isBoolean()
+    .withMessage('isDefault phải là giá trị boolean')
+];
+
 module.exports = {
   validateRequest,
   productValidationRules,
@@ -197,5 +286,6 @@ module.exports = {
   blogValidationRules,
   contactValidationRules,
   validateIdParam,
-  validatePagination
+  validatePagination,
+  addressValidationRules
 };

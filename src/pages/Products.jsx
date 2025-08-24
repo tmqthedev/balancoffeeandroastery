@@ -105,15 +105,47 @@ const Products = () => {
     // Cart functionality
     const handleAddToCart = (product) => {
         try {
+            // Determine the correct price and product data
+            let productPrice;
+            let productName = product.name || product.nameVi || 'Sản phẩm';
+            
+            if (product.pricingType === 'weight-based' && product.weightPricing && product.weightPricing.length > 0) {
+                // For weight-based products, use the first available option or default option
+                const defaultOption = product.weightPricing.find(option => option.isDefault && option.isAvailable) ||
+                                    product.weightPricing.find(option => option.isAvailable) ||
+                                    product.weightPricing[0];
+                
+                productPrice = defaultOption.price;
+                // Add weight info to product name for clarity
+                productName += ` (${defaultOption.weight}g)`;
+            } else {
+                // For fixed pricing
+                productPrice = product.price;
+            }
+
+            // Ensure we have a valid price
+            if (!productPrice || productPrice <= 0) {
+                alert('Sản phẩm này hiện tại chưa có giá. Vui lòng liên hệ để biết thêm thông tin.');
+                return;
+            }
+
             addToCart({
-                id: product.id,
-                name: product.nameVi || product.name,
-                price: product.price,
-                image_url: product.image_url,
-                stock_quantity: product.stock_quantity
+                id: product.id || product._id,
+                product_id: product.id || product._id,
+                name: productName,
+                price: productPrice,
+                image_url: product.image_url || '',
+                description: product.description || product.shortDescription || '',
+                stock_quantity: product.stockQuantity || product.stock_quantity || 0,
+                pricingType: product.pricingType,
+                weightPricing: product.weightPricing
             }, 1);
+            
+            // Optional: Show success message
+            console.log(`Đã thêm "${productName}" vào giỏ hàng với giá ${productPrice.toLocaleString('vi-VN')}đ`);
         } catch (error) {
             console.error('Error adding to cart:', error);
+            alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
         }
     };
 
@@ -289,7 +321,6 @@ const Products = () => {
                                 searchTime={0}
                                 totalProducts={totalProducts}
                                 onClearSearch={handleClearSearch}
-                                handleAddToCart={handleAddToCart}
                                 clearFilters={clearFilters}
                             />
                         </div>

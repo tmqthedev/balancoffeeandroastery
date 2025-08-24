@@ -207,13 +207,15 @@ export const CartProvider = ({ children }) => {
             return total + (price * quantity);
         }, 0);
         
-        const shipping = subtotal >= 1000000 ? 0 : 50000; // Free shipping over 1M VND
-        const tax = Math.round(subtotal * 0.1); // 10% tax
-        const total = subtotal + shipping + tax;
+        // No shipping or tax charges
+        const shipping = 0;
+        const tax = 0;
+        const total = subtotal;
         
         return { 
             itemCount: itemCount || 0, 
-            subtotal: subtotal || 0,            shipping: shipping || 0, 
+            subtotal: subtotal || 0,
+            shipping: shipping || 0, 
             tax: tax || 0, 
             total: total || 0
         };

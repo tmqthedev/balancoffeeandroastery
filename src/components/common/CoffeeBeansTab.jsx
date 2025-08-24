@@ -11,7 +11,6 @@ const CoffeeBeansTab = ({
     searchTime, 
     totalProducts, 
     onClearSearch,
-    handleAddToCart,
     clearFilters 
 }) => {
     return (
@@ -98,7 +97,6 @@ const CoffeeBeansTab = ({
                             key={product._id || product.id}
                             product={product}
                             searchTerm={searchTerm || ''}
-                            onAddToCart={handleAddToCart}
                         />
                     ))}
                 </div>
@@ -141,12 +139,12 @@ const CoffeeBeansTab = ({
 
 CoffeeBeansTab.propTypes = {
     products: PropTypes.array.isRequired,
-    loading: PropTypes.bool.isRequired,    error: PropTypes.string,
+    loading: PropTypes.bool.isRequired,    
+    error: PropTypes.string,
     searchTerm: PropTypes.string,
     searchTime: PropTypes.number,
     totalProducts: PropTypes.number.isRequired,
     onClearSearch: PropTypes.func.isRequired,
-    handleAddToCart: PropTypes.func.isRequired,
     clearFilters: PropTypes.func.isRequired
 };
 

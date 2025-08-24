@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
+const Order = require('../models/Order');
 const momoService = require('../services/momoService');
 const emailService = require('../services/emailService');
 
@@ -61,28 +62,49 @@ router.post('/', [
     }
 
     const { customerInfo, items, paymentMethod, total, notes } = req.body;
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('PaymentMethod:', paymentMethod);
 
     // Generate order number
     const orderNumber = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
 
-    // Prepare order data
+    // Calculate subtotal from items
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Prepare order data to match Order schema
     const orderData = {
       orderNumber,
-      customerInfo,
-      items,
-      total,
-      paymentMethod,
+      customerId: req.user?.userId || 'guest',
+      customerInfo: {
+        email: customerInfo.email,
+        firstName: customerInfo.name?.split(' ')[1] || customerInfo.name,
+        lastName: customerInfo.name?.split(' ')[0] || '',
+        phone: customerInfo.phone
+      },
+      items: items.map(item => ({
+        productId: item.productId,
+        productName: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        subtotal: item.price * item.quantity
+      })),
+      subtotal: subtotal,
+      total: total,
+      payment: {
+        method: paymentMethod || 'cod',
+        status: 'pending'
+      },
       notes: notes || '',
       status: 'pending',
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'waiting',
-      createdAt: new Date().toISOString(),
-      userId: req.user?.userId || null
+      customerNotes: notes || ''
     };
 
     console.log('Creating order:', orderNumber);
+    console.log('Order data:', JSON.stringify(orderData, null, 2));
 
-    // Create order in database
-    const order = await db.createOrder(orderData);
+    // Create order in database using Mongoose
+    const order = new Order(orderData);
+    await order.save();
 
     // Handle MoMo payment
     if (paymentMethod === 'momo') {
@@ -96,17 +118,16 @@ router.post('/', [
 
         if (momoResult.success) {
           // Update order with MoMo payment info
-          await db.updateOrderPaymentInfo(orderNumber, {
-            paymentMethod: 'momo',
-            paymentStatus: 'pending',
-            momoData: momoResult.data
-          });
+          order.payment.method = 'momo';
+          order.payment.status = 'pending';
+          order.payment.gatewayResponse = momoResult.data;
+          await order.save();
 
           return res.status(201).json({
             success: true,
             message: 'Đơn hàng đã được tạo thành công',
             order: {
-              ...order,
+              ...order.toObject(),
               momoData: momoResult.data
             }
           });
@@ -135,7 +156,7 @@ router.post('/', [
     res.status(201).json({
       success: true,
       message: 'Đơn hàng đã được tạo thành công',
-      order: order
+      order: order.toObject()
     });
 
   } catch (error) {
@@ -161,31 +182,32 @@ router.get('/', authenticateToken, async (req, res) => {
     console.log(`Getting orders for user ${userId}`);
 
     // Build query conditions
-    const conditions = { userId };
+    const conditions = { customerId: userId };
     if (status) {
       conditions.status = status;
     }
 
-    // Get orders from database
-    const orders = await db.query('orders', conditions);
+    // Get orders from MongoDB using Mongoose
+    const orders = await Order.find(conditions)
+      .sort({ createdAt: -1 }) // Newest first
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
 
-    // Sort by creation date (newest first)
-    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Get total count for pagination
+    const totalOrders = await Order.countDocuments(conditions);
 
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedOrders = orders.slice(startIndex, endIndex);
+    console.log(`Found ${orders.length} orders for user ${userId}`);
 
     res.json({
       success: true,
       data: {
-        orders: paginatedOrders,
+        orders: orders,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          total: orders.length,
-          totalPages: Math.ceil(orders.length / limit)
+          total: totalOrders,
+          totalPages: Math.ceil(totalOrders / limit)
         }
       }
     });
@@ -212,8 +234,8 @@ router.get('/:orderNumber', authenticateToken, async (req, res) => {
 
     console.log(`Getting order ${orderNumber} for user ${userId}`);
 
-    // Get order from database
-    const order = await db.getOrder(orderNumber);
+    // Get order from MongoDB
+    const order = await Order.findOne({ orderNumber }).exec();
 
     if (!order) {
       return res.status(404).json({
@@ -223,7 +245,7 @@ router.get('/:orderNumber', authenticateToken, async (req, res) => {
     }
 
     // Check if user owns this order (or is admin)
-    if (order.userId !== userId && !req.user.isAdmin) {
+    if (order.customerId !== userId && !req.user.isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Không có quyền truy cập đơn hàng này'
@@ -257,8 +279,8 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
 
     console.log(`Cancelling order ${orderNumber} for user ${userId}`);
 
-    // Get order from database
-    const order = await db.getOrder(orderNumber);
+    // Get order from MongoDB
+    const order = await Order.findOne({ orderNumber }).exec();
 
     if (!order) {
       return res.status(404).json({
@@ -268,7 +290,7 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
     }
 
     // Check if user owns this order
-    if (order.userId !== userId && !req.user.isAdmin) {
+    if (order.customerId !== userId && !req.user.isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Không có quyền huỷ đơn hàng này'
@@ -276,18 +298,22 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
     }
 
     // Check if order can be cancelled
-    if (order.status === 'completed' || order.status === 'cancelled') {
+    if (order.status === 'delivered' || order.status === 'cancelled') {
       return res.status(400).json({
         success: false,
         message: 'Không thể huỷ đơn hàng này'
       });
     }
 
-    // Update order status
-    await db.updateOrderPaymentStatus(orderNumber, 'cancelled', {
-      cancelledAt: new Date().toISOString(),
+    // Update order status using Mongoose
+    order.status = 'cancelled';
+    order.cancellation = {
+      reason: req.body.reason || 'Khách hàng yêu cầu huỷ',
+      cancelledAt: new Date(),
       cancelledBy: userId
-    });
+    };
+    order.updateStatus('cancelled', req.body.reason || 'Khách hàng yêu cầu huỷ', userId);
+    await order.save();
 
     res.json({
       success: true,
@@ -344,6 +370,39 @@ router.get('/public/:orderNumber', async (req, res) => {
       success: false,
       message: 'Không thể lấy thông tin đơn hàng',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+/**
+ * @route GET /api/orders/test/mongodb
+ * @desc Test MongoDB connection for orders
+ * @access Public (for testing)
+ */
+router.get('/test/mongodb', async (req, res) => {
+  try {
+    // Test MongoDB connection
+    const orderCount = await Order.countDocuments();
+    const recentOrders = await Order.find().sort({ createdAt: -1 }).limit(5);
+    
+    res.json({
+      success: true,
+      message: 'MongoDB connection working',
+      data: {
+        totalOrders: orderCount,
+        recentOrders: recentOrders.map(order => ({
+          orderNumber: order.orderNumber,
+          status: order.status,
+          total: order.total,
+          createdAt: order.createdAt
+        }))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'MongoDB connection failed',
+      error: error.message
     });
   }
 });

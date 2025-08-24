@@ -54,6 +54,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Logging middleware
 app.use(morgan('combined'));
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`🔍 ${req.method} ${req.url}`);
+  console.log('Headers:', req.headers);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -114,7 +124,7 @@ app.use('/api/products', (req, res, next) => {
 
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
-// app.use('/api/orders', require('./routes/orders'));
+app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
 // app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/payments', require('./routes/payments'));

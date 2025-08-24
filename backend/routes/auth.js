@@ -13,7 +13,20 @@ const { validateRequest, userValidationRules, loginValidationRules } = require('
 // Register
 router.post('/register', validateRequest(userValidationRules), async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone } = req.body;
+    const { 
+      email, 
+      password, 
+      firstName, 
+      lastName, 
+      phone,
+      // Optional fields
+      dateOfBirth,
+      gender,
+      address,
+      city,
+      province,
+      postalCode
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -29,8 +42,8 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     // Generate user ID
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create new user
-    const newUser = new User({
+    // Prepare user data
+    const userData = {
       _id: userId,
       email,
       password: hashedPassword,
@@ -41,7 +54,31 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
       status: 'active',
       emailVerified: false,
       phoneVerified: false
-    });
+    };
+
+    // Add optional fields if provided
+    if (dateOfBirth) userData.dateOfBirth = new Date(dateOfBirth);
+    if (gender) userData.gender = gender;
+
+    // Create user
+    const newUser = new User(userData);
+
+    // Add address if provided
+    if (address || city || province) {
+      const defaultAddress = {
+        type: 'both',
+        firstName: firstName,
+        lastName: lastName,
+        address1: address || '',
+        city: city || '',
+        province: province || '',
+        postalCode: postalCode || '',
+        country: 'VN',
+        phone: phone || undefined,
+        isDefault: true
+      };
+      newUser.addresses.push(defaultAddress);
+    }
 
     await newUser.save();
 
