@@ -21,18 +21,64 @@ const ProductDetail = () => {
     const [selectedWeight, setSelectedWeight] = useState('250g');
     const [addingToCart, setAddingToCart] = useState(false);
 
-    const weights = ['100g', '250g', '500g', '1kg'];
+    // Get available weights from product data or fallback to default
+    const getAvailableWeights = () => {
+        if (product?.pricingType === 'weight-based' && product?.weightPricing?.length > 0) {
+            return product.weightPricing
+                .filter(option => option.isAvailable !== false)
+                .map(option => option.weightDisplay)
+                .sort((a, b) => {
+                    // Sort by weight value
+                    const aNum = parseInt(a);
+                    const bNum = parseInt(b);
+                    return aNum - bNum;
+                });
+        }
+        return ['100g', '250g', '500g', '1kg']; // Fallback for fixed pricing
+    };
+
+    const weights = getAvailableWeights();
 
     // Get price based on selected weight from product data
     const getCurrentPrice = () => {
         if (!product) return 0;
         
-        // Use weightPricing from product data if available
-        if (product?.weightPricing?.[selectedWeight]) {
-            return product.weightPricing[selectedWeight];
+        // For weight-based products, find the matching weight option
+        if (product.pricingType === 'weight-based' && product.weightPricing?.length > 0) {
+            // Find price for selected weight
+            const weightOption = product.weightPricing.find(option => 
+                option.weightDisplay === selectedWeight && option.isAvailable !== false
+            );
+            
+            if (weightOption) {
+                return weightOption.price;
+            }
+            
+            // If selectedWeight not found, use default option
+            const defaultOption = product.weightPricing.find(option => 
+                option.isDefault && option.isAvailable !== false
+            );
+            
+            if (defaultOption) {
+                return defaultOption.price;
+            }
+            
+            // If no default, use first available option
+            const firstAvailable = product.weightPricing.find(option => 
+                option.isAvailable !== false
+            );
+            
+            if (firstAvailable) {
+                return firstAvailable.price;
+            }
         }
         
-        // Fallback to default pricing for products without weightPricing
+        // For fixed pricing
+        if (product.price) {
+            return product.price;
+        }
+        
+        // Last resort fallback
         const defaultWeightPrices = {
             '100g': 120000,   
             '250g': 280000,   
@@ -40,7 +86,7 @@ const ProductDetail = () => {
             '1kg': 980000     
         };
         
-        return defaultWeightPrices[selectedWeight] || product.price || 280000;
+        return defaultWeightPrices[selectedWeight] || 280000;
     };
 
     const fetchProduct = useCallback(async () => {
@@ -76,6 +122,28 @@ const ProductDetail = () => {
     useEffect(() => {
         fetchProduct();
     }, [fetchProduct]);
+
+    // Set default selected weight when product is loaded
+    useEffect(() => {
+        if (product && product.pricingType === 'weight-based' && product.weightPricing?.length > 0) {
+            // Find default option first
+            const defaultOption = product.weightPricing.find(option => 
+                option.isDefault && option.isAvailable !== false
+            );
+            
+            if (defaultOption) {
+                setSelectedWeight(defaultOption.weightDisplay);
+            } else {
+                // Use first available option
+                const firstAvailable = product.weightPricing.find(option => 
+                    option.isAvailable !== false
+                );
+                if (firstAvailable) {
+                    setSelectedWeight(firstAvailable.weightDisplay);
+                }
+            }
+        }
+    }, [product]);
 
     const handleAddToCart = async () => {
         if (!product) return;

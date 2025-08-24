@@ -48,15 +48,29 @@ const ProductCard = ({ product, searchTerm, onAddToCart }) => {
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                         {product.weightPricing && product.weightPricing.length > 0 ? (
-                            // Weight-based pricing
-                            <>
-                                <span className="text-xl font-bold text-brand-primary">
-                                    {formatVND(product.weightPricing[0].price)}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                    từ {product.weightPricing[0].weight}g
-                                </span>
-                            </>
+                            // Weight-based pricing - show default option or first available
+                            (() => {
+                                // Find default option first
+                                const defaultOption = product.weightPricing.find(option => 
+                                    option.isDefault && option.isAvailable !== false
+                                );
+                                
+                                // If no default, use first available option
+                                const displayOption = defaultOption || product.weightPricing.find(option => 
+                                    option.isAvailable !== false
+                                ) || product.weightPricing[0];
+                                
+                                return (
+                                    <>
+                                        <span className="text-xl font-bold text-brand-primary">
+                                            {formatVND(displayOption.price)}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                            từ {displayOption.weightDisplay || `${displayOption.weight}g`}
+                                        </span>
+                                    </>
+                                );
+                            })()
                         ) : (
                             // Fixed pricing
                             <span className="text-xl font-bold text-brand-primary">

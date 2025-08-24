@@ -52,9 +52,9 @@ const Cart = () => {
 
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-brand-primary via-brand-primary/95 to-brand-primary/90 text-brand-white py-12">
+                <div className="bg-gradient-to-r from-brand-primary via-brand-primary/95 to-brand-primary/90 text-white py-12">
                     <div className="container mx-auto px-4">
-                        <h1 className="text-3xl md:text-4xl font-bold">
+                        <h1 className="text-3xl md:text-4xl font-bold text-white">
                             Giỏ hàng ({itemCount})
                         </h1>
                     </div>
@@ -215,30 +215,20 @@ const Cart = () => {
                                             <span className="font-semibold text-coffee-800">{formatVND(subtotal)}</span>
                                         </div>
                                         
-                                        <div className="flex justify-between">
-                                            <span className="text-coffee-600">Phí vận chuyển</span>
-                                            <span className="font-semibold text-coffee-800">
-                                                {shipping === 0 ? 'Miễn phí' : formatVND(shipping)}
-                                            </span>
-                                        </div>
-                                        
-                                        <div className="flex justify-between">
-                                            <span className="text-coffee-600">Thuế</span>
-                                            <span className="font-semibold text-coffee-800">{formatVND(tax)}</span>
-                                        </div>
-                                        
                                         <hr className="border-coffee-200" />
                                         
                                         <div className="flex justify-between text-lg">
                                             <span className="font-semibold text-coffee-800">Tổng cộng</span>
-                                            <span className="font-bold text-coffee-800">{formatVND(total)}</span>
+                                            <span className="font-bold text-coffee-800">{formatVND(subtotal)}</span>
                                         </div>
                                     </div>
                                       {/* Shipping Notice */}
                                     {subtotal < 1000000 && (
                                         <div className="mt-4 p-3 bg-coffee-50 border border-coffee-200 rounded-lg">
                                             <p className="text-sm text-coffee-700">
-                                                Thêm {formatVND(1000000 - subtotal)} nữa để được miễn phí vận chuyển!
+                                                Freeship nội khu Vinhomes Grand Park hoặc đơn hàng trên 1.000.000đ
+                                                <br />
+                                                Phí ship được thanh toán bởi người đặt nếu ngoài khu vực Vinhomes Grand Park.
                                             </p>
                                         </div>
                                     )}

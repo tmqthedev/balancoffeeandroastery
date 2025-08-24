@@ -36,7 +36,22 @@ export const CartProvider = ({ children }) => {
             if (isAuthenticated) {
                 // Load from API for authenticated users
                 const response = await api.get('/cart');
-                setCartItems(response.data.items || []);
+                console.log('Cart API response:', response.data); // Debug log
+                const cartData = response.data.cart || response.data;
+                const cartItems = cartData.items || [];
+                
+                // Transform backend cart items to frontend format
+                const transformedItems = cartItems.map(item => ({
+                    product_id: item.productId,
+                    id: item.productId,
+                    name: item.name || 'Sản phẩm',
+                    price: item.price || 0,
+                    quantity: item.quantity || 1,
+                    image_url: item.image_url || '',
+                    description: item.description || ''
+                }));
+                
+                setCartItems(transformedItems);
             } else {
                 // Load from localStorage for guests
                 const savedCart = localStorage.getItem('cart');
@@ -57,60 +72,75 @@ export const CartProvider = ({ children }) => {
         loadCart();
     }, [loadCart, isAuthenticated]);
 
-    // Save cart to localStorage (guest) or API (authenticated user)
-    const saveCart = useCallback(async (items) => {
-        try {
-            if (isAuthenticated) {
-                // Save to API for authenticated users
-                await api.post('/cart', { items });
-            } else {
-                // Save to localStorage for guests
-                localStorage.setItem('cart', JSON.stringify(items));
-            }
-        } catch (error) {
-            console.error('Failed to save cart:', error);
-            // Fallback to localStorage
-            localStorage.setItem('cart', JSON.stringify(items));
-        }
-    }, [isAuthenticated]);
-
     // Add item to cart
     const addToCart = useCallback(async (product, quantity = 1) => {
         try {
             setLoading(true);
             const productId = product.product_id || product.id;
-            const newItems = (() => {
-                const existingItem = cartItems.find(item => (item.product_id || item.id) === productId);
+            
+            if (isAuthenticated) {
+                // For authenticated users, call API
+                const response = await api.post('/cart', { 
+                    productId: productId,
+                    quantity: quantity 
+                });
                 
-                if (existingItem) {
-                    return cartItems.map(item =>
-                        (item.product_id || item.id) === productId
-                            ? { ...item, quantity: item.quantity + quantity }
-                            : item
-                    );
-                } else {
-                    return [...cartItems, { ...product, quantity, product_id: productId }];
+                if (response.data.success) {
+                    // Reload cart to get updated data with populated product info
+                    await loadCart();
                 }
-            })();
-              setCartItems(newItems);
-            await saveCart(newItems);
+            } else {
+                // For guests, handle locally
+                const newItems = (() => {
+                    const existingItem = cartItems.find(item => (item.product_id || item.id) === productId);
+                    
+                    if (existingItem) {
+                        return cartItems.map(item =>
+                            (item.product_id || item.id) === productId
+                                ? { ...item, quantity: item.quantity + quantity }
+                                : item
+                        );
+                    } else {
+                        return [...cartItems, { 
+                            ...product, 
+                            quantity, 
+                            product_id: productId,
+                            id: productId 
+                        }];
+                    }
+                })();
+                
+                setCartItems(newItems);
+                localStorage.setItem('cart', JSON.stringify(newItems));
+            }
         } catch (error) {
             console.error('Failed to add to cart:', error);        } finally {
             setLoading(false);
         }
-    }, [cartItems, saveCart]);
+    }, [cartItems, isAuthenticated, loadCart]);
 
     // Remove item from cart
     const removeFromCart = useCallback(async (productId) => {
         try {
             setLoading(true);
-            const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
-            setCartItems(newItems);
-            await saveCart(newItems);        } catch (error) {
+            
+            if (isAuthenticated) {
+                // For authenticated users, call API
+                const response = await api.delete(`/cart/items/${productId}`);
+                if (response.data.success) {
+                    await loadCart(); // Reload cart from API
+                }
+            } else {
+                // For guests, handle locally
+                const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
+                setCartItems(newItems);
+                localStorage.setItem('cart', JSON.stringify(newItems));
+            }
+        } catch (error) {
             console.error('Failed to remove from cart:', error);        } finally {
             setLoading(false);
         }
-    }, [cartItems, saveCart]);
+    }, [cartItems, isAuthenticated, loadCart]);
 
     // Update item quantity
     const updateQuantity = useCallback(async (productId, quantity) => {
@@ -121,31 +151,52 @@ export const CartProvider = ({ children }) => {
                 return;
             }
             
-            const newItems = cartItems.map(item =>
-                (item.product_id || item.id) === productId
-                    ? { ...item, quantity }
-                    : item
-            );
-            
-            setCartItems(newItems);            await saveCart(newItems);
+            if (isAuthenticated) {
+                // For authenticated users, call API
+                const response = await api.put(`/cart/items/${productId}`, { quantity });
+                if (response.data.success) {
+                    await loadCart(); // Reload cart from API
+                }
+            } else {
+                // For guests, handle locally
+                const newItems = cartItems.map(item =>
+                    (item.product_id || item.id) === productId
+                        ? { ...item, quantity }
+                        : item
+                );
+                
+                setCartItems(newItems);
+                localStorage.setItem('cart', JSON.stringify(newItems));
+            }
         } catch (error) {
             console.error('Failed to update quantity:', error);
         } finally {
             setLoading(false);
         }
-    }, [cartItems, removeFromCart, saveCart]);
+    }, [cartItems, removeFromCart, isAuthenticated, loadCart]);
 
     // Clear cart
     const clearCart = useCallback(async () => {
         try {
             setLoading(true);
-            setCartItems([]);
-            await saveCart([]);        } catch (error) {
+            
+            if (isAuthenticated) {
+                // For authenticated users, call API
+                const response = await api.delete('/cart');
+                if (response.data.success) {
+                    setCartItems([]);
+                }
+            } else {
+                // For guests, handle locally
+                setCartItems([]);
+                localStorage.setItem('cart', JSON.stringify([]));
+            }
+        } catch (error) {
             console.error('Failed to clear cart:', error);
         } finally {
             setLoading(false);
         }
-    }, [saveCart]);
+    }, [isAuthenticated]);
 
     // Get cart totals
     const getCartTotals = useCallback(() => {
