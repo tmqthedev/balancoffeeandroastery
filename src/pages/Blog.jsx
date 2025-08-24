@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import SEOHelmet from '../components/common/SEOHelmet';
@@ -31,7 +31,7 @@ const Blog = () => {
     }
   };
 
-  const fetchBlogs = async () => {
+  const fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -58,7 +58,7 @@ const Blog = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, selectedCategory]);
 
   useEffect(() => {
     fetchCategories();
@@ -66,7 +66,7 @@ const Blog = () => {
 
   useEffect(() => {
     fetchBlogs();
-  }, [currentPage, selectedCategory, searchTerm]);
+  }, [fetchBlogs]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
@@ -85,6 +85,7 @@ const Blog = () => {
     try {
       return new Date(dateString).toLocaleDateString('vi-VN');
     } catch (error) {
+      console.error('Date formatting error:', error);
       return '';
     }
   };
@@ -159,7 +160,7 @@ const Blog = () => {
               >
                 Tất cả
               </button>
-              {Array.isArray(categories) && categories.map((category, index) => {
+              {Array.isArray(categories) && categories.map((category) => {
                 const categoryValue = category; // Categories API returns strings
                 const categoryDisplay = category;
                 

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 // Simple error logger for development
 const logError = (error, errorInfo = {}) => {
-  const isProd = false; // Development mode
+  const isProd = import.meta.env.PROD;
   if (isProd) {
     // In production, you can integrate with error reporting services
     console.error('Production Error:', {
@@ -81,7 +81,7 @@ class ErrorBoundary extends React.Component {
               </a>
             </div>
             
-            {false && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 mb-2">
                   Chi tiết lỗi (development only)

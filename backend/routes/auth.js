@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
-const db = require('../config/database');
+const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 
 // Validation middleware
@@ -16,12 +16,9 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     const { email, password, firstName, lastName, phone } = req.body;
 
     // Check if user already exists
-    const existingUsers = await db.query(
-      'SELECT id FROM Users WHERE email = @email',
-      { email }
-    );
+    const existingUser = await User.findOne({ email });
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       return res.status(400).json({ error: 'User already exists with this email' });
     }
 
@@ -29,26 +26,28 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user
-    const result = await db.execute(
-      `INSERT INTO Users (email, password, firstName, lastName, phone, role, emailVerified)
-       OUTPUT INSERTED.* 
-       VALUES (@email, @password, @firstName, @lastName, @phone, 'customer', 0)`,
-      {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        phone: phone || null
-      }
-    );
+    // Generate user ID
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const newUser = result.recordset[0];
-    delete newUser.password;
+    // Create new user
+    const newUser = new User({
+      _id: userId,
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      phone: phone || undefined,
+      role: 'customer',
+      status: 'active',
+      emailVerified: false,
+      phoneVerified: false
+    });
+
+    await newUser.save();
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email, role: newUser.role },
+      { userId: newUser._id, email: newUser.email, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
@@ -56,7 +55,13 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: newUser
+      user: {
+        _id: newUser._id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role
+      }
     });
 
   } catch (error) {
@@ -87,7 +92,7 @@ router.post('/login', [
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user._id || user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
@@ -363,16 +368,13 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
 // Get current user (protected route)
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const users = await db.query(
-      'SELECT id, email, firstName, lastName, phone, address, city, postalCode, role, profileImage, createdAt FROM Users WHERE id = @userId AND isActive = 1',
-      { userId: req.user.userId }
-    );
+    const user = await User.findById(req.user.userId).select('-password');
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user: users[0] });
+    res.json({ user });
 
   } catch (error) {
     console.error('Get user error:', error);

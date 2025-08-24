@@ -165,9 +165,10 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         try {
             // Remove email from userData to prevent updating it
+            // eslint-disable-next-line no-unused-vars
             const { email, ...updateData } = userData;
             
-            const response = await api.put('/api/users/profile', updateData, {
+            const response = await api.put('/users/profile', updateData, {
                 headers: { 
                     Authorization: `Bearer ${localStorage.getItem('authToken')}` 
                 }

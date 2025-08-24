@@ -1,42 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const db = require('../config/database');
-
-// Middleware to authenticate token
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
-    }
-    req.user = user;
-    next();
-  });
-};
+const User = require('../models/User');
+const { authenticateToken } = require('../middleware/auth');
 
 // Get user profile (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
-    const users = await db.query(
-      'SELECT id, email, firstName, lastName, phone, address, city, postalCode, role, profileImage, createdAt FROM Users WHERE id = @userId AND isActive = 1',
-      { userId: req.user.userId }
-    );
+    const user = await User.findOne({ 
+      _id: req.user.userId,
+      status: 'active' 
+    }).select('-password');
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(users[0]);
-
+    res.json({
+      success: true,
+      user: {
+        _id: user._id,
+        id: user._id, // backwards compatibility
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        role: user.role,
+        avatar: user.avatar,
+        addresses: user.addresses || [],
+        preferences: user.preferences || {},
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
+        createdAt: user.createdAt
+      }
+    });
   } catch (error) {
     console.error('Get user profile error:', error);
     res.status(500).json({ error: 'Failed to fetch user profile' });
@@ -45,17 +42,20 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
 // Update user profile (protected route)
 router.put('/profile', authenticateToken, [
-  body('first_name').trim().isLength({ min: 1 }).withMessage('First name is required'),
-  body('last_name').trim().isLength({ min: 1 }).withMessage('Last name is required'),
-  body('phone').optional().isMobilePhone('vi-VN').withMessage('Invalid phone number'),
+  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
+  body('phone').optional().isLength({ min: 10, max: 15 }).withMessage('Phone number must be 10-15 digits'),
 ], async (req, res) => {
   try {
+    console.log('🔍 Profile update request body:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { first_name, last_name, phone, date_of_birth, gender } = req.body;
+    const { firstName, lastName, phone, dateOfBirth, gender } = req.body;
     
     // Email is not allowed to be updated for security reasons
     if (req.body.email) {
@@ -63,32 +63,26 @@ router.put('/profile', authenticateToken, [
     }
 
     // Update user profile (excluding email)
-    await db.execute(
-      `UPDATE Users 
-       SET firstName = @firstName, lastName = @lastName, 
-           phone = @phone, dateOfBirth = @dateOfBirth, gender = @gender, 
-           updatedAt = GETDATE()
-       WHERE id = @userId`,
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
       {
-        firstName: first_name,
-        lastName: last_name,
-        phone: phone || null,
-        dateOfBirth: date_of_birth || null,
-        gender: gender || null,
-        userId: req.user.userId
-      }
-    );
+        firstName,
+        lastName,
+        phone: phone || undefined,
+        dateOfBirth: dateOfBirth || undefined,
+        gender: gender || undefined
+      },
+      { new: true, runValidators: true }
+    ).select('-password');
 
-    // Fetch updated user data
-    const users = await db.query(
-      'SELECT id, email, firstName, lastName, phone, dateOfBirth, gender, role, createdAt FROM Users WHERE id = @userId AND isActive = 1',
-      { userId: req.user.userId }
-    );
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     res.json({ 
       success: true, 
       message: 'Profile updated successfully',
-      user: users[0]
+      user: updatedUser
     });
 
   } catch (error) {

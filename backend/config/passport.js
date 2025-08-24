@@ -2,7 +2,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const bcrypt = require('bcryptjs');
-const db = require('./database');
+const User = require('../models/User');
 
 // Local Strategy
 passport.use(new LocalStrategy({
@@ -11,20 +11,16 @@ passport.use(new LocalStrategy({
 }, async (email, password, done) => {
   try {
     console.log('🔍 Passport Local Strategy - Email:', email);
-    const users = await db.query(
-      'SELECT * FROM Users WHERE email = @email AND isActive = 1',
-      { email }
-    );
+    const user = await User.findOne({ email, status: 'active' });
 
-    console.log('🔍 Passport Local Strategy - Users found:', users.length);
-    if (users.length === 0) {
+    console.log('🔍 Passport Local Strategy - User found:', !!user);
+    if (!user) {
       console.log('❌ No user found with email:', email);
       return done(null, false, { message: 'Invalid email or password' });
     }
 
-    const user = users[0];
     console.log('🔍 Passport Local Strategy - User:', { 
-      id: user.id, 
+      id: user._id, 
       email: user.email, 
       hasPassword: !!user.password,
       passwordLength: user.password ? user.password.length : 0
@@ -46,10 +42,18 @@ passport.use(new LocalStrategy({
 
     console.log('✅ Authentication successful for user:', user.email);
 
-    // Create a copy and remove password from the copy
-    const userWithoutPassword = { ...user };
-    delete userWithoutPassword.password;
-    return done(null, userWithoutPassword);
+    // Return user object
+    const userObject = {
+      _id: user._id,
+      id: user._id, // for backwards compatibility
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      status: user.status
+    };
+    
+    return done(null, userObject);
   } catch (error) {
     console.error('❌ Passport Local Strategy error:', error);
     return done(error);
@@ -68,49 +72,48 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       console.log('🔍 Facebook Strategy - Profile:', profile.id);
       
       // Check if user already exists with Facebook ID
-      let users = await db.query(
-        'SELECT * FROM Users WHERE facebookId = @facebookId',
-        { facebookId: profile.id }
-      );
+      let user = await User.findOne({ 'providers.facebook.id': profile.id });
 
-      if (users.length > 0) {
+      if (user) {
         console.log('✅ Facebook user found, logging in...');
-        const user = users[0];
-        const userWithoutPassword = { ...user };
-        delete userWithoutPassword.password;
-        return done(null, userWithoutPassword);
+        const userObject = {
+          _id: user._id,
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          status: user.status
+        };
+        return done(null, userObject);
       }
 
       // Check if user exists with the same email
       const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
       
       if (email) {
-        users = await db.query(
-          'SELECT * FROM Users WHERE email = @email',
-          { email }
-        );
+        user = await User.findOne({ email });
 
-        if (users.length > 0) {
+        if (user) {
           console.log('✅ Existing user found, linking Facebook account...');
           // Update existing user with Facebook ID
-          await db.execute(
-            'UPDATE Users SET facebookId = @facebookId, profileImage = @profileImage WHERE email = @email',
-            {
-              facebookId: profile.id,
-              profileImage: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
-              email
-            }
-          );
+          user.providers.facebook = {
+            id: profile.id,
+            accessToken
+          };
+          user.avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : user.avatar;
+          await user.save();
 
-          const updatedUsers = await db.query(
-            'SELECT * FROM Users WHERE email = @email',
-            { email }
-          );
-
-          const user = updatedUsers[0];
-          const userWithoutPassword = { ...user };
-          delete userWithoutPassword.password;
-          return done(null, userWithoutPassword);
+          const userObject = {
+            _id: user._id,
+            id: user._id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            status: user.status
+          };
+          return done(null, userObject);
         }
       }
 
@@ -121,24 +124,39 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       }
 
       console.log('✅ Creating new Facebook user...');
-      const result = await db.execute(
-        `INSERT INTO Users (email, firstName, lastName, facebookId, profileImage, emailVerified, role, isActive)
-         OUTPUT INSERTED.* 
-         VALUES (@email, @firstName, @lastName, @facebookId, @profileImage, 1, 'customer', 1)`,
-        {
-          email,
-          firstName: profile.name.givenName || 'Facebook',
-          lastName: profile.name.familyName || 'User',
-          facebookId: profile.id,
-          profileImage: profile.photos && profile.photos[0] ? profile.photos[0].value : null
-        }
-      );
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const newUser = new User({
+        _id: userId,
+        email,
+        firstName: profile.name.givenName || 'Facebook',
+        lastName: profile.name.familyName || 'User',
+        providers: {
+          facebook: {
+            id: profile.id,
+            accessToken
+          }
+        },
+        avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
+        emailVerified: true,
+        role: 'customer',
+        status: 'active'
+      });
 
-      const newUser = result.recordset[0];
-      const userWithoutPassword = { ...newUser };
-      delete userWithoutPassword.password;
+      await newUser.save();
+
+      const userObject = {
+        _id: newUser._id,
+        id: newUser._id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        status: newUser.status
+      };
+      
       console.log('✅ New Facebook user created:', newUser.email);
-      return done(null, userWithoutPassword);
+      return done(null, userObject);
     } catch (error) {
       console.error('❌ Facebook strategy error:', error);
       return done(error);
@@ -150,29 +168,33 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
 
 // Serialize user for session
 passport.serializeUser((user, done) => {
-  console.log('🔍 Serializing user:', user.id);
-  done(null, user.id);
+  console.log('🔍 Serializing user:', user._id || user.id);
+  done(null, user._id || user.id);
 });
 
 // Deserialize user from session
 passport.deserializeUser(async (id, done) => {
   try {
     console.log('🔍 Deserializing user:', id);
-    const users = await db.query(
-      'SELECT * FROM Users WHERE id = @id AND isActive = 1',
-      { id }
-    );
+    const user = await User.findOne({ _id: id, status: 'active' });
 
-    if (users.length === 0) {
+    if (!user) {
       console.log('❌ User not found during deserialization:', id);
       return done(null, false);
     }
 
-    const user = users[0];
-    const userWithoutPassword = { ...user };
-    delete userWithoutPassword.password;
+    const userObject = {
+      _id: user._id,
+      id: user._id, // for backwards compatibility
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      status: user.status
+    };
+    
     console.log('✅ User deserialized successfully:', user.email);
-    done(null, userWithoutPassword);
+    done(null, userObject);
   } catch (error) {
     console.error('❌ Deserialization error:', error);
     done(error);

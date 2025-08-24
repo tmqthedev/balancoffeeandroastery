@@ -11,11 +11,11 @@ const Account = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
-    date_of_birth: '',
+    dateOfBirth: '',
     gender: ''
   });
   const [passwordData, setPasswordData] = useState({
@@ -29,11 +29,11 @@ const Account = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
-        date_of_birth: user.date_of_birth || '',
+        dateOfBirth: user.dateOfBirth || '',
         gender: user.gender || ''
       });
     }
@@ -232,7 +232,7 @@ const Account = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  Xin chào, {user?.first_name || user?.email}!
+                  Xin chào, {user?.firstName || user?.email}!
                 </h1>
                 <p className="text-gray-600 mt-2">
                   Quản lý thông tin và đơn hàng của bạn
@@ -306,8 +306,8 @@ const Account = () => {
                           <input
                             id="first-name-acc"
                             type="text"
-                            value={formData.first_name}
-                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
                           />
                         </div>
@@ -319,8 +319,8 @@ const Account = () => {
                           <input
                             id="last-name-acc"
                             type="text"
-                            value={formData.last_name}
-                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
                           />
                         </div>
@@ -362,8 +362,8 @@ const Account = () => {
                           <input
                             id="user-birthday-acc"
                             type="date"
-                            value={formData.date_of_birth}
-                            onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                            value={formData.dateOfBirth}
+                            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
                           />
                         </div>

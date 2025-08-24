@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useFacebook } from '../../hooks/useFacebook';
 
@@ -21,6 +21,39 @@ const FacebookLoginButton = ({
 
   // Show fallback button if Facebook SDK failed to load
   const shouldShowFallback = error && error.includes('Facebook SDK not available');
+
+  // Handle successful login
+  const handleLoginSuccess = useCallback(async (response) => {
+    try {
+      if (response.authResponse) {
+        // Get user profile from Facebook
+        const userProfile = await new Promise((resolve, reject) => {
+          window.FB.api('/me', { 
+            fields: 'id,name,email,picture' 
+          }, (profile) => {
+            if (profile.error) {
+              reject(new Error(profile.error.message));
+            } else {
+              resolve(profile);
+            }
+          });
+        });
+
+        // Call success callback with both response and profile
+        if (onLoginSuccess) {
+          onLoginSuccess({
+            authResponse: response.authResponse,
+            userProfile: userProfile
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      if (onLoginError) {
+        onLoginError(error);
+      }
+    }
+  }, [onLoginSuccess, onLoginError]);
 
   // Global callback function for Facebook login button
   useEffect(() => {
@@ -63,40 +96,7 @@ const FacebookLoginButton = ({
         delete window.statusChangeCallback;
       }
     };
-  }, [onLoginSuccess, onLoginError]);
-
-  // Handle successful login
-  const handleLoginSuccess = async (response) => {
-    try {
-      if (response.authResponse) {
-        // Get user profile from Facebook
-        const userProfile = await new Promise((resolve, reject) => {
-          window.FB.api('/me', { 
-            fields: 'id,name,email,picture' 
-          }, (profile) => {
-            if (profile.error) {
-              reject(new Error(profile.error.message));
-            } else {
-              resolve(profile);
-            }
-          });
-        });
-
-        // Call success callback with both response and profile
-        if (onLoginSuccess) {
-          onLoginSuccess({
-            authResponse: response.authResponse,
-            userProfile: userProfile
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error getting user profile:', error);
-      if (onLoginError) {
-        onLoginError(error);
-      }
-    }
-  };
+  }, [handleLoginSuccess]);
 
   // Re-parse XFBML when Facebook SDK is loaded
   useEffect(() => {

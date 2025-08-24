@@ -22,7 +22,7 @@ const Products = () => {
         maxPrice: '',
         inStock: false
     });
-    const [sortBy, setSortBy] = useState('name');
+    const [sortBy] = useState('name'); // setSortBy not used yet
     
     // Ref for the tab navigation section
     const tabNavigationRef = useRef(null);
@@ -94,7 +94,7 @@ const Products = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, filters, currentPage]);
+    }, [activeTab, filters, currentPage, sortBy]);
 
     useEffect(() => {
         fetchProducts();

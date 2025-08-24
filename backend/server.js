@@ -102,8 +102,8 @@ require('./config/passport');
 
 // Routes with request logging
 app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/users', require('./routes/users'));
-// app.use('/api/cart', require('./routes/cart'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/cart', require('./routes/cart'));
 
 // Add request logging for products
 app.use('/api/products', (req, res, next) => {

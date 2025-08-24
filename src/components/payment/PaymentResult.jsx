@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import axios from 'axios';
 
 const PaymentResult = () => {
     const navigate = useNavigate();
@@ -71,7 +70,7 @@ const PaymentResult = () => {
         };
 
         checkPaymentStatus();
-    }, [searchParams, stateOrder, stateSuccess]);
+    }, [searchParams, stateOrder, stateSuccess, paymentStatus]);
 
     const handleContinueShopping = () => {
         navigate('/products');

@@ -44,19 +44,17 @@ const Contact = () => {
   };
 
   const storeInfo = {
-    address: "123 Đường Cà Phê, Phường 1, Thành phố Đà Lạt, Lâm Đồng",
-    phone: "+84 123 456 789",
+    address: "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
+    phone: "+84 964 822 269",
     email: "info@balancoffee.com",
-    hours: {
-      weekdays: "7:00 - 21:00",
-      weekend: "6:30 - 22:00"
-    }
-  };
+    hours: "6:30 - 22:30"
+  }; 
 
   // Google Maps integration would go here
   useEffect(() => {
     // Initialize Google Maps when component mounts
     // This would require Google Maps API key
+    
   }, []);
 
   return (
@@ -78,9 +76,9 @@ const Contact = () => {
             "name": "Balan Coffee & Roastery",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "123 Đường Cà Phê, Phường 1",
-              "addressLocality": "Đà Lạt",
-              "addressRegion": "Lâm Đồng",
+              "streetAddress": "S6.01 Vinhome Grand Park Phường Long Bình",
+              "addressLocality": "Thủ Đức",
+              "addressRegion": "Hồ Chí Minh",
               "addressCountry": "VN"
             },
             "telephone": "+84-123-456-789",
@@ -310,8 +308,7 @@ const Contact = () => {
                         Giờ mở cửa
                       </h3>
                       <div className="text-gray-600 mt-1">
-                        <p>Thứ 2 - Thứ 6: {storeInfo.hours.weekdays}</p>
-                        <p>Thứ 7 - Chủ nhật: {storeInfo.hours.weekend}</p>
+                        {storeInfo.hours}
                       </div>
                     </div>
                   </div>
@@ -403,17 +400,19 @@ const Contact = () => {
                 </p>
               </div>
               
-              {/* Google Map would be embedded here */}
-              <div className="h-96 bg-gray-200 flex items-center justify-center">
-                <div className="text-center">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-gray-500">
-                    Bản đồ sẽ được hiển thị tại đây
-                  </p>
-                </div>
+              {/* Google Map iframe */}
+              <div className="h-96 relative">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.5968705427917!2d106.8354841748059!3d10.842130789310659!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317529f54ced1d0f%3A0x10dea56b2dad9187!2sBalan%20Coffee%20Roastery!5e0!3m2!1svi!2s!4v1756018341637!5m2!1svi!2s" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen={true}
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Vị trí Balan Coffee Roastery"
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
               </div>
             </div>
           </div>

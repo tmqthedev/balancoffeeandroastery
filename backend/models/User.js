@@ -3,15 +3,15 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: String,
-  firstName: String,
-  lastName: String,
-  displayName: String,
-  phone: String,
-  avatar: String,
-  dateOfBirth: Date,
-  gender: { type: String, enum: ['male', 'female', 'other'] },
-  role: { type: String, enum: ['customer'], default: 'customer' },
+  password: { type: String, required: false },
+  firstName: { type: String, required: false },
+  lastName: { type: String, required: false },
+  displayName: { type: String, required: false },
+  phone: { type: String, required: false },
+  avatar: { type: String, required: false },
+  dateOfBirth: { type: Date, required: false },
+  gender: { type: String, enum: ['male', 'female', 'other'], required: false },
+  role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   status: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
   emailVerified: { type: Boolean, default: false },
   phoneVerified: { type: Boolean, default: false },
@@ -19,79 +19,117 @@ const userSchema = new mongoose.Schema({
   // Social login
   providers: {
     facebook: {
-      id: String,
-      accessToken: String
+      id: { type: String, required: false },
+      accessToken: { type: String, required: false }
     },
     google: {
-      id: String,
-      accessToken: String
+      id: { type: String, required: false },
+      accessToken: { type: String, required: false }
     }
   },
   
-  // Address information
-  addresses: [{
-    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
-    type: { type: String, enum: ['billing', 'shipping', 'both'], default: 'both' },
-    firstName: String,
-    lastName: String,
-    company: String,
-    address1: String,
-    address2: String,
-    city: String,
-    province: String,
-    postalCode: String,
-    country: { type: String, default: 'VN' },
-    phone: String,
-    isDefault: { type: Boolean, default: false }
-  }],
+  // Address information  
+  addresses: {
+    type: [{
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      type: { type: String, enum: ['billing', 'shipping', 'both'], default: 'both' },
+      firstName: { type: String, required: false },
+      lastName: { type: String, required: false },
+      company: { type: String, required: false },
+      address1: { type: String, required: false },
+      address2: { type: String, required: false },
+      city: { type: String, required: false },
+      province: { type: String, required: false },
+      postalCode: { type: String, required: false },
+      country: { type: String, default: 'VN' },
+      phone: { type: String, required: false },
+      isDefault: { type: Boolean, default: false }
+    }],
+    default: []
+  },
   
   // Preferences
   preferences: {
-    language: { type: String, default: 'vi' },
-    currency: { type: String, default: 'VND' },
-    notifications: {
-      email: { type: Boolean, default: true },
-      sms: { type: Boolean, default: false },
-      promotions: { type: Boolean, default: true }
+    type: {
+      language: { type: String, default: 'vi' },
+      currency: { type: String, default: 'VND' },
+      notifications: {
+        email: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
+        promotions: { type: Boolean, default: true }
+      }
+    },
+    default: function() {
+      return {
+        language: 'vi',
+        currency: 'VND',
+        notifications: {
+          email: true,
+          sms: false,
+          promotions: true
+        }
+      };
     }
   },
   
   // Statistics
   stats: {
-    totalOrders: { type: Number, default: 0 },
-    totalSpent: { type: Number, default: 0 },
-    averageOrderValue: { type: Number, default: 0 },
-    lastOrderDate: Date,
-    lastLoginDate: Date
+    type: {
+      totalOrders: { type: Number, default: 0 },
+      totalSpent: { type: Number, default: 0 },
+      averageOrderValue: { type: Number, default: 0 },
+      lastOrderDate: { type: Date, required: false },
+      lastLoginDate: { type: Date, required: false }
+    },
+    default: function() {
+      return {
+        totalOrders: 0,
+        totalSpent: 0,
+        averageOrderValue: 0
+      };
+    }
   },
   
   // Metadata
   metadata: {
-    source: String,
-    utmSource: String,
-    utmMedium: String,
-    utmCampaign: String,
-    referrer: String,
-    ipAddress: String,
-    userAgent: String
+    type: {
+      source: { type: String, required: false },
+      utmSource: { type: String, required: false },
+      utmMedium: { type: String, required: false },
+      utmCampaign: { type: String, required: false },
+      referrer: { type: String, required: false },
+      ipAddress: { type: String, required: false },
+      userAgent: { type: String, required: false }
+    },
+    default: {}
   },
   
   // Security
   security: {
-    lastPasswordChange: Date,
-    loginAttempts: { type: Number, default: 0 },
-    lockedUntil: Date,
-    twoFactorEnabled: { type: Boolean, default: false }
+    type: {
+      lastPasswordChange: { type: Date, required: false },
+      loginAttempts: { type: Number, default: 0 },
+      lockedUntil: { type: Date, required: false },
+      twoFactorEnabled: { type: Boolean, default: false }
+    },
+    default: function() {
+      return {
+        loginAttempts: 0,
+        twoFactorEnabled: false
+      };
+    }
   },
   
   lastActivityAt: { type: Date, default: Date.now }
 }, {
   timestamps: true,
-  _id: false
+  _id: false,
+  minimize: false,
+  strict: false
 });
 
 // Indexes
-userSchema.index({ email: 1 });
+// userSchema.index({ email: 1 }); // Already unique in schema definition
 userSchema.index({ phone: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });

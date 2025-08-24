@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const cartSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
   customerId: { type: String, ref: 'User' },
   sessionId: String,
   
@@ -57,8 +56,7 @@ const cartSchema = new mongoose.Schema({
     paymentMethod: String
   }
 }, {
-  timestamps: true,
-  _id: false
+  timestamps: true
 });
 
 // Indexes
