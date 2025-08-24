@@ -5,73 +5,68 @@ const About = () => {
 
   const teamMembers = [
     {
-      name: "Nguyễn Văn Minh",
-      position: "Founder & Master Roaster",
-      image: "/images/team/founder.jpg",
-      description: "25 năm kinh nghiệm trong ngành cà phê với đam mê rang xay và phát triển các dòng cà phê đặc sản Việt Nam."
+      name: "Nguyễn Thị Khánh Ly",
+      position: "Founder & CEO",
+      image: "backend/public/images/team/NguyenThiKhanhLy.jpg",
+      description: ""
     },
     {
-      name: "Trần Thị Lan",
-      position: "Quality Control Manager",
-      image: "/images/team/qc-manager.jpg",
-      description: "Chuyên gia về chất lượng cà phê với chứng chỉ Q Grader quốc tế, đảm bảo mỗi hạt cà phê đều đạt tiêu chuẩn cao nhất."
+      name: "Võ Hồng Quang",
+      position: "Operations Manager",
+      image: "backend/public/images/team/VoHongQuang.jpg",
+      description: ""
     },
     {
-      name: "Lê Hoàng Nam",
-      position: "Head Barista",
-      image: "/images/team/head-barista.jpg",
-      description: "Nhà vô địch Barista Championship Việt Nam 2023, am hiểu sâu sắc về nghệ thuật pha chế cà phê."
-    }
+      name: "Trần Nguyễn Nam Khánh",
+      position: "Training & QA Manager",
+      image: "backend/public/images/team/TranNguyenNamKhanh.jpg",
+      description: ""
+    },
+    {
+      name: "Trần Minh Quân",
+      position: "IT Manager",
+      image: "backend/public/images/team/TranMinhQuan.jpg",
+      description: ""
+    },    
+    {
+      name: "Trần Thái Thiện",
+      position: "Production Manager",
+      image: "backend/public/images/team/TranThaiThien.png",
+      description: ""
+    },
+    {
+      name: "Dương Chí Công",
+      position: "Branding & Digital Marketing Manager",
+      image: "backend/public/images/team/DuongChiCong.jpg",
+      description: ""
+    },
   ];
 
   const milestones = [
     {
-      year: "1998",
+      year: "2022",
       title: "Khởi đầu hành trình",
-      description: "Bắt đầu với một vườn cà phê nhỏ tại Đà Lạt"
-    },
-    {
-      year: "2005",
-      title: "Mở rộng sản xuất",
-      description: "Xây dựng nhà máy rang xay đầu tiên"
-    },
-    {
-      year: "2012",
-      title: "Ra mắt thương hiệu",
-      description: "Chính thức ra mắt thương hiệu Balan Coffee & Roastery"
-    },
-    {
-      year: "2018",
-      title: "Chứng nhận quốc tế",
-      description: "Đạt chứng nhận Organic và Fair Trade"
+      description: "Bắt đầu quán cà phê tại một góc nhỏ ở Bình Thạnh"
     },
     {
       year: "2023",
-      title: "Kỷ nguyên số",
+      title: "Thay đổi địa điểm",
+      description: "Chọn Vinhomes Grand Park trở thành nơi phát triển lâu dài"
+    },
+    {
+      year: "1/2024",
+      title: "Ra mắt thương hiệu",
+      description: "Chính thức ra mắt thương hiệu Balan Coffee & Roastery tại Vinhomes Grand Park"
+    },
+    {
+      year: "3/2024",
+      title: "Một tầm nhìn xa hơn",
+      description: "Chúng tôi chọn đưa trải nghiệm cà phê cá nhân hóa đến gần hơn với mọi người"
+    },
+    {
+      year: "2025",
+      title: "Trở thành một doanh nghiệp",
       description: "Ra mắt nền tảng thương mại điện tử"
-    }
-  ];
-
-  const values = [
-    {
-      icon: "🌱",
-      title: "Bền vững",
-      description: "Cam kết phát triển bền vững từ trang trại đến tách cà phê"
-    },
-    {
-      icon: "⭐",
-      title: "Chất lượng",
-      description: "Không ngừng nâng cao chất lượng sản phẩm và dịch vụ"
-    },
-    {
-      icon: "🤝",
-      title: "Tôn trọng",
-      description: "Tôn trọng người nông dân và môi trường tự nhiên"
-    },
-    {
-      icon: "💡",
-      title: "Sáng tạo",
-      description: "Luôn tìm kiếm những phương pháp mới để hoàn thiện hương vị"
     }
   ];
 
@@ -119,24 +114,16 @@ const About = () => {
 
       <div className="min-h-screen bg-cream-50">
         {/* Hero Section */}
-        <section className="relative h-screen flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: "url('/images/about/hero-coffee-farm.jpg')"
-            }}
-          ></div>
-            <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              Câu chuyện của chúng tôi
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-cream-100">
-              Hành trình 25 năm mang đến cà phê đặc sản chất lượng cao
-            </p>
+        <section className="relative h-screen flex items-end justify-center overflow-hidden pb-20">
+          <div className="absolute inset-0 z-10"></div>
+          <img src='backend/public/images/banners/about_banner.png'
+            alt="About Banner"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
             <Link
               to="/products"
-              className="inline-block bg-brand-primary text-brand-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-brand-primary/90 transition-colors"
+              className="inline-block bg-brand-primary text-brand-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-brand-primary/90 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               Khám phá sản phẩm
             </Link>
@@ -152,66 +139,42 @@ const About = () => {
                 </h2>
                 <div className="prose prose-lg text-gray-700">
                   <p className="mb-4">
-                    Balan Coffee & Roastery được thành lập từ năm 1998 bởi ông Nguyễn Văn Minh, 
-                    một người nông dân đầy đam mê với cà phê tại vùng cao nguyên Đà Lạt. 
-                    Bắt đầu từ một vườn cà phê nhỏ, chúng tôi đã không ngừng phát triển 
-                    để trở thành một trong những thương hiệu cà phê đặc sản hàng đầu Việt Nam.
+                    Balan Coffee & Roastery ra đời với một niềm tin đơn giản: "Mỗi ly cà phê phải phản chiếu câu chuyện của người thưởng thức."
+                    Chúng tôi không chỉ pha chế cà phê – chúng tôi kiến tạo trải nghiệm 
+                    cá nhân hóa, nơi mỗi vị đắng, ngọt, chua hay hậu vị đều được điều chỉnh để chạm đúng gu của bạn.
                   </p>
                   <p className="mb-4">
-                    Với hơn 25 năm kinh nghiệm, chúng tôi tự hào mang đến những sản phẩm 
-                    cà phê chất lượng cao, từ khâu trồng trọt, thu hoạch, chế biến đến rang xay. 
-                    Mỗi hạt cà phê đều được chăm sóc tỉ mỉ và kiểm tra chất lượng nghiêm ngặt.
+                    Balan khởi đầu với một niềm đam mê giản dị dành cho cà phê và mong muốn tạo ra trải nghiệm khác biệt. 
+                    Chúng tôi vẫn đang từng bước thử nghiệm, lắng nghe và hoàn thiện, để mỗi ly cà phê mang lại cảm giác gần với “gu” mà bạn tìm kiếm.
                   </p>
                   <p>
-                    Sứ mệnh của chúng tôi là mang đến cho người tiêu dùng những trải nghiệm 
-                    cà phê tuyệt vời nhất, đồng thời góp phần phát triển bền vững ngành 
-                    cà phê Việt Nam.
+                    Cà phê ở Việt Nam chưa bao giờ chỉ là một thức uống. 
+                    Đó là không gian của đối thoại, của suy tư và của sự kết nối. 
+                    Balan Coffee & Roastery được sinh ra để trở thành nơi bạn có thể dừng lại, 
+                    tận hưởng và tìm thấy gu của chính mình.
                   </p>
                 </div>
               </div>
               <div className="relative">
                 <img
-                  src="/images/about/coffee-processing.jpg"
+                  src="backend/public/images/banners/story_banner.png"
                   alt="Coffee processing"
                   className="rounded-lg shadow-xl"
                 />
                 <div className="absolute -bottom-6 -left-6 bg-brand-primary text-brand-white p-6 rounded-lg">
                   <div className="text-3xl font-bold">25+</div>
                   <div className="text-sm">Năm kinh nghiệm</div>
+
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Values Section */}
-        <section className="py-20 bg-cream-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Giá trị cốt lõi
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Những giá trị định hướng mọi hoạt động của chúng tôi
-              </p>
-            </div><div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {values.map((value) => (
-                <div key={value.title} className="text-center">
-                  <div className="text-6xl mb-4">{value.icon}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    {value.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {value.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Timeline Section */}
         <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
+            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
                 Hành trình phát triển
               </h2>
@@ -222,7 +185,8 @@ const About = () => {
 
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-primary/20"></div>              {milestones.map((milestone, index) => (
+              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-primary/20"></div>              
+              {milestones.map((milestone, index) => (
                 <div key={milestone.year} className={`relative flex items-center mb-12 ${
                   index % 2 === 0 ? 'justify-start' : 'justify-end'
                 }`}>
@@ -251,7 +215,8 @@ const About = () => {
 
         {/* Team Section */}
         <section className="py-20 bg-cream-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
+            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
                 Đội ngũ chuyên gia
               </h2>
@@ -285,33 +250,10 @@ const About = () => {
           </div>
         </section>
 
-        {/* Statistics Section */}
-        <section className="py-20 bg-brand-primary text-brand-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-5xl font-bold mb-2">25+</div>
-                <div className="text-brand-white/80">Năm kinh nghiệm</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold mb-2">50+</div>
-                <div className="text-brand-white/80">Loại cà phê đặc sản</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold mb-2">10K+</div>
-                <div className="text-brand-white/80">Khách hàng hài lòng</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold mb-2">100%</div>
-                <div className="text-brand-white/80">Cà phê nguyên chất</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Certifications Section */}
         <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
                 Chứng nhận chất lượng
               </h2>

@@ -174,6 +174,17 @@ const Auth = () => {
 
     const handleFacebookLoginError = (error) => {
         console.error('Facebook login error:', error);
+        
+        // Don't show error for normal states
+        if (error.message && (
+            error.message.includes('not authorized') || 
+            error.message.includes('not logged into Facebook') ||
+            error.message.includes('cancelled')
+        )) {
+            // These are normal user actions, not errors
+            return;
+        }
+        
         setError(error.message || 'Có lỗi xảy ra khi đăng nhập với Facebook');
         setFacebookLoading(false);
     };

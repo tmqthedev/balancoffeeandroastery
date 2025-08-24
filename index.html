@@ -80,7 +80,27 @@
     <title>Balan Coffee & Roastery - Cà phê rang mộc chất lượng cao</title>
   </head>
   <body>
+    <div id="fb-root"></div>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js"></script>
+    
     <div id="root"></div>
+    
+    <!-- Facebook SDK Initialization -->
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '649133454778917',
+          cookie     : true,
+          xfbml      : true,
+          version    : 'v19.0'
+        });
+          
+        FB.AppEvents.logPageView();
+        
+        // Dispatch custom event when SDK is ready
+        window.dispatchEvent(new Event('fb-sdk-ready'));
+      };
+    </script>
     
     <script type="module" src="/src/main.jsx"></script>
   </body>

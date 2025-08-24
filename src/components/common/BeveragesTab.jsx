@@ -11,45 +11,92 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
 
     const beverageCategories = [
         {
-            name: 'Cà phê truyền thống',
-            icon: '☕',
+            name: 'Robusta',
             items: [
-                { name: 'Cà phê đen đá', price: '25,000đ', description: 'Cà phê rang mộc pha phin, đậm đà truyền thống' },
-                { name: 'Cà phê sữa đá', price: '30,000đ', description: 'Cà phê đen kết hợp sữa đặc ngọt ngào' },
-                { name: 'Cà phê nóng', price: '25,000đ', description: 'Cà phê phin nóng, thưởng thức từng giọt' },
-                { name: 'Bạc xỉu', price: '35,000đ', description: 'Cà phê sữa đá phong cách Sài Gòn' }
+                { name: 'Cà phê đen', price: '29,000đ' },
+                { name: 'Cà phê sữa', price: '35,000đ' },
+                { name: 'Bạc xỉu', price: '35,000đ' },
+                { name: 'Cà phê muối', price: '45,000đ' },
+                { name: 'Cà phê dừa', price: '50,000đ' },
+                { name: 'Mokapot', price: '50,000đ' }
             ]
         },
         {
-            name: 'Cà phê hiện đại',
-            icon: '🥤',
+            name: 'Arabica',
             items: [
-                { name: 'Americano', price: '40,000đ', description: 'Espresso pha loãng, vị đậm nhẹ nhàng' },
-                { name: 'Cappuccino', price: '45,000đ', description: 'Espresso với sữa nóng và foam mịn' },
-                { name: 'Latte', price: '45,000đ', description: 'Espresso với nhiều sữa nóng, vị ngọt dịu' },
-                { name: 'Mocha', price: '50,000đ', description: 'Kết hợp hoàn hảo giữa cà phê và chocolate' }
+                { name: 'Espresso Single', price: '35,000đ' },
+                { name: 'Espresso Double', price: '42,000đ' },
+                { name: 'Americano', price: '40,000đ' },
+                { name: 'Cappuccino', price: '50,000đ' },
+                { name: 'Latte', price: '50,000đ' },
+                { name: 'Caramel Machiatto', price: '52,000đ' },
+                { name: 'Cafe Mocha', price: '52,000đ' },
+                { name: 'Cold Brew ( + Orange/ Pineapple/ Apple)', price: '50,000đ' }
             ]
         },
         {
-            name: 'Đồ uống đặc biệt',
-            icon: '🌟',
+            name: 'Chocolate',
             items: [
-                { name: 'Cà phê trứng', price: '45,000đ', description: 'Đặc sản Hà Nội với lớp kem trứng béo ngậy' },
-                { name: 'Cà phê dừa', price: '40,000đ', description: 'Cà phê kết hợp nước cốt dừa tươi mát' },
-                { name: 'Cold Brew', price: '45,000đ', description: 'Cà phê pha lạnh trong 12 giờ, vị ngọt tự nhiên' },
-                { name: 'Affogato', price: '55,000đ', description: 'Kem vanilla với shot espresso nóng' }
+                { name: 'Chocolate Latte', price: '50,000đ' },
+                { name: 'Coconut Chocolate', price: '55,000đ' },
+                { name: 'Cookies & Cream', price: '55,000đ' },
+                { name: 'Chocolate Matcha Latte', price: '60,000đ' },
+                { name: 'Tiramisu Latte', price: '60,000đ' }
             ]
         },
         {
-            name: 'Đồ uống khác',
-            icon: '🧊',
+            name: 'Matcha',
             items: [
-                { name: 'Trà đá', price: '15,000đ', description: 'Trà đen truyền thống thanh mát' },
-                { name: 'Trà sữa', price: '35,000đ', description: 'Trà đen kết hợp sữa tươi ngọt ngào' },
-                { name: 'Nước cam tươi', price: '30,000đ', description: 'Cam tươi vắt 100% không đường' },
-                { name: 'Soda chanh', price: '25,000đ', description: 'Nước soda với chanh tươi giải khát' }
+                { name: 'Matcha Latte', price: '50,000đ' },
+                { name: 'Matcha Iceblended', price: '50,000đ' },
+                { name: 'Houjicha Latte', price: '50,000đ' },
+                { name: 'Matcha Latte ( + Mango/ Strawberry)', price: '60,000đ' },
+                { name: 'Orange Matcha', price: '60,000đ' },
+                { name: 'Coconut Matcha', price: '60,000đ' },
+                { name: 'Matcha Tiramisu', price: '70,000đ' }
             ]
-        }
+        },
+        {
+            name: 'Smoothies',
+            items: [
+                { name: 'Xoài', price: '50,000đ' },
+                { name: 'Xoài Chanh dây', price: '50,000đ' },
+                { name: 'Xoài Ớt', price: '50,000đ' },
+                { name: 'Xoài Thơm Chuối Dâu', price: '50,000đ' },
+                { name: 'Dừa Dứa', price: '50,000đ' }
+            ]
+        },
+        {
+            name: 'Fruit Tea',
+            items: [
+                { name: 'Trà Xoài', price: '45,000đ' },
+                { name: 'Trà Vải', price: '45,000đ' },
+                { name: 'Trà Lê Hoa Cúc', price: '45,000đ' }
+            ]
+        },
+        {
+            name: 'Juices',
+            items: [
+                { name: 'Dừa Hạt Chia', price: '35,000đ' },
+                { name: 'Cam', price: '35,000đ' },
+                { name: 'Thơm', price: '35,000đ' },            
+                { name: 'Dưa Hấu', price: '35,000đ' },
+                { name: 'Chanh Mật ong', price: '35,000đ' },
+                { name: 'Táo Thơm', price: '40,000đ' },
+                { name: 'Cam Dừa', price: '40,000đ' },
+                { name: 'Cam Thơm', price: '40,000đ' },
+                { name: 'Dưa Hấu Thơm', price: '40,000đ' },
+                { name: 'Táo Thơm Cam', price: '45,000đ' },
+                { name: 'Táo Thơm Chanh dây', price: '45,000đ' }
+            ]
+        },
+        {
+            name: 'Milktea',
+            items: [
+                { name: 'Trà sữa Oolong', price: '35,000đ' },
+                { name: 'Trà sữa Lài', price: '35,000đ' }
+            ]
+        },
     ];
 
     const filteredCategories = searchTerm?.trim() 
@@ -122,38 +169,31 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
                                 </h3>
                             </div>
                             <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {category.items.map((item) => (
-                                        <div key={`${category.name}-${item.name}`} className="flex justify-between items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors hover:border-brand-primary/30 hover:shadow-sm">
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-brand-primary mb-1">
-                                                    {searchTerm ? (
-                                                        <span dangerouslySetInnerHTML={{
-                                                            __html: item.name.replace(
-                                                                new RegExp(`(${searchTerm})`, 'gi'),
-                                                                '<mark class="bg-brand-secondary text-brand-primary px-1 rounded">$1</mark>'
-                                                            )
-                                                        }} />
-                                                    ) : item.name}
-                                                </h4>
-                                                <p className="text-sm text-gray-600 mb-2">
-                                                    {searchTerm ? (
-                                                        <span dangerouslySetInnerHTML={{
-                                                            __html: item.description.replace(
-                                                                new RegExp(`(${searchTerm})`, 'gi'),
-                                                                '<mark class="bg-brand-secondary text-brand-primary px-1 rounded">$1</mark>'
-                                                            )
-                                                        }} />
-                                                    ) : item.description}
-                                                </p>
-                                            </div>
-                                            <div className="text-right ml-4">
-                                                <div className="font-bold text-brand-primary text-lg">
+                                        <div key={`${category.name}-${item.name}`} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-brand-primary/40 transition-all duration-300 group">
+                                            {/* Tên món */}
+                                            <h4 className="font-semibold text-brand-primary text-base mb-3 group-hover:text-brand-primary/80 transition-colors leading-snug">
+                                                {searchTerm ? (
+                                                    <span dangerouslySetInnerHTML={{
+                                                        __html: item.name.replace(
+                                                            new RegExp(`(${searchTerm})`, 'gi'),
+                                                            '<mark class="bg-brand-secondary text-brand-primary px-1 rounded">$1</mark>'
+                                                        )
+                                                    }} />
+                                                ) : item.name}
+                                            </h4>
+                                            
+                                            {/* Giá */}
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-xl font-bold text-brand-primary">
                                                     {item.price}
                                                 </div>
+                                                
+                                                {/* Nút đặt món */}
                                                 <button 
                                                     onClick={handleOrderClick}
-                                                    className="mt-2 px-4 py-2 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white text-sm rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                                                    className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md"
                                                 >
                                                     Đặt món
                                                 </button>

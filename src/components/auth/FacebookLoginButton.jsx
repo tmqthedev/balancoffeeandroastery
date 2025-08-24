@@ -34,12 +34,12 @@ const FacebookLoginButton = ({
           handleLoginSuccess(response);
         } else if (response.status === 'not_authorized') {
           // User is logged into Facebook but has not authorized your app
-          if (onLoginError) {
-            onLoginError(new Error('User has not authorized the app'));
-          }
-        } else if (onLoginError) {
-          // User is not logged into Facebook
-          onLoginError(new Error('User is not logged into Facebook'));
+          // This is normal - don't treat as error, just show the login button
+          console.log('User is logged into Facebook but has not authorized the app');
+        } else {
+          // User is not logged into Facebook or status is unknown
+          // This is also normal - don't treat as error
+          console.log('User login status:', response.status);
         }
       };
 

@@ -6,104 +6,140 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
 
     const services = [
         {
-            id: 'cafe-setup',
-            name: 'Setup quán cà phê',
-            icon: '🏪',
-            shortDesc: 'Tư vấn toàn diện từ A-Z việc mở quán cà phê',
-            description: 'Dịch vụ tư vấn và thiết kế quán cà phê chuyên nghiệp từ khâu lên ý tưởng đến vận hành thực tế.',
+            id: 'coffee-supply',
+            name: 'Cung cấp cà phê',
+            icon: '☕',
+            shortDesc: 'Cung cấp cà phê chất lượng cao, rang mộc tại Lâm Đồng',
+            description: 'Chúng tôi cung cấp các loại hạt cà phê rang mộc cao cấp từ những vùng trồng nổi tiếng, đảm bảo chất lượng và hương vị tuyệt hảo cho quán cà phê của bạn.',
             features: [
-                'Tư vấn địa điểm và không gian',
-                'Thiết kế nội thất và bố trí',
-                'Lựa chọn thiết bị máy móc',
-                'Xây dựng menu và định giá',
-                'Đào tạo quy trình vận hành',
-                'Hỗ trợ marketing khai trương'
+                'Cà phê Arabica Cầu Đất Lâm Đồng',
+                'Cà phê Robusta rang mộc truyền thống',
+                'Blends độc quyền theo yêu cầu',
+                'Đóng gói chân không bảo quản',
+                'Giao hàng định kỳ theo lịch',
+                'Tư vấn lựa chọn loại cà phê phù hợp'
             ],
-            packages: [
-                { name: 'Gói cơ bản', price: '15,000,000đ', duration: '2-3 tuần' },
-                { name: 'Gói tiêu chuẩn', price: '25,000,000đ', duration: '3-4 tuần' },
-                { name: 'Gói cao cấp', price: '40,000,000đ', duration: '4-6 tuần' }
-            ]
+            price: '160,000đ/kg',
+            duration: 'Đơn hàng tối thiểu 10kg'
+        },
+        {
+            id: 'equipment-materials',
+            name: 'Cung ứng nguyên vật liệu, thiết bị pha chế',
+            icon: '⚙️',
+            shortDesc: 'Cung cấp thiết bị pha chế và nguyên vật liệu chuyên nghiệp',
+            description: 'Một trong những nhà cung cấp hàng đầu các thiết bị pha chế cà phê chuyên nghiệp và nguyên vật liệu chất lượng cao cho quán cà phê.',
+            features: [
+                'Máy espresso các thương hiệu nổi tiếng',
+                'Máy xay cà phê công nghiệp',
+                'Dụng cụ pha chế V60, French Press, Chemex',
+                'Cốc, ly, dĩa chuyên dụng cao cấp',
+                'Nguyên liệu: sữa, syrup, topping',
+                'Bảo hành và bảo trì thiết bị'
+            ],
+            price: '65,000,000đ',
+            duration: 'Combo thiết bị chuyên nghiệp'
+        },
+        {
+            id: 'product-rd',
+            name: 'R&D Sản phẩm',
+            icon: '🔬',
+            shortDesc: 'Nghiên cứu và phát triển sản phẩm cà phê độc đáo',
+            description: 'Dịch vụ nghiên cứu và phát triển sản phẩm cà phê mới, tạo ra signature drinks độc quyền cho thương hiệu của bạn.',
+            features: [
+                'Phát triển blend cà phê độc quyền',
+                'Tạo ra signature drinks mới',
+                'Nghiên cứu xu hướng thị trường',
+                'Test và tối ưu hóa công thức',
+                'Tư vấn menu theo mùa',
+                'Đào tạo cách pha chế sản phẩm mới'
+            ],
+            price: '25,000,000đ',
+            duration: '5-7 sản phẩm độc quyền'
+        },
+        {
+            id: 'store-operation',
+            name: 'Vận hành cửa hàng',
+            icon: '🏪',
+            shortDesc: 'Tư vấn và hỗ trợ vận hành cửa hàng cà phê hiệu quả',
+            description: 'Dịch vụ tư vấn và hỗ trợ vận hành cửa hàng cà phê, từ quy trình phục vụ đến quản lý hiệu quả.',
+            features: [
+                'Thiết lập quy trình vận hành chuẩn',
+                'Hệ thống quản lý bán hàng (POS)',
+                'Quy trình kiểm soát chất lượng',
+                'Quản lý kho và nhập xuất',
+                'Tối ưu hóa chi phí vận hành',
+                'Hỗ trợ marketing và bán hàng'
+            ],
+            price: '35,000,000đ',
+            duration: 'Hỗ trợ toàn diện 6 tháng'
+        },
+        {
+            id: 'owner-training',
+            name: 'Đào tạo chủ quán',
+            icon: '👨‍💼',
+            shortDesc: 'Đào tạo kỹ năng quản lý và điều hành cho chủ quán cà phê',
+            description: 'Chương trình đào tạo chuyên sâu dành cho chủ quán cà phê về quản lý, kinh doanh và phát triển thương hiệu.',
+            features: [
+                'Quản lý tài chính và chi phí',
+                'Xây dựng thương hiệu cá nhân',
+                'Chiến lược marketing hiệu quả',
+                'Quản lý nhân sự và đội ngũ',
+                'Phân tích và tối ưu doanh thu',
+                'Kỹ năng lãnh đạo và giao tiếp'
+            ],
+            price: '15,000,000đ',
+            duration: '5 ngày (40 giờ)'
+        },
+        {
+            id: 'management-training',
+            name: 'Đào tạo quản lý',
+            icon: '📋',
+            shortDesc: 'Đào tạo kỹ năng quản lý cho trưởng ca và quản lý cửa hàng',
+            description: 'Chương trình đào tạo quản lý chuyên nghiệp cho các vị trí trưởng ca, phó quản lý và quản lý cửa hàng cà phê.',
+            features: [
+                'Quản lý ca làm việc hiệu quả',
+                'Kiểm soát chất lượng sản phẩm',
+                'Xử lý tình huống khó khăn',
+                'Quản lý nhân viên và phân ca',
+                'Báo cáo doanh thu và tồn kho',
+                'Kỹ năng giao tiếp với khách hàng'
+            ],
+            price: '7,500,000đ/người',
+            duration: '3 ngày (24 giờ)'
         },
         {
             id: 'staff-training',
-            name: 'Training nhân viên',
+            name: 'Training nhân sự',
             icon: '👥',
-            shortDesc: 'Đào tạo barista và nhân viên quán cà phê chuyên nghiệp',
-            description: 'Chương trình đào tạo toàn diện cho nhân viên pha chế và phục vụ quán cà phê.',
+            shortDesc: 'Đào tạo nhân viên phục vụ và kỹ năng bán hàng',
+            description: 'Chương trình đào tạo toàn diện cho nhân viên phục vụ, từ kỹ năng giao tiếp đến kỹ thuật bán hàng chuyên nghiệp.',
             features: [
-                'Kỹ thuật pha chế cà phê cơ bản',
-                'Sử dụng máy espresso chuyên nghiệp',
-                'Nghệ thuật trang trí Latte Art',
-                'Kỹ năng phục vụ khách hàng',
-                'Quy trình vệ sinh và bảo quản',
-                'Quản lý kho và tồn kho'
+                'Kỹ năng giao tiếp và phục vụ khách hàng',
+                'Hiểu biết về sản phẩm cà phê',
+                'Kỹ thuật bán hàng và up-sell',
+                'Xử lý khiếu nại và tình huống khó khăn',
+                'Quy trình vệ sinh và an toàn thực phẩm',
+                'Làm việc nhóm và tinh thần teamwork'
             ],
-            packages: [
-                { name: 'Khóa cơ bản', price: '2,500,000đ/người', duration: '3 ngày' },
-                { name: 'Khóa nâng cao', price: '4,500,000đ/người', duration: '5 ngày' },
-                { name: 'Khóa chuyên nghiệp', price: '7,500,000đ/người', duration: '10 ngày' }
-            ]
+            price: '2,500,000đ/người',
+            duration: '2 ngày (16 giờ)'
         },
         {
-            id: 'business-consulting',
-            name: 'Tư vấn kinh doanh',
-            icon: '📊',
-            shortDesc: 'Tư vấn chiến lược kinh doanh và marketing quán cà phê',
-            description: 'Dịch vụ tư vấn chiến lược để phát triển và mở rộng mô hình kinh doanh cà phê.',
+            id: 'barista-training',
+            name: 'Đào tạo Barista',
+            icon: '☕️',
+            shortDesc: 'Đào tạo Barista chuyên nghiệp từ cơ bản đến nâng cao',
+            description: 'Khóa học Barista chuyên nghiệp với đầy đủ kỹ thuật pha chế, latte art và kiến thức chuyên sâu về cà phê.',
             features: [
-                'Phân tích thị trường và đối thủ',
-                'Xây dựng kế hoạch kinh doanh',
-                'Chiến lược marketing online/offline',
-                'Tối ưu hóa chi phí vận hành',
-                'Phát triển thương hiệu',
-                'Kế hoạch mở rộng chuỗi'
+                'Kỹ thuật pha espresso chuẩn Italia',
+                'Nghệ thuật trang trí Latte Art từ cơ bản đến nâng cao',
+                'Pha chế các loại coffee specialty',
+                'Hiểu biết sâu về hạt cà phê và origin',
+                'Vận hành và bảo trì máy espresso',
+                'Tham gia thi đấu và chứng chỉ quốc tế'
             ],
-            packages: [
-                { name: 'Tư vấn cơ bản', price: '5,000,000đ', duration: '1 tuần' },
-                { name: 'Tư vấn toàn diện', price: '12,000,000đ', duration: '3 tuần' },
-                { name: 'Đồng hành dài hạn', price: '25,000,000đ', duration: '3 tháng' }
-            ]
-        },
-        {
-            id: 'equipment-supply',
-            name: 'Cung cấp thiết bị',
-            icon: '⚙️',
-            shortDesc: 'Cung cấp máy móc và thiết bị quán cà phê chuyên nghiệp',
-            description: 'Phân phối các loại máy móc, thiết bị chuyên dụng cho quán cà phê với giá tốt nhất.',
-            features: [
-                'Máy espresso các hãng nổi tiếng',
-                'Máy xay cà phê chuyên nghiệp',
-                'Thiết bị pha chế đa dạng',
-                'Đồ dùng phục vụ cao cấp',
-                'Bảo hành và bảo trì định kỳ',
-                'Đào tạo sử dụng thiết bị'
-            ],
-            packages: [
-                { name: 'Combo khởi nghiệp', price: '45,000,000đ', duration: 'Giao ngay' },
-                { name: 'Combo tiêu chuẩn', price: '85,000,000đ', duration: '1-2 tuần' },
-                { name: 'Combo cao cấp', price: '150,000,000đ', duration: '2-3 tuần' }
-            ]
-        },
-        {
-            id: 'franchise',
-            name: 'Nhượng quyền thương hiệu',
-            icon: '🤝',
-            shortDesc: 'Cơ hội nhượng quyền mở quán cà phê Balan Coffee',
-            description: 'Chương trình nhượng quyền thương hiệu Balan Coffee với hỗ trợ toàn diện.',
-            features: [
-                'Sử dụng thương hiệu Balan Coffee',
-                'Được cung cấp nguyên liệu độc quyền',
-                'Hỗ trợ thiết kế và setup',
-                'Đào tạo vận hành chuyên nghiệp',
-                'Marketing và quảng bá thương hiệu',
-                'Hỗ trợ kỹ thuật liên tục'
-            ],
-            packages: [
-                { name: 'Nhượng quyền cơ bản', price: '200,000,000đ', duration: 'Hợp đồng 5 năm' },
-                { name: 'Nhượng quyền cao cấp', price: '350,000,000đ', duration: 'Hợp đồng 10 năm' },
-                { name: 'Nhượng quyền thành phố', price: 'Thỏa thuận', duration: 'Độc quyền khu vực' }
-            ]
+            price: '12,000,000đ/người',
+            duration: '10 ngày (80 giờ)'
         }
     ];
 
@@ -118,7 +154,7 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
     const highlightText = (text, term) => {
         if (!term) return text;
         const regex = new RegExp(`(${term})`, 'gi');
-        return text.replace(regex, '<mark class="bg-yellow-200 font-semibold px-1 rounded">$1</mark>');
+        return text.replace(regex, '<mark class="bg-brand-secondary/40 text-gray-900 font-bold px-1 rounded">$1</mark>');
     };
 
     return (
@@ -136,14 +172,14 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
 
             {/* Search Results */}
             {searchTerm?.trim() && (
-                <div className="mb-6 bg-gradient-to-r from-brand-primary/5 to-brand-secondary/5 rounded-xl p-4 border border-brand-primary/20">
+                <div className="mb-6 bg-gradient-to-r from-brand-secondary/10 to-brand-secondary/5 rounded-xl p-4 border border-brand-secondary/20 shadow-sm">
                     <div className="flex items-center justify-between">
                         <p className="text-brand-primary font-medium">
                             🔍 Tìm thấy <strong>{filteredServices.length}</strong> dịch vụ cho "{searchTerm}"
                         </p>
                         <button
                             onClick={onClearSearch}
-                            className="text-sm px-3 py-2 bg-white/70 hover:bg-brand-primary hover:text-brand-white rounded-lg transition-all duration-200 border border-brand-primary/30"
+                            className="text-sm px-4 py-2 bg-white/80 hover:bg-brand-primary hover:text-brand-white rounded-lg transition-all duration-200 border border-brand-primary/30 shadow-sm hover:shadow-md"
                         >
                             ✕ Xóa tìm kiếm
                         </button>
@@ -172,69 +208,76 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
 
             {/* Services Grid */}
             {filteredServices.length > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                     {filteredServices.map((service) => (
-                        <div key={service.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                            <div className="p-6">
-                                <div className="flex items-start mb-4">
-                                    <span className="text-4xl mr-4">{service.icon}</span>
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-brand-primary mb-2">
-                                            {searchTerm ? (
-                                                <span dangerouslySetInnerHTML={{
-                                                    __html: highlightText(service.name, searchTerm)
-                                                }} />
-                                            ) : service.name}
-                                        </h3>
-                                        <p className="text-brand-primary/70 mb-4">
-                                            {searchTerm ? (
-                                                <span dangerouslySetInnerHTML={{
-                                                    __html: highlightText(service.description, searchTerm)
-                                                }} />
-                                            ) : service.description}
-                                        </p>
-                                    </div>
+                        <div key={service.id} className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-brand-primary/50 hover:-translate-y-1 transition-all duration-300 group">
+                            {/* Service Header */}
+                            <div className="flex items-center mb-4">
+                                <div className="p-3 bg-gradient-to-br from-brand-primary/20 to-brand-primary/10 rounded-xl mr-4 group-hover:from-brand-primary/30 group-hover:to-brand-primary/20 transition-all duration-300">
+                                    <span className="text-2xl">{service.icon}</span>
                                 </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-brand-primary transition-colors">
+                                        {searchTerm ? (
+                                            <span dangerouslySetInnerHTML={{
+                                                __html: highlightText(service.name, searchTerm)
+                                            }} />
+                                        ) : service.name}
+                                    </h3>
+                                </div>
+                            </div>
 
-                                <div className="mb-4">
-                                    <h4 className="font-semibold text-brand-primary mb-2">Dịch vụ bao gồm:</h4>
-                                    <ul className="text-sm text-gray-600 space-y-1">
-                                        {service.features.slice(0, 3).map((feature) => (
-                                            <li key={feature} className="flex items-center">
-                                                <span className="text-brand-secondary mr-2">✓</span>
+                            {/* Short Description */}
+                            <p className="text-gray-700 text-sm mb-4 line-clamp-2 leading-relaxed font-medium">
+                                {searchTerm ? (
+                                    <span dangerouslySetInnerHTML={{
+                                        __html: highlightText(service.shortDesc, searchTerm)
+                                    }} />
+                                ) : service.shortDesc}
+                            </p>
+
+                            {/* Key Features */}
+                            <div className="mb-6">
+                                <ul className="text-sm text-gray-700 space-y-2">
+                                    {service.features.slice(0, 2).map((feature) => (
+                                        <li key={feature} className="flex items-start">
+                                            <div className="flex-shrink-0 w-4 h-4 bg-brand-primary rounded-full flex items-center justify-center mr-3 mt-0.5">
+                                                <span className="text-white text-xs font-bold">✓</span>
+                                            </div>
+                                            <span className="leading-relaxed font-medium">
                                                 {searchTerm ? (
                                                     <span dangerouslySetInnerHTML={{
                                                         __html: highlightText(feature, searchTerm)
                                                     }} />
                                                 ) : feature}
-                                            </li>
-                                        ))}
-                                        {service.features.length > 3 && (
-                                            <li className="text-gray-500 text-xs">
-                                                +{service.features.length - 3} dịch vụ khác...
-                                            </li>
-                                        )}
-                                    </ul>
-                                </div>
+                                            </span>
+                                        </li>
+                                    ))}
+                                    {service.features.length > 2 && (
+                                        <li className="text-brand-primary text-xs font-bold ml-7">
+                                            +{service.features.length - 2} dịch vụ khác...
+                                        </li>
+                                    )}
+                                </ul>
+                            </div>
 
-                                <div className="mb-4">
-                                    <div className="text-sm text-gray-600 mb-2">Giá từ:</div>
-                                    <div className="text-2xl font-bold text-brand-primary">
-                                        {service.packages[0].price}
-                                    </div>
+                            {/* Price and Buttons */}
+                            <div className="flex items-end justify-between">
+                                <div className="flex flex-col">
+                                    <span className="text-xl font-bold text-brand-primary">
+                                        {service.price}
+                                    </span>
+                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md font-medium">
+                                        {service.duration}
+                                    </span>
                                 </div>
-
-                                <div className="flex space-x-2">
-                                    <button
-                                        onClick={() => setSelectedService(service)}
-                                        className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-                                    >
-                                        Xem chi tiết
-                                    </button>
-                                    <button className="bg-gray-100 hover:bg-brand-primary hover:text-brand-white text-brand-primary py-2 px-4 rounded-lg transition-all duration-200 border border-brand-primary/20">
-                                        📞 Liên hệ
-                                    </button>
-                                </div>
+                                
+                                <button
+                                    onClick={() => setSelectedService(service)}
+                                    className="px-6 py-2 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-white text-sm font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                                >
+                                    Xem chi tiết
+                                </button>
                             </div>
                         </div>
                     ))}
@@ -243,54 +286,112 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
 
             {/* Service Detail Modal */}
             {selectedService && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-96 overflow-y-auto">
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-2xl font-bold text-coffee-800 flex items-center">
-                                    <span className="text-3xl mr-3">{selectedService.icon}</span>
-                                    {selectedService.name}
-                                </h3>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-brand-primary to-brand-primary/90 p-6 text-white relative overflow-hidden">
+                            <div className="absolute inset-0 opacity-10">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-secondary rounded-full -translate-y-16 translate-x-16"></div>
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-secondary rounded-full translate-y-12 -translate-x-12"></div>
+                            </div>
+                            <div className="relative flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <span className="text-4xl mr-4 filter drop-shadow-md">{selectedService.icon}</span>
+                                    <div>
+                                        <h3 className="text-2xl font-bold mb-1">{selectedService.name}</h3>
+                                        <p className="text-brand-white/80 text-sm">Dịch vụ chuyên nghiệp - Uy tín hàng đầu</p>
+                                    </div>
+                                </div>
                                 <button
                                     onClick={() => setSelectedService(null)}
-                                    className="text-coffee-500 hover:text-coffee-700 text-2xl"
+                                    className="text-brand-white/80 hover:text-brand-white hover:bg-white/10 rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 text-xl"
                                 >
                                     ✕
                                 </button>
                             </div>
+                        </div>
 
-                            <p className="text-coffee-600 mb-6">{selectedService.description}</p>
+                        {/* Modal Content */}
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                            {/* Description */}
+                            <div className="bg-gradient-to-r from-brand-secondary/15 to-brand-secondary/10 rounded-xl p-6 mb-6 border-2 border-brand-secondary/30">
+                                <h4 className="font-bold text-gray-900 mb-3 flex items-center text-lg">
+                                    <span className="w-3 h-3 bg-brand-secondary rounded-full mr-3"></span>
+                                    Mô tả dịch vụ
+                                </h4>
+                                <p className="text-gray-800 leading-relaxed font-medium">{selectedService.description}</p>
+                            </div>
 
+                            {/* Features */}
                             <div className="mb-6">
-                                <h4 className="font-semibold text-coffee-800 mb-3">Dịch vụ chi tiết:</h4>                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {selectedService.features.map((feature) => (
-                                        <div key={feature} className="flex items-center text-coffee-600">
-                                            <span className="text-green-500 mr-2">✓</span>
-                                            {feature}
+                                <h4 className="font-bold text-gray-900 mb-4 flex items-center text-lg">
+                                    <span className="w-3 h-3 bg-brand-secondary rounded-full mr-3"></span>
+                                    Dịch vụ chi tiết
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {selectedService.features.map((feature, index) => (
+                                        <div key={feature} className="flex items-start bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-brand-primary/40 hover:shadow-sm transition-all duration-200">
+                                            <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-brand-primary to-brand-primary/80 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                                                <span className="text-white text-xs font-bold">{index + 1}</span>
+                                            </div>
+                                            <span className="text-gray-800 text-sm leading-relaxed font-medium">{feature}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
+                            {/* Single Price Package */}
                             <div className="mb-6">
-                                <h4 className="font-semibold text-coffee-800 mb-3">Gói dịch vụ:</h4>                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {selectedService.packages.map((pkg) => (
-                                        <div key={pkg.name} className="border border-coffee-200 rounded-lg p-4">
-                                            <h5 className="font-semibold text-coffee-800 mb-2">{pkg.name}</h5>
-                                            <div className="text-xl font-bold text-coffee-600 mb-1">{pkg.price}</div>
-                                            <div className="text-sm text-coffee-500">{pkg.duration}</div>
+                                <h4 className="font-bold text-gray-900 mb-4 flex items-center text-lg">
+                                    <span className="w-3 h-3 bg-brand-secondary rounded-full mr-3"></span>
+                                    Thông tin giá
+                                </h4>
+                                <div className="bg-gradient-to-br from-brand-primary/10 to-brand-primary/5 border-2 border-brand-primary/30 rounded-xl p-8 text-center relative">
+                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                        <span className="bg-brand-secondary text-white text-sm font-bold px-4 py-1 rounded-full">
+                                            GIÁ TIÊU CHUẨN
+                                        </span>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="mb-4">
+                                            <span className="text-3xl font-bold text-brand-primary">{selectedService.price}</span>
                                         </div>
-                                    ))}
+                                        <div className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-gray-200">
+                                            <span>Với</span> {selectedService.duration}
+                                        </div>
+                                        <button className="w-full mt-6 py-3 px-6 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-white font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
+                                            Đặt dịch vụ ngay
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex space-x-4">
-                                <button className="bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
-                                    Đặt lịch tư vấn
+                            {/* Action Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t-2 border-gray-200">
+                                <button className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg font-bold">
+                                    📅 Đặt lịch tư vấn miễn phí
                                 </button>
-                                <button className="bg-gray-100 hover:bg-brand-primary hover:text-brand-white text-brand-primary py-3 px-6 rounded-xl transition-all duration-200 border border-brand-primary/20">
-                                    Tải brochure
+                                <button className="flex-1 bg-gradient-to-r from-brand-secondary to-brand-secondary/90 hover:from-brand-secondary/90 hover:to-brand-secondary text-white py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg font-bold">
+                                    💬 Chat với chuyên gia
                                 </button>
+                            </div>
+
+                            {/* Trust Indicators */}
+                            <div className="mt-6 bg-gray-100 rounded-xl p-4 border border-gray-200">
+                                <div className="flex items-center justify-center space-x-8 text-sm text-gray-700">
+                                    <div className="flex items-center">
+                                        <span className="text-brand-secondary mr-2">🛡️</span>
+                                        <span className="font-bold">Bảo hành dịch vụ</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="text-brand-secondary mr-2">⚡</span>
+                                        <span className="font-bold">Hỗ trợ nhanh chóng</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="text-brand-secondary mr-2">💯</span>
+                                        <span className="font-bold">Cam kết chất lượng</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -298,27 +399,27 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
             )}
 
             {/* Why Choose Us */}
-            <div className="bg-gradient-to-r from-coffee-800 to-coffee-600 rounded-lg p-8 text-white">
+            <div className="bg-gradient-to-r from-brand-primary to-brand-primary/90 rounded-xl p-8 text-white shadow-lg">
                 <h3 className="text-2xl font-bold mb-6 text-center">Tại sao chọn dịch vụ của chúng tôi?</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="text-center">
                         <div className="text-4xl mb-3">🏆</div>
                         <h4 className="font-semibold mb-2">Kinh nghiệm 10+ năm</h4>
-                        <p className="text-cream-200 text-sm">
+                        <p className="text-brand-white/80 text-sm">
                             Đội ngũ chuyên gia giàu kinh nghiệm trong ngành cà phê
                         </p>
                     </div>
                     <div className="text-center">
                         <div className="text-4xl mb-3">🤝</div>
                         <h4 className="font-semibold mb-2">Hỗ trợ 24/7</h4>
-                        <p className="text-cream-200 text-sm">
+                        <p className="text-brand-white/80 text-sm">
                             Đồng hành và hỗ trợ khách hàng mọi lúc mọi nơi
                         </p>
                     </div>
                     <div className="text-center">
                         <div className="text-4xl mb-3">✅</div>
                         <h4 className="font-semibold mb-2">Cam kết chất lượng</h4>
-                        <p className="text-cream-200 text-sm">
+                        <p className="text-brand-white/80 text-sm">
                             Đảm bảo kết quả và hoàn tiền nếu không hài lòng
                         </p>
                     </div>
@@ -326,18 +427,18 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
             </div>
 
             {/* Contact CTA */}
-            <div className="mt-8 bg-cream-100 rounded-lg p-6 text-center">
-                <h3 className="text-lg font-semibold text-coffee-800 mb-2">
+            <div className="mt-8 bg-gradient-to-br from-brand-secondary/10 to-brand-secondary/5 border border-brand-secondary/20 rounded-xl p-6 text-center shadow-sm">
+                <h3 className="text-lg font-semibold text-brand-primary mb-2">
                     Sẵn sàng bắt đầu dự án cà phê của bạn?
                 </h3>
-                <p className="text-coffee-600 mb-4">
+                <p className="text-gray-700 mb-4">
                     Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button className="bg-coffee-600 hover:bg-coffee-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <button className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
                         📞 Gọi ngay: 1900 xxxx
                     </button>
-                    <button className="bg-white hover:bg-coffee-50 text-coffee-800 border border-coffee-300 px-6 py-2 rounded-lg transition-colors">
+                    <button className="bg-white hover:bg-brand-secondary/10 text-brand-primary border border-brand-primary/30 px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md">
                         💬 Chat với chuyên gia
                     </button>
                 </div>
