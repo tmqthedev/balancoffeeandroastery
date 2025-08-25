@@ -102,12 +102,12 @@ const Login = () => {
             </Helmet>            <div className="min-h-screen bg-cream-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 pt-20">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     <Link to="/" className="flex justify-center items-center space-x-2 mb-6">
-                        <div className="w-12 h-12 bg-coffee-600 rounded-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-brand-primary rounded-lg flex items-center justify-center">
                             <img src="backend\public\images\logos\title.png" alt="Balan Coffee Logo" className='h-8 w-8 object-cover'/>
                         </div>                        
                     </Link>
                     
-                    <h2 className="text-center text-3xl font-bold text-coffee-800">
+                    <h2 className="text-center text-3xl font-bold text-brand-primary">
                         Đăng nhập
                     </h2>
                 </div>
@@ -122,7 +122,7 @@ const Login = () => {
 
                         <form className="space-y-6" onSubmit={handleSubmit}>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-coffee-700">
+                                <label htmlFor="email" className="block text-sm font-medium text-brand-primary">
                                     Email
                                 </label>
                                 <div className="mt-1">
@@ -133,14 +133,14 @@ const Login = () => {
                                         required
                                         value={formData.email}
                                         onChange={handleChange}
-                                        className="appearance-none block w-full px-3 py-2 border border-coffee-300 rounded-lg placeholder-coffee-400 focus:outline-none focus:ring-coffee-500 focus:border-coffee-500"
+                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                                         placeholder="Email"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-coffee-700">
+                                <label htmlFor="password" className="block text-sm font-medium text-brand-primary">
                                     Mật khẩu
                                 </label>
                                 <div className="mt-1">
@@ -151,7 +151,7 @@ const Login = () => {
                                         required
                                         value={formData.password}
                                         onChange={handleChange}
-                                        className="appearance-none block w-full px-3 py-2 border border-coffee-300 rounded-lg placeholder-coffee-400 focus:outline-none focus:ring-coffee-500 focus:border-coffee-500"
+                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                                         placeholder="Mật khẩu"
                                     />
                                 </div>
@@ -165,15 +165,15 @@ const Login = () => {
                                         type="checkbox"
                                         checked={formData.remember}
                                         onChange={handleChange}
-                                        className="h-4 w-4 text-coffee-600 focus:ring-coffee-500 border-coffee-300 rounded"
+                                        className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
                                     />
-                                    <label htmlFor="remember" className="ml-2 block text-sm text-coffee-700">
+                                    <label htmlFor="remember" className="ml-2 block text-sm text-brand-primary">
                                         Ghi nhớ đăng nhập
                                     </label>
                                 </div>
 
                                 <div className="text-sm">
-                                    <Link to="/forgot-password" className="font-medium text-coffee-600 hover:text-coffee-500">
+                                    <Link to="/forgot-password" className="font-medium text-brand-primary hover:text-brand-primary">
                                         Quên mật khẩu?
                                     </Link>
                                 </div>
@@ -183,7 +183,7 @@ const Login = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-coffee-600 hover:bg-coffee-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coffee-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-primary hover:bg-brand-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? 'Đang xử lý...' : 'Đăng nhập'}
                                 </button>
@@ -192,10 +192,10 @@ const Login = () => {
                             <div className="mt-6">
                                 <div className="relative">
                                     <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-coffee-300" />
+                                        <div className="w-full border-t border-gray-300" />
                                     </div>
                                     <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-white text-coffee-500">Or continue with</span>
+                                        <span className="px-2 bg-white text-brand-primary">Or continue with</span>
                                     </div>
                                 </div>
 
@@ -215,8 +215,8 @@ const Login = () => {
                         </form>
 
                         <div className="mt-6 text-center">
-                            <p className="text-sm text-coffee-600">                                Chưa có tài khoản?{' '}
-                                <Link to="/register" className="font-medium text-coffee-600 hover:text-coffee-500">
+                            <p className="text-sm text-brand-primary">                                Chưa có tài khoản?{' '}
+                                <Link to="/register" className="font-medium text-brand-primary hover:text-brand-primary">
                                     Đăng ký ngay
                                 </Link>
                             </p>

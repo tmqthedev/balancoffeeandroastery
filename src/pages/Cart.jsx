@@ -38,7 +38,7 @@ const Cart = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-cream-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
             </div>
         );
     }
@@ -84,7 +84,7 @@ const Cart = () => {
                             {/* Cart Items */}
                             <div className="lg:col-span-2">
                                 <div className="bg-white rounded-lg shadow-md">
-                                    <div className="p-6 border-b border-coffee-100">                                        <div className="flex justify-between items-center">
+                                    <div className="p-6 border-b border-gray-200">                                        <div className="flex justify-between items-center">
                                             <h2 className="text-xl font-semibold text-brand-primary">
                                                 Sản phẩm trong giỏ ({itemCount})
                                             </h2>
@@ -97,7 +97,7 @@ const Cart = () => {
                                         </div>
                                     </div>
                                     
-                                    <div className="divide-y divide-coffee-100">
+                                    <div className="divide-y divide-gray-200">
                                         {cartItems.map((item) => (
                                             <div key={item.product_id} className="p-6">
                                                 <div className="flex flex-col sm:flex-row gap-4">
@@ -193,7 +193,7 @@ const Cart = () => {
                                 {/* Continue Shopping */}
                                 <div className="mt-6">                                    <Link
                                         to="/products"
-                                        className="inline-flex items-center text-coffee-600 hover:text-coffee-800 font-medium"
+                                        className="inline-flex items-center text-brand-primary hover:text-brand-primary/80 font-medium"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -205,27 +205,27 @@ const Cart = () => {
                             
                             {/* Order Summary */}
                             <div className="lg:col-span-1">
-                                <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                    <h3 className="text-xl font-semibold text-coffee-800 mb-6">
+                                <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                    <h3 className="text-xl font-semibold text-brand-primary mb-6">
                                         Tóm tắt đơn hàng
                                     </h3>
                                     
                                     <div className="space-y-4">
                                         <div className="flex justify-between">
-                                            <span className="text-coffee-600">Tạm tính</span>
-                                            <span className="font-semibold text-coffee-800">{formatVND(subtotal)}</span>
+                                            <span className="text-gray-600">Tạm tính</span>
+                                            <span className="font-semibold text-brand-primary">{formatVND(subtotal)}</span>
                                         </div>
                                         
-                                        <hr className="border-coffee-200" />
+                                        <hr className="border-gray-200" />
                                         
                                         <div className="flex justify-between text-lg">
-                                            <span className="font-semibold text-coffee-800">Tổng cộng</span>
-                                            <span className="font-bold text-coffee-800">{formatVND(subtotal)}</span>
+                                            <span className="font-semibold text-brand-primary">Tổng cộng</span>
+                                            <span className="font-bold text-brand-primary">{formatVND(subtotal)}</span>
                                         </div>
                                     </div>
                                       {/* Shipping Notice */}
                                     {subtotal < 1000000 && (
-                                        <div className="mt-4 p-3 bg-coffee-50 border border-coffee-200 rounded-lg">
-                                            <p className="text-sm text-coffee-700">
+                                        <div className="mt-4 p-3 bg-brand-secondary/10 border border-brand-secondary/30 rounded-lg">
+                                            <p className="text-sm text-gray-700">
                                                 Freeship nội khu Vinhomes Grand Park hoặc đơn hàng trên 1.000.000đ
                                                 <br />
                                                 Phí ship được thanh toán bởi người đặt nếu ngoài khu vực Vinhomes Grand Park.
@@ -236,13 +236,13 @@ const Cart = () => {
                                     {/* Checkout Button */}
                                     <button
                                         onClick={handleCheckout}
-                                        className="w-full mt-6 bg-coffee-600 hover:bg-coffee-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors duration-200"
+                                        className="w-full mt-6 bg-brand-primary hover:bg-brand-primary/90 text-white py-3 px-6 rounded-lg font-semibold transition-colors duration-200"
                                     >
                                         {isAuthenticated ? 'Thanh toán' : 'Đăng nhập và thanh toán'}
                                     </button>
                                     
                                     {/* Security Notice */}
-                                    <div className="mt-4 flex items-center justify-center text-sm text-coffee-600">
+                                    <div className="mt-4 flex items-center justify-center text-sm text-gray-600">
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>

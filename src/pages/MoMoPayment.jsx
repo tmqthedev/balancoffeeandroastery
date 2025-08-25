@@ -75,10 +75,10 @@ const MoMoPaymentPage = () => {
         return (
             <div className="min-h-screen bg-cream-50 flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-xl font-semibold text-coffee-800 mb-4">Không tìm thấy thông tin thanh toán</h2>
+                    <h2 className="text-xl font-semibold text-brand-primary mb-4">Không tìm thấy thông tin thanh toán</h2>
                     <button
                         onClick={() => navigate('/checkout')}
-                        className="bg-coffee-600 text-white px-6 py-2 rounded-lg hover:bg-coffee-700"
+                        className="bg-brand-primary text-white px-6 py-2 rounded-lg hover:bg-brand-primary/90"
                     >
                         Quay lại đặt hàng
                     </button>
@@ -105,7 +105,7 @@ const MoMoPaymentPage = () => {
                     {/* Payment info */}
                     <div className="p-6">
                         <div className="text-center mb-6">
-                            <h2 className="text-xl font-semibold text-coffee-800 mb-2">
+                            <h2 className="text-xl font-semibold text-brand-primary mb-2">
                                 Số tiền: {new Intl.NumberFormat('vi-VN', { 
                                     style: 'currency', 
                                     currency: 'VND' 
@@ -126,14 +126,14 @@ const MoMoPaymentPage = () => {
                         {/* QR Code */}
                         {momoData.qrCodeUrl && (
                             <div className="text-center mb-6">
-                                <div className="inline-block p-4 bg-white border-2 border-dashed border-coffee-300 rounded-lg">
+                                <div className="inline-block p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg">
                                     <img 
                                         src={momoData.qrCodeUrl} 
                                         alt="MoMo QR Code"
                                         className="w-48 h-48 mx-auto"
                                     />
                                 </div>
-                                <p className="text-sm text-coffee-600 mt-2">
+                                <p className="text-sm text-brand-primary mt-2">
                                     Quét mã QR bằng ứng dụng MoMo để thanh toán
                                 </p>
                             </div>
@@ -143,15 +143,15 @@ const MoMoPaymentPage = () => {
                         <div className="space-y-4 mb-6">
                             {/* MoMo App */}
                             {momoData.deeplink && (
-                                <div className="border border-coffee-200 rounded-lg p-4">
+                                <div className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center text-white mr-3">
                                                 📱
                                             </div>
                                             <div>
-                                                <h3 className="font-medium text-coffee-800">Ứng dụng MoMo</h3>
-                                                <p className="text-sm text-coffee-600">Thanh toán trực tiếp qua app</p>
+                                                <h3 className="font-medium text-brand-primary">Ứng dụng MoMo</h3>
+                                                <p className="text-sm text-brand-primary">Thanh toán trực tiếp qua app</p>
                                             </div>
                                         </div>
                                         <a
@@ -165,14 +165,14 @@ const MoMoPaymentPage = () => {
                             )}
 
                             {/* QR Code */}
-                            <div className="border border-coffee-200 rounded-lg p-4">
+                            <div className="border border-gray-200 rounded-lg p-4">
                                 <div className="flex items-center">
                                     <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white mr-3">
                                         📷
                                     </div>
                                     <div>
-                                        <h3 className="font-medium text-coffee-800">Quét mã QR</h3>
-                                        <p className="text-sm text-coffee-600">Sử dụng camera trong app MoMo</p>
+                                        <h3 className="font-medium text-brand-primary">Quét mã QR</h3>
+                                        <p className="text-sm text-brand-primary">Sử dụng camera trong app MoMo</p>
                                     </div>
                                 </div>
                             </div>
@@ -215,8 +215,8 @@ const MoMoPaymentPage = () => {
 
                         {/* Instructions */}
                         <div className="bg-cream-50 rounded-lg p-4">
-                            <h3 className="font-medium text-coffee-800 mb-2">Hướng dẫn thanh toán:</h3>
-                            <ol className="text-sm text-coffee-600 space-y-1">
+                            <h3 className="font-medium text-brand-primary mb-2">Hướng dẫn thanh toán:</h3>
+                            <ol className="text-sm text-brand-primary space-y-1">
                                 <li>1. Mở ứng dụng MoMo trên điện thoại</li>
                                 <li>2. Chọn "Quét QR" hoặc "Thanh toán"</li>
                                 <li>3. Quét mã QR code ở trên</li>
@@ -227,18 +227,18 @@ const MoMoPaymentPage = () => {
 
                         {/* Support */}
                         <div className="text-center mt-6 pt-6 border-t border-cream-200">
-                            <p className="text-sm text-coffee-600 mb-2">Cần hỗ trợ?</p>
+                            <p className="text-sm text-brand-primary mb-2">Cần hỗ trợ?</p>
                             <div className="flex justify-center space-x-4">
                                 <button
                                     onClick={handleGoBack}
-                                    className="text-coffee-600 hover:text-coffee-800 text-sm"
+                                    className="text-brand-primary hover:text-brand-primary text-sm"
                                 >
                                     ← Quay lại đặt hàng
                                 </button>
                                 <span className="text-cream-400">|</span>
                                 <a
                                     href="/contact"
-                                    className="text-coffee-600 hover:text-coffee-800 text-sm"
+                                    className="text-brand-primary hover:text-brand-primary text-sm"
                                 >
                                     Liên hệ hỗ trợ
                                 </a>

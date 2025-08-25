@@ -108,7 +108,7 @@ const BlogPost = () => {
           </p>
           <Link
             to="/blog"
-            className="inline-flex items-center px-6 py-3 bg-coffee-600 text-white rounded-md hover:bg-coffee-700 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
           >
             Quay lại Blog
           </Link>
@@ -129,7 +129,7 @@ const BlogPost = () => {
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center px-6 py-3 bg-coffee-600 text-white rounded-md hover:bg-coffee-700 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
           >
             Quay lại
           </button>
@@ -203,11 +203,11 @@ const BlogPost = () => {
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">            <nav className="flex items-center space-x-2 text-sm">
-              <Link to="/" className="text-gray-500 hover:text-coffee-600">
+              <Link to="/" className="text-gray-500 hover:text-brand-primary">
                 Trang chủ
               </Link>
               <span className="text-gray-400">/</span>
-              <Link to="/blog" className="text-gray-500 hover:text-coffee-600">
+              <Link to="/blog" className="text-gray-500 hover:text-brand-primary">
                 Blog
               </Link>
               <span className="text-gray-400">/</span>
@@ -222,7 +222,7 @@ const BlogPost = () => {
             {/* Category */}
             {blog?.category && (
               <div className="mb-4">
-                <span className="inline-block bg-coffee-100 text-coffee-800 px-3 py-1 rounded-full text-sm font-medium">
+                <span className="inline-block bg-brand-secondary/20 text-brand-primary px-3 py-1 rounded-full text-sm font-medium">
                   {typeof blog.category === 'object' ? blog.category.name : blog.category}
                 </span>
               </div>
@@ -346,7 +346,7 @@ const BlogPost = () => {
                     </Link>
 
                     <div className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-coffee-600 transition-colors">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-brand-primary transition-colors">
                         <Link to={`/blog/${relatedBlog.slug}`}>
                           {relatedBlog.title || 'Tiêu đề blog'}
                         </Link>
@@ -358,7 +358,7 @@ const BlogPost = () => {
                       
                       <Link
                         to={`/blog/${relatedBlog.slug}`}
-                        className="inline-flex items-center text-coffee-600 hover:text-coffee-700 font-medium text-sm transition-colors"
+                        className="inline-flex items-center text-brand-primary hover:text-brand-primary/90 font-medium text-sm transition-colors"
                       >
                         Đọc thêm
                         <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

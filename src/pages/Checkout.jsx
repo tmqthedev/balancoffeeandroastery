@@ -18,8 +18,9 @@ const Checkout = () => {
             lastName: user?.lastName || '',
             email: user?.email || '',
             phone: user?.phone || '',
-            address: user?.addresses?.find(addr => addr.isDefault)?.address1 || user?.addresses?.[0]?.address1 || '',
-            city: user?.addresses?.find(addr => addr.isDefault)?.city || user?.addresses?.[0]?.city || '',
+            address: user?.addresses?.find(addr => addr.isDefault)?.street || user?.addresses?.[0]?.street || '',
+            wardCommune: user?.addresses?.find(addr => addr.isDefault)?.wardCommune || user?.addresses?.[0]?.wardCommune || '',
+            district: user?.addresses?.find(addr => addr.isDefault)?.district || user?.addresses?.[0]?.district || '',
             province: user?.addresses?.find(addr => addr.isDefault)?.province || user?.addresses?.[0]?.province || '',
             postalCode: user?.addresses?.find(addr => addr.isDefault)?.postalCode || user?.addresses?.[0]?.postalCode || '',
             country: 'Vietnam'
@@ -30,7 +31,8 @@ const Checkout = () => {
             firstName: '',
             lastName: '',
             address: '',
-            city: '',
+            wardCommune: '',
+            district: '',
             province: '',
             postalCode: '',
             country: 'Vietnam'
@@ -61,8 +63,9 @@ const Checkout = () => {
                     lastName: user.lastName || prev.billing.lastName,
                     email: user.email || prev.billing.email,
                     phone: user.phone || defaultAddress?.phone || prev.billing.phone,
-                    address: defaultAddress?.address1 || prev.billing.address,
-                    city: defaultAddress?.city || prev.billing.city,
+                    address: defaultAddress?.street || prev.billing.address,
+                    wardCommune: defaultAddress?.wardCommune || prev.billing.wardCommune,
+                    district: defaultAddress?.district || prev.billing.district,
                     province: defaultAddress?.province || prev.billing.province,
                     postalCode: defaultAddress?.postalCode || prev.billing.postalCode,
                 },
@@ -71,8 +74,9 @@ const Checkout = () => {
                     sameAsBilling: true,
                     firstName: defaultAddress?.firstName || user.firstName || '',
                     lastName: defaultAddress?.lastName || user.lastName || '',
-                    address: defaultAddress?.address1 || '',
-                    city: defaultAddress?.city || '',
+                    address: defaultAddress?.street || '',
+                    wardCommune: defaultAddress?.wardCommune || '',
+                    district: defaultAddress?.district || '',
                     province: defaultAddress?.province || '',
                     postalCode: defaultAddress?.postalCode || '',
                 }
@@ -126,7 +130,8 @@ const Checkout = () => {
                     firstName: prev.billing.firstName,
                     lastName: prev.billing.lastName,
                     address: prev.billing.address,
-                    city: prev.billing.city,
+                    wardCommune: prev.billing.wardCommune,
+                    district: prev.billing.district,
                     province: prev.billing.province,
                     postalCode: prev.billing.postalCode,
                     country: prev.billing.country
@@ -138,7 +143,7 @@ const Checkout = () => {
     const validateStep = (step) => {
         const newErrors = {};        if (step === 1) {
             // Validate billing information
-            const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'province'];
+            const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'wardCommune', 'district', 'province'];
             required.forEach(field => {
                 if (!formData.billing[field]) {
                     newErrors[`billing.${field}`] = 'Trường này là bắt buộc';
@@ -150,8 +155,9 @@ const Checkout = () => {
             }
         }
 
-        if (step === 2 && !formData.shipping.sameAsBilling) {            // Validate shipping information
-            const required = ['firstName', 'lastName', 'address', 'city', 'province'];
+        if (step === 2 && !formData.shipping.sameAsBilling) {
+            // Validate shipping information
+            const required = ['firstName', 'lastName', 'address', 'wardCommune', 'district', 'province'];
             required.forEach(field => {
                 if (!formData.shipping[field]) {
                     newErrors[`shipping.${field}`] = 'Trường này là bắt buộc';
@@ -198,10 +204,10 @@ const Checkout = () => {
 
             // Prepare customer info according to new API structure
             const customerInfo = {
-                name: `${formData.billing.lastName} ${formData.billing.firstName}`.trim(),
+                firstName: formData.billing.firstName,
+                lastName: formData.billing.lastName,
                 email: formData.billing.email,
-                phone: formData.billing.phone,
-                address: `${formData.billing.address}, ${formData.billing.city}, ${formData.billing.province}`.trim()
+                phone: formData.billing.phone
             };
 
             // Prepare items for new API
@@ -215,7 +221,22 @@ const Checkout = () => {
 
             const orderData = {
                 customerInfo,
-                items,
+                shippingAddress: {
+                    street: formData.billing.address,
+                    wardCommune: formData.billing.wardCommune || '',
+                    district: formData.billing.district || '',
+                    province: formData.billing.province,
+                    postalCode: formData.billing.postalCode || '',
+                    country: 'Việt Nam'
+                },
+                items: cartItems.map(item => ({
+                    productId: item.product_id,
+                    productName: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    subtotal: item.quantity * item.price
+                })),
+                subtotal: Math.round(total),
                 total: Math.round(total), // Ensure integer for payment gateway
                 notes: formData.notes || ''
             };
@@ -347,8 +368,9 @@ const Checkout = () => {
                                                                         firstName: selectedAddress.firstName || prev.billing.firstName,
                                                                         lastName: selectedAddress.lastName || prev.billing.lastName,
                                                                         phone: selectedAddress.phone || prev.billing.phone,
-                                                                        address: selectedAddress.address1 || prev.billing.address,
-                                                                        city: selectedAddress.city || prev.billing.city,
+                                                                        address: selectedAddress.street || prev.billing.address,
+                                                                        wardCommune: selectedAddress.wardCommune || prev.billing.wardCommune,
+                                                                        district: selectedAddress.district || prev.billing.district,
                                                                         province: selectedAddress.province || prev.billing.province,
                                                                         postalCode: selectedAddress.postalCode || prev.billing.postalCode,
                                                                     }
@@ -466,20 +488,38 @@ const Checkout = () => {
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Phường/Xã *
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    value={formData.billing.city}
-                                                    onChange={(e) => handleInputChange('billing', 'city', e.target.value)}
+                                                    value={formData.billing.wardCommune || ''}
+                                                    onChange={(e) => handleInputChange('billing', 'wardCommune', e.target.value)}
                                                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                        errors['billing.city'] ? 'border-red-300' : 'border-gray-300'
+                                                        errors['billing.wardCommune'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
-                                                {errors['billing.city'] && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.city']}</p>
+                                                {errors['billing.wardCommune'] && (
+                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.wardCommune']}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                    Quận/Huyện *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.billing.district || ''}
+                                                    onChange={(e) => handleInputChange('billing', 'district', e.target.value)}
+                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                        errors['billing.district'] ? 'border-red-300' : 'border-gray-300'
+                                                    }`}
+                                                />
+                                                {errors['billing.district'] && (
+                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.district']}</p>
                                                 )}
                                             </div>
                                             
@@ -609,28 +649,46 @@ const Checkout = () => {
                                                     )}
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                                Phường/Xã *
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={formData.shipping.city}
-                                                            onChange={(e) => handleInputChange('shipping', 'city', e.target.value)}
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                            Phường/Xã *
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.shipping.wardCommune || ''}
+                                                            onChange={(e) => handleInputChange('shipping', 'wardCommune', e.target.value)}
                                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                                errors['shipping.city'] ? 'border-red-300' : 'border-gray-300'
+                                                                errors['shipping.wardCommune'] ? 'border-red-300' : 'border-gray-300'
                                                             }`}
                                                         />
-                                                        {errors['shipping.city'] && (
-                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.city']}</p>
+                                                        {errors['shipping.wardCommune'] && (
+                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.wardCommune']}</p>
                                                         )}
                                                     </div>
-                                                    
-                                                    <div>                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                                Tỉnh/Thành phố *
-                                                            </label>
-                                                            <select
-                                                                value={formData.shipping.province}
+
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                            Quận/Huyện *
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.shipping.district || ''}
+                                                            onChange={(e) => handleInputChange('shipping', 'district', e.target.value)}
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                                errors['shipping.district'] ? 'border-red-300' : 'border-gray-300'
+                                                            }`}
+                                                        />
+                                                        {errors['shipping.district'] && (
+                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.district']}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                            Tỉnh/Thành phố *
+                                                        </label>
+                                                        <select
+                                                            value={formData.shipping.province}
                                                             onChange={(e) => handleInputChange('shipping', 'province', e.target.value)}
                                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
                                                                 errors['shipping.province'] ? 'border-red-300' : 'border-gray-300'
@@ -646,13 +704,13 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     
-                                                    <div>                                                            
-                                                            <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                                Mã bưu điện
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={formData.shipping.postalCode}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                            Mã bưu điện
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.shipping.postalCode}
                                                             onChange={(e) => handleInputChange('shipping', 'postalCode', e.target.value)}
                                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
                                                         />

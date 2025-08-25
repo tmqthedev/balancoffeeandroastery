@@ -46,7 +46,7 @@ const NotFound = () => {
             </div>
 
             {/* 404 Text */}
-            <h1 className="text-6xl md:text-8xl font-bold text-coffee-800 mb-4">
+            <h1 className="text-6xl md:text-8xl font-bold text-brand-primary mb-4">
               404
             </h1>
               <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">
@@ -61,7 +61,7 @@ const NotFound = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link
                 to="/"
-                className="inline-flex items-center px-6 py-3 bg-coffee-600 text-white rounded-lg hover:bg-coffee-700 transition-colors font-semibold"
+                className="inline-flex items-center px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors font-semibold"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -71,7 +71,7 @@ const NotFound = () => {
               
               <button
                 onClick={() => window.history.back()}
-                className="inline-flex items-center px-6 py-3 border border-coffee-600 text-coffee-600 rounded-lg hover:bg-coffee-50 transition-colors font-semibold"
+                className="inline-flex items-center px-6 py-3 border border-brand-primary text-brand-primary rounded-lg hover:bg-gray-50 transition-colors font-semibold"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -89,12 +89,12 @@ const NotFound = () => {
                 <Link
                   key={page.path}
                   to={page.path}
-                  className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-coffee-300 hover:bg-coffee-50 transition-colors group"
+                  className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors group"
                 >
                   <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">
                     {page.icon}
                   </span>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-coffee-700">
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-brand-primary/90">
                     {page.name}
                   </span>
                 </Link>
@@ -122,7 +122,7 @@ const NotFound = () => {
                       />
                     </div>
                     <div className="p-4">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-coffee-600 transition-colors">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-brand-primary transition-colors">
                         {product.name}
                       </h4>
                     </div>
@@ -133,7 +133,7 @@ const NotFound = () => {
           </div>
 
           {/* Search Section */}
-          <div className="mt-8 bg-coffee-50 rounded-lg p-6">            <h3 className="text-lg font-semibold text-coffee-800 mb-4">
+          <div className="mt-8 bg-gray-50 rounded-lg p-6">            <h3 className="text-lg font-semibold text-brand-primary mb-4">
               Tìm kiếm sản phẩm
             </h3>
             
@@ -142,11 +142,11 @@ const NotFound = () => {
                 <input
                   type="text"
                   placeholder="Tìm kiếm cà phê..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                 />
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-coffee-600 text-white rounded-r-md hover:bg-coffee-700 transition-colors"
+                  className="px-6 py-2 bg-brand-primary text-white rounded-r-md hover:bg-brand-primary/90 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -164,7 +164,7 @@ const NotFound = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
               <Link
                 to="/contact"
-                className="text-coffee-600 hover:text-coffee-700 font-medium"
+                className="text-brand-primary hover:text-brand-primary/90 font-medium"
               >
                 📧 Gửi email
               </Link>
@@ -173,7 +173,7 @@ const NotFound = () => {
               
               <a
                 href="tel:+84123456789"
-                className="text-coffee-600 hover:text-coffee-700 font-medium"
+                className="text-brand-primary hover:text-brand-primary/90 font-medium"
               >
                 📞 Gọi điện thoại
               </a>
@@ -182,7 +182,7 @@ const NotFound = () => {
               
               <Link
                 to="/faq"
-                className="text-coffee-600 hover:text-coffee-700 font-medium"
+                className="text-brand-primary hover:text-brand-primary/90 font-medium"
               >
                 ❓ Câu hỏi thường gặp
               </Link>

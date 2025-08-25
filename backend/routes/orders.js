@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const { orderValidationRules } = require('../middleware/validation');
 const db = require('../config/database');
 const Order = require('../models/Order');
 const momoService = require('../services/momoService');
@@ -37,19 +38,50 @@ const optionalAuth = (req, res, next) => {
 };
 
 /**
+ * @route POST /api/orders/debug
+ * @desc Debug order creation
+ * @access Public
+ */
+router.post('/debug', async (req, res) => {
+  try {
+    console.log('=== DEBUG ORDER CREATION ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+
+    console.log('Attempting to save order...');
+    const savedOrder = await testOrder.save();
+    console.log('Order saved successfully:', savedOrder._id);
+    
+    res.json({
+      success: true,
+      message: 'Debug order created successfully',
+      orderId: savedOrder._id
+    });
+    
+  } catch (error) {
+    console.error('=== DEBUG ORDER ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error message:', error.message);
+    if (error.errors) {
+      console.error('Validation errors:', Object.keys(error.errors));
+      for (const field in error.errors) {
+        console.error(`${field}: ${error.errors[field].message}`);
+      }
+    }
+    res.status(400).json({
+      success: false,
+      message: 'Debug order creation failed',
+      error: error.message,
+      details: error.errors
+    });
+  }
+});
+
+/**
  * @route POST /api/orders
  * @desc Create a new order
  * @access Public (with optional authentication)
  */
-router.post('/', [
-  body('customerInfo.name').trim().isLength({ min: 2 }).withMessage('Tên khách hàng phải có ít nhất 2 ký tự'),
-  body('customerInfo.phone').trim().isLength({ min: 10 }).withMessage('Số điện thoại không hợp lệ'),
-  body('customerInfo.email').isEmail().withMessage('Email không hợp lệ'),
-  body('customerInfo.address').trim().isLength({ min: 10 }).withMessage('Địa chỉ phải có ít nhất 10 ký tự'),
-  body('items').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất 1 sản phẩm'),
-  body('paymentMethod').isIn(['cod', 'momo']).withMessage('Phương thức thanh toán không hợp lệ'),
-  body('total').isNumeric({ min: 1 }).withMessage('Tổng tiền không hợp lệ')
-], optionalAuth, async (req, res) => {
+router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
   try {
     // Validate input
     const errors = validationResult(req);
@@ -61,15 +93,15 @@ router.post('/', [
       });
     }
 
-    const { customerInfo, items, paymentMethod, total, notes } = req.body;
+    const { customerInfo, shippingAddress, items, paymentMethod, subtotal, total, notes } = req.body;
     console.log('Request body:', JSON.stringify(req.body, null, 2));
     console.log('PaymentMethod:', paymentMethod);
 
     // Generate order number
     const orderNumber = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
 
-    // Calculate subtotal from items
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Calculate subtotal from items if not provided
+    const calculatedSubtotal = subtotal || items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     // Prepare order data to match Order schema
     const orderData = {
@@ -77,26 +109,38 @@ router.post('/', [
       customerId: req.user?.userId || 'guest',
       customerInfo: {
         email: customerInfo.email,
-        firstName: customerInfo.name?.split(' ')[1] || customerInfo.name,
-        lastName: customerInfo.name?.split(' ')[0] || '',
+        firstName: customerInfo.firstName,
+        lastName: customerInfo.lastName,
         phone: customerInfo.phone
+      },
+      // Shipping address
+      shippingAddress: {
+        street: shippingAddress.street,
+        wardCommune: shippingAddress.wardCommune,
+        district: shippingAddress.district || '',
+        province: shippingAddress.province,
+        postalCode: shippingAddress.postalCode || '',
+        country: shippingAddress.country || 'Việt Nam'
       },
       items: items.map(item => ({
         productId: item.productId,
-        productName: item.name,
+        productName: item.productName || item.name,
+        productNameVi: item.productNameVi || item.name,
+        sku: item.sku || '',
         price: item.price,
         quantity: item.quantity,
-        subtotal: item.price * item.quantity
+        subtotal: item.subtotal || (item.price * item.quantity),
+        image: item.image || '',
+        variant: item.variant || {}
       })),
-      subtotal: subtotal,
+      subtotal: calculatedSubtotal,
       total: total,
       payment: {
         method: paymentMethod || 'cod',
         status: 'pending'
       },
       notes: notes || '',
-      status: 'pending',
-      customerNotes: notes || ''
+      status: 'pending'
     };
 
     console.log('Creating order:', orderNumber);
@@ -104,6 +148,21 @@ router.post('/', [
 
     // Create order in database using Mongoose
     const order = new Order(orderData);
+    
+    // Debug: validate before saving
+    console.log('Validating order...');
+    const validationError = order.validateSync();
+    if (validationError) {
+      console.error('Validation error:', validationError);
+      return res.status(400).json({
+        success: false,
+        message: 'Lỗi validation Mongoose',
+        error: validationError.message,
+        details: validationError.errors
+      });
+    }
+    
+    console.log('Mongoose validation passed, attempting to save to MongoDB...');
     await order.save();
 
     // Handle MoMo payment

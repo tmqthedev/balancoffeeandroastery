@@ -113,10 +113,10 @@ const QRPaymentPage = () => {
                 <div className="container mx-auto px-4 max-w-2xl">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-coffee-800 mb-2">
+                        <h1 className="text-3xl font-bold text-brand-primary mb-2">
                             Thanh Toán QR Code
                         </h1>
-                        <p className="text-coffee-600">
+                        <p className="text-brand-primary">
                             Quét mã QR bằng ứng dụng ngân hàng để hoàn tất thanh toán
                         </p>
                     </div>
@@ -160,19 +160,19 @@ const QRPaymentPage = () => {
                                         <img 
                                             src={iposData.qrCodeUrl} 
                                             alt="QR Code thanh toán"
-                                            className="mx-auto w-64 h-64 border border-coffee-200 rounded-lg"
+                                            className="mx-auto w-64 h-64 border border-gray-200 rounded-lg"
                                         />
                                     ) : (
-                                        <div className="mx-auto w-64 h-64 bg-coffee-100 border border-coffee-200 rounded-lg flex items-center justify-center">
-                                            <span className="text-coffee-500">Đang tải mã QR...</span>
+                                        <div className="mx-auto w-64 h-64 bg-brand-secondary/20 border border-gray-200 rounded-lg flex items-center justify-center">
+                                            <span className="text-gray-500">Đang tải mã QR...</span>
                                         </div>
                                     )}
                                 </div>
 
                                 {timeLeft && (
                                     <div className="mb-4">
-                                        <p className="text-sm text-coffee-600 mb-1">Thời gian còn lại:</p>
-                                        <p className="text-xl font-bold text-coffee-800">{timeLeft}</p>
+                                        <p className="text-sm text-brand-primary mb-1">Thời gian còn lại:</p>
+                                        <p className="text-xl font-bold text-brand-primary">{timeLeft}</p>
                                     </div>
                                 )}
 
@@ -205,36 +205,36 @@ const QRPaymentPage = () => {
                         )}
 
                         {/* Order Summary */}
-                        <div className="border-t border-coffee-200 p-6">
-                            <h3 className="font-semibold text-coffee-800 mb-4">📦 Thông tin đơn hàng</h3>
+                        <div className="border-t border-gray-200 p-6">
+                            <h3 className="font-semibold text-brand-primary mb-4">📦 Thông tin đơn hàng</h3>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-coffee-600">Mã đơn hàng:</span>
-                                    <span className="font-medium text-coffee-800">{order.orderNumber}</span>
+                                    <span className="text-brand-primary">Mã đơn hàng:</span>
+                                    <span className="font-medium text-brand-primary">{order.orderNumber}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-coffee-600">Phương thức:</span>
-                                    <span className="text-coffee-800">iPOS QR Code</span>
+                                    <span className="text-brand-primary">Phương thức:</span>
+                                    <span className="text-brand-primary">iPOS QR Code</span>
                                 </div>
-                                <div className="flex justify-between font-semibold text-base pt-2 border-t border-coffee-200">
-                                    <span className="text-coffee-800">Tổng tiền:</span>
-                                    <span className="text-coffee-800">{formatCurrency(order.total)}</span>
+                                <div className="flex justify-between font-semibold text-base pt-2 border-t border-gray-200">
+                                    <span className="text-brand-primary">Tổng tiền:</span>
+                                    <span className="text-brand-primary">{formatCurrency(order.total)}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="border-t border-coffee-200 p-6 bg-coffee-50">
+                        <div className="border-t border-gray-200 p-6 bg-gray-50">
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={() => navigate('/account')}
-                                    className="flex-1 bg-coffee-100 hover:bg-coffee-200 text-coffee-800 py-2 px-4 rounded-lg font-medium transition-colors"
+                                    className="flex-1 bg-brand-secondary/20 hover:bg-gray-200 text-brand-primary py-2 px-4 rounded-lg font-medium transition-colors"
                                 >
                                     📋 Xem đơn hàng
                                 </button>
                                 <button
                                     onClick={() => navigate('/products')}
-                                    className="flex-1 bg-coffee-600 hover:bg-coffee-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                                    className="flex-1 bg-brand-primary hover:bg-brand-primary/90 text-white py-2 px-4 rounded-lg font-medium transition-colors"
                                 >
                                     🛒 Tiếp tục mua sắm
                                 </button>
@@ -244,12 +244,12 @@ const QRPaymentPage = () => {
 
                     {/* Support info */}
                     <div className="mt-8 text-center">
-                        <p className="text-sm text-coffee-600 mb-2">
+                        <p className="text-sm text-brand-primary mb-2">
                             Gặp vấn đề khi thanh toán? 
                         </p>
                         <a 
                             href="tel:+84123456789" 
-                            className="text-coffee-600 hover:text-coffee-800 font-medium"
+                            className="text-brand-primary hover:text-brand-primary font-medium"
                         >
                             📞 Liên hệ hỗ trợ: 0123 456 789
                         </a>

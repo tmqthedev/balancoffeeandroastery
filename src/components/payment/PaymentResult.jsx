@@ -98,8 +98,8 @@ const PaymentResult = () => {
                 </Helmet>
                 <div className="min-h-screen flex items-center justify-center bg-cream-50">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600 mx-auto mb-4"></div>
-                        <p className="text-coffee-700">Đang xử lý...</p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+                        <p className="text-brand-primary/90">Đang xử lý...</p>
                     </div>
                 </div>
             </>
@@ -168,18 +168,18 @@ const PaymentResult = () => {
                     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
                         {getStatusIcon()}
                         
-                        <h1 className="text-2xl font-bold text-center text-coffee-800 mb-4">
+                        <h1 className="text-2xl font-bold text-center text-brand-primary mb-4">
                             {getStatusTitle()}
                         </h1>
                         
-                        <p className="text-center text-coffee-600 mb-6">
+                        <p className="text-center text-brand-primary mb-6">
                             {getStatusMessage()}
                         </p>
 
                         {orderDetails && (
                             <div className="bg-cream-50 rounded-lg p-4 mb-6">
-                                <h3 className="font-semibold text-coffee-800 mb-2">Chi tiết đơn hàng</h3>
-                                <div className="space-y-1 text-sm text-coffee-600">
+                                <h3 className="font-semibold text-brand-primary mb-2">Chi tiết đơn hàng</h3>
+                                <div className="space-y-1 text-sm text-brand-primary">
                                     <p>
                                         <span className="font-medium">Mã đơn hàng:</span>{' '}
                                         {orderDetails.orderNumber || orderDetails.order_id || orderDetails.id}
@@ -213,7 +213,7 @@ const PaymentResult = () => {
                             {paymentStatus === 'success' && (
                                 <button
                                     onClick={handleViewOrder}
-                                    className="w-full bg-coffee-600 text-white py-3 px-4 rounded-lg hover:bg-coffee-700 transition duration-200 font-medium"
+                                    className="w-full bg-brand-primary text-white py-3 px-4 rounded-lg hover:bg-brand-primary/90 transition duration-200 font-medium"
                                 >
                                     Xem tài khoản
                                 </button>
@@ -223,8 +223,8 @@ const PaymentResult = () => {
                                 onClick={handleContinueShopping}
                                 className={`w-full py-3 px-4 rounded-lg transition duration-200 font-medium ${
                                     paymentStatus === 'success' 
-                                        ? 'bg-cream-200 text-coffee-700 hover:bg-cream-300' 
-                                        : 'bg-coffee-600 text-white hover:bg-coffee-700'
+                                        ? 'bg-cream-200 text-brand-primary/90 hover:bg-cream-300' 
+                                        : 'bg-brand-primary text-white hover:bg-brand-primary/90'
                                 }`}
                             >
                                 {paymentStatus === 'success' ? 'Tiếp tục mua sắm' : 'Quay lại sản phẩm'}

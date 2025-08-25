@@ -38,7 +38,10 @@ const userSchema = new mongoose.Schema({
       company: { type: String, required: false },
       address1: { type: String, required: false },
       address2: { type: String, required: false },
-      city: { type: String, required: false },
+      street: { type: String, required: false }, // New Vietnamese address format
+      wardCommune: { type: String, required: false }, // Phường/Xã
+      district: { type: String, required: false }, // Quận/Huyện
+      city: { type: String, required: false }, // Legacy support
       province: { type: String, required: false },
       postalCode: { type: String, required: false },
       country: { type: String, default: 'VN' },
@@ -119,6 +122,10 @@ const userSchema = new mongoose.Schema({
       };
     }
   },
+  
+  // Password reset
+  resetPasswordToken: { type: String, required: false },
+  resetPasswordExpires: { type: Date, required: false },
   
   lastActivityAt: { type: Date, default: Date.now }
 }, {

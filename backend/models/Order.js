@@ -36,29 +36,21 @@ const orderSchema = new mongoose.Schema({
   
   // Addresses
   billingAddress: {
-    firstName: String,
-    lastName: String,
-    company: String,
-    address1: String,
-    address2: String,
-    city: String,
-    province: String,
-    postalCode: String,
-    country: String,
-    phone: String
+    street: String,              // Địa chỉ cụ thể
+    wardCommune: String,         // Phường/Xã 
+    district: String,            // Quận/Huyện
+    province: String,            // Tỉnh/Thành phố
+    postalCode: String,          // Mã bưu điện
+    country: { type: String, default: 'Việt Nam' }
   },
   
   shippingAddress: {
-    firstName: String,
-    lastName: String,
-    company: String,
-    address1: String,
-    address2: String,
-    city: String,
-    province: String,
-    postalCode: String,
-    country: String,
-    phone: String
+    street: String,              // Địa chỉ cụ thể
+    wardCommune: String,         // Phường/Xã 
+    district: String,            // Quận/Huyện
+    province: String,            // Tỉnh/Thành phố
+    postalCode: String,          // Mã bưu điện
+    country: { type: String, default: 'Việt Nam' }
   },
   
   // Shipping
@@ -140,7 +132,7 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Indexes
-orderSchema.index({ orderNumber: 1 });
+// orderNumber already has unique: true in schema, no need for separate index
 orderSchema.index({ customerId: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ 'payment.status': 1 });

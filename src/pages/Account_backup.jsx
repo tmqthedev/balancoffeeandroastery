@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { formatDateForInput, formatDateForBackend } from '../utils/dateUtils';
@@ -6,6 +7,7 @@ import axios from 'axios';
 
 const Account = () => {
   const { user, updateUserInfo, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -176,9 +178,105 @@ const Account = () => {
     }
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount * 25000); // Convert USD to VND
+  };
+
+
+  const getOrderStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getOrderStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ xử lý';
+      case 'processing':
+        return 'Đang xử lý';
+      case 'shipped':
+        return 'Đã gửi hàng';
+      case 'delivered':
+        return 'Đã giao hàng';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return 'Không xác định';
+    }
+  };
+
+  const renderOrdersContent = () => {
+    if (loading) {
+      return (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+          <p className="mt-2 text-gray-600">Đang tải đơn hàng...</p>
+        </div>
+      );
+    }
+
+    if (orders.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Bạn chưa có đơn hàng nào</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="mt-4 bg-brand-primary text-white px-6 py-2 rounded-md hover:bg-brand-primary/90 transition-colors"
+          >
+            Mua sắm ngay
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {orders.map((order) => (
+          <div key={order.id} className="border border-gray-200 rounded-lg p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Đơn hàng #{order.id}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                </p>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusColor(order.status)}`}>
+                {getOrderStatusText(order.status)}
+              </span>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-lg font-semibold text-gray-900">
+                Tổng: {formatCurrency(order.total_amount)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const tabs = [
     { id: 'profile', name: 'Thông tin cá nhân', icon: '👤' },
-    { id: 'password', name: 'Đổi mật khẩu', icon: '🔒' }
+    { id: 'orders', name: 'Đơn hàng', icon: '📦' },
+    { id: 'password', name: 'Đổi mật khẩu', icon: '🔒' },
+    { id: 'preferences', name: 'Tùy chọn', icon: '⚙️' }
   ];
 
   return (
@@ -501,6 +599,16 @@ const Account = () => {
                   </div>
                 )}
 
+                {/* Orders Tab */}
+                {activeTab === 'orders' && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                      Đơn hàng của tôi
+                    </h2>
+                    {renderOrdersContent()}
+                  </div>
+                )}
+
                 {/* Password Tab */}
                 {activeTab === 'password' && (
                   <div>
@@ -559,6 +667,56 @@ const Account = () => {
                         {loading ? 'Đang lưu...' : 'Đổi mật khẩu'}
                       </button>
                     </form>
+                  </div>
+                )}
+
+                {/* Preferences Tab */}
+                {activeTab === 'preferences' && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                      Tùy chọn
+                    </h2>
+
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Thông báo
+                        </h3>                        <div className="space-y-3">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-3" defaultChecked />
+                            <span>Nhận thông báo qua email</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-3" defaultChecked />
+                            <span>Cập nhật trạng thái đơn hàng</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-3" />
+                            <span>Nhận bản tin khuyến mãi</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          Quyền riêng tư
+                        </h3>
+                        <div className="space-y-3">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-3" />
+                            <span>Chia sẻ dữ liệu với đối tác</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-3" defaultChecked />
+                            <span>Cho phép phân tích hành vi</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <button className="bg-brand-primary text-white px-6 py-2 rounded-md hover:bg-brand-primary/90 transition-colors">
+                        Lưu tùy chọn
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

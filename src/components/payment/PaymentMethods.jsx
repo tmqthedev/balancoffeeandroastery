@@ -50,6 +50,9 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                 paymentMethod: selectedMethod
             };
 
+            console.log('=== ORDER PAYLOAD DEBUG ===');
+            console.log('Order payload:', JSON.stringify(orderPayload, null, 2));
+
             // Create order via API
             const response = await fetch(`/api/orders`, {
                 method: 'POST',
@@ -61,8 +64,12 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             });
 
             const result = await response.json();
+            console.log('=== ORDER RESPONSE DEBUG ===');
+            console.log('Response status:', response.status);
+            console.log('Response result:', result);
 
             if (!response.ok) {
+                console.error('Order creation failed with details:', result);
                 throw new Error(result.message || 'Không thể tạo đơn hàng');
             }
 
@@ -144,7 +151,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
         }
     };    return (
         <div className="bg-white rounded-lg shadow-sm border border-cream-200 p-6">
-            <h3 className="text-lg font-semibold text-coffee-800 mb-4">
+            <h3 className="text-lg font-semibold text-brand-primary mb-4">
                 Chọn phương thức thanh toán
             </h3>
 
@@ -164,7 +171,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                             htmlFor={method.id}
                             className={`block p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                                 selectedMethod === method.id
-                                    ? 'border-coffee-500 bg-coffee-50'
+                                    ? 'border-brand-primary bg-brand-secondary/20'
                                     : 'border-cream-200 hover:border-cream-300'
                             }`}
                         >
@@ -174,18 +181,18 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center">
-                                        <h4 className="font-medium text-coffee-800">{method.name}</h4>
+                                        <h4 className="font-medium text-brand-primary">{method.name}</h4>
                                         {method.popular && (
                                             <span className="ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
                                                 Phổ biến
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-coffee-600">{method.description}</p>
+                                    <p className="text-sm text-brand-primary">{method.description}</p>
                                 </div>
                                 <div className={`w-4 h-4 rounded-full border-2 ${
                                     selectedMethod === method.id
-                                        ? 'border-coffee-500 bg-coffee-500'
+                                        ? 'border-brand-primary bg-brand-primary'
                                         : 'border-cream-300'
                                 }`}>
                                     {selectedMethod === method.id && (
@@ -240,7 +247,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                 className={`w-full py-3 px-4 rounded-lg font-medium transition duration-200 ${
                     !selectedMethod || loading
                         ? 'bg-cream-300 text-cream-500 cursor-not-allowed'
-                        : 'bg-coffee-600 text-white hover:bg-coffee-700'
+                        : 'bg-brand-primary text-white hover:bg-brand-primary/90'
                 }`}
             >
                 {loading ? (
@@ -255,7 +262,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
 
             {/* Security notice */}
             <div className="mt-4 text-center">
-                <div className="flex items-center justify-center text-sm text-coffee-600">
+                <div className="flex items-center justify-center text-sm text-brand-primary">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>

@@ -175,20 +175,33 @@ export const AuthProvider = ({ children }) => {
             // eslint-disable-next-line no-unused-vars
             const { email, ...updateData } = userData;
             
+            console.log('📤 AuthContext: Sending profile update:', updateData);
+            
             const response = await api.put('/users/profile', updateData, {
                 headers: { 
                     Authorization: `Bearer ${localStorage.getItem('authToken')}` 
                 }
             });
+            
+            console.log('📥 AuthContext: Backend response:', response.data);
+            
             if (response.data.success) {
-                setUser(response.data.user);
+                const updatedUser = response.data.user;
+                console.log('✅ AuthContext: Updating user state with:', updatedUser);
+                
+                // Update context state
+                setUser(updatedUser);
+                
+                // Update localStorage
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                
                 return { success: true, message: response.data.message };
             } else {
                 throw new Error(response.data.message || 'Cập nhật thông tin thất bại');
             }
         } catch (error) {
-            console.error('Update profile failed:', error);
-            const errorMessage = error.response?.data?.error || error.message || 'Cập nhật thông tin thất bại';
+            console.error('❌ AuthContext: Update profile failed:', error);
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Cập nhật thông tin thất bại';
             return { success: false, message: errorMessage };
         } finally {
             setLoading(false);

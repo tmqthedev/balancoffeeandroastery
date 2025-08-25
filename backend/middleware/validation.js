@@ -142,38 +142,62 @@ const loginValidationRules = [
 
 // Order validation rules
 const orderValidationRules = [
-  body('customerEmail')
+  body('customerInfo.email')
     .isEmail()
     .normalizeEmail()
     .withMessage('Email không hợp lệ'),
-  body('customerName')
+  body('customerInfo.firstName')
     .trim()
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Tên khách hàng phải có từ 3 đến 100 ký tự'),
-  body('customerPhone')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Tên phải có từ 2 đến 50 ký tự'),
+  body('customerInfo.lastName')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Họ phải có từ 2 đến 50 ký tự'),
+  body('customerInfo.phone')
     .optional()
     .matches(/^[0-9+\-\s()]{8,20}$/)
     .withMessage('Số điện thoại không hợp lệ'),
-  body('shippingAddress')
+  body('shippingAddress.street')
     .trim()
-    .isLength({ min: 5, max: 500 })
-    .withMessage('Địa chỉ giao hàng phải có từ 5 đến 500 ký tự'),
-  body('shippingCity')
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Địa chỉ phải có từ 5 đến 200 ký tự'),
+  body('shippingAddress.wardCommune')
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Thành phố giao hàng phải có từ 2 đến 100 ký tự'),
+    .withMessage('Phường/Xã phải có từ 2 đến 100 ký tự'),
+  body('shippingAddress.district')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Quận/Huyện phải có từ 2 đến 100 ký tự'),
+  body('shippingAddress.province')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Tỉnh/Thành phố phải có từ 2 đến 100 ký tự'),
   body('items')
     .isArray({ min: 1 })
     .withMessage('Đơn hàng phải có ít nhất 1 sản phẩm'),
   body('items.*.productId')
-    .isInt({ min: 1 })
+    .notEmpty()
     .withMessage('ID sản phẩm không hợp lệ'),
   body('items.*.quantity')
     .isInt({ min: 1 })
     .withMessage('Số lượng phải là số nguyên dương'),
+  body('items.*.price')
+    .isNumeric()
+    .isFloat({ min: 0 })
+    .withMessage('Giá sản phẩm phải là số dương'),
   body('paymentMethod')
     .isIn(['momo', 'cod'])
-    .withMessage('Phương thức thanh toán không hợp lệ')
+    .withMessage('Phương thức thanh toán không hợp lệ'),
+  body('subtotal')
+    .isNumeric()
+    .isFloat({ min: 0 })
+    .withMessage('Tổng phụ phải là số dương'),
+  body('total')
+    .isNumeric()
+    .isFloat({ min: 0 })
+    .withMessage('Tổng cộng phải là số dương')
 ];
 
 // Blog validation rules

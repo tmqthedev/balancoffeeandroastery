@@ -68,7 +68,7 @@ const ProductPricing = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
             </div>
         );
     }
@@ -83,10 +83,10 @@ const ProductPricing = () => {
             <div className="min-h-screen bg-gray-50 py-8">
                 <div className="container mx-auto px-4">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-coffee-800 mb-2">
+                        <h1 className="text-3xl font-bold text-brand-primary mb-2">
                             🏷️ Quản Lý Giá Theo Trọng Lượng
                         </h1>
-                        <p className="text-coffee-600">
+                        <p className="text-brand-primary">
                             Thiết lập giá cho từng trọng lượng của sản phẩm cà phê
                         </p>
                     </div>
@@ -104,19 +104,19 @@ const ProductPricing = () => {
                     <div className="space-y-6">
                         {products.map((product, productIndex) => (
                             <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                                <div className="bg-coffee-100 px-6 py-4 border-b border-coffee-200">
+                                <div className="bg-brand-secondary/20 px-6 py-4 border-b border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h3 className="text-xl font-semibold text-coffee-800">
+                                            <h3 className="text-xl font-semibold text-brand-primary">
                                                 {product.name}
                                             </h3>
-                                            <p className="text-coffee-600 text-sm">
+                                            <p className="text-brand-primary text-sm">
                                                 {product.category_name || 'Không có danh mục'}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm text-coffee-600">Giá hiện tại:</p>
-                                            <p className="text-lg font-bold text-coffee-800">
+                                            <p className="text-sm text-brand-primary">Giá hiện tại:</p>
+                                            <p className="text-lg font-bold text-brand-primary">
                                                 {formatVND(product.price)}
                                             </p>
                                         </div>
@@ -127,7 +127,7 @@ const ProductPricing = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                                         {weights.map(weight => (
                                             <div key={weight} className="space-y-2">
-                                                <label className="block text-sm font-medium text-coffee-700">
+                                                <label className="block text-sm font-medium text-brand-primary">
                                                     💰 Giá {weight}
                                                 </label>
                                                 <div className="relative">
@@ -138,12 +138,12 @@ const ProductPricing = () => {
                                                         value={product.weightPricing?.[weight] || ''}
                                                         onChange={(e) => handlePriceChange(productIndex, weight, e.target.value)}
                                                         placeholder="Nhập giá..."
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500 transition-colors"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-colors"
                                                     />
                                                     <span className="absolute right-3 top-2 text-gray-400 text-sm">đ</span>
                                                 </div>
                                                 {product.weightPricing?.[weight] && (
-                                                    <p className="text-xs text-coffee-600">
+                                                    <p className="text-xs text-brand-primary">
                                                         {formatVND(product.weightPricing[weight])}
                                                     </p>
                                                 )}
@@ -188,7 +188,7 @@ const ProductPricing = () => {
                                         <button
                                             onClick={() => saveProductPricing(productIndex)}
                                             disabled={saving}
-                                            className="px-6 py-2 bg-coffee-600 text-white rounded-lg hover:bg-coffee-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                                            className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                                         >
                                             {saving ? '⏳ Đang lưu...' : '💾 Lưu giá'}
                                         </button>

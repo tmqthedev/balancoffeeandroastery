@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 const { validateRequest, addressValidationRules } = require('../middleware/validation');
+const db = require('../config/database');
 
 // Get user profile (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {
@@ -43,17 +45,31 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
 // Update user profile (protected route)
 router.put('/profile', authenticateToken, [
-  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
-  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
-  body('phone').optional().isLength({ min: 10, max: 15 }).withMessage('Phone number must be 10-15 digits'),
+  body('firstName').trim().isLength({ min: 1, max: 50 }).withMessage('Họ không được để trống và không quá 50 ký tự'),
+  body('lastName').trim().isLength({ min: 1, max: 50 }).withMessage('Tên không được để trống và không quá 50 ký tự'),
+  body('phone').optional().matches(/^[0-9+\-\s()]{8,20}$/).withMessage('Số điện thoại không hợp lệ'),
+  body('dateOfBirth').optional().isISO8601().withMessage('Ngày sinh không hợp lệ'),
+  body('gender').optional().isIn(['male', 'female', 'other']).withMessage('Giới tính không hợp lệ'),
+  // Vietnamese address validation - optional fields
+  body('address').optional().trim().isLength({ max: 255 }).withMessage('Địa chỉ không được quá 255 ký tự'),
+  body('wardCommune').optional().trim().isLength({ max: 100 }).withMessage('Phường/Xã không được quá 100 ký tự'),
+  body('district').optional().trim().isLength({ max: 100 }).withMessage('Quận/Huyện không được quá 100 ký tự'),
+  body('province').optional().trim().isLength({ max: 100 }).withMessage('Tỉnh/Thành phố không được quá 100 ký tự'),
+  body('postalCode').optional().matches(/^[0-9]{5,6}$/).withMessage('Mã bưu điện phải có 5-6 chữ số')
 ], async (req, res) => {
   try {
-    console.log('🔍 Profile update request body:', req.body);
+    console.log('🔍 Profile update request received');
+    console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('👤 User ID:', req.user.userId);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('❌ Validation errors:', errors.array());
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ 
+        success: false,
+        errors: errors.array(),
+        message: 'Dữ liệu không hợp lệ'
+      });
     }
 
     const { 
@@ -62,9 +78,10 @@ router.put('/profile', authenticateToken, [
       phone, 
       dateOfBirth, 
       gender,
-      // Address fields
+      // Address fields - new Vietnamese format
       address,
-      city,
+      wardCommune,
+      district,
       province,
       postalCode
     } = req.body;
@@ -76,8 +93,18 @@ router.put('/profile', authenticateToken, [
 
     const user = await User.findById(req.user.userId);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      console.log('❌ User not found with ID:', req.user.userId);
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
     }
+    
+    console.log('✅ User found:', {
+      id: user._id,
+      email: user.email,
+      currentAddresses: user.addresses?.length || 0
+    });
 
     // Update basic profile info
     user.firstName = firstName;
@@ -87,37 +114,50 @@ router.put('/profile', authenticateToken, [
     user.gender = gender || undefined;
 
     // Update or create default address if address information is provided
-    if (address || city || province) {
-      let defaultAddress = user.addresses.find(addr => addr.isDefault);
+    if (address || wardCommune || district || province) {
+      console.log('🏠 Processing address update:', { address, wardCommune, district, province });
       
-      if (defaultAddress) {
-        // Update existing default address
-        defaultAddress.firstName = firstName;
-        defaultAddress.lastName = lastName;
-        defaultAddress.address1 = address || defaultAddress.address1;
-        defaultAddress.city = city || defaultAddress.city;
-        defaultAddress.province = province || defaultAddress.province;
-        defaultAddress.postalCode = postalCode || defaultAddress.postalCode;
-        defaultAddress.phone = phone || defaultAddress.phone;
-      } else {
-        // Create new default address
-        const newAddress = {
-          type: 'both',
-          firstName,
-          lastName,
-          address1: address || '',
-          city: city || '',
-          province: province || '',
-          postalCode: postalCode || '',
-          country: 'VN',
-          phone: phone || undefined,
-          isDefault: true
-        };
-        user.addresses.push(newAddress);
-      }
+      // FORCE CREATE NEW ADDRESS WITH PROPER STRUCTURE
+      // Remove existing default address
+      user.addresses = user.addresses.filter(addr => !addr.isDefault);
+      
+      // Create completely new address with Vietnamese format
+      const newAddress = {
+        type: 'both',
+        firstName,
+        lastName,
+        street: address || '',
+        address1: address || '', // Legacy support
+        wardCommune: wardCommune || '',
+        district: district || '',
+        city: district || '', // Map district to legacy city field for backward compatibility
+        province: province || '',
+        postalCode: postalCode || '',
+        country: 'VN',
+        phone: phone || undefined,
+        isDefault: true
+      };
+      
+      user.addresses.push(newAddress);
+      
+      console.log('🆕 Force created new address with proper Vietnamese structure:', {
+        street: newAddress.street,
+        address1: newAddress.address1,
+        wardCommune: newAddress.wardCommune,
+        district: newAddress.district,
+        city: newAddress.city,
+        province: newAddress.province,
+        postalCode: newAddress.postalCode
+      });
     }
 
     await user.save();
+    console.log('✅ User profile updated and saved successfully');
+    console.log('📤 Returning user data:', {
+      addresses: user.addresses,
+      firstName: user.firstName,
+      lastName: user.lastName
+    });
 
     res.json({ 
       success: true, 
@@ -136,8 +176,12 @@ router.put('/profile', authenticateToken, [
     });
 
   } catch (error) {
-    console.error('Update user profile error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    console.error('❌ Update user profile error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to update profile',
+      message: error.message
+    });
   }
 });
 
@@ -323,18 +367,18 @@ router.put('/change-password', authenticateToken, [
 
     const { current_password, new_password } = req.body;
 
-    // Get current user password
-    const users = await db.query(
-      'SELECT password FROM Users WHERE id = @userId AND is_active = 1',
-      { userId: req.user.userId }
-    );
+    // Get current user
+    const user = await User.findOne({ 
+      _id: req.user.userId,
+      status: 'active' 
+    });
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(current_password, users[0].password);
+    const isCurrentPasswordValid = await bcrypt.compare(current_password, user.password);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
@@ -344,13 +388,10 @@ router.put('/change-password', authenticateToken, [
     const hashedNewPassword = await bcrypt.hash(new_password, saltRounds);
 
     // Update password
-    await db.execute(
-      'UPDATE Users SET password = @password, updated_at = GETDATE() WHERE id = @userId',
-      {
-        password: hashedNewPassword,
-        userId: req.user.userId
-      }
-    );
+    await User.findByIdAndUpdate(req.user.userId, {
+      password: hashedNewPassword,
+      updatedAt: new Date()
+    });
 
     res.json({ 
       success: true, 

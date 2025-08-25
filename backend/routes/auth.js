@@ -6,6 +6,7 @@ const passport = require('passport');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 
 // Validation middleware
 const { validateRequest, userValidationRules, loginValidationRules } = require('../middleware/validation');
@@ -301,55 +302,41 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       const facebookUser = userProfile;
 
       // Check if user exists in database
-      let users = await db.query(
-        'SELECT * FROM Users WHERE facebookId = @facebookId AND isActive = 1',
-        { facebookId: facebookUser.id }
-      );
+      let user = await User.findOne({ 
+        facebookId: facebookUser.id,
+        isActive: true 
+      });
 
-      let user;
-
-      if (users.length > 0) {
-        // Existing user
-        user = users[0];
-      } else {
+      if (!user) {
         // Check if user exists with same email
         if (facebookUser.email) {
-          const emailUsers = await db.query(
-            'SELECT * FROM Users WHERE email = @email AND isActive = 1',
-            { email: facebookUser.email }
-          );
+          user = await User.findOne({
+            email: facebookUser.email,
+            isActive: true
+          });
 
-          if (emailUsers.length > 0) {
+          if (user) {
             // Link Facebook to existing account
-            await db.execute(
-              'UPDATE Users SET facebookId = @facebookId, profileImage = @profileImage WHERE email = @email',
-              {
-                facebookId: facebookUser.id,
-                profileImage: facebookUser.picture?.data?.url || null,
-                email: facebookUser.email
-              }
-            );
-
-            user = emailUsers[0];
+            user.facebookId = facebookUser.id;
+            user.profileImage = facebookUser.picture?.data?.url || null;
+            await user.save();
           } else {
             // Create new user
             const [firstName, ...lastNameParts] = (facebookUser.name || '').split(' ');
             const lastName = lastNameParts.join(' ');
 
-            const result = await db.execute(
-              `INSERT INTO Users (email, firstName, lastName, facebookId, profileImage, emailVerified, role, isActive)
-               OUTPUT INSERTED.*
-               VALUES (@email, @firstName, @lastName, @facebookId, @profileImage, 1, 'customer', 1)`,
-              {
-                email: facebookUser.email,
-                firstName: firstName || 'Facebook',
-                lastName: lastName || 'User',
-                facebookId: facebookUser.id,
-                profileImage: facebookUser.picture?.data?.url || null
-              }
-            );
+            user = new User({
+              email: facebookUser.email,
+              firstName: firstName || '',
+              lastName: lastName || '',
+              facebookId: facebookUser.id,
+              profileImage: facebookUser.picture?.data?.url || null,
+              emailVerified: true,
+              role: 'customer',
+              isActive: true
+            });
 
-            user = result.recordset[0];
+            await user.save();
           }
         } else {
           return res.status(400).json({ error: 'No email provided by Facebook' });
@@ -358,19 +345,19 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
 
       // Generate JWT token
       const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
+        { userId: user._id, email: user.email, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE || '7d' }
       );
 
-      // Remove password from user object
-      const userWithoutPassword = { ...user };
-      delete userWithoutPassword.password;
+      // Convert Mongoose user to object and remove password
+      const userObject = user.toObject();
+      delete userObject.password;
 
       res.json({
         message: 'Facebook login successful',
         token,
-        user: userWithoutPassword
+        user: userObject
       });
 
     } catch (error) {
@@ -569,6 +556,184 @@ router.get('/debug-token', async (req, res) => {
             success: false,
             error: error.message,
             name: error.name
+        });
+    }
+});
+
+// Forgot Password
+router.post('/forgot-password', [
+    body('email').isEmail().withMessage('Email không hợp lệ')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dữ liệu không hợp lệ',
+                errors: errors.array()
+            });
+        }
+
+        const { email } = req.body;
+        console.log('🔐 Forgot password request for email:', email);
+
+        // Check if user exists
+        const user = await User.findOne({ email: email.toLowerCase() });
+        
+        if (!user) {
+            // Don't reveal if email exists or not for security
+            return res.json({
+                success: true,
+                message: 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu.'
+            });
+        }
+
+        // Generate reset token (you can use crypto.randomBytes or jwt)
+        const resetToken = jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET || 'balan-coffee-secret',
+            { expiresIn: '1h' }
+        );
+
+        // Store reset token and expiry in user document
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+        await user.save();
+
+        console.log('✅ Reset token generated for user:', user.email);
+
+        // Create reset link
+        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+        
+        // Send email with reset link
+        try {
+            const emailResult = await emailService.sendForgotPasswordEmail(
+                user.email, 
+                resetLink, 
+                user.firstName || user.fullName
+            );
+            
+            if (emailResult.success) {
+                console.log('✅ Forgot password email sent successfully');
+            } else {
+                console.error('❌ Failed to send forgot password email:', emailResult.error);
+            }
+        } catch (emailError) {
+            console.error('❌ Email service error:', emailError);
+        }
+        
+        res.json({
+            success: true,
+            message: 'Email khôi phục mật khẩu đã được gửi đến địa chỉ email của bạn.',
+            // For development purposes, include the reset link
+            ...(process.env.NODE_ENV === 'development' && {
+                resetLink: resetLink
+            })
+        });
+
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Có lỗi xảy ra khi xử lý yêu cầu'
+        });
+    }
+});
+
+// Verify Reset Token
+router.post('/verify-reset-token', [
+    body('token').notEmpty().withMessage('Token là bắt buộc')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token không hợp lệ'
+            });
+        }
+
+        const { token } = req.body;
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        
+        // Check if user exists and token is still valid
+        const user = await User.findById(decoded.userId);
+        
+        if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token không hợp lệ hoặc đã hết hạn'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Token hợp lệ'
+        });
+
+    } catch (error) {
+        console.error('Verify token error:', error);
+        res.status(400).json({
+            success: false,
+            message: 'Token không hợp lệ hoặc đã hết hạn'
+        });
+    }
+});
+
+// Reset Password
+router.post('/reset-password', [
+    body('token').notEmpty().withMessage('Token là bắt buộc'),
+    body('newPassword').isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dữ liệu không hợp lệ',
+                errors: errors.array()
+            });
+        }
+
+        const { token, newPassword } = req.body;
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        
+        // Check if user exists and token is still valid
+        const user = await User.findById(decoded.userId);
+        
+        if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token không hợp lệ hoặc đã hết hạn'
+            });
+        }
+
+        // Hash new password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Update user password and clear reset token
+        user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        console.log('✅ Password reset successful for user:', user.email);
+
+        res.json({
+            success: true,
+            message: 'Mật khẩu đã được đặt lại thành công'
+        });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Có lỗi xảy ra khi đặt lại mật khẩu'
         });
     }
 });

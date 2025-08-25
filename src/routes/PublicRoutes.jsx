@@ -19,6 +19,8 @@ const BlogPost = React.lazy(() => import('../pages/BlogPost'));
 const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));
 const Auth = React.lazy(() => import('../pages/auth/Auth'));
+const ForgotPassword = React.lazy(() => import('../pages/auth/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('../pages/auth/ResetPassword'));
 const FacebookCallback = React.lazy(() => import('../pages/auth/FacebookCallback'));
 const QRPaymentPage = React.lazy(() => import('../pages/QRPaymentPage'));
 const MoMoPayment = React.lazy(() => import('../pages/MoMoPayment'));
@@ -28,6 +30,7 @@ const NotFound = React.lazy(() => import('../pages/NotFound'));
 const Checkout = React.lazy(() => import('../pages/Checkout'));
 const PaymentResult = React.lazy(() => import('../components/payment/PaymentResult'));
 const Account = React.lazy(() => import('../pages/Account'));
+const Orders = React.lazy(() => import('../pages/Orders'));
 
 const PublicRoutes = () => {
   return (    <Suspense fallback={<PublicLoadingSpinner />}>      <Routes>
@@ -44,6 +47,8 @@ const PublicRoutes = () => {
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<FacebookCallback />} />
         
         {/* Protected Routes */}        <Route path="/checkout" element={
@@ -68,6 +73,11 @@ const PublicRoutes = () => {
         } />        <Route path="/account/*" element={
           <ProtectedRoute>
             <Account />
+          </ProtectedRoute>
+        } />
+        <Route path="/orders" element={
+          <ProtectedRoute>
+            <Orders />
           </ProtectedRoute>
         } />
         

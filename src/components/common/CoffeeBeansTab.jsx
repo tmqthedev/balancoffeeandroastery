@@ -111,22 +111,22 @@ const CoffeeBeansTab = ({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="text-center">
                             <div className="text-4xl mb-3">🌱</div>
-                            <h4 className="font-semibold text-coffee-800 mb-2">Nguồn gốc rõ ràng</h4>
-                            <p className="text-coffee-600 text-sm">
+                            <h4 className="font-semibold text-brand-primary mb-2">Nguồn gốc rõ ràng</h4>
+                            <p className="text-brand-primary text-sm">
                                 Tất cả hạt cà phê đều được truy xuất nguồn gốc từ các trang trại uy tín
                             </p>
                         </div>
                         <div className="text-center">
                             <div className="text-4xl mb-3">🔥</div>
-                            <h4 className="font-semibold text-coffee-800 mb-2">Rang tươi hàng ngày</h4>
-                            <p className="text-coffee-600 text-sm">
+                            <h4 className="font-semibold text-brand-primary mb-2">Rang tươi hàng ngày</h4>
+                            <p className="text-brand-primary text-sm">
                                 Rang xay theo đơn đặt hàng để đảm bảo độ tươi ngon tối đa
                             </p>
                         </div>
                         <div className="text-center">
                             <div className="text-4xl mb-3">📦</div>
-                            <h4 className="font-semibold text-coffee-800 mb-2">Đóng gói chuyên nghiệp</h4>
-                            <p className="text-coffee-600 text-sm">
+                            <h4 className="font-semibold text-brand-primary mb-2">Đóng gói chuyên nghiệp</h4>
+                            <p className="text-brand-primary text-sm">
                                 Bao bì chống oxy hóa giữ nguyên hương vị trong thời gian dài
                             </p>
                         </div>
