@@ -80,6 +80,13 @@ const Auth = () => {
             newErrors.email = 'Email không hợp lệ';
         }
         
+        // Phone validation - now required
+        if (!registerData.phone.trim()) {
+            newErrors.phone = 'Số điện thoại là bắt buộc';
+        } else if (!/^[0-9]{10,11}$/.test(registerData.phone.replace(/\s/g, ''))) {
+            newErrors.phone = 'Số điện thoại không hợp lệ (10-11 chữ số)';
+        }
+        
         if (!registerData.password) {
             newErrors.password = 'Trường này là bắt buộc';
         } else if (registerData.password.length < 6) {
@@ -127,26 +134,51 @@ const Auth = () => {
         setError('');
 
         try {
-            // Prepare data for backend
+            // Prepare data for backend - only include optional fields if they have values
             const registrationData = {
                 firstName: registerData.firstName,
                 lastName: registerData.lastName,
                 email: registerData.email,
                 phone: registerData.phone,
-                password: registerData.password,
-                // Optional fields
-                dateOfBirth: registerData.dateOfBirth ? formatDateForBackend(registerData.dateOfBirth) : '',
-                gender: registerData.gender,
-                address: registerData.address,
-                city: registerData.city,
-                province: registerData.province,
-                postalCode: registerData.postalCode
+                password: registerData.password
             };
 
-            await register(registrationData);
-            navigate('/');
+            // Only add optional fields if they have values
+            if (registerData.dateOfBirth && registerData.dateOfBirth.trim()) {
+                registrationData.dateOfBirth = formatDateForBackend(registerData.dateOfBirth);
+            }
+            if (registerData.gender && registerData.gender.trim()) {
+                registrationData.gender = registerData.gender;
+            }
+            if (registerData.address && registerData.address.trim()) {
+                registrationData.address = registerData.address;
+            }
+            if (registerData.city && registerData.city.trim()) {
+                registrationData.city = registerData.city;
+            }
+            if (registerData.province && registerData.province.trim()) {
+                registrationData.province = registerData.province;
+            }
+            if (registerData.postalCode && registerData.postalCode.trim()) {
+                registrationData.postalCode = registerData.postalCode;
+            }
+
+            const response = await register(registrationData);
+            
+            // Check if email verification is required
+            if (response && response.requiresVerification) {
+                // Show success message and redirect to verification info page
+                alert(`${response.message}\n\nVui lòng kiểm tra email ${response.email} để xác thực tài khoản.`);
+                // Stay on auth page and show verification info
+                setMode('verification');
+                setRegisterData(prev => ({ ...prev, email: response.email }));
+            } else {
+                // Normal registration flow (should not happen with new system)
+                navigate('/');
+            }
         } catch (error) {
-            setError(error.response?.data?.message || 'Đăng ký thất bại');
+            console.error('Registration error:', error);
+            setError(error.message || 'Đăng ký thất bại');
         } finally {
             setLoading(false);
         }
@@ -216,10 +248,13 @@ const Auth = () => {
     return (
         <>
             <Helmet>
-                <title>{mode === 'login' ? 'Đăng nhập' : 'Đăng ký'} - Balan Coffee</title>
-                <meta name="description" content={mode === 'login' ? 
+                <title>{mode === 'login' ? 'Đăng nhập' : mode === 'register' ? 'Đăng ký' : 'Xác thực Email'} - Balan Coffee</title>
+                <meta name="description" content={
+                    mode === 'login' ? 
                     "Đăng nhập vào tài khoản Balan Coffee để trải nghiệm mua sắm cà phê tuyệt vời" :
-                    "Đăng ký tài khoản Balan Coffee để tận hưởng những sản phẩm cà phê chất lượng cao"
+                    mode === 'register' ?
+                    "Đăng ký tài khoản Balan Coffee để tận hưởng những sản phẩm cà phê chất lượng cao" :
+                    "Xác thực email để kích hoạt tài khoản Balan Coffee"
                 } />
             </Helmet>
 
@@ -242,12 +277,14 @@ const Auth = () => {
                             </div>
                         </Link>
                         <h2 className="text-3xl font-bold text-brand-primary mb-2">
-                            {mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
+                            {mode === 'login' ? 'Đăng nhập' : mode === 'register' ? 'Tạo tài khoản' : 'Xác thực Email'}
                         </h2>
                         <p className="text-gray-600">
                             {mode === 'login' ? 
                                 'Chào mừng bạn trở lại!' : 
-                                'Tham gia cộng đồng yêu cà phê của chúng tôi'
+                                mode === 'register' ?
+                                'Tham gia cộng đồng yêu cà phê của chúng tôi' :
+                                'Vui lòng kiểm tra email để hoàn tất đăng ký'
                             }
                         </p>
                     </div>
@@ -445,7 +482,7 @@ const Auth = () => {
 
                                 <div>
                                     <label htmlFor="phone" className="block text-sm font-medium text-brand-primary mb-2">
-                                        Số điện thoại
+                                        Số điện thoại <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         id="phone"
@@ -454,7 +491,7 @@ const Auth = () => {
                                         value={registerData.phone}
                                         onChange={handleRegisterChange}
                                         className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
-                                        placeholder="Nhập số điện thoại (tùy chọn)"
+                                        placeholder="Nhập số điện thoại"
                                     />
                                 </div>
 
@@ -718,6 +755,78 @@ const Auth = () => {
                                     className="w-full"
                                 />
                             </form>
+                        )}
+
+                        {/* Email Verification Info */}
+                        {mode === 'verification' && (
+                            <div className="space-y-6">
+                                <div className="text-center">
+                                    <div className="flex justify-center mb-4">
+                                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-coffee-dark mb-4">
+                                        📧 Kiểm tra email của bạn
+                                    </h3>
+                                    <p className="text-gray-600 mb-6">
+                                        Chúng tôi đã gửi email xác thực đến <strong>{registerData.email}</strong>
+                                    </p>
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                                    <h4 className="font-semibold text-blue-800 mb-2">Bước tiếp theo:</h4>
+                                    <ol className="text-blue-700 text-sm space-y-1">
+                                        <li>1. Mở email từ Balan Coffee trong hộp thư của bạn</li>
+                                        <li>2. Nhấn vào nút "Xác thực Email" trong email</li>
+                                        <li>3. Hoàn tất việc kích hoạt tài khoản</li>
+                                        <li>4. Đăng nhập và bắt đầu mua sắm!</li>
+                                    </ol>
+                                </div>
+
+                                <div className="text-center text-sm text-gray-600">
+                                    <p className="mb-2">Không thấy email? Kiểm tra thư mục spam hoặc</p>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const response = await fetch('/api/auth/resend-verification', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ email: registerData.email }),
+                                                });
+                                                const data = await response.json();
+                                                if (data.success) {
+                                                    alert('Email xác thực đã được gửi lại!');
+                                                } else {
+                                                    alert(data.message || 'Có lỗi xảy ra');
+                                                }
+                                            } catch (error) {
+                                                alert('Có lỗi xảy ra khi gửi lại email');
+                                            }
+                                        }}
+                                        className="text-coffee-dark hover:text-coffee-darker font-medium underline"
+                                    >
+                                        gửi lại email xác thực
+                                    </button>
+                                </div>
+
+                                <div className="pt-4 border-t space-y-3">
+                                    <button
+                                        onClick={() => setMode('login')}
+                                        className="w-full bg-coffee-dark text-white py-2 px-4 rounded-md hover:bg-coffee-darker focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coffee-light"
+                                    >
+                                        Đã xác thực? Đăng nhập ngay
+                                    </button>
+                                    <button
+                                        onClick={() => setMode('register')}
+                                        className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                                    >
+                                        Quay lại đăng ký
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
 

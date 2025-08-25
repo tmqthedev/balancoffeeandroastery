@@ -3,6 +3,11 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
+// Configure axios base URL
+const api = axios.create({
+  baseURL: '/api'
+});
+
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -27,7 +32,7 @@ const ResetPassword = () => {
       }
 
       try {
-        const response = await axios.post('/api/auth/verify-reset-token', { token });
+        const response = await api.post('/auth/verify-reset-token', { token });
         if (response.data.success) {
           setTokenValid(true);
         } else {
@@ -62,7 +67,7 @@ const ResetPassword = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('/api/auth/reset-password', {
+      const response = await api.post('/auth/reset-password', {
         token,
         newPassword: formData.newPassword
       });
@@ -153,7 +158,7 @@ const ResetPassword = () => {
           <div className="flex justify-center">
             <Link to="/" className="flex items-center">
               <img 
-                src="/backend/public/images/logos/logo.png" 
+                src="/backend/public/images/logos/title.png" 
                 alt="Balan Coffee & Roastery" 
                 className="h-12 w-auto"
               />

@@ -11,7 +11,8 @@ passport.use(new LocalStrategy({
 }, async (email, password, done) => {
   try {
     console.log('🔍 Passport Local Strategy - Email:', email);
-    const user = await User.findOne({ email, status: 'active' });
+    // Find user regardless of status to check email verification
+    const user = await User.findOne({ email });
 
     console.log('🔍 Passport Local Strategy - User found:', !!user);
     if (!user) {
@@ -23,7 +24,9 @@ passport.use(new LocalStrategy({
       id: user._id, 
       email: user.email, 
       hasPassword: !!user.password,
-      passwordLength: user.password ? user.password.length : 0
+      passwordLength: user.password ? user.password.length : 0,
+      emailVerified: user.emailVerified,
+      status: user.status
     });
 
     if (!user.password) {
@@ -42,7 +45,7 @@ passport.use(new LocalStrategy({
 
     console.log('✅ Authentication successful for user:', user.email);
 
-    // Return user object
+    // Return user object with all necessary fields
     const userObject = {
       _id: user._id,
       id: user._id, // for backwards compatibility
@@ -50,7 +53,8 @@ passport.use(new LocalStrategy({
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      status: user.status
+      status: user.status,
+      emailVerified: user.emailVerified
     };
     
     return done(null, userObject);

@@ -34,6 +34,20 @@ export const AuthProvider = ({ children }) => {
         checkAuthStatus();
     }, []);
 
+    // Refresh user data from server
+    const refreshUser = async () => {
+        if (!isAuthenticated) return;
+        
+        try {
+            const response = await api.get('/auth/me');
+            setUser(response.data.user);
+            return response.data.user;
+        } catch (error) {
+            console.error('Failed to refresh user data:', error);
+            return null;
+        }
+    };
+
     const checkAuthStatus = async () => {
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -120,31 +134,59 @@ export const AuthProvider = ({ children }) => {
     const register = async (userData) => {
         setLoading(true);
         try {
-            const response = await api.post('/auth/register', {
+            // Prepare registration data - only include required fields first
+            const registrationData = {
                 email: userData.email,
                 password: userData.password,
                 firstName: userData.firstName,
                 lastName: userData.lastName,
-                phone: userData.phone,
-                // Optional fields
-                dateOfBirth: userData.dateOfBirth,
-                gender: userData.gender,
-                address: userData.address,
-                city: userData.city,
-                province: userData.province,
-                postalCode: userData.postalCode
-            });
+                phone: userData.phone
+            };
 
-            const { token, user: newUser } = response.data;
-            
-            // Store token in localStorage
-            localStorage.setItem('authToken', token);
-            
-            // Update state
-            setUser(newUser);
-            setIsAuthenticated(true);
-            
-            return { success: true };
+            // Only add optional fields if they have values
+            if (userData.dateOfBirth && userData.dateOfBirth.trim()) {
+                registrationData.dateOfBirth = userData.dateOfBirth;
+            }
+            if (userData.gender && userData.gender.trim()) {
+                registrationData.gender = userData.gender;
+            }
+            if (userData.address && userData.address.trim()) {
+                registrationData.address = userData.address;
+            }
+            if (userData.city && userData.city.trim()) {
+                registrationData.city = userData.city;
+            }
+            if (userData.province && userData.province.trim()) {
+                registrationData.province = userData.province;
+            }
+            if (userData.postalCode && userData.postalCode.trim()) {
+                registrationData.postalCode = userData.postalCode;
+            }
+
+            const response = await api.post('/auth/register', registrationData);
+
+            // Check if email verification is required
+            if (response.data.requiresVerification) {
+                // Return response data for frontend to handle
+                return {
+                    success: true,
+                    requiresVerification: true,
+                    message: response.data.message,
+                    email: response.data.email
+                };
+            } else {
+                // Normal registration flow (for social logins, etc.)
+                const { token, user: newUser } = response.data;
+                
+                // Store token in localStorage
+                localStorage.setItem('authToken', token);
+                
+                // Update state
+                setUser(newUser);
+                setIsAuthenticated(true);
+                
+                return { success: true };
+            }
         } catch (error) {
             console.error('Registration failed:', error);
             
@@ -224,7 +266,9 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };    const value = useMemo(() => ({
+    };
+
+    const value = useMemo(() => ({
         user,
         loading,
         isAuthenticated,
@@ -234,8 +278,11 @@ export const AuthProvider = ({ children }) => {
         register,
         updateUserInfo,
         changePassword,
-        checkAuthStatus
-    }), [user, loading, isAuthenticated]);return (
+        checkAuthStatus,
+        refreshUser
+    }), [user, loading, isAuthenticated]);
+
+    return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>

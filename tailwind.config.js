@@ -25,6 +25,9 @@ export default {
           800: '#78553a',
           900: '#614530',
           950: '#342318',
+          dark: '#1A3C34',    // Alias for primary color
+          darker: '#143028',  // Darker version
+          light: '#FFC107',   // Alias for secondary color
         },
         cream: {
           50: '#fefdfb',

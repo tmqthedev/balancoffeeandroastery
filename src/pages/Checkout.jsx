@@ -7,7 +7,7 @@ import PaymentMethods from '../components/payment/PaymentMethods';
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { cartItems, getCartTotals } = useCart();
     
     const [currentStep, setCurrentStep] = useState(1);
@@ -49,6 +49,14 @@ const Checkout = () => {
             navigate('/cart');
         }
     }, [cartItems, navigate]);
+
+    // Refresh user data on mount to get latest info
+    useEffect(() => {
+        if (user && refreshUser) {
+            // Refresh user data to ensure we have the latest information
+            refreshUser();
+        }
+    }, []); // Only run once on mount
 
     // Update form data when user info changes
     useEffect(() => {

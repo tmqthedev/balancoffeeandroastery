@@ -19,6 +19,7 @@ const BlogPost = React.lazy(() => import('../pages/BlogPost'));
 const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));
 const Auth = React.lazy(() => import('../pages/auth/Auth'));
+const VerifyEmail = React.lazy(() => import('../pages/auth/VerifyEmail'));
 const ForgotPassword = React.lazy(() => import('../pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('../pages/auth/ResetPassword'));
 const FacebookCallback = React.lazy(() => import('../pages/auth/FacebookCallback'));
@@ -47,6 +48,7 @@ const PublicRoutes = () => {
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<FacebookCallback />} />

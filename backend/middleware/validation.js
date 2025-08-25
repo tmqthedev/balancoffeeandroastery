@@ -76,54 +76,55 @@ const userValidationRules = [
     .isLength({ min: 1 })
     .withMessage('Tên không được để trống'),
   body('phone')
-    .optional()
+    .notEmpty()
+    .withMessage('Số điện thoại là bắt buộc')
     .matches(/^[0-9+\-\s()]{8,20}$/)
     .withMessage('Số điện thoại không hợp lệ'),
   // Optional demographic fields
   body('dateOfBirth')
-    .optional()
+    .optional({ checkFalsy: true })
     .isISO8601()
     .withMessage('Ngày sinh không hợp lệ'),
   body('gender')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['male', 'female', 'other'])
     .withMessage('Giới tính không hợp lệ'),
   body('occupation')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 100 })
     .withMessage('Nghề nghiệp không được quá 100 ký tự'),
   body('coffeePreference')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['light', 'medium', 'dark', 'mixed'])
     .withMessage('Sở thích cà phê không hợp lệ'),
   body('marketingConsent')
-    .optional()
+    .optional({ checkFalsy: true })
     .isBoolean()
     .withMessage('Đồng ý marketing phải là giá trị boolean'),
   // Optional address fields
   body('street')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 255 })
     .withMessage('Địa chỉ không được quá 255 ký tự'),
   body('ward')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 100 })
     .withMessage('Phường/Xã không được quá 100 ký tự'),
   body('district')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 100 })
     .withMessage('Quận/Huyện không được quá 100 ký tự'),
   body('city')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 100 })
     .withMessage('Tỉnh/Thành phố không được quá 100 ký tự'),
   body('postalCode')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .matches(/^[0-9]{5,6}$/)
     .withMessage('Mã bưu điện phải có 5-6 chữ số'),

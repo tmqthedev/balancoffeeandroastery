@@ -127,7 +127,8 @@ const ProductDetail = () => {
 
     const handleBuyNow = async () => {
         await handleAddToCart();
-        navigate('/cart');
+        // Redirect directly to checkout for faster purchase flow
+        navigate('/checkout');
     };
 
     if (loading) {

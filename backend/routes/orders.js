@@ -182,6 +182,62 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
           order.payment.gatewayResponse = momoResult.data;
           await order.save();
 
+          console.log('✅ MoMo order created successfully:', orderNumber);
+
+          // Send email notifications for MoMo orders
+          try {
+            // Prepare email data
+            const emailOrderData = {
+              orderNumber: order.orderNumber,
+              createdAt: order.createdAt,
+              total: order.total,
+              totalAmount: order.total,
+              paymentMethod: order.payment.method,
+              items: order.items.map(item => ({
+                productName: item.productName,
+                name: item.productName,
+                quantity: item.quantity,
+                price: item.price
+              })),
+              customerName: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
+              name: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
+              customerEmail: order.customerInfo.email,
+              email: order.customerInfo.email,
+              customerPhone: order.customerInfo.phone,
+              phone: order.customerInfo.phone,
+              shippingAddress: `${order.shippingAddress.street}, ${order.shippingAddress.wardCommune}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`.replace(/^,\s*|,\s*$/g, ''),
+              notes: order.notes
+            };
+
+            // Send confirmation email to customer
+            console.log('📧 Sending MoMo order confirmation email to customer...');
+            const customerEmailResult = await emailService.sendOrderConfirmationEmail(
+              order.customerInfo.email,
+              emailOrderData,
+              order.customerInfo.firstName
+            );
+
+            if (customerEmailResult.success) {
+              console.log('✅ Customer MoMo confirmation email sent successfully');
+            } else {
+              console.error('❌ Failed to send customer MoMo confirmation email:', customerEmailResult.error);
+            }
+
+            // Send notification to admins
+            console.log('📧 Sending MoMo order notification to admins...');
+            const adminEmailResult = await emailService.sendNewOrderNotificationToAdmin(emailOrderData);
+
+            if (adminEmailResult.success) {
+              console.log(`✅ Admin MoMo notifications sent: ${adminEmailResult.totalSent}/${adminEmailResult.totalSent + adminEmailResult.totalFailed}`);
+            } else {
+              console.error('❌ Failed to send admin MoMo notifications:', adminEmailResult.error);
+            }
+
+          } catch (emailError) {
+            // Don't fail the order creation if email fails
+            console.error('❌ MoMo email notification error (order still created):', emailError);
+          }
+
           return res.status(201).json({
             success: true,
             message: 'Đơn hàng đã được tạo thành công',
@@ -212,6 +268,62 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
     }
 
     // COD payment - order is ready
+    console.log('✅ Order created successfully:', orderNumber);
+
+    // Send email notifications
+    try {
+      // Prepare email data
+      const emailOrderData = {
+        orderNumber: order.orderNumber,
+        createdAt: order.createdAt,
+        total: order.total,
+        totalAmount: order.total,
+        paymentMethod: order.payment.method,
+        items: order.items.map(item => ({
+          productName: item.productName,
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        customerName: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
+        name: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
+        customerEmail: order.customerInfo.email,
+        email: order.customerInfo.email,
+        customerPhone: order.customerInfo.phone,
+        phone: order.customerInfo.phone,
+        shippingAddress: `${order.shippingAddress.street}, ${order.shippingAddress.wardCommune}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`.replace(/^,\s*|,\s*$/g, ''),
+        notes: order.notes
+      };
+
+      // Send confirmation email to customer
+      console.log('📧 Sending order confirmation email to customer...');
+      const customerEmailResult = await emailService.sendOrderConfirmationEmail(
+        order.customerInfo.email,
+        emailOrderData,
+        order.customerInfo.firstName
+      );
+
+      if (customerEmailResult.success) {
+        console.log('✅ Customer confirmation email sent successfully');
+      } else {
+        console.error('❌ Failed to send customer confirmation email:', customerEmailResult.error);
+      }
+
+      // Send notification to admins
+      console.log('📧 Sending new order notification to admins...');
+      const adminEmailResult = await emailService.sendNewOrderNotificationToAdmin(emailOrderData);
+
+      if (adminEmailResult.success) {
+        console.log(`✅ Admin notifications sent: ${adminEmailResult.totalSent}/${adminEmailResult.totalSent + adminEmailResult.totalFailed}`);
+      } else {
+        console.error('❌ Failed to send admin notifications:', adminEmailResult.error);
+      }
+
+    } catch (emailError) {
+      // Don't fail the order creation if email fails
+      console.error('❌ Email notification error (order still created):', emailError);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Đơn hàng đã được tạo thành công',
