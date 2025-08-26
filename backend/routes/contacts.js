@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const db = require('../config/database');
+const Contact = require('../models/Contact');
 
 // Create contact form submission
 router.post('/', [
@@ -19,28 +19,34 @@ router.post('/', [
 
     const { name, email, phone, subject, message } = req.body;
 
-    // Insert contact form submission
-    const result = await db.execute(`
-      INSERT INTO Contacts (name, email, phone, subject, message, status, createdAt)
-      OUTPUT INSERTED.*
-      VALUES (@name, @email, @phone, @subject, @message, 'new', GETDATE())
-    `, {
+
+    // Create and save contact using Mongoose
+    const contact = new Contact({
       name,
       email,
-      phone: phone || null,
+      phone,
       subject,
-      message
+      message,
+      status: 'new',
+      source: 'website',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      referrer: req.headers['referer'] || req.headers['referrer']
+    });
+    await contact.save();
+
+    // Gửi email thông báo cho quản lý bộ phận
+    const { notifyManagers } = require('../services/contactNotificationService');
+    notifyManagers(contact).then(result => {
+      if (!result.success) {
+        console.warn('Không gửi được email thông báo liên hệ:', result.error);
+      }
     });
 
-    const contact = result.recordset[0];
-
-    // Here you could send an email notification to admin
-    // TODO: Implement email notification
-
     res.status(201).json({
-      message: 'Contact form submitted successfully. We will get back to you soon!',
+      message: 'Gửi liên hệ thành công. Chúng tôi sẽ phản hồi sớm nhất!',
       contact: {
-        id: contact.id,
+        id: contact._id,
         name: contact.name,
         email: contact.email,
         subject: contact.subject,

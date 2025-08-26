@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/sharedAuth';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Orders = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,8 +28,8 @@ const Orders = () => {
       
       console.log('Orders response:', response.data);
       setOrders(response.data.data?.orders || response.data.orders || []);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
       setError('Không thể tải danh sách đơn hàng');
     } finally {
       setLoading(false);
@@ -86,7 +86,8 @@ const Orders = () => {
         hour: '2-digit',
         minute: '2-digit'
       });
-    } catch (error) {
+    } catch (err) {
+      console.error('formatDate error:', err);
       return dateString;
     }
   };
@@ -398,30 +399,38 @@ const Orders = () => {
                         )}
 
                         {/* Payment Method */}
-                        {order.paymentMethod && (
-                          <div className="bg-green-50 rounded-lg p-5 border border-green-100">
-                            <div className="flex items-center space-x-2 mb-3">
-                              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                              </svg>
-                              <h4 className="font-semibold text-green-900">Thanh toán</h4>
+                        {order.paymentMethod && (() => {
+                          let paymentMethodText;
+                          if (order.paymentMethod === 'cod') {
+                            paymentMethodText = 'Thanh toán khi nhận hàng (COD)';
+                          } else if (order.paymentMethod === 'momo') {
+                            paymentMethodText = 'Ví MoMo';
+                          } else {
+                            paymentMethodText = order.paymentMethod.toUpperCase();
+                          }
+                          return (
+                            <div className="bg-green-50 rounded-lg p-5 border border-green-100">
+                              <div className="flex items-center space-x-2 mb-3">
+                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                <h4 className="font-semibold text-green-900">Thanh toán</h4>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {order.paymentMethod === 'cod' && (
+                                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                  </div>
+                                )}
+                                <span className="text-sm font-medium text-green-800">
+                                  {paymentMethodText}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              {order.paymentMethod === 'cod' && (
-                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                  </svg>
-                                </div>
-                              )}
-                              <span className="text-sm font-medium text-green-800">
-                                {order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 
-                                 order.paymentMethod === 'momo' ? 'Ví MoMo' : 
-                                 order.paymentMethod.toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                          );
+                        })()}
 
                         {/* Order Notes */}
                         {order.notes && (

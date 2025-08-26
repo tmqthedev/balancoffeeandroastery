@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/sharedAuth';
+import { useCart } from '../../constants/cartConstants';
 
 const Navbar = () => {
     const location = useLocation();

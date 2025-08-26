@@ -3,7 +3,7 @@ import SEOHelmet from '../components/common/SEOHelmet';
 import CoffeeBeansTab from '../components/common/CoffeeBeansTab';
 import BeveragesTab from '../components/common/BeveragesTab';
 import ServicesTab from '../components/common/ServicesTab';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../constants/cartConstants';
 
 // Use Vite proxy instead of hardcoded URL
 const API_BASE_URL = '/api';
@@ -28,7 +28,28 @@ const Products = () => {
     const tabNavigationRef = useRef(null);
 
     // Cart functionality
-    const { addToCart } = useCart();
+    // addToCart is intentionally unused in this listing page; cart operations happen in product cards/components
+    // keep useCart for potential future use
+    useCart();
+
+    // Tab change handler (used by desktop & mobile tab buttons)
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        setCurrentPage(1);
+        setFilters({
+            search: '',
+            category: '',
+            minPrice: '',
+            maxPrice: '',
+            inStock: false
+        });
+        // Scroll to the tab navigation position for better UX
+        if (tabNavigationRef.current) {
+            const navTop = tabNavigationRef.current.offsetTop;
+            const headerHeight = 64;
+            window.scrollTo({ top: navTop - headerHeight - 10, behavior: 'smooth' });
+        }
+    };
 
     const productsPerPage = 12;
 
@@ -102,60 +123,13 @@ const Products = () => {
 
     const totalProducts = useMemo(() => products.length, [products]);
 
-    // Cart functionality
-    const handleAddToCart = (product) => {
-        try {
-            // Determine the correct price and product data
-            let productPrice;
-            let productName = product.name || product.nameVi || 'Sản phẩm';
-            
-            if (product.pricingType === 'weight-based' && product.weightPricing && product.weightPricing.length > 0) {
-                // For weight-based products, use the first available option or default option
-                const defaultOption = product.weightPricing.find(option => option.isDefault && option.isAvailable) ||
-                                    product.weightPricing.find(option => option.isAvailable) ||
-                                    product.weightPricing[0];
-                
-                productPrice = defaultOption.price;
-                // Add weight info to product name for clarity
-                productName += ` (${defaultOption.weight}g)`;
-            } else {
-                // For fixed pricing
-                productPrice = product.price;
-            }
-
-            // Ensure we have a valid price
-            if (!productPrice || productPrice <= 0) {
-                alert('Sản phẩm này hiện tại chưa có giá. Vui lòng liên hệ để biết thêm thông tin.');
-                return;
-            }
-
-            addToCart({
-                id: product.id || product._id,
-                product_id: product.id || product._id,
-                name: productName,
-                price: productPrice,
-                image_url: product.image_url || '',
-                description: product.description || product.shortDescription || '',
-                stock_quantity: product.stockQuantity || product.stock_quantity || 0,
-                pricingType: product.pricingType,
-                weightPricing: product.weightPricing
-            }, 1);
-            
-            // Optional: Show success message
-            console.log(`Đã thêm "${productName}" vào giỏ hàng với giá ${productPrice.toLocaleString('vi-VN')}đ`);
-        } catch (error) {
-            console.error('Error adding to cart:', error);
-            alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
-        }
-    };
-
     // Clear search functionality
     const handleClearSearch = () => {
         setFilters(prev => ({ ...prev, search: '' }));
         setCurrentPage(1);
     };
 
-    // Clear all filters
+    // clearFilters used by CoffeeBeansTab to reset local search/filters
     const clearFilters = () => {
         setFilters({
             search: '',
@@ -167,51 +141,8 @@ const Products = () => {
         setCurrentPage(1);
     };
 
-    const handleTabChange = (tabId) => {
-        setActiveTab(tabId);
-        setCurrentPage(1);
-        setFilters({
-            search: '',
-            category: '',
-            minPrice: '',
-            maxPrice: '',
-            inStock: false
-        });
-        
-        // Scroll to the top of the tab navigation, accounting for the fixed header
-        if (tabNavigationRef.current) {
-            const navTop = tabNavigationRef.current.offsetTop;
-            const headerHeight = 64; // Height of the fixed header (h-16 = 64px)
-            window.scrollTo({
-                top: navTop - headerHeight - 10, // Account for header height + small padding
-                behavior: 'smooth'
-            });
-        }
-    };
-
     return (
         <div className="min-h-screen bg-white">
-            <SEOHelmet
-                title="Sản phẩm cà phê chất lượng cao - Balan Coffee & Roastery"
-                description="Khám phá bộ sưu tập cà phê nguyên chất từ Đắk Lắk. Arabica Cầu Đất, Robusta Lâm Đồng và các dòng cà phê đặc biệt từ Balan Coffee & Roastery."
-                keywords="cà phê rang mộc, Arabica Cầu Đất, Robusta Lâm Đồng, cà phê Đắk Lắk, cà phê chất lượng cao"
-                canonical="https://balancoffeeandroastery.com/products"
-            />
-
-            {/* Hero Section */}
-            <section className="bg-brand-primary text-brand-white py-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
-                <div className="text-center">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-white">
-                        Sản phẩm của chúng tôi
-                    </h1>
-                    <p className="text-xl text-brand-white/80 max-w-3xl mx-auto">
-                        Khám phá bộ sưu tập cà phê nguyên chất, thức uống độc đáo và dịch vụ chuyên nghiệp từ Balan Coffee & Roastery
-                    </p>
-                </div>
-            </div>
-            </section>
-
             {/* Enhanced Sticky Tab Navigation - Always Visible Below Header */}
             <div 
                 ref={tabNavigationRef}
@@ -254,7 +185,6 @@ const Products = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
                                     {/* Enhanced Active glow effect */}
                                     {activeTab === tab.id && (
                                         <>
@@ -294,7 +224,6 @@ const Products = () => {
                                             isScrolled ? 'text-xs leading-tight' : 'text-xs'
                                         }`}>{tab.name}</div>
                                     </div>
-                                    
                                     {/* Mobile active indicator */}
                                     {activeTab === tab.id && (
                                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-brand-primary rounded-full"></div>

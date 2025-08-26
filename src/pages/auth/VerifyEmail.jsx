@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/sharedAuth';
 import { LoadingSpinner } from '../../components/common/Loading';
 
 const VerifyEmail = () => {
@@ -53,7 +53,6 @@ const VerifyEmail = () => {
                             }, 3000);
                         } catch (loginError) {
                             console.error('Auto login failed:', loginError);
-                            // Don't show error to user since verification was successful
                         }
                     }
                 } else {
@@ -70,7 +69,7 @@ const VerifyEmail = () => {
         };
 
         verifyEmail();
-    }, [token]); // Remove loginWithToken and navigate from dependencies
+    }, [token, loginWithToken, navigate, hasVerified]);
 
     const handleResendVerification = async (e) => {
         e.preventDefault();

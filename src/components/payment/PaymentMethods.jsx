@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../constants/cartConstants';
 
 const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) => {
     const navigate = useNavigate();

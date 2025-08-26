@@ -7,7 +7,7 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Import MongoDB connection
 const { connectDB } = require('./config/database');
@@ -43,9 +43,24 @@ app.use(cors({
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  // Return a JSON response and include Retry-After header to be friendly to API clients
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the deprecated `X-RateLimit-*` headers
+  handler: (req, res /*, next */) => {
+    const retryAfterSec = Math.ceil((15 * 60));
+    res.set('Retry-After', String(retryAfterSec));
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests from this IP, please try again later.'
+    });
+  }
 });
-app.use('/api/', limiter);
+// Mount rate limiter only in non-development environments to avoid blocking local dev/testing
+if (process.env.NODE_ENV === 'development') {
+  console.log('⚠️ Rate limiter disabled in development mode');
+} else {
+  app.use('/api/', limiter);
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -100,11 +115,15 @@ app.get('/', (req, res) => {
 });
 
 // Initialize MongoDB connection
-connectDB().then(() => {
-  console.log('✅ Connected to MongoDB database');
+connectDB().then((res) => {
+  if (res === false) {
+    console.error('\u274c MongoDB connection failed: continuing without DB connection for dev');
+  } else {
+    console.log('\u2705 Connected to MongoDB database');
+  }
 }).catch(err => {
-  console.error('❌ MongoDB connection failed:', err.message);
-  process.exit(1);
+  console.error('\u274c MongoDB connection unexpected error:', err && err.message);
+  // Continue startup for debugging; routes should handle missing DB gracefully.
 });
 
 // Passport configuration
@@ -126,7 +145,7 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
-// app.use('/api/contacts', require('./routes/contacts'));
+app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/payments', require('./routes/payments'));
 
 // MoMo payment routes

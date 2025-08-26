@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { useCart } from '../constants/cartConstants';
+import { useAuth } from '../context/sharedAuth';
 import { formatVND } from '../utils/currency';
 
 const Cart = () => {
@@ -17,7 +17,7 @@ const Cart = () => {
         getCartTotals 
     } = useCart();
 
-    const { subtotal, shipping, tax, total, itemCount } = getCartTotals();
+    const { subtotal, itemCount } = getCartTotals();
 
     const handleQuantityChange = (productId, newQuantity) => {
         if (newQuantity < 1) {

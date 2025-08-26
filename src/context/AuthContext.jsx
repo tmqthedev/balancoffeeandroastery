@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { AuthContext, useAuth } from '../constants/authConstants';
+import { AuthContext } from '../constants/authConstants';
 
 // Configure axios defaults
 const API_BASE_URL = '/api';
@@ -21,9 +22,6 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Re-export AuthContext and useAuth hook
-export { AuthContext, useAuth };
-
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -35,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     // Refresh user data from server
-    const refreshUser = async () => {
+    const refreshUser = useCallback(async () => {
         if (!isAuthenticated) return;
         
         try {
@@ -46,7 +44,7 @@ export const AuthProvider = ({ children }) => {
             console.error('Failed to refresh user data:', error);
             return null;
         }
-    };
+    }, [isAuthenticated]);
 
     const checkAuthStatus = async () => {
         const token = localStorage.getItem('authToken');
@@ -97,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Login with token (for OAuth callbacks)
-    const loginWithToken = async (token) => {
+    const loginWithToken = useCallback(async (token) => {
         setLoading(true);
         try {
             // Store token in localStorage
@@ -117,7 +115,7 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Logout function
     const logout = async () => {
@@ -280,7 +278,7 @@ export const AuthProvider = ({ children }) => {
         changePassword,
         checkAuthStatus,
         refreshUser
-    }), [user, loading, isAuthenticated]);
+    }), [user, loading, isAuthenticated, refreshUser, loginWithToken]);
 
     return (
         <AuthContext.Provider value={value}>

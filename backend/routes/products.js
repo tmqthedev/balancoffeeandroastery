@@ -2,11 +2,24 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const { authenticateToken } = require('../middleware/auth');
+const { testConnection } = require('../config/database');
 
 console.log('🛒 Products router loading with MongoDB support');
 
 // Get all products with filtering, sorting and pagination
 router.get('/', async (req, res) => {
+  // Fast-fail when DB is not connected to avoid long timeouts and buffering errors
+  try {
+    const dbOk = await testConnection();
+    if (!dbOk) {
+      console.error('❌ Products API: Database unavailable - returning 503');
+      return res.status(503).json({ success: false, message: 'Database unavailable. Please try again later.' });
+    }
+  } catch (err) {
+    console.error('❌ Products API: DB connectivity check failed:', err && err.message);
+    return res.status(503).json({ success: false, message: 'Database unavailable. Please try again later.' });
+  }
+
   try {
     const {
       page = 1,
@@ -83,6 +96,18 @@ router.get('/', async (req, res) => {
 
 // Get single product by ID
 router.get('/:id', async (req, res) => {
+  // Fast-fail when DB is not connected
+  try {
+    const dbOk = await testConnection();
+    if (!dbOk) {
+      console.error('❌ Product by ID API: Database unavailable - returning 503');
+      return res.status(503).json({ success: false, message: 'Database unavailable. Please try again later.' });
+    }
+  } catch (err) {
+    console.error('❌ Product by ID API: DB connectivity check failed:', err && err.message);
+    return res.status(503).json({ success: false, message: 'Database unavailable. Please try again later.' });
+  }
+
   try {
     const { id } = req.params;
     

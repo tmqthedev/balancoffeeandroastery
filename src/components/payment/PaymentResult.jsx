@@ -74,8 +74,9 @@ const PaymentResult = () => {
 
     const handleContinueShopping = () => {
         navigate('/products');
-    };    const handleViewOrder = () => {
-        navigate('/account');
+    };
+    const handleViewOrders = () => {
+        navigate('/orders');
     };
 
     const getPaymentMethodName = () => {
@@ -147,7 +148,7 @@ const PaymentResult = () => {
     const getStatusMessage = () => {
         switch (paymentStatus) {
             case 'success':
-                return 'Đơn hàng của bạn đã được thanh toán thành công. Chúng tôi sẽ xử lý và giao hàng trong thời gian sớm nhất.';
+                return 'Đơn hàng của bạn đã được tạo thành công. Chúng tôi sẽ xử lý và giao hàng trong thời gian sớm nhất.';
             case 'failed':
                 return 'Giao dịch thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.';
             default:
@@ -212,13 +213,12 @@ const PaymentResult = () => {
                         <div className="space-y-3">
                             {paymentStatus === 'success' && (
                                 <button
-                                    onClick={handleViewOrder}
+                                    onClick={handleViewOrders}
                                     className="w-full bg-brand-primary text-white py-3 px-4 rounded-lg hover:bg-brand-primary/90 transition duration-200 font-medium"
                                 >
-                                    Xem tài khoản
+                                    Xem đơn hàng
                                 </button>
                             )}
-                            
                             <button
                                 onClick={handleContinueShopping}
                                 className={`w-full py-3 px-4 rounded-lg transition duration-200 font-medium ${

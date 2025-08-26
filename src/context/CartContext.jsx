@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { CartContext } from '../constants/cartConstants';
-import { useAuth } from './AuthContext';
+import { useAuth } from './sharedAuth';
 
 // Configure axios for cart API
 const API_BASE_URL = '/api';
@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
 });
 
 // Re-export the useCart hook
-export { useCart } from '../constants/cartConstants';
+
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
@@ -177,26 +177,36 @@ export const CartProvider = ({ children }) => {
 
     // Clear cart
     const clearCart = useCallback(async () => {
+        // Optimistically clear UI first so callers see immediate feedback
+        setLoading(true);
+        setCartItems([]);
+
         try {
-            setLoading(true);
-            
-            if (isAuthenticated) {
-                // For authenticated users, call API
-                const response = await api.delete('/cart');
-                if (response.data.success) {
-                    setCartItems([]);
-                }
-            } else {
-                // For guests, handle locally
-                setCartItems([]);
+            if (!isAuthenticated) {
+                // Guests: persist empty cart locally
                 localStorage.setItem('cart', JSON.stringify([]));
+                return;
+            }
+
+            // Authenticated users: attempt to clear server-side cart, but keep UI cleared
+            try {
+                const response = await api.delete('/cart');
+                if (!response || !response.data || !response.data.success) {
+                    console.warn('Clear cart API returned non-success:', response && response.data);
+                    // Attempt to reload server-side cart to reflect real state
+                    await loadCart();
+                }
+            } catch (err) {
+                console.error('Failed to clear cart via API:', err);
+                // Try to reload to recover state from server
+                try { await loadCart(); } catch (e) { /* swallow */ }
             }
         } catch (error) {
             console.error('Failed to clear cart:', error);
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, loadCart]);
 
     // Get cart totals
     const getCartTotals = useCallback(() => {

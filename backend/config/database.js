@@ -28,8 +28,11 @@ const connectDB = async () => {
     });
     
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    process.exit(1);
+  console.error('❌ Database connection failed:', error);
+  // Don't exit the process in development: allow the server to start
+  // so HTTP endpoints can respond with clear 5xx JSON errors instead of causing socket resets.
+  // Return false so callers can detect failure if needed.
+  return false;
   }
 };
 

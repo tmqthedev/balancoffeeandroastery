@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/sharedAuth';
 import { formatDateForBackend } from '../../utils/dateUtils';
 import FacebookLoginButton from '../../components/auth/FacebookLoginButton';
 
 const Auth = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, register } = useAuth();
+    const { login, register } = useAuth(); // Updated import
     
     // Determine initial mode based on URL
     const initialMode = location.pathname === '/register' ? 'register' : 'login';
@@ -114,8 +114,8 @@ const Auth = () => {
         try {
             await login(loginData.email, loginData.password, loginData.remember);
             navigate(from, { replace: true });
-        } catch (error) {
-            setError(error.response?.data?.message || 'Đăng nhập thất bại');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Đăng nhập thất bại');
         } finally {
             setLoading(false);
         }
@@ -176,9 +176,9 @@ const Auth = () => {
                 // Normal registration flow (should not happen with new system)
                 navigate('/');
             }
-        } catch (error) {
-            console.error('Registration error:', error);
-            setError(error.message || 'Đăng ký thất bại');
+        } catch (err) {
+            console.error('Registration error:', err); // Updated error handling
+            setError(err.message || 'Đăng ký thất bại');
         } finally {
             setLoading(false);
         }
@@ -802,7 +802,8 @@ const Auth = () => {
                                                 } else {
                                                     alert(data.message || 'Có lỗi xảy ra');
                                                 }
-                                            } catch (error) {
+                                            } catch (err) {
+                                                console.error('Resend verification error:', err);
                                                 alert('Có lỗi xảy ra khi gửi lại email');
                                             }
                                         }}

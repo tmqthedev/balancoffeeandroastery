@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { useCart } from '../constants/cartConstants';
+import { useAuth } from '../context/sharedAuth';
 import PaymentMethods from '../components/payment/PaymentMethods';
 
 const Checkout = () => {
@@ -42,7 +42,7 @@ const Checkout = () => {
         notes: ''
     });    const [errors, setErrors] = useState({});
 
-    const { subtotal, tax, total } = getCartTotals();
+    const { subtotal, total } = getCartTotals();
 
     useEffect(() => {
         if (cartItems.length === 0) {
@@ -56,7 +56,7 @@ const Checkout = () => {
             // Refresh user data to ensure we have the latest information
             refreshUser();
         }
-    }, []); // Only run once on mount
+    }, [user, refreshUser]);
 
     // Update form data when user info changes
     useEffect(() => {
@@ -221,10 +221,10 @@ const Checkout = () => {
             // Prepare items for new API
             const items = cartItems.map(item => ({
                 productId: item.product_id,
-                name: item.name,
+                productName: item.name,
+                price: item.price,
                 quantity: item.quantity,
-                price: item.price, // Price is already in VND
-                total: item.quantity * item.price
+                subtotal: item.quantity * item.price
             }));
 
             const orderData = {
@@ -235,15 +235,9 @@ const Checkout = () => {
                     district: formData.billing.district || '',
                     province: formData.billing.province,
                     postalCode: formData.billing.postalCode || '',
-                    country: 'Việt Nam'
+                    country: 'Vi\u1ec7t Nam'
                 },
-                items: cartItems.map(item => ({
-                    productId: item.product_id,
-                    productName: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    subtotal: item.quantity * item.price
-                })),
+                items,
                 subtotal: Math.round(total),
                 total: Math.round(total), // Ensure integer for payment gateway
                 notes: formData.notes || ''
@@ -531,7 +525,8 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                            <div>                                                
+                                                <label className="block text-sm font-medium text-brand-primary mb-1">
                                                     Tỉnh/Thành phố *
                                                 </label>
                                                 <select
