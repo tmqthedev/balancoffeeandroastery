@@ -103,7 +103,7 @@ const Login = () => {
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     <Link to="/" className="flex justify-center items-center space-x-2 mb-6">
                         <div className="w-12 h-12 bg-brand-primary rounded-lg flex items-center justify-center">
-                            <img src="backend\public\images\logos\title.png" alt="Balan Coffee Logo" className='h-8 w-8 object-cover'/>
+                            <img src="src/assets/logos/title.png" alt="Balan Coffee Logo" className='h-8 w-8 object-cover'/>
                         </div>                        
                     </Link>
                     

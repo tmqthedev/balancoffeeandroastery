@@ -34,7 +34,7 @@ const Footer = () => {
                     {/* Logo and Company Info */}
                     <div className="col-span-1 md:col-span-2">
                         <Link to="/" className="flex items-center space-x-3 mb-4">
-                            <img src="backend\public\images\logos\logo.png" alt="Balan Coffee Logo" className='h-12 w-24 object-cover'/>  
+                            <img src="src/assets/logos/logo.png" alt="Balan Coffee Logo" className='h-12 w-24 object-cover'/>  
                         </Link>
                         <p className="text-brand-white/80 mb-4 max-w-md">
                             Cà phê rang mộc chất lượng cao từ những vùng đất tốt nhất Việt Nam. Chúng tôi mang đến cho bạn hương vị cà phê đậm đà và tinh túy.

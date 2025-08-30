@@ -324,7 +324,7 @@ const Contact = () => {
 
                 <div className="flex space-x-4">
                   <a
-                    href="https://facebook.com/balancoffee"
+                    href="https://www.facebook.com/Balancoffeeroastery2023/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"

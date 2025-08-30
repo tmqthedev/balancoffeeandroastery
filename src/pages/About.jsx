@@ -1,5 +1,13 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import aboutBanner from '../assets/banners/about_banner.png';
+import storyBanner from '../assets/banners/story_banner.png';
+import NguyenThiKhanhLy from '../assets/team/NguyenThiKhanhLy.jpg';
+import VoHongQuang from '../assets/team/VoHongQuang.jpg';
+import TranNguyenNamKhanh from '../assets/team/TranNguyenNamKhanh.jpg';
+import TranMinhQuan from '../assets/team/TranMinhQuan.jpg';
+import TranThaiThien from '../assets/team/TranThaiThien.png';
+import DuongChiCong from '../assets/team/DuongChiCong.jpg';
 
 const About = () => {
 
@@ -7,37 +15,37 @@ const About = () => {
     {
       name: "Nguyễn Thị Khánh Ly",
       position: "Founder & CEO",
-      image: "backend/public/images/team/NguyenThiKhanhLy.jpg",
+      image: NguyenThiKhanhLy,
       description: ""
     },
     {
       name: "Võ Hồng Quang",
       position: "Operations Manager",
-      image: "backend/public/images/team/VoHongQuang.jpg",
+      image: VoHongQuang,
       description: ""
     },
     {
       name: "Trần Nguyễn Nam Khánh",
       position: "Training & QA Manager",
-      image: "backend/public/images/team/TranNguyenNamKhanh.jpg",
+      image: TranNguyenNamKhanh,
       description: ""
     },
     {
       name: "Trần Minh Quân",
       position: "IT Manager",
-      image: "backend/public/images/team/TranMinhQuan.jpg",
+      image: TranMinhQuan,
       description: ""
     },    
     {
       name: "Trần Thái Thiện",
       position: "Production Manager",
-      image: "backend/public/images/team/TranThaiThien.png",
+      image: TranThaiThien,
       description: ""
     },
     {
       name: "Dương Chí Công",
       position: "Branding & Digital Marketing Manager",
-      image: "backend/public/images/team/DuongChiCong.jpg",
+      image: DuongChiCong,
       description: ""
     },
   ];
@@ -116,7 +124,7 @@ const About = () => {
         {/* Hero Section */}
         <section className="relative h-screen flex items-end justify-center overflow-hidden pb-20">
           <div className="absolute inset-0 z-10"></div>
-          <img src='backend/public/images/banners/about_banner.png'
+          <img src={aboutBanner}
             alt="About Banner"
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -157,7 +165,7 @@ const About = () => {
               </div>
               <div className="relative">
                 <img
-                  src="backend/public/images/banners/story_banner.png"
+                  src={storyBanner}
                   alt="Coffee processing"
                   className="rounded-lg shadow-xl"
                 />
