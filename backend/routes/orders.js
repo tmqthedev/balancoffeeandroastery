@@ -5,7 +5,6 @@ const { body, validationResult } = require('express-validator');
 const { orderValidationRules } = require('../middleware/validation');
 const db = require('../config/database');
 const Order = require('../models/Order');
-const momoService = require('../services/momoService');
 const emailService = require('../services/emailService');
 
 // Middleware to authenticate token (required for getting orders)
@@ -94,8 +93,7 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
     }
 
     const { customerInfo, shippingAddress, items, paymentMethod, subtotal, total, notes } = req.body;
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-    console.log('PaymentMethod:', paymentMethod);
+    console.log('Creating order for customer:', customerInfo.email);
 
     // Generate order number
     const orderNumber = 'ORD' + Date.now() + Math.floor(Math.random() * 1000);
@@ -111,6 +109,7 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
         email: customerInfo.email,
         firstName: customerInfo.firstName,
         lastName: customerInfo.lastName,
+        fullName: customerInfo.fullName, // Add fullName support
         phone: customerInfo.phone
       },
       // Shipping address
@@ -144,127 +143,78 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
     };
 
     console.log('Creating order:', orderNumber);
-    console.log('Order data:', JSON.stringify(orderData, null, 2));
 
     // Create order in database using Mongoose
     const order = new Order(orderData);
-    
-    // Debug: validate before saving
-    console.log('Validating order...');
-    const validationError = order.validateSync();
-    if (validationError) {
-      console.error('Validation error:', validationError);
-      return res.status(400).json({
-        success: false,
-        message: 'Lỗi validation Mongoose',
-        error: validationError.message,
-        details: validationError.errors
-      });
-    }
-    
-    console.log('Mongoose validation passed, attempting to save to MongoDB...');
-    await order.save();
 
-    // Handle MoMo payment
-    if (paymentMethod === 'momo') {
+    // Handle different payment methods
+    if (paymentMethod === 'contact') {
+      // For contact payment, set status to pending and send notification
+      order.payment.method = 'contact';
+      order.payment.status = 'pending';
+      await order.save();
+
+      console.log('✅ Contact payment order created successfully:', orderNumber);
+
+      // Send email notifications for contact orders
       try {
-        const momoResult = await momoService.createPayment({
-          orderNumber,
-          total,
-          customerInfo,
-          items
-        });
+        // Prepare email data
+        const emailOrderData = {
+          orderNumber: order.orderNumber,
+          createdAt: order.createdAt,
+          total: order.total,
+          totalAmount: order.total,
+          paymentMethod: order.payment.method,
+          items: order.items.map(item => ({
+            productName: item.productName,
+            name: item.productName,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          customerName: order.customerInfo.fullName || `${order.customerInfo.firstName || ''} ${order.customerInfo.lastName || ''}`.trim(),
+          name: order.customerInfo.fullName || `${order.customerInfo.firstName || ''} ${order.customerInfo.lastName || ''}`.trim(),
+          customerEmail: order.customerInfo.email,
+          email: order.customerInfo.email,
+          customerPhone: order.customerInfo.phone,
+          phone: order.customerInfo.phone,
+          shippingAddress: `${order.shippingAddress.street}, ${order.shippingAddress.wardCommune}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`.replace(/^,\s*|,\s*$/g, ''),
+          notes: order.notes
+        };
 
-        if (momoResult.success) {
-          // Update order with MoMo payment info
-          order.payment.method = 'momo';
-          order.payment.status = 'pending';
-          order.payment.gatewayResponse = momoResult.data;
-          await order.save();
+        // Send confirmation email to customer
+        console.log('📧 Sending contact payment order confirmation email to customer...');
+        const customerEmailResult = await emailService.sendOrderConfirmationEmail(
+          order.customerInfo.email,
+          emailOrderData,
+          order.customerInfo.fullName || order.customerInfo.firstName
+        );
 
-          console.log('✅ MoMo order created successfully:', orderNumber);
-
-          // Send email notifications for MoMo orders
-          try {
-            // Prepare email data
-            const emailOrderData = {
-              orderNumber: order.orderNumber,
-              createdAt: order.createdAt,
-              total: order.total,
-              totalAmount: order.total,
-              paymentMethod: order.payment.method,
-              items: order.items.map(item => ({
-                productName: item.productName,
-                name: item.productName,
-                quantity: item.quantity,
-                price: item.price
-              })),
-              customerName: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
-              name: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
-              customerEmail: order.customerInfo.email,
-              email: order.customerInfo.email,
-              customerPhone: order.customerInfo.phone,
-              phone: order.customerInfo.phone,
-              shippingAddress: `${order.shippingAddress.street}, ${order.shippingAddress.wardCommune}, ${order.shippingAddress.district}, ${order.shippingAddress.province}`.replace(/^,\s*|,\s*$/g, ''),
-              notes: order.notes
-            };
-
-            // Send confirmation email to customer
-            console.log('📧 Sending MoMo order confirmation email to customer...');
-            const customerEmailResult = await emailService.sendOrderConfirmationEmail(
-              order.customerInfo.email,
-              emailOrderData,
-              order.customerInfo.firstName
-            );
-
-            if (customerEmailResult.success) {
-              console.log('✅ Customer MoMo confirmation email sent successfully');
-            } else {
-              console.error('❌ Failed to send customer MoMo confirmation email:', customerEmailResult.error);
-            }
-
-            // Send notification to admins
-            console.log('📧 Sending MoMo order notification to admins...');
-            const adminEmailResult = await emailService.sendNewOrderNotificationToAdmin(emailOrderData);
-
-            if (adminEmailResult.success) {
-              console.log(`✅ Admin MoMo notifications sent: ${adminEmailResult.totalSent}/${adminEmailResult.totalSent + adminEmailResult.totalFailed}`);
-            } else {
-              console.error('❌ Failed to send admin MoMo notifications:', adminEmailResult.error);
-            }
-
-          } catch (emailError) {
-            // Don't fail the order creation if email fails
-            console.error('❌ MoMo email notification error (order still created):', emailError);
-          }
-
-          return res.status(201).json({
-            success: true,
-            message: 'Đơn hàng đã được tạo thành công',
-            order: {
-              ...order.toObject(),
-              momoData: momoResult.data
-            }
-          });
+        if (customerEmailResult.success) {
+          console.log('✅ Customer contact confirmation email sent successfully');
         } else {
-          // MoMo failed, but order is created - can switch to COD
-          console.error('MoMo payment creation failed:', momoResult.error);
-          return res.status(400).json({
-            success: false,
-            message: 'Không thể tạo thanh toán MoMo. Vui lòng chọn thanh toán khi nhận hàng.',
-            error: momoResult.error,
-            order: order
-          });
+          console.error('❌ Failed to send customer contact confirmation email:', customerEmailResult.error);
         }
-      } catch (momoError) {
-        console.error('MoMo service error:', momoError);
-        return res.status(400).json({
-          success: false,
-          message: 'Lỗi kết nối MoMo. Vui lòng chọn thanh toán khi nhận hàng.',
-          error: momoError.message,
-          order: order
-        });
+
+        // Send notification to admins
+        console.log('📧 Sending contact payment order notification to admins...');
+        const adminEmailResult = await emailService.sendNewOrderNotificationToAdmin(emailOrderData);
+
+        if (adminEmailResult.success) {
+          console.log(`✅ Admin contact notifications sent: ${adminEmailResult.totalSent}/${adminEmailResult.totalSent + adminEmailResult.totalFailed}`);
+        } else {
+          console.error('❌ Failed to send admin contact notifications:', adminEmailResult.error);
+        }
+
+      } catch (emailError) {
+        // Don't fail the order creation if email fails
+        console.error('❌ Contact email notification error (order still created):', emailError);
       }
+
+      return res.status(201).json({
+        success: true,
+        message: 'Đơn hàng đã được tạo thành công. Chúng tôi sẽ liên hệ với bạn để hướng dẫn thanh toán.',
+        order: order.toObject()
+      });
     }
 
     // COD payment - order is ready
@@ -285,8 +235,8 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
           quantity: item.quantity,
           price: item.price
         })),
-        customerName: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
-        name: `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.trim(),
+        customerName: order.customerInfo.fullName || `${order.customerInfo.firstName || ''} ${order.customerInfo.lastName || ''}`.trim(),
+        name: order.customerInfo.fullName || `${order.customerInfo.firstName || ''} ${order.customerInfo.lastName || ''}`.trim(),
         customerEmail: order.customerInfo.email,
         email: order.customerInfo.email,
         customerPhone: order.customerInfo.phone,
@@ -300,7 +250,7 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
       const customerEmailResult = await emailService.sendOrderConfirmationEmail(
         order.customerInfo.email,
         emailOrderData,
-        order.customerInfo.firstName
+        order.customerInfo.fullName || order.customerInfo.firstName
       );
 
       if (customerEmailResult.success) {

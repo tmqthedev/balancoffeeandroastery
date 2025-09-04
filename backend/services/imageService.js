@@ -311,6 +311,115 @@ class ImageService {
     return `${baseUrl}${imagePath}`;
   }
 
+  // Get file URL for uploaded files
+  getFileUrl(relativePath) {
+    if (!relativePath) return null;
+    
+    // Remove leading slash if present
+    const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+    
+    // Return full URL for the uploaded file
+    return `/uploads/${cleanPath}`;
+  }
+
+  // Upload product images (multer configuration)
+  uploadProductImages() {
+    return this.getMulterConfig('PRODUCTS');
+  }
+
+  // Upload blog images (multer configuration)
+  uploadBlogImages() {
+    return this.getMulterConfig('BLOGS');
+  }
+
+  // Upload avatar images (multer configuration)
+  uploadAvatar() {
+    return this.getMulterConfig('USERS');
+  }
+
+  // Create thumbnail
+  async createThumbnail(inputPath, outputFilename, size = 150) {
+    try {
+      const outputPath = path.join(this.publicDir, 'images', 'thumbnails', outputFilename);
+      
+      await this.processImage(inputPath, outputPath, {
+        width: size,
+        height: size,
+        quality: 80,
+        format: 'webp',
+        fit: 'cover'
+      });
+      
+      return `thumbnails/${outputFilename}`;
+    } catch (error) {
+      console.error('Error creating thumbnail:', error);
+      return null;
+    }
+  }
+
+  // Delete file
+  async deleteFile(filePath) {
+    try {
+      const fullPath = path.join(this.uploadDir, filePath);
+      await fs.unlink(fullPath);
+      console.log(`✅ Deleted file: ${filePath}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      return false;
+    }
+  }
+
+  // Get file info
+  async getFileInfo(filePath) {
+    try {
+      const fullPath = path.join(this.uploadDir, filePath);
+      const stats = await fs.stat(fullPath);
+      
+      return {
+        path: filePath,
+        size: stats.size,
+        createdAt: stats.birthtime,
+        modifiedAt: stats.mtime,
+        url: this.getFileUrl(filePath)
+      };
+    } catch (error) {
+      console.error('Error getting file info:', error);
+      return null;
+    }
+  }
+
+  // Cleanup old files
+  async cleanupOldFiles(days = 30) {
+    try {
+      const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
+      const results = { deleted: [], errors: [] };
+      
+      // Clean temp directory
+      const tempDir = path.join(this.uploadDir, this.imageFolder.TEMP);
+      try {
+        const files = await fs.readdir(tempDir);
+        for (const file of files) {
+          const filePath = path.join(tempDir, file);
+          const stats = await fs.stat(filePath);
+          
+          if (stats.mtime.getTime() < cutoffTime) {
+            await fs.unlink(filePath);
+            results.deleted.push(`temp/${file}`);
+          }
+        }
+      } catch (error) {
+        results.errors.push(`temp cleanup: ${error.message}`);
+      }
+      
+      console.log(`🧹 Cleanup completed: ${results.deleted.length} files deleted`);
+      return results;
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+      return { deleted: [], errors: [error.message] };
+    }
+  }
+
   // Clean up old temp files
   async cleanupTempFiles(olderThanHours = 24) {
     try {

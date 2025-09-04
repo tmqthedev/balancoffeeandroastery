@@ -27,21 +27,11 @@ const PaymentResult = () => {
 
                 // Get order info from URL params
                 const orderId = searchParams.get('orderId') || searchParams.get('orderNumber');
-                const resultCode = searchParams.get('resultCode'); // For MoMo
                 
                 if (!orderId) {
                     setPaymentStatus('error');
                     setLoading(false);
                     return;
-                }
-
-                // Handle MoMo return
-                if (resultCode !== null) {
-                    if (resultCode === '0') {
-                        setPaymentStatus('success');
-                    } else {
-                        setPaymentStatus('failed');
-                    }
                 }
 
                 // Fetch order details using new API
@@ -81,8 +71,8 @@ const PaymentResult = () => {
 
     const getPaymentMethodName = () => {
         switch (paymentMethod) {
-            case 'momo':
-                return 'Ví điện tử MoMo';
+            case 'contact':
+                return 'Liên hệ trực tiếp để thanh toán';
             case 'cod':
                 return 'Thanh toán khi nhận hàng';
             default:
@@ -148,6 +138,9 @@ const PaymentResult = () => {
     const getStatusMessage = () => {
         switch (paymentStatus) {
             case 'success':
+                if (paymentMethod === 'contact') {
+                    return 'Đơn hàng của bạn đã được tạo thành công. Chúng tôi sẽ liên hệ với bạn trong vòng 24 giờ để hướng dẫn thanh toán.';
+                }
                 return 'Đơn hàng của bạn đã được tạo thành công. Chúng tôi sẽ xử lý và giao hàng trong thời gian sớm nhất.';
             case 'failed':
                 return 'Giao dịch thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.';

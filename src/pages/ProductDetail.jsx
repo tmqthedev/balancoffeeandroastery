@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useCart } from '../constants/cartConstants';
+import { useAuth } from '../context/sharedAuth';
 import { formatVND } from '../utils/currency';
 
 // Configure axios defaults
@@ -12,6 +13,7 @@ const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart, isInCart, getItemQuantity } = useCart();
+    const { isAuthenticated } = useAuth();
     
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -57,6 +59,8 @@ const ProductDetail = () => {
 
             setLoading(true);
             const response = await axios.get(`${API_BASE_URL}/products/${id}`);
+            console.log('📦 Product data received:', response.data.product);
+            console.log('🖼️ Image URL from API:', response.data.product.image_url);
             setProduct(response.data.product);
             
             // Fetch related products
@@ -126,8 +130,46 @@ const ProductDetail = () => {
     };
 
     const handleBuyNow = async () => {
+        if (!product) return;
+
+        console.log('🛒 ProductDetail: handleBuyNow called');
+        console.log('🔐 ProductDetail: isAuthenticated:', isAuthenticated);
+
+        // Check if user is authenticated
+        if (!isAuthenticated) {
+            console.log('👤 ProductDetail: User not authenticated, saving to localStorage');
+            // Save product info to localStorage for after login
+            const buyNowProduct = {
+                productId: product.id || product._id,
+                name: product.name,
+                price: getCurrentPrice(),
+                selectedWeight,
+                quantity,
+                image_url: product.image_url,
+                timestamp: Date.now()
+            };
+
+            console.log('💾 ProductDetail: Saving buy now product:', buyNowProduct);
+            localStorage.setItem('buyNowProduct', JSON.stringify(buyNowProduct));
+            
+            // Verify it was saved
+            const saved = localStorage.getItem('buyNowProduct');
+            console.log('✅ ProductDetail: Verified saved product:', saved);
+
+            // Redirect to login with return path
+            console.log('🔄 ProductDetail: Redirecting to login');
+            navigate('/login', {
+                state: {
+                    from: { pathname: '/checkout' },
+                    message: 'Vui lòng đăng nhập để tiếp tục mua hàng'
+                }
+            });
+            return;
+        }
+
+        console.log('✅ ProductDetail: User authenticated, proceeding with normal flow');
+        // User is authenticated, proceed with normal flow
         await handleAddToCart();
-        // Redirect directly to checkout for faster purchase flow
         navigate('/checkout');
     };
 
@@ -214,17 +256,32 @@ const ProductDetail = () => {
                         {/* Product Images */}
                         <div className="space-y-4">
                             <div className="aspect-square bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 rounded-xl overflow-hidden shadow-lg">
-                                {product.image_url ? (
-                                    <img
-                                        src={product.image_url}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                        <span className="text-8xl text-brand-primary/50">☕</span>
-                                    </div>
-                                )}
+                                {(() => {
+                                    console.log('🖼️ Rendering image with URL:', product.image_url);
+                                    console.log('🖼️ Product object:', product);
+                                    
+                                    if (product.image_url) {
+                                        return (
+                                            <img
+                                                src={product.image_url}
+                                                alt={product.name}
+                                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                                                onLoad={() => console.log('✅ Image loaded successfully:', product.image_url)}
+                                                onError={(e) => {
+                                                    console.error('❌ Image failed to load:', product.image_url);
+                                                    console.error('❌ Error event:', e);
+                                                }}
+                                            />
+                                        );
+                                    } else {
+                                        console.log('⚠️ No image_url found');
+                                        return (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <span className="text-8xl text-brand-primary/50">☕</span>
+                                            </div>
+                                        );
+                                    }
+                                })()}
                             </div>
                         </div>
 

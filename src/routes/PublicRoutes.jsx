@@ -22,9 +22,7 @@ const Auth = React.lazy(() => import('../pages/auth/Auth'));
 const VerifyEmail = React.lazy(() => import('../pages/auth/VerifyEmail'));
 const ForgotPassword = React.lazy(() => import('../pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('../pages/auth/ResetPassword'));
-const FacebookCallback = React.lazy(() => import('../pages/auth/FacebookCallback'));
 const QRPaymentPage = React.lazy(() => import('../pages/QRPaymentPage'));
-const MoMoPayment = React.lazy(() => import('../pages/MoMoPayment'));
 const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 // Protected pages
@@ -51,7 +49,6 @@ const PublicRoutes = () => {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/auth/callback" element={<FacebookCallback />} />
         
         {/* Protected Routes */}        <Route path="/checkout" element={
           <ProtectedRoute>
@@ -61,11 +58,6 @@ const PublicRoutes = () => {
         <Route path="/payment/qr" element={
           <ProtectedRoute>
             <QRPaymentPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/payment/momo" element={
-          <ProtectedRoute>
-            <MoMoPayment />
           </ProtectedRoute>
         } />
         <Route path="/payment/result" element={

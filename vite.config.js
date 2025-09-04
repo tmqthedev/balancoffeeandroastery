@@ -4,6 +4,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
   plugins: [react(), basicSsl()],
+  publicDir: 'src/assets', // This makes src/assets available as static files
   server: {
     port: 5173,
     host: 'localhost',
@@ -16,6 +17,11 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,

@@ -79,8 +79,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Static files
+// Static files - serve from backend uploads directory
+// Maps /uploads/products/file.jpg to backend/uploads/products/file.jpg
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Maps /backend/uploads/products/file.jpg to backend/uploads/products/file.jpg  
+app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -147,9 +150,6 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/blogs', require('./routes/blogs'));
 app.use('/api/contacts', require('./routes/contacts'));
 app.use('/api/payments', require('./routes/payments'));
-
-// MoMo payment routes
-app.use('/api/payments/momo', require('./routes/momo-payment'));
 
 // Upload routes for file management
 app.use('/api/upload', require('./routes/upload'));

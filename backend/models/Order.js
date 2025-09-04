@@ -7,6 +7,7 @@ const orderSchema = new mongoose.Schema({
     email: String,
     firstName: String,
     lastName: String,
+    fullName: String, // Vietnamese full name
     phone: String
   },
   

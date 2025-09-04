@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/sharedAuth';
+import { useCart } from '../../constants/cartConstants';
 import { formatDateForBackend } from '../../utils/dateUtils';
-import FacebookLoginButton from '../../components/auth/FacebookLoginButton';
 
 const Auth = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, register } = useAuth(); // Updated import
+    const { login, register } = useAuth();
+    const { addToCart } = useCart(); // Updated import
     
     // Determine initial mode based on URL
     const initialMode = location.pathname === '/register' ? 'register' : 'login';
@@ -19,8 +20,7 @@ const Auth = () => {
         remember: false
     });
     const [registerData, setRegisterData] = useState({
-        firstName: '',
-        lastName: '',
+        fullName: '',
         email: '',
         phone: '',
         password: '',
@@ -34,11 +34,43 @@ const Auth = () => {
         province: '',
         postalCode: ''
     });    const [loading, setLoading] = useState(false);
-    const [facebookLoading, setFacebookLoading] = useState(false);
     const [error, setError] = useState('');
     const [registerErrors, setRegisterErrors] = useState({});
+    const [buyNowProduct, setBuyNowProduct] = useState(null);
 
     const from = location.state?.from?.pathname || '/';
+
+    // Check for buy now product on component mount
+    useEffect(() => {
+        console.log('� Auth: Component mounted');
+        console.log('🔗 Auth: Current location:', location.pathname);
+        console.log('📍 Auth: Location state:', location.state);
+        
+        console.log('�🔍 Auth: Checking for buy now product in localStorage');
+        const savedBuyNowProduct = localStorage.getItem('buyNowProduct');
+        console.log('📦 Auth: Raw buyNowProduct from localStorage:', savedBuyNowProduct);
+        
+        if (savedBuyNowProduct) {
+            try {
+                const product = JSON.parse(savedBuyNowProduct);
+                console.log('📦 Auth: Parsed buy now product:', product);
+                
+                // Check if product is not too old (within 30 minutes)
+                if (Date.now() - product.timestamp < 30 * 60 * 1000) {
+                    console.log('✅ Auth: Buy now product is valid, setting state');
+                    setBuyNowProduct(product);
+                } else {
+                    console.log('⏰ Auth: Buy now product is too old, removing');
+                    localStorage.removeItem('buyNowProduct');
+                }
+            } catch (error) {
+                console.error('❌ Auth: Error parsing buy now product:', error);
+                localStorage.removeItem('buyNowProduct');
+            }
+        } else {
+            console.log('❌ Auth: No buy now product found in localStorage');
+        }
+    }, []); // Empty dependency array to run only once on mount
 
     const handleLoginChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -66,12 +98,8 @@ const Auth = () => {
     const validateRegisterForm = () => {
         const newErrors = {};
         
-        if (!registerData.firstName.trim()) {
-            newErrors.firstName = 'Trường này là bắt buộc';
-        }
-        
-        if (!registerData.lastName.trim()) {
-            newErrors.lastName = 'Trường này là bắt buộc';
+        if (!registerData.fullName.trim()) {
+            newErrors.fullName = 'Trường này là bắt buộc';
         }
         
         if (!registerData.email.trim()) {
@@ -112,7 +140,55 @@ const Auth = () => {
         setError('');
 
         try {
+            console.log('🔐 Auth: Login form submitted');
+            console.log('📦 Auth: Current buyNowProduct state:', buyNowProduct);
+            
             await login(loginData.email, loginData.password, loginData.remember);
+            console.log('✅ Auth: Login successful');
+            
+            // If there's a buy now product, add it to cart
+            if (buyNowProduct) {
+                console.log('🛒 Auth: Adding buy now product to cart');
+                try {
+                    const productToAdd = {
+                        id: buyNowProduct.productId,
+                        name: buyNowProduct.name,
+                        price: buyNowProduct.price,
+                        selectedWeight: buyNowProduct.selectedWeight,
+                        image_url: buyNowProduct.image_url
+                    };
+                    
+                    console.log('📦 Auth: Product to add:', productToAdd);
+                    console.log('📦 Auth: Quantity:', buyNowProduct.quantity);
+                    
+                    // Add a small delay to ensure authentication state is updated
+                    console.log('⏳ Auth: Waiting for authentication state to update...');
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                    await addToCart(productToAdd, buyNowProduct.quantity);
+                    console.log('✅ Auth: Buy now product added to cart successfully');
+                    
+                    // Clear the buy now product from localStorage
+                    localStorage.removeItem('buyNowProduct');
+                    console.log('🧹 Auth: Cleared buy now product from localStorage');
+                    
+                    // Clear buy now product from state as well
+                    setBuyNowProduct(null);
+                    console.log('🧹 Auth: Cleared buy now product from state');
+                    
+                    // Navigate to checkout instead of the original 'from' path
+                    console.log('🚀 Auth: Navigating to checkout');
+                    navigate('/checkout', { replace: true });
+                    return;
+                } catch (cartError) {
+                    console.error('❌ Auth: Failed to add buy now product to cart:', cartError);
+                    // Continue with normal navigation if cart addition fails
+                }
+            } else {
+                console.log('❌ Auth: No buy now product to add');
+            }
+            
+            console.log('🚀 Auth: Navigating to from path:', from);
             navigate(from, { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Đăng nhập thất bại');
@@ -136,12 +212,29 @@ const Auth = () => {
         try {
             // Prepare data for backend - only include optional fields if they have values
             const registrationData = {
-                firstName: registerData.firstName,
-                lastName: registerData.lastName,
+                fullName: registerData.fullName,
                 email: registerData.email,
                 phone: registerData.phone,
                 password: registerData.password
             };
+
+            // Split full name for backend compatibility
+            const splitFullName = (fullName) => {
+                if (!fullName || !fullName.trim()) return { firstName: '', lastName: '' };
+                
+                const nameParts = fullName.trim().split(' ');
+                if (nameParts.length === 1) {
+                    return { firstName: nameParts[0], lastName: '' };
+                } else {
+                    const firstName = nameParts[nameParts.length - 1]; // Last part is given name
+                    const lastName = nameParts.slice(0, -1).join(' '); // Rest is family/middle name
+                    return { firstName, lastName };
+                }
+            };
+
+            const nameParts = splitFullName(registerData.fullName);
+            registrationData.firstName = nameParts.firstName;
+            registrationData.lastName = nameParts.lastName;
 
             // Only add optional fields if they have values
             if (registerData.dateOfBirth && registerData.dateOfBirth.trim()) {
@@ -173,8 +266,52 @@ const Auth = () => {
                 setMode('verification');
                 setRegisterData(prev => ({ ...prev, email: response.email }));
             } else {
-                // Normal registration flow (should not happen with new system)
-                navigate('/');
+                console.log('🎉 Auth: Registration completed without verification required');
+                
+                // If there's a buy now product, add it to cart
+                if (buyNowProduct) {
+                    console.log('🛒 Auth: Adding buy now product to cart after registration');
+                    try {
+                        const productToAdd = {
+                            id: buyNowProduct.productId,
+                            name: buyNowProduct.name,
+                            price: buyNowProduct.price,
+                            selectedWeight: buyNowProduct.selectedWeight,
+                            image_url: buyNowProduct.image_url
+                        };
+                        
+                        console.log('📦 Auth: Product to add:', productToAdd);
+                        console.log('📦 Auth: Quantity:', buyNowProduct.quantity);
+                        
+                        // Add a small delay to ensure authentication state is updated
+                        console.log('⏳ Auth: Waiting for authentication state to update...');
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                        await addToCart(productToAdd, buyNowProduct.quantity);
+                        console.log('✅ Auth: Buy now product added to cart successfully');
+                        
+                        // Clear the buy now product from localStorage
+                        localStorage.removeItem('buyNowProduct');
+                        console.log('🧹 Auth: Cleared buy now product from localStorage');
+                        
+                        // Clear buy now product from state as well
+                        setBuyNowProduct(null);
+                        console.log('🧹 Auth: Cleared buy now product from state');
+                        
+                        // Navigate to checkout instead of the original 'from' path
+                        console.log('🚀 Auth: Navigating to checkout');
+                        navigate('/checkout', { replace: true });
+                        return;
+                    } catch (cartError) {
+                        console.error('❌ Auth: Failed to add buy now product to cart:', cartError);
+                        // Continue with normal navigation if cart addition fails
+                    }
+                } else {
+                    console.log('❌ Auth: No buy now product to add');
+                }
+                
+                console.log('🚀 Auth: Navigating to from path:', from);
+                navigate(from, { replace: true });
             }
         } catch (err) {
             console.error('Registration error:', err); // Updated error handling
@@ -182,61 +319,6 @@ const Auth = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    // Handler for official Facebook Login Button
-    const handleFacebookLoginSuccess = async (facebookData) => {
-        try {
-            setFacebookLoading(true);
-            setError('');
-            
-            console.log('Facebook login success:', facebookData);
-            
-            // Send Facebook data to your backend for authentication
-            const authResponse = await fetch('/api/auth/facebook/callback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    accessToken: facebookData.authResponse.accessToken,
-                    userProfile: facebookData.userProfile
-                })
-            });
-            
-            if (authResponse.ok) {
-                const result = await authResponse.json();
-                console.log('Backend authentication success:', result);
-                
-                // Navigate to the intended page or home
-                navigate(from, { replace: true });
-            } else {
-                const errorData = await authResponse.json();
-                setError(errorData.message || 'Đăng nhập Facebook thất bại');
-            }
-        } catch (error) {
-            console.error('Facebook login error:', error);
-            setError('Có lỗi xảy ra khi đăng nhập với Facebook. Vui lòng thử lại.');
-        } finally {
-            setFacebookLoading(false);
-        }
-    };
-
-    const handleFacebookLoginError = (error) => {
-        console.error('Facebook login error:', error);
-        
-        // Don't show error for normal states
-        if (error.message && (
-            error.message.includes('not authorized') || 
-            error.message.includes('not logged into Facebook') ||
-            error.message.includes('cancelled')
-        )) {
-            // These are normal user actions, not errors
-            return;
-        }
-        
-        setError(error.message || 'Có lỗi xảy ra khi đăng nhập với Facebook');
-        setFacebookLoading(false);
     };
 
     const switchMode = (newMode) => {
@@ -327,6 +409,23 @@ const Auth = () => {
                             </div>
                         )}
 
+                        {/* Buy Now Product Message */}
+                        {buyNowProduct && (mode === 'login' || mode === 'register') && (
+                            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-blue-700">
+                                        {mode === 'login' 
+                                            ? `Đăng nhập để thêm "${buyNowProduct.name}" vào giỏ hàng và thanh toán`
+                                            : `Đăng ký để thêm "${buyNowProduct.name}" vào giỏ hàng và thanh toán`
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Login Form */}
                         {mode === 'login' && (
                             <form onSubmit={handleLoginSubmit} className="space-y-6">
@@ -388,75 +487,31 @@ const Auth = () => {
                                 >
                                     {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                                 </button>
-
-                                {/* Social Login */}
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-300" />
-                                    </div>
-                                    <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-brand-white text-gray-500">Hoặc đăng nhập với</span>
-                                    </div>
-                                </div>
-
-                                {/* Official Facebook Login Button */}
-                                <FacebookLoginButton
-                                    onLoginSuccess={handleFacebookLoginSuccess}
-                                    onLoginError={handleFacebookLoginError}
-                                    size="large"
-                                    buttonText="continue_with"
-                                    scope="email,public_profile"
-                                    disabled={facebookLoading || loading}
-                                    className="w-full"
-                                />
                             </form>
                         )}
 
                         {/* Register Form */}
                         {mode === 'register' && (
                             <form onSubmit={handleRegisterSubmit} className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label htmlFor="firstName" className="block text-sm font-medium text-brand-primary mb-2">
-                                            Họ *
-                                        </label>
-                                        <input
-                                            id="firstName"
-                                            name="firstName"
-                                            type="text"
-                                            required
-                                            value={registerData.firstName}
-                                            onChange={handleRegisterChange}
-                                            className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
-                                                registerErrors.firstName ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
-                                            }`}
-                                            placeholder="Họ"
-                                        />
-                                        {registerErrors.firstName && (
-                                            <p className="mt-1 text-sm text-red-600">{registerErrors.firstName}</p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="lastName" className="block text-sm font-medium text-brand-primary mb-2">
-                                            Tên *
-                                        </label>
-                                        <input
-                                            id="lastName"
-                                            name="lastName"
-                                            type="text"
-                                            required
-                                            value={registerData.lastName}
-                                            onChange={handleRegisterChange}
-                                            className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
-                                                registerErrors.lastName ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
-                                            }`}
-                                            placeholder="Tên"
-                                        />
-                                        {registerErrors.lastName && (
-                                            <p className="mt-1 text-sm text-red-600">{registerErrors.lastName}</p>
-                                        )}
-                                    </div>
+                                <div>
+                                    <label htmlFor="fullName" className="block text-sm font-medium text-brand-primary mb-2">
+                                        Họ và tên *
+                                    </label>
+                                    <input
+                                        id="fullName"
+                                        name="fullName"
+                                        type="text"
+                                        required
+                                        value={registerData.fullName}
+                                        onChange={handleRegisterChange}
+                                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                            registerErrors.fullName ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
+                                        }`}
+                                        placeholder="Ví dụ: Nguyễn Văn A"
+                                    />
+                                    {registerErrors.fullName && (
+                                        <p className="mt-1 text-sm text-red-600">{registerErrors.fullName}</p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -733,27 +788,6 @@ const Auth = () => {
                                 >
                                     {loading ? 'Đang đăng ký...' : 'Tạo tài khoản'}
                                 </button>
-
-                                {/* Divider */}
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-300" />
-                                    </div>
-                                    <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-brand-white text-gray-500">Hoặc đăng ký với</span>
-                                    </div>
-                                </div>
-
-                                {/* Official Facebook Login Button */}
-                                <FacebookLoginButton
-                                    onLoginSuccess={handleFacebookLoginSuccess}
-                                    onLoginError={handleFacebookLoginError}
-                                    size="large"
-                                    buttonText="continue_with"
-                                    scope="email,public_profile"
-                                    disabled={facebookLoading || loading}
-                                    className="w-full"
-                                />
                             </form>
                         )}
 

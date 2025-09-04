@@ -2,19 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../constants/cartConstants';
 
-const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) => {
+const PaymentMethods = ({ orderData, onPaymentError, selectedMethod: propSelectedMethod, onPaymentMethodSelect }) => {
     const navigate = useNavigate();
     const { clearCart } = useCart();
-    const [selectedMethod, setSelectedMethod] = useState('momo');
+    const [internalSelectedMethod, setInternalSelectedMethod] = useState(propSelectedMethod || 'contact');
     const [loading, setLoading] = useState(false);
+
+    // Use prop value if provided, otherwise use internal state
+    const selectedMethod = propSelectedMethod !== undefined ? propSelectedMethod : internalSelectedMethod;
 
     const paymentMethods = [
         {
-            id: 'momo',
-            name: 'Ví điện tử MoMo',
-            description: 'Thanh toán nhanh chóng qua ví MoMo',
-            icon: '🪙',
-            color: 'bg-pink-500',
+            id: 'contact',
+            name: 'Liên hệ trực tiếp với chúng tôi để thanh toán trực tuyến',
+            description: 'Chúng tôi sẽ hướng dẫn bạn thanh toán qua các phương thức an toàn',
+            icon: '📞',
+            color: 'bg-blue-500',
             popular: true
         },
         {
@@ -26,9 +29,14 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             popular: false
         }
     ];    const handlePaymentMethodChange = (methodId) => {
-        setSelectedMethod(methodId);
-        if (onPaymentMethodSelect) {
-            onPaymentMethodSelect(methodId);
+        if (propSelectedMethod !== undefined) {
+            // Controlled component - use prop callback
+            if (onPaymentMethodSelect) {
+                onPaymentMethodSelect(methodId);
+            }
+        } else {
+            // Uncontrolled component - use internal state
+            setInternalSelectedMethod(methodId);
         }
     };
 
@@ -79,57 +87,16 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             await clearCart();
 
             // Handle different payment methods
-            if (selectedMethod === 'momo') {
-                // Check if MoMo data is already included in order response
-                if (result.order && result.order.momoData) {
-                    // Redirect to MoMo payment page
-                    if (result.order.momoData.payUrl) {
-                        window.location.href = result.order.momoData.payUrl;
-                    } else {
-                        // For development mode, show QR code
-                        navigate('/payment/momo', { 
-                            state: { 
-                                order: result.order,
-                                momoData: result.order.momoData
-                            }
-                        });
+            if (selectedMethod === 'contact') {
+                // Redirect to success page with contact information
+                navigate('/payment/result', { 
+                    state: { 
+                        order: result.order,
+                        paymentMethod: 'contact',
+                        success: true,
+                        message: 'Đơn hàng đã được tạo thành công. Chúng tôi sẽ liên hệ với bạn để hướng dẫn thanh toán.'
                     }
-                } else {
-                    // Fallback - create separate MoMo payment request
-                    console.warn('No MoMo data in order response, creating separate payment');
-                    
-                    const momoResponse = await fetch(`/api/payments/momo/create`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        },
-                        body: JSON.stringify({
-                            orderNumber: result.order.orderNumber,
-                            total: result.order.total,
-                            customerInfo: result.order.customerInfo,
-                            items: result.order.items
-                        })
-                    });
-
-                    const momoResult = await momoResponse.json();
-
-                    if (!momoResponse.ok) {
-                        throw new Error(momoResult.message || 'Không thể tạo thanh toán MoMo');
-                    }
-
-                    // Redirect to MoMo payment page
-                    if (momoResult.data.payUrl) {
-                        window.location.href = momoResult.data.payUrl;
-                    } else {
-                        navigate('/payment/momo', { 
-                            state: { 
-                                order: result.order,
-                                momoData: momoResult.data
-                            }
-                        });
-                    }
-                }
+                });
             } else if (selectedMethod === 'cod') {
                 // Redirect to success page for COD
                 navigate('/payment/result', { 
@@ -206,17 +173,18 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
             </div>
 
             {/* Payment method details */}
-            {selectedMethod === 'momo' && (
-                <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-6">
+            {selectedMethod === 'contact' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <div className="flex items-start">
-                        <svg className="w-5 h-5 text-pink-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                         <div>
-                            <h4 className="font-medium text-pink-800 mb-1">Thanh toán MoMo</h4>
-                            <p className="text-sm text-pink-700">
-                                Sau khi đặt hàng, bạn sẽ được chuyển đến trang thanh toán MoMo. 
-                                Sử dụng ứng dụng MoMo hoặc quét mã QR để hoàn tất thanh toán.
+                            <h4 className="font-medium text-blue-800 mb-1">Liên hệ để thanh toán</h4>
+                            <p className="text-sm text-blue-700">
+                                Sau khi đặt hàng, đội ngũ của chúng tôi sẽ liên hệ với bạn trong vòng 24 giờ 
+                                để hướng dẫn thanh toán qua các phương thức an toàn như chuyển khoản ngân hàng, 
+                                ví điện tử hoặc các kênh thanh toán khác.
                             </p>
                         </div>
                     </div>
@@ -256,7 +224,7 @@ const PaymentMethods = ({ orderData, onPaymentError, onPaymentMethodSelect }) =>
                         Đang xử lý...
                     </div>
                 ) : (
-                    selectedMethod === 'momo' ? 'Thanh toán qua MoMo' : 'Đặt hàng'
+                    selectedMethod === 'contact' ? 'Đặt hàng và liên hệ thanh toán' : 'Đặt hàng'
                 )}
             </button>
 

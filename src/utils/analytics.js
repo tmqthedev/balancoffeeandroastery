@@ -26,43 +26,10 @@ export const initGA4 = () => {
   window.gtag = gtag;
 };
 
-// Meta Pixel (Facebook) Implementation
+// Meta Pixel (Facebook) Implementation - DISABLED
 export const initMetaPixel = () => {
-  const PIXEL_ID = null; // Disabled for development
-  
-  if (!PIXEL_ID) return;
-  
-  // Add Facebook Pixel code
-  (function(f, b, e, v) {
-    if (f.fbq) return;
-    
-    const n = f.fbq = function() {
-      if (n.callMethod) {
-        n.callMethod(...arguments);
-      } else {
-        n.queue.push(arguments);
-      }
-    };
-    
-    if (!f._fbq) {
-      f._fbq = n;
-    }
-    
-    n.push = n;
-    n.loaded = true;
-    n.version = '2.0';
-    n.queue = [];
-    
-    const scriptTag = b.createElement(e);
-    scriptTag.async = true;
-    scriptTag.src = v;
-    
-    const firstScript = b.getElementsByTagName(e)[0];
-    firstScript.parentNode.insertBefore(scriptTag, firstScript);
-  })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-  
-  window.fbq('init', PIXEL_ID);
-  window.fbq('track', 'PageView');
+  // Facebook Pixel disabled - removed for simplified system
+  console.log('Facebook Pixel disabled');
 };
 
 // TikTok Pixel Implementation
@@ -127,7 +94,7 @@ export const initAnalytics = () => {
   const enableAnalytics = false;
   if (enableAnalytics) {
     initGA4();
-    initMetaPixel();
+    // initMetaPixel(); // Disabled - Facebook Pixel removed
     initTikTokPixel();
   }
 };
@@ -141,11 +108,7 @@ export const trackPageView = (path) => {
     });
   }
   
-  // Track in Meta Pixel
-  if (window.fbq) {
-    window.fbq('track', 'PageView');
-  }
-  
+  // Meta Pixel disabled - removed for simplified system
   // Track in TikTok
   if (window.ttq) {
     window.ttq.page();
@@ -159,41 +122,8 @@ export const trackEcommerceEvent = (eventName, data) => {
     window.gtag('event', eventName, data);
   }
   
-  // Meta Pixel ecommerce events
-  if (window.fbq) {
-    switch (eventName) {
-      case 'view_item':
-        window.fbq('track', 'ViewContent', {
-          content_ids: [data.items[0].item_id],
-          content_name: data.items[0].item_name,
-          content_type: 'product',
-          value: data.value,
-          currency: data.currency
-        });
-        break;
-      case 'add_to_cart':
-        window.fbq('track', 'AddToCart', {
-          content_ids: [data.items[0].item_id],
-          content_name: data.items[0].item_name,
-          content_type: 'product',
-          value: data.value,
-          currency: data.currency
-        });
-        break;
-      case 'begin_checkout':
-        window.fbq('track', 'InitiateCheckout', {
-          value: data.value,
-          currency: data.currency
-        });
-        break;
-      case 'purchase':
-        window.fbq('track', 'Purchase', {
-          value: data.value,
-          currency: data.currency
-        });
-        break;
-    }
-  }
+  // Meta Pixel disabled - removed for simplified system
+  // Facebook Pixel ecommerce events disabled
   
   // TikTok Pixel ecommerce events
   if (window.ttq) {

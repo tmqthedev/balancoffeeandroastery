@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../constants/cartConstants';
@@ -14,8 +14,7 @@ const Checkout = () => {
     const [formData, setFormData] = useState({
         // Billing Information
         billing: {
-            firstName: user?.firstName || '',
-            lastName: user?.lastName || '',
+            fullName: user?.fullName || user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || '',
             email: user?.email || '',
             phone: user?.phone || '',
             address: user?.addresses?.find(addr => addr.isDefault)?.street || user?.addresses?.[0]?.street || '',
@@ -28,8 +27,7 @@ const Checkout = () => {
         // Shipping Information
         shipping: {
             sameAsBilling: true,
-            firstName: '',
-            lastName: '',
+            fullName: '',
             address: '',
             wardCommune: '',
             district: '',
@@ -43,6 +41,110 @@ const Checkout = () => {
     });    const [errors, setErrors] = useState({});
 
     const { subtotal, total } = getCartTotals();
+
+    // Define validateStep before useEffect that uses it
+    const validateStep = useCallback((step) => {
+        const newErrors = {};
+
+        if (step === 1) {
+            // Validate billing information
+            const required = ['fullName', 'email', 'phone', 'address', 'wardCommune', 'district', 'province'];
+
+            required.forEach(field => {
+                const value = formData.billing[field];
+                if (!value || (typeof value === 'string' && value.trim() === '')) {
+                    const fieldLabels = {
+                        fullName: 'Họ và tên',
+                        email: 'Email',
+                        phone: 'Số điện thoại',
+                        address: 'Địa chỉ',
+                        wardCommune: 'Phường/Xã',
+                        district: 'Quận/Huyện',
+                        province: 'Tỉnh/Thành phố'
+                    };
+                    newErrors[`billing.${field}`] = `${fieldLabels[field]} không được để trống`;
+                }
+            });
+
+            // Email validation
+            if (formData.billing.email && formData.billing.email.trim()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(formData.billing.email)) {
+                    newErrors['billing.email'] = 'Vui lòng nhập địa chỉ email hợp lệ (vd: example@email.com)';
+                }
+            }
+
+            // Phone validation
+            if (formData.billing.phone && formData.billing.phone.trim()) {
+                const phoneRegex = /^[0-9]{10,11}$/;
+                const cleanPhone = formData.billing.phone.replace(/\s/g, '');
+                if (!phoneRegex.test(cleanPhone)) {
+                    newErrors['billing.phone'] = 'Số điện thoại phải có 10-11 chữ số (vd: 0123456789)';
+                }
+            }
+
+            // Full name validation
+            if (formData.billing.fullName && formData.billing.fullName.trim().length < 2) {
+                newErrors['billing.fullName'] = 'Họ và tên phải có ít nhất 2 ký tự';
+            }
+
+            // Address validation
+            if (formData.billing.address && formData.billing.address.trim().length < 5) {
+                newErrors['billing.address'] = 'Vui lòng nhập địa chỉ chi tiết hơn (ít nhất 5 ký tự)';
+            }
+
+            // Postal code validation (if provided)
+            if (formData.billing.postalCode && formData.billing.postalCode.trim()) {
+                const postalRegex = /^[0-9]{5,6}$/;
+                if (!postalRegex.test(formData.billing.postalCode.trim())) {
+                    newErrors['billing.postalCode'] = 'Mã bưu điện phải có 5-6 chữ số';
+                }
+            }
+        }
+
+        if (step === 2 && !formData.shipping.sameAsBilling) {
+            // Validate shipping information
+            const required = ['fullName', 'address', 'wardCommune', 'district', 'province'];
+            required.forEach(field => {
+                if (!formData.shipping[field] || formData.shipping[field].trim() === '') {
+                    const fieldLabels = {
+                        fullName: 'Họ và tên',
+                        address: 'Địa chỉ',
+                        wardCommune: 'Phường/Xã',
+                        district: 'Quận/Huyện',
+                        province: 'Tỉnh/Thành phố'
+                    };
+                    newErrors[`shipping.${field}`] = `${fieldLabels[field]} không được để trống`;
+                }
+            });
+
+            // Full name validation for shipping
+            if (formData.shipping.fullName && formData.shipping.fullName.trim().length < 2) {
+                newErrors['shipping.fullName'] = 'Họ và tên phải có ít nhất 2 ký tự';
+            }
+
+            // Address validation for shipping
+            if (formData.shipping.address && formData.shipping.address.trim().length < 5) {
+                newErrors['shipping.address'] = 'Vui lòng nhập địa chỉ chi tiết hơn (ít nhất 5 ký tự)';
+            }
+
+            // Postal code validation for shipping (if provided)
+            if (formData.shipping.postalCode && formData.shipping.postalCode.trim()) {
+                const postalRegex = /^[0-9]{5,6}$/;
+                if (!postalRegex.test(formData.shipping.postalCode.trim())) {
+                    newErrors['shipping.postalCode'] = 'Mã bưu điện phải có 5-6 chữ số';
+                }
+            }
+        }
+
+        if (step === 3) {
+            if (!formData.paymentMethod) {
+                newErrors.paymentMethod = 'Vui lòng chọn phương thức thanh toán để tiếp tục';
+            }
+        }
+
+        return newErrors;
+    }, [formData]);
 
     useEffect(() => {
         if (cartItems.length === 0) {
@@ -58,39 +160,13 @@ const Checkout = () => {
         }
     }, [user, refreshUser]);
 
-    // Update form data when user info changes
+    // Real-time validation effect
     useEffect(() => {
-        if (user) {
-            const defaultAddress = user.addresses?.find(addr => addr.isDefault) || user.addresses?.[0];
-            
-            setFormData(prev => ({
-                ...prev,
-                billing: {
-                    ...prev.billing,
-                    firstName: user.firstName || prev.billing.firstName,
-                    lastName: user.lastName || prev.billing.lastName,
-                    email: user.email || prev.billing.email,
-                    phone: user.phone || defaultAddress?.phone || prev.billing.phone,
-                    address: defaultAddress?.street || prev.billing.address,
-                    wardCommune: defaultAddress?.wardCommune || prev.billing.wardCommune,
-                    district: defaultAddress?.district || prev.billing.district,
-                    province: defaultAddress?.province || prev.billing.province,
-                    postalCode: defaultAddress?.postalCode || prev.billing.postalCode,
-                },
-                shipping: {
-                    ...prev.shipping,
-                    sameAsBilling: true,
-                    firstName: defaultAddress?.firstName || user.firstName || '',
-                    lastName: defaultAddress?.lastName || user.lastName || '',
-                    address: defaultAddress?.street || '',
-                    wardCommune: defaultAddress?.wardCommune || '',
-                    district: defaultAddress?.district || '',
-                    province: defaultAddress?.province || '',
-                    postalCode: defaultAddress?.postalCode || '',
-                }
-            }));
-        }
-    }, [user]);    const steps = [
+        const stepErrors = validateStep(currentStep);
+        setErrors(stepErrors);
+    }, [formData, currentStep, validateStep]);
+
+    const steps = [
         { number: 1, title: 'Thông tin thanh toán' },
         { number: 2, title: 'Thông tin giao hàng' },
         { number: 3, title: 'Phương thức thanh toán' }
@@ -112,74 +188,6 @@ const Checkout = () => {
         'Hà Nội', 'TP Hồ Chí Minh'
     ];
 
-    const handleInputChange = (section, field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [section]: {
-                ...prev[section],
-                [field]: value
-            }
-        }));
-        
-        // Clear error for this field
-        const errorKey = `${section}.${field}`;
-        if (errors[errorKey]) {
-            setErrors(prev => ({ ...prev, [errorKey]: '' }));
-        }
-    };
-
-    const handleSameAsBillingChange = (checked) => {
-        setFormData(prev => ({
-            ...prev,
-            shipping: {
-                ...prev.shipping,
-                sameAsBilling: checked,
-                ...(checked ? {
-                    firstName: prev.billing.firstName,
-                    lastName: prev.billing.lastName,
-                    address: prev.billing.address,
-                    wardCommune: prev.billing.wardCommune,
-                    district: prev.billing.district,
-                    province: prev.billing.province,
-                    postalCode: prev.billing.postalCode,
-                    country: prev.billing.country
-                } : {})
-            }
-        }));
-    };
-
-    const validateStep = (step) => {
-        const newErrors = {};        if (step === 1) {
-            // Validate billing information
-            const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'wardCommune', 'district', 'province'];
-            required.forEach(field => {
-                if (!formData.billing[field]) {
-                    newErrors[`billing.${field}`] = 'Trường này là bắt buộc';
-                }
-            });
-            
-            if (formData.billing.email && !/\S+@\S+\.\S+/.test(formData.billing.email)) {
-                newErrors['billing.email'] = 'Email không hợp lệ';
-            }
-        }
-
-        if (step === 2 && !formData.shipping.sameAsBilling) {
-            // Validate shipping information
-            const required = ['firstName', 'lastName', 'address', 'wardCommune', 'district', 'province'];
-            required.forEach(field => {
-                if (!formData.shipping[field]) {
-                    newErrors[`shipping.${field}`] = 'Trường này là bắt buộc';
-                }
-            });
-        }        if (step === 3) {
-            if (!formData.paymentMethod) {
-                newErrors.paymentMethod = 'Vui lòng chọn phương thức thanh toán';
-            }
-        }
-
-        return newErrors;
-    };
-
     const handleNext = () => {
         const stepErrors = validateStep(currentStep);
         if (Object.keys(stepErrors).length > 0) {
@@ -191,11 +199,74 @@ const Checkout = () => {
         setCurrentStep(prev => Math.min(prev + 1, 3));
     };
 
+    // Check if current step has any validation errors in real-time
+    const hasCurrentStepErrors = () => {
+        return Object.keys(errors).some(errorKey => {
+            if (currentStep === 1) {
+                return errorKey.startsWith('billing.');
+            } else if (currentStep === 2) {
+                return errorKey.startsWith('shipping.');
+            } else if (currentStep === 3) {
+                return errorKey === 'paymentMethod';
+            }
+            return false;
+        });
+    };
+
     const handlePrevious = () => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
-    };    const handlePaymentError = (error) => {
-        console.error('Payment failed:', error);
-        setErrors({ payment: error.message || 'Thanh toán thất bại. Vui lòng thử lại.' });
+    };
+
+    // Handle input changes for form fields
+    const handleInputChange = (section, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            [section]: {
+                ...prev[section],
+                [field]: value
+            }
+        }));
+
+        // Clear field-specific error immediately when user starts typing
+        if (errors[`${section}.${field}`]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[`${section}.${field}`];
+                return newErrors;
+            });
+        }
+    };
+
+    // Handle same as billing checkbox
+    const handleSameAsBillingChange = (checked) => {
+        setFormData(prev => ({
+            ...prev,
+            shipping: {
+                ...prev.shipping,
+                sameAsBilling: checked,
+                ...(checked ? {
+                    fullName: prev.billing.fullName,
+                    address: prev.billing.address,
+                    wardCommune: prev.billing.wardCommune,
+                    district: prev.billing.district,
+                    province: prev.billing.province,
+                    postalCode: prev.billing.postalCode
+                } : {})
+            }
+        }));
+
+        // Clear shipping errors when copying from billing
+        if (checked) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                Object.keys(newErrors).forEach(key => {
+                    if (key.startsWith('shipping.')) {
+                        delete newErrors[key];
+                    }
+                });
+                return newErrors;
+            });
+        }
     };
 
     const formatCurrency = (amount) => {
@@ -203,17 +274,53 @@ const Checkout = () => {
             style: 'currency',
             currency: 'VND'
         }).format(amount);
-    };    const createOrder = async () => {
+    };
+
+    // Handle payment method selection
+    const handlePaymentMethodChange = (method) => {
+        setFormData(prev => ({
+            ...prev,
+            paymentMethod: method
+        }));
+
+        // Clear payment method error
+        if (errors.paymentMethod) {
+            setErrors(prev => ({ ...prev, paymentMethod: '' }));
+        }
+    };
+
+    const handlePaymentError = (error) => {
+        console.error('Payment failed:', error);
+        setErrors({ payment: error.message || 'Thanh toán thất bại. Vui lòng thử lại.' });
+    };
+    const createOrder = useCallback(async () => {
         try {
             // Save address to account if requested
             if (user && formData.saveToAccount) {
                 await saveAddressToAccount();
             }
 
+            // Split full name into first and last name for backend compatibility
+            const splitFullName = (fullName) => {
+                if (!fullName || !fullName.trim()) return { firstName: '', lastName: '' };
+                
+                const nameParts = fullName.trim().split(' ');
+                if (nameParts.length === 1) {
+                    return { firstName: nameParts[0], lastName: '' };
+                } else {
+                    const firstName = nameParts[nameParts.length - 1]; // Last part is given name
+                    const lastName = nameParts.slice(0, -1).join(' '); // Rest is family/middle name
+                    return { firstName, lastName };
+                }
+            };
+
+            const billingNameParts = splitFullName(formData.billing.fullName);
+
             // Prepare customer info according to new API structure
             const customerInfo = {
-                firstName: formData.billing.firstName,
-                lastName: formData.billing.lastName,
+                firstName: billingNameParts.firstName,
+                lastName: billingNameParts.lastName,
+                fullName: formData.billing.fullName, // Add fullName for backend compatibility
                 email: formData.billing.email,
                 phone: formData.billing.phone
             };
@@ -249,16 +356,17 @@ const Checkout = () => {
             console.error('Order preparation failed:', error);
             throw error;
         }
-    };
+    }, [user, formData, cartItems, total]);
 
     // Function to save address to user account
     const saveAddressToAccount = async () => {
         try {
             const addressData = {
-                firstName: formData.billing.firstName,
-                lastName: formData.billing.lastName,
+                fullName: formData.billing.fullName,
                 address1: formData.billing.address,
-                city: formData.billing.city,
+                street: formData.billing.address,
+                wardCommune: formData.billing.wardCommune,
+                district: formData.billing.district,
                 province: formData.billing.province,
                 postalCode: formData.billing.postalCode,
                 country: 'VN',
@@ -349,7 +457,53 @@ const Checkout = () => {
                             <div className="bg-white rounded-lg shadow-md p-6">
                                 {/* Step 1: Billing Information */}
                                 {currentStep === 1 && (
-                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-brand-primary">
+                                    <div className="space-y-6">
+                                        {/* Validation Status */}
+                                        <div className={`p-4 rounded-lg border ${
+                                            hasCurrentStepErrors()
+                                                ? 'bg-red-50 border-red-200 text-red-700'
+                                                : 'bg-green-50 border-green-200 text-green-700'
+                                        }`}>
+                                            <div className="flex items-center">
+                                                <svg className={`w-5 h-5 mr-2 ${
+                                                    hasCurrentStepErrors() ? 'text-red-500' : 'text-green-500'
+                                                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {hasCurrentStepErrors() ? (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                    ) : (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    )}
+                                                </svg>
+                                                <span className="text-sm font-medium">
+                                                    {hasCurrentStepErrors()
+                                                        ? 'Vui lòng kiểm tra và điền đầy đủ thông tin bên dưới'
+                                                        : 'Tuyệt vời! Thông tin thanh toán đã được điền đầy đủ'
+                                                    }
+                                                </span>
+                                            </div>
+
+                                            {/* Detailed error messages */}
+                                            {hasCurrentStepErrors() && (
+                                                <div className="mt-3 pt-3 border-t border-red-200">
+                                                    <p className="text-xs font-medium text-red-700 mb-2">
+                                                        Các trường cần điền:
+                                                    </p>
+                                                    <ul className="text-xs text-red-600 space-y-1">
+                                                        {Object.entries(errors).map(([key, error]) => (
+                                                            <li key={key} className="flex items-start">
+                                                                <span className="text-red-500 mr-1">•</span>
+                                                                <span>{error}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                                                        💡 Mẹo: Hãy điền đầy đủ thông tin để có thể tiếp tục đặt hàng
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <h2 className="text-xl font-semibold text-brand-primary">
                                             Thông tin thanh toán
                                         </h2>
                                         
@@ -367,10 +521,9 @@ const Checkout = () => {
                                                                     ...prev,
                                                                     billing: {
                                                                         ...prev.billing,
-                                                                        firstName: selectedAddress.firstName || prev.billing.firstName,
-                                                                        lastName: selectedAddress.lastName || prev.billing.lastName,
+                                                                        fullName: selectedAddress.fullName || `${selectedAddress.firstName || ''} ${selectedAddress.lastName || ''}`.trim() || prev.billing.fullName,
                                                                         phone: selectedAddress.phone || prev.billing.phone,
-                                                                        address: selectedAddress.street || prev.billing.address,
+                                                                        address: selectedAddress.street || selectedAddress.address1 || prev.billing.address,
                                                                         wardCommune: selectedAddress.wardCommune || prev.billing.wardCommune,
                                                                         district: selectedAddress.district || prev.billing.district,
                                                                         province: selectedAddress.province || prev.billing.province,
@@ -385,7 +538,7 @@ const Checkout = () => {
                                                     <option value="">Chọn địa chỉ đã lưu...</option>
                                                     {user.addresses.map(address => (
                                                         <option key={address._id} value={address._id}>
-                                                            {`${address.firstName} ${address.lastName} - ${address.address1}, ${address.city}, ${address.province}`}
+                                                            {`${address.fullName || `${address.firstName || ''} ${address.lastName || ''}`.trim() || 'N/A'} - ${address.address1 || address.street}, ${address.city || address.district}, ${address.province}`}
                                                         </option>
                                                     ))}
                                                 </select>
@@ -405,45 +558,32 @@ const Checkout = () => {
                                             </div>
                                         )}
                                         
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                    Họ *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.billing.lastName}
-                                                    onChange={(e) => handleInputChange('billing', 'lastName', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                        errors['billing.lastName'] ? 'border-red-300' : 'border-gray-300'
-                                                    }`}
-                                                />
-                                                {errors['billing.lastName'] && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.lastName']}</p>
-                                                )}
-                                            </div>
-                                            
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                    Tên *
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.billing.firstName}
-                                                    onChange={(e) => handleInputChange('billing', 'firstName', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                        errors['billing.firstName'] ? 'border-red-300' : 'border-gray-300'
-                                                    }`}
-                                                />
-                                                {errors['billing.firstName'] && (
-                                                    <p className="mt-1 text-sm text-red-600">{errors['billing.firstName']}</p>
-                                                )}
-                                            </div>
+                                        <div>
+                                            <label htmlFor="billing-fullName" className="block text-sm font-medium text-brand-primary mb-1">
+                                                Họ và tên *
+                                            </label>
+                                            <input
+                                                id="billing-fullName"
+                                                type="text"
+                                                value={formData.billing.fullName}
+                                                onChange={(e) => handleInputChange('billing', 'fullName', e.target.value)}
+                                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                    errors['billing.fullName'] ? 'border-red-300' : 'border-gray-300'
+                                                }`}
+                                                placeholder="Ví dụ: Nguyễn Văn A"
+                                            />
+                                            {errors['billing.fullName'] && (
+                                                <p className="mt-1 text-sm text-red-600">{errors['billing.fullName']}</p>
+                                            )}
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                            <div>
+                                                <label htmlFor="billing-email" className="block text-sm font-medium text-brand-primary mb-1">
                                                     Email *
                                                 </label>
                                                 <input
+                                                    id="billing-email"
                                                     type="email"
                                                     value={formData.billing.email}
                                                     onChange={(e) => handleInputChange('billing', 'email', e.target.value)}
@@ -456,16 +596,19 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                            <div>
+                                                <label htmlFor="billing-phone" className="block text-sm font-medium text-brand-primary mb-1">
                                                     Số điện thoại *
                                                 </label>
                                                 <input
+                                                    id="billing-phone"
                                                     type="tel"
                                                     value={formData.billing.phone}
                                                     onChange={(e) => handleInputChange('billing', 'phone', e.target.value)}
                                                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
                                                         errors['billing.phone'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
+                                                    placeholder="0123456789 (10-11 chữ số)"
                                                 />
                                                 {errors['billing.phone'] && (
                                                     <p className="mt-1 text-sm text-red-600">{errors['billing.phone']}</p>
@@ -473,17 +616,19 @@ const Checkout = () => {
                                             </div>
                                         </div>
 
-                                        <div>                                            <label className="block text-sm font-medium text-brand-primary mb-1">
+                                        <div>
+                                            <label htmlFor="billing-address" className="block text-sm font-medium text-brand-primary mb-1">
                                                 Địa chỉ *
                                             </label>
                                             <input
+                                                id="billing-address"
                                                 type="text"
                                                 value={formData.billing.address}
                                                 onChange={(e) => handleInputChange('billing', 'address', e.target.value)}
                                                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
                                                     errors['billing.address'] ? 'border-red-300' : 'border-gray-300'
                                                 }`}
-                                                placeholder="Street address"
+                                                placeholder="Số nhà, tên đường"
                                             />
                                             {errors['billing.address'] && (
                                                 <p className="mt-1 text-sm text-red-600">{errors['billing.address']}</p>
@@ -492,10 +637,11 @@ const Checkout = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                <label htmlFor="billing-wardCommune" className="block text-sm font-medium text-brand-primary mb-1">
                                                     Phường/Xã *
                                                 </label>
                                                 <input
+                                                    id="billing-wardCommune"
                                                     type="text"
                                                     value={formData.billing.wardCommune || ''}
                                                     onChange={(e) => handleInputChange('billing', 'wardCommune', e.target.value)}
@@ -509,10 +655,11 @@ const Checkout = () => {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                <label htmlFor="billing-district" className="block text-sm font-medium text-brand-primary mb-1">
                                                     Quận/Huyện *
                                                 </label>
                                                 <input
+                                                    id="billing-district"
                                                     type="text"
                                                     value={formData.billing.district || ''}
                                                     onChange={(e) => handleInputChange('billing', 'district', e.target.value)}
@@ -526,17 +673,18 @@ const Checkout = () => {
                                             </div>
                                             
                                             <div>                                                
-                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                <label htmlFor="billing-province" className="block text-sm font-medium text-brand-primary mb-1">
                                                     Tỉnh/Thành phố *
                                                 </label>
                                                 <select
+                                                    id="billing-province"
                                                     value={formData.billing.province}
                                                     onChange={(e) => handleInputChange('billing', 'province', e.target.value)}
                                                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
                                                         errors['billing.province'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 >
-                                                    <option value="">Select Province</option>
+                                                    <option value="">Chọn Tỉnh/Thành phố</option>
                                                     {vietnameseProvinces.map(province => (
                                                         <option key={province} value={province}>{province}</option>
                                                     ))}
@@ -546,10 +694,11 @@ const Checkout = () => {
                                                 )}
                                             </div>
                                             
-                                            <div>                                                <label className="block text-sm font-medium text-brand-primary mb-1">
+                                            <div>                                                <label htmlFor="billing-postalCode" className="block text-sm font-medium text-brand-primary mb-1">
                                                     Mã bưu điện
                                                 </label>
                                                 <input
+                                                    id="billing-postalCode"
                                                     type="text"
                                                     value={formData.billing.postalCode}
                                                     onChange={(e) => handleInputChange('billing', 'postalCode', e.target.value)}
@@ -581,7 +730,53 @@ const Checkout = () => {
 
                                 {/* Step 2: Shipping Information */}
                                 {currentStep === 2 && (
-                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-brand-primary">
+                                    <div className="space-y-6">
+                                        {/* Validation Status */}
+                                        <div className={`p-4 rounded-lg border ${
+                                            hasCurrentStepErrors()
+                                                ? 'bg-red-50 border-red-200 text-red-700'
+                                                : 'bg-green-50 border-green-200 text-green-700'
+                                        }`}>
+                                            <div className="flex items-center">
+                                                <svg className={`w-5 h-5 mr-2 ${
+                                                    hasCurrentStepErrors() ? 'text-red-500' : 'text-green-500'
+                                                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {hasCurrentStepErrors() ? (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                    ) : (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    )}
+                                                </svg>
+                                                <span className="text-sm font-medium">
+                                                    {hasCurrentStepErrors()
+                                                        ? 'Vui lòng kiểm tra và điền đầy đủ thông tin giao hàng'
+                                                        : 'Tuyệt vời! Thông tin giao hàng đã được điền đầy đủ'
+                                                    }
+                                                </span>
+                                            </div>
+
+                                            {/* Detailed error messages */}
+                                            {hasCurrentStepErrors() && (
+                                                <div className="mt-3 pt-3 border-t border-red-200">
+                                                    <p className="text-xs font-medium text-red-700 mb-2">
+                                                        Các trường cần điền:
+                                                    </p>
+                                                    <ul className="text-xs text-red-600 space-y-1">
+                                                        {Object.entries(errors).map(([key, error]) => (
+                                                            <li key={key} className="flex items-start">
+                                                                <span className="text-red-500 mr-1">•</span>
+                                                                <span>{error}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                                                        💡 Mẹo: Bạn có thể tích vào "Giống như thông tin thanh toán" để tự động điền
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <h2 className="text-xl font-semibold text-brand-primary">
                                             Thông tin giao hàng
                                         </h2>
                                         
@@ -600,52 +795,38 @@ const Checkout = () => {
 
                                         {!formData.shipping.sameAsBilling && (
                                             <>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                            Họ *
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.shipping.lastName}
-                                                            onChange={(e) => handleInputChange('shipping', 'lastName', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                                errors['shipping.lastName'] ? 'border-red-300' : 'border-gray-300'
-                                                            }`}
-                                                        />
-                                                        {errors['shipping.lastName'] && (
-                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.lastName']}</p>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    <div>                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
-                                                            Tên *
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.shipping.firstName}
-                                                            onChange={(e) => handleInputChange('shipping', 'firstName', e.target.value)}
-                                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
-                                                                errors['shipping.firstName'] ? 'border-red-300' : 'border-gray-300'
-                                                            }`}
-                                                        />
-                                                        {errors['shipping.firstName'] && (
-                                                            <p className="mt-1 text-sm text-red-600">{errors['shipping.firstName']}</p>
-                                                        )}
-                                                    </div>
+                                                <div>
+                                                    <label htmlFor="shipping-fullName" className="block text-sm font-medium text-brand-primary mb-1">
+                                                        Họ và tên *
+                                                    </label>
+                                                    <input
+                                                        id="shipping-fullName"
+                                                        type="text"
+                                                        value={formData.shipping.fullName}
+                                                        onChange={(e) => handleInputChange('shipping', 'fullName', e.target.value)}
+                                                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                            errors['shipping.fullName'] ? 'border-red-300' : 'border-gray-300'
+                                                        }`}
+                                                        placeholder="Ví dụ: Nguyễn Văn A"
+                                                    />
+                                                    {errors['shipping.fullName'] && (
+                                                        <p className="mt-1 text-sm text-red-600">{errors['shipping.fullName']}</p>
+                                                    )}
                                                 </div>
 
                                                 <div>                                                    
-                                                    <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                    <label htmlFor="shipping-address" className="block text-sm font-medium text-brand-primary mb-1">
                                                         Địa chỉ *
                                                     </label>
                                                     <input
+                                                        id="shipping-address"
                                                         type="text"
                                                         value={formData.shipping.address}
                                                         onChange={(e) => handleInputChange('shipping', 'address', e.target.value)}
                                                         className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
                                                             errors['shipping.address'] ? 'border-red-300' : 'border-gray-300'
                                                         }`}
-                                                        placeholder="Street address"
+                                                        placeholder="Số nhà, tên đường"
                                                     />
                                                     {errors['shipping.address'] && (
                                                         <p className="mt-1 text-sm text-red-600">{errors['shipping.address']}</p>
@@ -654,10 +835,11 @@ const Checkout = () => {
 
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                        <label htmlFor="shipping-wardCommune" className="block text-sm font-medium text-brand-primary mb-1">
                                                             Phường/Xã *
                                                         </label>
                                                         <input
+                                                            id="shipping-wardCommune"
                                                             type="text"
                                                             value={formData.shipping.wardCommune || ''}
                                                             onChange={(e) => handleInputChange('shipping', 'wardCommune', e.target.value)}
@@ -671,10 +853,11 @@ const Checkout = () => {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                        <label htmlFor="shipping-district" className="block text-sm font-medium text-brand-primary mb-1">
                                                             Quận/Huyện *
                                                         </label>
                                                         <input
+                                                            id="shipping-district"
                                                             type="text"
                                                             value={formData.shipping.district || ''}
                                                             onChange={(e) => handleInputChange('shipping', 'district', e.target.value)}
@@ -687,17 +870,18 @@ const Checkout = () => {
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                        <label htmlFor="shipping-province" className="block text-sm font-medium text-brand-primary mb-1">
                                                             Tỉnh/Thành phố *
                                                         </label>
                                                         <select
+                                                            id="shipping-province"
                                                             value={formData.shipping.province}
                                                             onChange={(e) => handleInputChange('shipping', 'province', e.target.value)}
                                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
                                                                 errors['shipping.province'] ? 'border-red-300' : 'border-gray-300'
                                                             }`}
                                                         >
-                                                            <option value="">Select Province</option>
+                                                            <option value="">Chọn Tỉnh/Thành phố</option>
                                                             {vietnameseProvinces.map(province => (
                                                                 <option key={province} value={province}>{province}</option>
                                                             ))}
@@ -708,10 +892,11 @@ const Checkout = () => {
                                                     </div>
                                                     
                                                     <div>
-                                                        <label className="block text-sm font-medium text-brand-primary mb-1">
+                                                        <label htmlFor="shipping-postalCode" className="block text-sm font-medium text-brand-primary mb-1">
                                                             Mã bưu điện
                                                         </label>
                                                         <input
+                                                            id="shipping-postalCode"
                                                             type="text"
                                                             value={formData.shipping.postalCode}
                                                             onChange={(e) => handleInputChange('shipping', 'postalCode', e.target.value)}
@@ -731,7 +916,7 @@ const Checkout = () => {
                                                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                                                 rows={3}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary"
-                                                placeholder="Any special instructions for your order..."
+                                                placeholder="Ví dụ: Giao hàng vào buổi sáng, hoặc có ghi chú đặc biệt nào khác..."
                                             />
                                         </div>
                                     </div>
@@ -739,7 +924,53 @@ const Checkout = () => {
 
                                 {/* Step 3: Payment Method */}
                                 {currentStep === 3 && (
-                                    <div className="space-y-6">                                        <h2 className="text-xl font-semibold text-brand-primary">
+                                    <div className="space-y-6">
+                                        {/* Validation Status */}
+                                        <div className={`p-4 rounded-lg border ${
+                                            hasCurrentStepErrors()
+                                                ? 'bg-red-50 border-red-200 text-red-700'
+                                                : 'bg-green-50 border-green-200 text-green-700'
+                                        }`}>
+                                            <div className="flex items-center">
+                                                <svg className={`w-5 h-5 mr-2 ${
+                                                    hasCurrentStepErrors() ? 'text-red-500' : 'text-green-500'
+                                                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {hasCurrentStepErrors() ? (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                    ) : (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    )}
+                                                </svg>
+                                                <span className="text-sm font-medium">
+                                                    {hasCurrentStepErrors()
+                                                        ? 'Vui lòng chọn phương thức thanh toán để hoàn tất đơn hàng'
+                                                        : 'Hoàn hảo! Bạn đã sẵn sàng đặt hàng'
+                                                    }
+                                                </span>
+                                            </div>
+
+                                            {/* Detailed error messages */}
+                                            {hasCurrentStepErrors() && (
+                                                <div className="mt-3 pt-3 border-t border-red-200">
+                                                    <p className="text-xs font-medium text-red-700 mb-2">
+                                                        Vui lòng chọn:
+                                                    </p>
+                                                    <ul className="text-xs text-red-600 space-y-1">
+                                                        {Object.entries(errors).map(([key, error]) => (
+                                                            <li key={key} className="flex items-start">
+                                                                <span className="text-red-500 mr-1">•</span>
+                                                                <span>{error}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                                                        💡 Mẹo: Chọn phương thức thanh toán phù hợp để hoàn tất đơn hàng
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <h2 className="text-xl font-semibold text-brand-primary">
                                             Phương thức thanh toán
                                         </h2>
                                         
@@ -750,6 +981,8 @@ const Checkout = () => {
                                         )}                                        <PaymentMethods
                                             orderData={createOrder}
                                             onPaymentError={handlePaymentError}
+                                            selectedMethod={formData.paymentMethod}
+                                            onPaymentMethodSelect={handlePaymentMethodChange}
                                         />
                                     </div>
                                 )}
@@ -763,13 +996,14 @@ const Checkout = () => {
                                     >
                                         Quay lại
                                     </button>
-                                    
+
                                     {currentStep < 3 && (
                                         <button
                                             onClick={handleNext}
-                                            className="bg-brand-primary hover:bg-brand-primary text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                            disabled={hasCurrentStepErrors()}
+                                            className="bg-brand-primary hover:bg-brand-primary text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-primary"
                                         >
-                                            Tiếp tục
+                                            {hasCurrentStepErrors() ? 'Vui lòng điền đầy đủ thông tin' : 'Tiếp tục'}
                                         </button>
                                     )}
                                 </div>

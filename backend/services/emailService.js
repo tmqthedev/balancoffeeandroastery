@@ -92,286 +92,307 @@ class EmailService {
      * Send email verification email
      */
     async sendEmailVerificationEmail(email, verificationLink, userName = '') {
-        const subject = 'Xác thực email - Balan Coffee & Roastery';
-        
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f5f5f5; }
-                    .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                    .header { text-align: center; margin-bottom: 30px; }
-                    .title { color: #1A3C34; font-size: 24px; font-weight: bold; margin: 20px 0; }
-                    .content { color: #333; margin-bottom: 30px; }
-                    .button { display: inline-block; background-color: #1A3C34; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-                    .button:hover { background-color: #2a5a4f; }
-                    .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
-                    .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
-                    .welcome { background-color: #e7f3ff; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #0c5460; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1 class="title">🎉 Chào mừng đến với Balan Coffee!</h1>
-                    </div>
-                    
-                    <div class="content">
-                        <p>Xin chào ${userName || 'Quý khách'},</p>
-                        
-                        <div class="welcome">
-                            <h3>💚 Cảm ơn bạn đã đăng ký tài khoản!</h3>
-                            <p>Chúng tôi rất vui mừng chào đón bạn trở thành thành viên của <strong>Balan Coffee & Roastery</strong> - nơi mang đến những hạt cà phê rang mộc chất lượng cao nhất.</p>
+        try {
+            if (!this.transporter) {
+                console.warn('Email service not configured, cannot send verification email');
+                return { success: false, error: 'Email service not configured' };
+            }
+
+            const subject = 'Xác thực email - Balan Coffee & Roastery';
+            
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f5f5f5; }
+                        .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .title { color: #1A3C34; font-size: 24px; font-weight: bold; margin: 20px 0; }
+                        .content { color: #333; margin-bottom: 30px; }
+                        .button { display: inline-block; background-color: #1A3C34; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+                        .button:hover { background-color: #2a5a4f; }
+                        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
+                        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
+                        .welcome { background-color: #e7f3ff; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #0c5460; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 class="title">🎉 Chào mừng đến với Balan Coffee!</h1>
                         </div>
                         
-                        <p>Để hoàn tất quá trình đăng ký và bảo vệ tài khoản của bạn, vui lòng xác thực địa chỉ email <strong>${email}</strong> bằng cách nhấn vào nút bên dưới:</p>
-                        
-                        <div style="text-align: center;">
-                            <a href="${verificationLink}" class="button">Xác thực Email</a>
-                        </div>
-                        
-                        <p>Hoặc copy và dán link sau vào trình duyệt:</p>
-                        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">${verificationLink}</p>
-                        
-                        <div class="warning">
-                            <strong>⚠️ Lưu ý quan trọng:</strong>
+                        <div class="content">
+                            <p>Xin chào ${userName || 'Quý khách'},</p>
+                            
+                            <div class="welcome">
+                                <h3>💚 Cảm ơn bạn đã đăng ký tài khoản!</h3>
+                                <p>Chúng tôi rất vui mừng chào đón bạn trở thành thành viên của <strong>Balan Coffee & Roastery</strong> - nơi mang đến những hạt cà phê rang mộc chất lượng cao nhất.</p>
+                            </div>
+                            
+                            <p>Để hoàn tất quá trình đăng ký và bảo vệ tài khoản của bạn, vui lòng xác thực địa chỉ email <strong>${email}</strong> bằng cách nhấn vào nút bên dưới:</p>
+                            
+                            <div style="text-align: center;">
+                                <a href="${verificationLink}" class="button">Xác thực Email</a>
+                            </div>
+                            
+                            <p>Hoặc copy và dán link sau vào trình duyệt:</p>
+                            <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">${verificationLink}</p>
+                            
+                            <div class="warning">
+                                <strong>⚠️ Lưu ý quan trọng:</strong>
+                                <ul>
+                                    <li>Link xác thực chỉ có hiệu lực trong <strong>24 giờ</strong></li>
+                                    <li>Sau khi xác thực, bạn có thể đăng nhập và sử dụng đầy đủ tính năng</li>
+                                    <li>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email</li>
+                                    <li>Không chia sẻ link này với bất kỳ ai khác</li>
+                                </ul>
+                            </div>
+                            
+                            <h3 style="color: #1A3C34;">☕ Những gì bạn sẽ nhận được:</h3>
                             <ul>
-                                <li>Link xác thực chỉ có hiệu lực trong <strong>24 giờ</strong></li>
-                                <li>Sau khi xác thực, bạn có thể đăng nhập và sử dụng đầy đủ tính năng</li>
-                                <li>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email</li>
-                                <li>Không chia sẻ link này với bất kỳ ai khác</li>
+                                <li>🎯 Ưu đãi đặc biệt dành riêng cho thành viên</li>
+                                <li>📦 Miễn phí giao hàng cho đơn hàng từ 300.000đ</li>
+                                <li>🔔 Thông báo sớm về sản phẩm mới và khuyến mãi</li>
+                                <li>⭐ Tích điểm và đổi quà hấp dẫn</li>
+                                <li>📞 Hỗ trợ khách hàng 24/7</li>
+                            </ul>
+                            
+                            <p>Nếu bạn gặp khó khăn trong việc xác thực email, vui lòng liên hệ với chúng tôi:</p>
+                            <ul>
+                                <li>📧 Email: support@balancoffee.com</li>
+                                <li>📞 Điện thoại: (028) 1234 5678</li>
+                                <li>💬 Live Chat: Trên website của chúng tôi</li>
                             </ul>
                         </div>
                         
-                        <h3 style="color: #1A3C34;">☕ Những gì bạn sẽ nhận được:</h3>
-                        <ul>
-                            <li>🎯 Ưu đãi đặc biệt dành riêng cho thành viên</li>
-                            <li>📦 Miễn phí giao hàng cho đơn hàng từ 300.000đ</li>
-                            <li>🔔 Thông báo sớm về sản phẩm mới và khuyến mãi</li>
-                            <li>⭐ Tích điểm và đổi quà hấp dẫn</li>
-                            <li>📞 Hỗ trợ khách hàng 24/7</li>
-                        </ul>
-                        
-                        <p>Nếu bạn gặp khó khăn trong việc xác thực email, vui lòng liên hệ với chúng tôi:</p>
-                        <ul>
-                            <li>📧 Email: support@balancoffee.com</li>
-                            <li>📞 Điện thoại: (028) 1234 5678</li>
-                            <li>💬 Live Chat: Trên website của chúng tôi</li>
-                        </ul>
+                        <div class="footer">
+                            <p><strong>Balan Coffee & Roastery</strong></p>
+                            <p>Cà phê rang mộc chất lượng cao | Premium Hand-roasted Coffee</p>
+                            <p style="font-size: 12px; color: #999;">
+                                Email này được gửi tự động, vui lòng không trả lời trực tiếp.
+                            </p>
+                        </div>
                     </div>
-                    
-                    <div class="footer">
-                        <p><strong>Balan Coffee & Roastery</strong></p>
-                        <p>Cà phê rang mộc chất lượng cao | Premium Hand-roasted Coffee</p>
-                        <p style="font-size: 12px; color: #999;">
-                            Email này được gửi tự động, vui lòng không trả lời trực tiếp.
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
+                </body>
+                </html>
+            `;
 
-        return await this.sendEmail(email, subject, html);
-    }
-
-    /**
+            return await this.sendEmail(email, subject, html);
+        } catch (error) {
+            console.error('Email verification failed:', error.message);
+            return { success: false, error: error.message };
+        }
+    }    /**
      * Send forgot password email
      */
     async sendForgotPasswordEmail(email, resetLink, userName = '') {
-        const subject = 'Đặt lại mật khẩu - Balan Coffee & Roastery';
-        
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f5f5f5; }
-                    .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                    .header { text-align: center; margin-bottom: 30px; }
-                    .title { color: #1A3C34; font-size: 24px; font-weight: bold; margin: 20px 0; }
-                    .content { color: #333; margin-bottom: 30px; }
-                    .button { display: inline-block; background-color: #1A3C34; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-                    .button:hover { background-color: #2a5a4f; }
-                    .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
-                    .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1 class="title">Đặt lại mật khẩu</h1>
-                    </div>
-                    
-                    <div class="content">
-                        <p>Xin chào ${userName || 'Quý khách'},</p>
-                        
-                        <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản <strong>${email}</strong> tại Balan Coffee & Roastery.</p>
-                        
-                        <p>Để đặt lại mật khẩu, vui lòng nhấn vào nút bên dưới:</p>
-                        
-                        <div style="text-align: center;">
-                            <a href="${resetLink}" class="button">Đặt lại mật khẩu</a>
+        try {
+            const subject = 'Đặt lại mật khẩu - Balan Coffee & Roastery';
+            
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f5f5f5; }
+                        .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .title { color: #1A3C34; font-size: 24px; font-weight: bold; margin: 20px 0; }
+                        .content { color: #333; margin-bottom: 30px; }
+                        .button { display: inline-block; background-color: #1A3C34; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+                        .button:hover { background-color: #2a5a4f; }
+                        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
+                        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 class="title">Đặt lại mật khẩu</h1>
                         </div>
                         
-                        <p>Hoặc copy và dán link sau vào trình duyệt:</p>
-                        <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">${resetLink}</p>
-                        
-                        <div class="warning">
-                            <strong>⚠️ Lưu ý quan trọng:</strong>
+                        <div class="content">
+                            <p>Xin chào ${userName || 'Quý khách'},</p>
+                            
+                            <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản <strong>${email}</strong> tại Balan Coffee & Roastery.</p>
+                            
+                            <p>Để đặt lại mật khẩu, vui lòng nhấn vào nút bên dưới:</p>
+                            
+                            <div style="text-align: center;">
+                                <a href="${resetLink}" class="button">Đặt lại mật khẩu</a>
+                            </div>
+                            
+                            <p>Hoặc copy và dán link sau vào trình duyệt:</p>
+                            <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">${resetLink}</p>
+                            
+                            <div class="warning">
+                                <strong>⚠️ Lưu ý quan trọng:</strong>
+                                <ul>
+                                    <li>Link này chỉ có hiệu lực trong <strong>1 giờ</strong></li>
+                                    <li>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này</li>
+                                    <li>Không chia sẻ link này với bất kỳ ai khác</li>
+                                </ul>
+                            </div>
+                            
+                            <p>Nếu bạn gặp khó khăn, vui lòng liên hệ với chúng tôi qua:</p>
                             <ul>
-                                <li>Link này chỉ có hiệu lực trong <strong>1 giờ</strong></li>
-                                <li>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này</li>
-                                <li>Không chia sẻ link này với bất kỳ ai khác</li>
+                                <li>📧 Email: support@balancoffee.com</li>
+                                <li>📞 Điện thoại: (028) 1234 5678</li>
                             </ul>
                         </div>
                         
-                        <p>Nếu bạn gặp khó khăn, vui lòng liên hệ với chúng tôi qua:</p>
-                        <ul>
-                            <li>📧 Email: support@balancoffee.com</li>
-                            <li>📞 Điện thoại: (028) 1234 5678</li>
-                        </ul>
+                        <div class="footer">
+                            <p><strong>Balan Coffee & Roastery</strong></p>
+                            <p>Cà phê rang mộc chất lượng cao | Premium Hand-roasted Coffee</p>
+                            <p style="font-size: 12px; color: #999;">
+                                Email này được gửi tự động, vui lòng không trả lời trực tiếp.
+                            </p>
+                        </div>
                     </div>
-                    
-                    <div class="footer">
-                        <p><strong>Balan Coffee & Roastery</strong></p>
-                        <p>Cà phê rang mộc chất lượng cao | Premium Hand-roasted Coffee</p>
-                        <p style="font-size: 12px; color: #999;">
-                            Email này được gửi tự động, vui lòng không trả lời trực tiếp.
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
+                </body>
+                </html>
+            `;
 
-        return await this.sendEmail(email, subject, html);
+            return await this.sendEmail(email, subject, html);
+        } catch (error) {
+            console.error('Forgot password email failed:', error.message);
+            return { success: false, error: error.message };
+        }
     }
 
     /**
      * Send order confirmation email to customer
      */
     async sendOrderConfirmationEmail(email, orderData, userName = '') {
-        const subject = `Xác nhận đơn hàng #${orderData.orderNumber} - Balan Coffee & Roastery`;
-        
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(amount);
-        };
+        try {
+            if (!this.transporter) {
+                console.warn('Email service not configured, cannot send order confirmation email');
+                return { success: false, error: 'Email service not configured' };
+            }
 
-        const itemsHtml = orderData.items.map(item => `
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.productName || item.name}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price * item.quantity)}</td>
-            </tr>
-        `).join('');
+            const subject = `Xác nhận đơn hàng #${orderData.orderNumber} - Balan Coffee & Roastery`;
+            
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                }).format(amount);
+            };
 
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f5f5f5; }
-                    .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                    .header { text-align: center; margin-bottom: 30px; }
-                    .logo { width: 120px; height: auto; }
-                    .title { color: #1A3C34; font-size: 24px; font-weight: bold; margin: 20px 0; }
-                    .content { color: #333; margin-bottom: 30px; }
-                    .order-info { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
-                    .order-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                    .order-table th { background-color: #1A3C34; color: white; padding: 12px; text-align: left; }
-                    .order-table td { padding: 10px; border-bottom: 1px solid #eee; }
-                    .total { font-size: 18px; font-weight: bold; color: #1A3C34; text-align: right; margin-top: 15px; }
-                    .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
-                    .status-badge { display: inline-block; padding: 5px 15px; border-radius: 15px; font-size: 12px; font-weight: bold; }
-                    .status-pending { background-color: #fff3cd; color: #856404; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1 class="title">🎉 Cảm ơn bạn đã đặt hàng!</h1>
-                    </div>
-                    
-                    <div class="content">
-                        <p>Xin chào ${userName || 'Quý khách'},</p>
-                        
-                        <p>Cảm ơn bạn đã đặt hàng tại <strong>Balan Coffee & Roastery</strong>! Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.</p>
-                        
-                        <div class="order-info">
-                            <h3 style="margin-top: 0; color: #1A3C34;">📋 Thông tin đơn hàng</h3>
-                            <p><strong>Mã đơn hàng:</strong> ${orderData.orderNumber}</p>
-                            <p><strong>Ngày đặt:</strong> ${new Date(orderData.createdAt || Date.now()).toLocaleDateString('vi-VN')}</p>
-                            <p><strong>Trạng thái:</strong> <span class="status-badge status-pending">Chờ xử lý</span></p>
-                            <p><strong>Phương thức thanh toán:</strong> ${orderData.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : orderData.paymentMethod.toUpperCase()}</p>
-                            ${orderData.shippingAddress ? `<p><strong>Địa chỉ giao hàng:</strong> ${orderData.shippingAddress}</p>` : ''}
-                            ${orderData.phone ? `<p><strong>Số điện thoại:</strong> ${orderData.phone}</p>` : ''}
+            const itemsHtml = orderData.items.map(item => `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.productName || item.name}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price * item.quantity)}</td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f5f5f5; }
+                        .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .logo { width: 120px; height: auto; }
+                        .title { color: #1A3C34; font-size: 24px; font-weight: bold; margin: 20px 0; }
+                        .content { color: #333; margin-bottom: 30px; }
+                        .order-info { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
+                        .order-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        .order-table th { background-color: #1A3C34; color: white; padding: 12px; text-align: left; }
+                        .order-table td { padding: 10px; border-bottom: 1px solid #eee; }
+                        .total { font-size: 18px; font-weight: bold; color: #1A3C34; text-align: right; margin-top: 15px; }
+                        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
+                        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+                        .status-pending { background-color: #fff3cd; color: #856404; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1 class="title">🎉 Cảm ơn bạn đã đặt hàng!</h1>
                         </div>
                         
-                        <h3 style="color: #1A3C34;">☕ Chi tiết đơn hàng</h3>
-                        <table class="order-table">
-                            <thead>
-                                <tr>
-                                    <th>Sản phẩm</th>
-                                    <th style="text-align: center;">Số lượng</th>
-                                    <th style="text-align: right;">Đơn giá</th>
-                                    <th style="text-align: right;">Thành tiền</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemsHtml}
-                            </tbody>
-                        </table>
-                        
-                        <div class="total">
-                            <p>Tổng cộng: ${formatCurrency(orderData.total || orderData.totalAmount)}</p>
+                        <div class="content">
+                            <p>Xin chào ${userName || 'Quý khách'},</p>
+                            
+                            <p>Cảm ơn bạn đã đặt hàng tại <strong>Balan Coffee & Roastery</strong>! Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.</p>
+                            
+                            <div class="order-info">
+                                <h3 style="margin-top: 0; color: #1A3C34;">📋 Thông tin đơn hàng</h3>
+                                <p><strong>Mã đơn hàng:</strong> ${orderData.orderNumber}</p>
+                                <p><strong>Ngày đặt:</strong> ${new Date(orderData.createdAt || Date.now()).toLocaleDateString('vi-VN')}</p>
+                                <p><strong>Trạng thái:</strong> <span class="status-badge status-pending">Chờ xử lý</span></p>
+                                <p><strong>Phương thức thanh toán:</strong> ${orderData.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : orderData.paymentMethod.toUpperCase()}</p>
+                                ${orderData.shippingAddress ? `<p><strong>Địa chỉ giao hàng:</strong> ${orderData.shippingAddress}</p>` : ''}
+                                ${orderData.phone ? `<p><strong>Số điện thoại:</strong> ${orderData.phone}</p>` : ''}
+                            </div>
+                            
+                            <h3 style="color: #1A3C34;">☕ Chi tiết đơn hàng</h3>
+                            <table class="order-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th style="text-align: center;">Số lượng</th>
+                                        <th style="text-align: right;">Đơn giá</th>
+                                        <th style="text-align: right;">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                            </table>
+                            
+                            <div class="total">
+                                <p>Tổng cộng: ${formatCurrency(orderData.total || orderData.totalAmount)}</p>
+                            </div>
+                            
+                            <div style="background-color: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #007bff;">
+                                <h4 style="margin-top: 0; color: #1A3C34;">⏰ Thời gian giao hàng dự kiến</h4>
+                                <p>Chúng tôi sẽ liên hệ với bạn trong vòng <strong>30 phút</strong> để xác nhận đơn hàng và sắp xếp thời gian giao hàng phù hợp.</p>
+                                <p>Thời gian giao hàng: <strong>1-2 giờ</strong> trong khu vực nội thành.</p>
+                            </div>
+                            
+                            <p>Nếu bạn có bất kỳ câu hỏi nào về đơn hàng, vui lòng liên hệ với chúng tôi:</p>
+                            <ul>
+                                <li>📧 Email: support@balancoffee.com</li>
+                                <li>📞 Điện thoại: (028) 1234 5678</li>
+                                <li>🌐 Website: https://balancoffee.com</li>
+                            </ul>
                         </div>
                         
-                        <div style="background-color: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #007bff;">
-                            <h4 style="margin-top: 0; color: #1A3C34;">⏰ Thời gian giao hàng dự kiến</h4>
-                            <p>Chúng tôi sẽ liên hệ với bạn trong vòng <strong>30 phút</strong> để xác nhận đơn hàng và sắp xếp thời gian giao hàng phù hợp.</p>
-                            <p>Thời gian giao hàng: <strong>1-2 giờ</strong> trong khu vực nội thành.</p>
+                        <div class="footer">
+                            <p><strong>Balan Coffee & Roastery</strong></p>
+                            <p>Cà phê rang mộc chất lượng cao | Premium Hand-roasted Coffee</p>
+                            <p style="font-size: 12px; color: #999;">
+                                Email này được gửi tự động, vui lòng không trả lời trực tiếp.
+                            </p>
                         </div>
-                        
-                        <p>Nếu bạn có bất kỳ câu hỏi nào về đơn hàng, vui lòng liên hệ với chúng tôi:</p>
-                        <ul>
-                            <li>📧 Email: support@balancoffee.com</li>
-                            <li>📞 Điện thoại: (028) 1234 5678</li>
-                            <li>🌐 Website: https://balancoffee.com</li>
-                        </ul>
                     </div>
-                    
-                    <div class="footer">
-                        <p><strong>Balan Coffee & Roastery</strong></p>
-                        <p>Cà phê rang mộc chất lượng cao | Premium Hand-roasted Coffee</p>
-                        <p style="font-size: 12px; color: #999;">
-                            Email này được gửi tự động, vui lòng không trả lời trực tiếp.
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
+                </body>
+                </html>
+            `;
 
-        return await this.sendEmail(email, subject, html);
-    }
-
-    /**
+            return await this.sendEmail(email, subject, html);
+        } catch (error) {
+            console.error('Order confirmation email failed:', error.message);
+            return { success: false, error: error.message };
+        }
+    }    /**
      * Send new order notification to admin/management
      */
     async sendNewOrderNotificationToAdmin(orderData) {
         try {
             if (!this.transporter) {
                 console.warn('Email service not configured, skipping admin notification');
-                return { success: false, error: 'Email service not configured' };
+                return { success: false, error: 'Email service not configured', totalSent: 0, totalFailed: 0 };
             }
 
             // Multiple admin emails can be configured
@@ -433,7 +454,7 @@ class EmailService {
 
                             <div class="customer-info">
                                 <h3>👤 Thông tin khách hàng</h3>
-                                <p><strong>Tên:</strong> ${orderData.customerName || orderData.name}</p>
+                                <p><strong>Tên:</strong> ${orderData.customerName || orderData.name || 'N/A'}</p>
                                 <p><strong>Email:</strong> ${orderData.customerEmail || orderData.email}</p>
                                 <p><strong>Điện thoại:</strong> ${orderData.customerPhone || orderData.phone}</p>
                                 ${orderData.shippingAddress ? `<p><strong>Địa chỉ giao hàng:</strong> ${orderData.shippingAddress}</p>` : ''}
@@ -501,7 +522,7 @@ class EmailService {
             };
         } catch (error) {
             console.error('Failed to send admin notifications:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: error.message, totalSent: 0, totalFailed: 0 };
         }
     }
 

@@ -2,7 +2,6 @@ const express = require('express');
 const crypto = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const { execute, query } = require('../config/database');
-const momoService = require('../services/momoService');
 const router = express.Router();
 
 console.log('✅ Payments router loaded successfully');
@@ -22,18 +21,18 @@ router.get('/methods', (req, res) => {
     try {
         const paymentMethods = [
             {
-                id: 'cod',
-                name: 'Thanh toán khi nhận hàng',
-                description: 'Thanh toán bằng tiền mặt khi nhận hàng',
-                icon: '💰',
+                id: 'contact',
+                name: 'Liên hệ trực tiếp để thanh toán',
+                description: 'Chúng tôi sẽ hướng dẫn bạn thanh toán qua các phương thức an toàn',
+                icon: '�',
                 enabled: true,
                 fee: 0
             },
             {
-                id: 'momo',
-                name: 'Ví điện tử MoMo',
-                description: 'Thanh toán qua ví MoMo bằng QR code',
-                icon: '📱',
+                id: 'cod',
+                name: 'Thanh toán khi nhận hàng',
+                description: 'Thanh toán bằng tiền mặt khi nhận hàng',
+                icon: '�',
                 enabled: true,
                 fee: 0
             }
@@ -89,41 +88,21 @@ router.post('/create', authenticateToken, async (req, res) => {
         }
 
         // Handle different payment methods
-        if (paymentMethod === 'momo') {
-            // Create MoMo payment
-            const momoResult = await momoService.createPayment({
-                orderNumber: order.orderNumber,
-                total: order.total,
-                customerInfo: order.customerInfo,
-                items: order.items || []
+        if (paymentMethod === 'contact') {
+            // Contact payment - just update status
+            await db.updateOrderPaymentInfo(orderNumber, {
+                paymentMethod: 'contact',
+                paymentStatus: 'pending'
             });
 
-            if (momoResult.success) {
-                // Update order with MoMo info
-                await db.updateOrderPaymentInfo(orderNumber, {
-                    paymentMethod: 'momo',
-                    paymentStatus: 'pending',
-                    momoData: momoResult.data
-                });
-
-                return res.json({
-                    success: true,
-                    data: {
-                        paymentMethod: 'momo',
-                        paymentUrl: momoResult.data.payUrl,
-                        qrCode: momoResult.data.qrCodeUrl,
-                        deeplink: momoResult.data.deeplink,
-                        requestId: momoResult.data.requestId
-                    },
-                    message: 'MoMo payment created successfully'
-                });
-            } else {
-                return res.status(400).json({
-                    success: false,
-                    message: momoResult.message || 'Failed to create MoMo payment',
-                    error: momoResult.error
-                });
-            }
+            return res.json({
+                success: true,
+                data: {
+                    paymentMethod: 'contact',
+                    message: 'Order confirmed. We will contact you for payment instructions.'
+                },
+                message: 'Contact payment confirmed'
+            });
         } else if (paymentMethod === 'cod') {
             // COD payment - just update status
             await db.updateOrderPaymentInfo(orderNumber, {
@@ -212,7 +191,7 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
  */
 router.post('/verify', authenticateToken, async (req, res) => {
     try {
-        const { orderNumber, paymentMethod, transactionId } = req.body;
+        const { orderNumber, paymentMethod } = req.body;
 
         if (!orderNumber || !paymentMethod) {
             return res.status(400).json({
@@ -240,34 +219,16 @@ router.post('/verify', authenticateToken, async (req, res) => {
         }
 
         // Verify payment based on method
-        if (paymentMethod === 'momo' && order.momoData) {
-            // Check MoMo payment status
-            const statusResult = await momoService.checkPaymentStatus(order.momoData.requestId);
-            
-            if (statusResult.success && statusResult.data.resultCode === 0) {
-                // Payment successful
-                await db.updateOrderPaymentStatus(orderNumber, 'completed', {
-                    transactionId: statusResult.data.transId,
-                    completedAt: new Date().toISOString()
-                });
-
-                return res.json({
-                    success: true,
-                    data: {
-                        paymentStatus: 'completed',
-                        transactionId: statusResult.data.transId
-                    },
-                    message: 'Payment verified successfully'
-                });
-            } else {
-                return res.json({
-                    success: false,
-                    data: {
-                        paymentStatus: 'pending'
-                    },
-                    message: 'Payment not yet completed'
-                });
-            }
+        if (paymentMethod === 'contact') {
+            // Contact payment verification (would be done by admin)
+            return res.json({
+                success: true,
+                data: {
+                    paymentStatus: order.paymentStatus,
+                    message: 'Contact payment will be arranged by our team'
+                },
+                message: 'Contact payment confirmed'
+            });
         } else if (paymentMethod === 'cod') {
             // COD verification (would be done by admin/delivery staff)
             return res.json({
@@ -301,7 +262,7 @@ router.get('/test', (req, res) => {
     res.json({
         success: true,
         message: 'Payments service is working!',
-        supportedMethods: ['cod', 'momo'],
+        supportedMethods: ['contact', 'cod'],
         timestamp: new Date().toISOString()
     });
 });

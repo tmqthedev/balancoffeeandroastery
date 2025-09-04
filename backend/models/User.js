@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: false },
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
+  fullName: { type: String, required: false }, // Vietnamese full name field
   displayName: { type: String, required: false },
   phone: { type: String, required: false },
   avatar: { type: String, required: false },
@@ -16,17 +17,17 @@ const userSchema = new mongoose.Schema({
   emailVerified: { type: Boolean, default: false },
   phoneVerified: { type: Boolean, default: false },
   
-  // Social login
-  providers: {
-    facebook: {
-      id: { type: String, required: false },
-      accessToken: { type: String, required: false }
-    },
-    google: {
-      id: { type: String, required: false },
-      accessToken: { type: String, required: false }
-    }
-  },
+  // Social login (removed - using local authentication only)
+  // providers: {
+  //   facebook: {
+  //     id: { type: String, required: false },
+  //     accessToken: { type: String, required: false }
+  //   },
+  //   google: {
+  //     id: { type: String, required: false },
+  //     accessToken: { type: String, required: false }
+  //   }
+  // },
   
   // Address information  
   addresses: {
@@ -35,6 +36,7 @@ const userSchema = new mongoose.Schema({
       type: { type: String, enum: ['billing', 'shipping', 'both'], default: 'both' },
       firstName: { type: String, required: false },
       lastName: { type: String, required: false },
+      fullName: { type: String, required: false }, // Vietnamese full name for addresses
       company: { type: String, required: false },
       address1: { type: String, required: false },
       address2: { type: String, required: false },
@@ -144,14 +146,14 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ phone: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });
-userSchema.index({ 'providers.facebook.id': 1 });
-userSchema.index({ 'providers.google.id': 1 });
+// userSchema.index({ 'providers.facebook.id': 1 }); // Removed - Facebook login disabled
+// userSchema.index({ 'providers.google.id': 1 }); // Removed - Google login disabled
 userSchema.index({ lastActivityAt: -1 });
 
-// Virtual for full name
-userSchema.virtual('fullName').get(function() {
-  return this.displayName || `${this.firstName || ''} ${this.lastName || ''}`.trim();
-});
+// Virtual for full name (removed - using real field instead)
+// userSchema.virtual('fullName').get(function() {
+//   return this.displayName || this.fullName || `${this.lastName || ''} ${this.firstName || ''}`.trim();
+// });
 
 // Methods
 userSchema.methods.getDefaultAddress = function() {

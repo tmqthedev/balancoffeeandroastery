@@ -19,6 +19,7 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
       password, 
       firstName, 
       lastName, 
+      fullName,
       phone,
       // Optional fields
       dateOfBirth,
@@ -65,8 +66,9 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
       _id: userId,
       email,
       password: hashedPassword,
-      firstName,
-      lastName,
+      firstName: firstName || (fullName ? fullName.split(' ').pop() : ''),
+      lastName: lastName || (fullName ? fullName.split(' ').slice(0, -1).join(' ') : ''),
+      fullName: fullName || (firstName && lastName ? `${lastName} ${firstName}` : ''),
       phone: phone || undefined,
       role: 'customer',
       status: 'inactive', // User starts as inactive until email verification
@@ -87,8 +89,9 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     if (address || city || province) {
       const defaultAddress = {
         type: 'both',
-        firstName: firstName,
-        lastName: lastName,
+        firstName: firstName || (fullName ? fullName.split(' ').pop() : ''),
+        lastName: lastName || (fullName ? fullName.split(' ').slice(0, -1).join(' ') : ''),
+        fullName: fullName || (firstName && lastName ? `${lastName} ${firstName}` : ''),
         address1: address || '',
         city: city || '',
         province: province || '',
@@ -110,7 +113,7 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
       const emailResult = await emailService.sendEmailVerificationEmail(
         email, 
         verificationLink, 
-        firstName || 'Quý khách'
+        fullName || firstName || 'Quý khách'
       );
       
       if (emailResult.success) {
@@ -192,250 +195,7 @@ router.post('/login', [
   })(req, res, next);
 });
 
-// Facebook OAuth routes (only if configured)
-if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-  router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-  router.get('/facebook/callback',
-    passport.authenticate('facebook', { session: false }),
-    (req, res) => {
-      try {
-        if (!req.user) {
-          console.error('Facebook callback - No user returned');
-          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-          return res.redirect(`${frontendUrl}/auth/callback?error=no_user`);
-        }
 
-        const token = jwt.sign(
-          { userId: req.user.id, email: req.user.email, role: req.user.role },
-          process.env.JWT_SECRET,
-          { expiresIn: process.env.JWT_EXPIRE || '7d' }
-        );
-
-        console.log('Facebook callback successful for user:', req.user.email);
-        
-        // Redirect to frontend with token
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
-      } catch (error) {
-        console.error('Facebook callback error:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        res.redirect(`${frontendUrl}/auth/callback?error=callback_failed`);
-      }
-    }
-  );
-
-  // Facebook token verification endpoint for SDK login
-  router.post('/facebook/token', async (req, res) => {
-    try {
-      const { accessToken, userID } = req.body;
-
-      if (!accessToken || !userID) {
-        return res.status(400).json({ error: 'Access token and user ID are required' });
-      }
-
-      // Verify the access token with Facebook
-      const response = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email,picture`);
-      const facebookUser = await response.json();
-
-      if (facebookUser.error) {
-        return res.status(401).json({ error: 'Invalid Facebook access token' });
-      }
-
-      if (facebookUser.id !== userID) {
-        return res.status(401).json({ error: 'User ID mismatch' });
-      }
-
-      // Check if user exists in database
-      let users = await db.query(
-        'SELECT * FROM Users WHERE facebookId = @facebookId AND isActive = 1',
-        { facebookId: facebookUser.id }
-      );
-
-      let user;
-
-      if (users.length > 0) {
-        // Existing user
-        user = users[0];
-      } else {
-        // Check if user exists with same email
-        if (facebookUser.email) {
-          const emailUsers = await db.query(
-            'SELECT * FROM Users WHERE email = @email AND isActive = 1',
-            { email: facebookUser.email }
-          );
-
-          if (emailUsers.length > 0) {
-            // Link Facebook to existing account
-            await db.execute(
-              'UPDATE Users SET facebookId = @facebookId, profileImage = @profileImage WHERE email = @email',
-              {
-                facebookId: facebookUser.id,
-                profileImage: facebookUser.picture?.data?.url || null,
-                email: facebookUser.email
-              }
-            );
-
-            const updatedUsers = await db.query(
-              'SELECT * FROM Users WHERE email = @email AND isActive = 1',
-              { email: facebookUser.email }
-            );
-            user = updatedUsers[0];
-          } else {
-            // Create new user
-            const nameParts = facebookUser.name?.split(' ') || ['Facebook', 'User'];
-            const firstName = nameParts[0] || 'Facebook';
-            const lastName = nameParts.slice(1).join(' ') || 'User';
-
-            const result = await db.execute(
-              `INSERT INTO Users (email, firstName, lastName, facebookId, profileImage, emailVerified, role, isActive)
-               OUTPUT INSERTED.* 
-               VALUES (@email, @firstName, @lastName, @facebookId, @profileImage, 1, 'customer', 1)`,
-              {
-                email: facebookUser.email,
-                firstName,
-                lastName,
-                facebookId: facebookUser.id,
-                profileImage: facebookUser.picture?.data?.url || null
-              }
-            );
-
-            user = result.recordset[0];
-          }
-        } else {
-          return res.status(400).json({ error: 'No email provided by Facebook' });
-        }
-      }
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || '7d' }
-      );
-
-      // Remove password from user object
-      const userWithoutPassword = { ...user };
-      delete userWithoutPassword.password;
-
-      res.json({
-        message: 'Facebook login successful',
-        token,
-        user: userWithoutPassword
-      });
-
-    } catch (error) {
-      console.error('Facebook token verification error:', error);
-      res.status(500).json({ error: 'Facebook authentication failed' });
-    }
-  });
-
-  // Facebook authentication for official login button (POST)
-  router.post('/facebook/callback', async (req, res) => {
-    try {
-      const { accessToken, userProfile } = req.body;
-
-      if (!accessToken || !userProfile) {
-        return res.status(400).json({ error: 'Access token and user profile are required' });
-      }
-
-      // Verify the access token with Facebook (optional extra security)
-      const verifyResponse = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email`);
-      const verifiedUser = await verifyResponse.json();
-
-      if (verifiedUser.error || verifiedUser.id !== userProfile.id) {
-        return res.status(401).json({ error: 'Invalid Facebook access token or user mismatch' });
-      }
-
-      // Use the userProfile data directly (already fetched by frontend)
-      const facebookUser = userProfile;
-
-      // Check if user exists in database
-      let user = await User.findOne({ 
-        facebookId: facebookUser.id,
-        isActive: true 
-      });
-
-      if (!user) {
-        // Check if user exists with same email
-        if (facebookUser.email) {
-          user = await User.findOne({
-            email: facebookUser.email,
-            isActive: true
-          });
-
-          if (user) {
-            // Link Facebook to existing account
-            user.facebookId = facebookUser.id;
-            user.profileImage = facebookUser.picture?.data?.url || null;
-            await user.save();
-          } else {
-            // Create new user
-            const [firstName, ...lastNameParts] = (facebookUser.name || '').split(' ');
-            const lastName = lastNameParts.join(' ');
-
-            user = new User({
-              email: facebookUser.email,
-              firstName: firstName || '',
-              lastName: lastName || '',
-              facebookId: facebookUser.id,
-              profileImage: facebookUser.picture?.data?.url || null,
-              emailVerified: true,
-              role: 'customer',
-              isActive: true
-            });
-
-            await user.save();
-          }
-        } else {
-          return res.status(400).json({ error: 'No email provided by Facebook' });
-        }
-      }
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: user._id, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRE || '7d' }
-      );
-
-      // Convert Mongoose user to object and remove password
-      const userObject = user.toObject();
-      delete userObject.password;
-
-      res.json({
-        message: 'Facebook login successful',
-        token,
-        user: userObject
-      });
-
-    } catch (error) {
-      console.error('Facebook login error:', error);
-      res.status(500).json({ error: 'Facebook authentication failed' });
-    }
-  });
-} else {
-  // Provide alternative routes when Facebook OAuth is not configured
-  router.get('/facebook', (req, res) => {
-    res.status(501).json({ 
-      error: 'Facebook OAuth not configured',
-      message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'
-    });
-  });
-
-  router.get('/facebook/callback', (req, res) => {
-    res.status(501).json({ 
-      error: 'Facebook OAuth not configured',
-      message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'
-    });
-  });
-
-  router.post('/facebook/token', (req, res) => {
-    res.status(501).json({ 
-      error: 'Facebook OAuth not configured',
-      message: 'Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables'
-    });
-  });
-}
 
 // Get current user (protected route)
 router.get('/me', authenticateToken, async (req, res) => {
@@ -658,7 +418,7 @@ router.post('/forgot-password', [
             const emailResult = await emailService.sendForgotPasswordEmail(
                 user.email, 
                 resetLink, 
-                user.firstName || user.fullName
+                user.fullName || user.firstName || 'Quý khách'
             );
             
             if (emailResult.success) {
@@ -924,7 +684,7 @@ router.post('/resend-verification', [
             const emailResult = await emailService.sendEmailVerificationEmail(
                 user.email, 
                 verificationLink, 
-                user.firstName || 'Quý khách'
+                user.fullName || user.firstName || 'Quý khách'
             );
             
             if (emailResult.success) {

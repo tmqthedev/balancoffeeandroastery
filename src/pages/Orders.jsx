@@ -403,8 +403,8 @@ const Orders = () => {
                           let paymentMethodText;
                           if (order.paymentMethod === 'cod') {
                             paymentMethodText = 'Thanh toán khi nhận hàng (COD)';
-                          } else if (order.paymentMethod === 'momo') {
-                            paymentMethodText = 'Ví MoMo';
+                          } else if (order.paymentMethod === 'contact') {
+                            paymentMethodText = 'Liên hệ trực tiếp để thanh toán';
                           } else {
                             paymentMethodText = order.paymentMethod.toUpperCase();
                           }
@@ -421,6 +421,13 @@ const Orders = () => {
                                   <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                                     <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                  </div>
+                                )}
+                                {order.paymentMethod === 'contact' && (
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                     </svg>
                                   </div>
                                 )}
@@ -463,7 +470,7 @@ const Orders = () => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
-                            <span>Phương thức: {order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod.toUpperCase()}</span>
+                            <span>Phương thức: {order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod === 'contact' ? 'Liên hệ' : order.paymentMethod.toUpperCase()}</span>
                           </div>
                         )}
                       </div>

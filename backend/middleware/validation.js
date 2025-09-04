@@ -67,14 +67,21 @@ const userValidationRules = [
   body('password')
     .isLength({ min: 6 })
     .withMessage('Mật khẩu phải có ít nhất 6 ký tự'),
+  body('fullName')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Họ và tên phải có từ 1 đến 100 ký tự'),
   body('firstName')
+    .optional()
     .trim()
-    .isLength({ min: 1 })
-    .withMessage('Họ không được để trống'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Tên phải có từ 1 đến 50 ký tự'),
   body('lastName')
+    .optional()
     .trim()
-    .isLength({ min: 1 })
-    .withMessage('Tên không được để trống'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Họ phải có từ 1 đến 50 ký tự'),
   body('phone')
     .notEmpty()
     .withMessage('Số điện thoại là bắt buộc')
@@ -147,17 +154,24 @@ const orderValidationRules = [
     .isEmail()
     .normalizeEmail()
     .withMessage('Email không hợp lệ'),
+  body('customerInfo.fullName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Họ và tên phải có từ 2 đến 100 ký tự'),
   body('customerInfo.firstName')
+    .optional()
     .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Tên phải có từ 2 đến 50 ký tự'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Tên phải có từ 1 đến 50 ký tự'),
   body('customerInfo.lastName')
+    .optional()
     .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Họ phải có từ 2 đến 50 ký tự'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Họ phải có từ 1 đến 50 ký tự'),
   body('customerInfo.phone')
     .optional()
-    .matches(/^[0-9+\-\s()]{8,20}$/)
+    .matches(/^[\d\s\-\+\(\)]{8,20}$/)
     .withMessage('Số điện thoại không hợp lệ'),
   body('shippingAddress.street')
     .trim()
@@ -165,12 +179,12 @@ const orderValidationRules = [
     .withMessage('Địa chỉ phải có từ 5 đến 200 ký tự'),
   body('shippingAddress.wardCommune')
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Phường/Xã phải có từ 2 đến 100 ký tự'),
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Phường/Xã phải có từ 1 đến 100 ký tự'),
   body('shippingAddress.district')
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Quận/Huyện phải có từ 2 đến 100 ký tự'),
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Quận/Huyện phải có từ 1 đến 100 ký tự'),
   body('shippingAddress.province')
     .trim()
     .isLength({ min: 2, max: 100 })
@@ -189,7 +203,7 @@ const orderValidationRules = [
     .isFloat({ min: 0 })
     .withMessage('Giá sản phẩm phải là số dương'),
   body('paymentMethod')
-    .isIn(['momo', 'cod'])
+    .isIn(['contact', 'cod'])
     .withMessage('Phương thức thanh toán không hợp lệ'),
   body('subtotal')
     .isNumeric()

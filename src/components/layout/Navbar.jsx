@@ -91,7 +91,7 @@ const Navbar = () => {
                                 
                                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 transform translate-y-2 group-hover:translate-y-0">
                                     <div className="px-4 py-2 border-b border-gray-100">
-                                        <p className="text-sm font-medium text-brand-primary truncate">{user?.firstName} {user?.lastName}</p>
+                                        <p className="text-sm font-medium text-brand-primary truncate">{user?.fullName || user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email}</p>
                                         <p className="text-xs text-gray-600 truncate">{user?.email}</p>
                                     </div>                                    <Link 
                                         to="/account" 
@@ -194,7 +194,7 @@ const Navbar = () => {
                             ) : (
                                 <div className="border-t border-brand-white/20 pt-4 mt-4 space-y-2">
                                     <div className="px-4 py-2 bg-brand-white/10 rounded-lg">
-                                        <p className="text-sm font-medium text-brand-white">{user?.firstName} {user?.lastName}</p>
+                                        <p className="text-sm font-medium text-brand-white">{user?.fullName || user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email}</p>
                                         <p className="text-xs text-brand-white/70">{user?.email}</p>
                                     </div>                                    <Link
                                         to="/account"

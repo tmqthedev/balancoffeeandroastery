@@ -13,18 +13,17 @@ This is a full-stack e-commerce website with blog integration for a coffee roast
 
 ### Backend
 - **Technology**: Node.js with Express
-- **Database**: Microsoft SQL Server (MSSQL)
-- **Authentication**: Passport.js with local and Facebook OAuth
-- **Payment**: Momo and VN-Pay integration
+- **Database**: MongoDB with Mongoose
+- **Authentication**: Passport.js with local authentication only
+- **Payment**: Contact-based payment integration
 - **Security**: Helmet, CORS, rate limiting, input validation
 
 ### Database Schema
-Key tables: Users, Products, Orders, Order_Products, Blogs, Contacts
+Key collections: Users, Products, Orders, Blogs, Contacts (MongoDB)
 
 ### Third-party Integrations
 - Google Maps for store location
-- Facebook API for login and blog sharing
-- Analytics: Google Analytics 4, Google Search Console, Meta Pixel, TikTok Pixel
+- Analytics: Google Analytics 4, Google Search Console, TikTok Pixel
 
 ## Development Guidelines
 1. **Code Style**: Use modern ES6+ syntax, functional components with hooks
@@ -40,7 +39,6 @@ Focus on Vietnamese coffee terms: "cà phê rang mộc", "Arabica Cầu Đất",
 ## File Structure
 - `/src` - React frontend source code
 - `/backend` - Node.js Express API server
-- `/database` - SQL scripts and schema definitions
 - `/public` - Static assets and SEO files
 
 When generating code, prioritize security, performance, and SEO best practices.

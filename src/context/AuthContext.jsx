@@ -67,26 +67,31 @@ export const AuthProvider = ({ children }) => {
 
     // Login function with real API call
     const login = async (email, password, remember = false) => {
+        console.log('🔐 AuthContext: Login called with email:', email);
         setLoading(true);
         try {
+            console.log('📡 AuthContext: Making login API call');
             const response = await api.post('/auth/login', {
                 email,
                 password,
                 remember
             });
+            console.log('✅ AuthContext: Login API response:', response.data);
 
             const { token, user: userData } = response.data;
             
             // Store token in localStorage
             localStorage.setItem('authToken', token);
+            console.log('💾 AuthContext: Token stored in localStorage');
             
             // Update state
             setUser(userData);
             setIsAuthenticated(true);
+            console.log('🔄 AuthContext: User state updated:', userData);
             
             return { success: true };
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error('❌ AuthContext: Login failed:', error);
             const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại';
             throw new Error(errorMessage);
         } finally {
@@ -125,6 +130,8 @@ export const AuthProvider = ({ children }) => {
             console.error('Logout API error:', error);
         } finally {
             localStorage.removeItem('authToken');
+            localStorage.removeItem('cart'); // Clear local cart on logout
+            localStorage.removeItem('buyNowProduct'); // Clear buy now product on logout
             setUser(null);
             setIsAuthenticated(false);
         }
@@ -161,10 +168,14 @@ export const AuthProvider = ({ children }) => {
                 registrationData.postalCode = userData.postalCode;
             }
 
+            console.log('📝 AuthContext: Registration data prepared:', registrationData);
+
             const response = await api.post('/auth/register', registrationData);
+            console.log('📡 AuthContext: Registration API response:', response.data);
 
             // Check if email verification is required
             if (response.data.requiresVerification) {
+                console.log('📧 AuthContext: Email verification required');
                 // Return response data for frontend to handle
                 return {
                     success: true,
@@ -173,24 +184,44 @@ export const AuthProvider = ({ children }) => {
                     email: response.data.email
                 };
             } else {
+                console.log('✅ AuthContext: Registration successful, setting up user session');
                 // Normal registration flow (for social logins, etc.)
                 const { token, user: newUser } = response.data;
-                
+
                 // Store token in localStorage
                 localStorage.setItem('authToken', token);
-                
+                console.log('💾 AuthContext: Token stored in localStorage');
+
                 // Update state
                 setUser(newUser);
                 setIsAuthenticated(true);
-                
+                console.log('🔄 AuthContext: User state updated:', newUser);
+
+                // Merge local cart to user cart after successful registration
+                console.log('🔄 AuthContext: Checking for local cart to merge after registration');
+                const localCart = localStorage.getItem('cart');
+                if (localCart) {
+                    console.log('📦 AuthContext: Found local cart, will merge after registration');
+                    try {
+                        // Import cart context to merge cart
+                        // Note: This will be handled by the CartContext useEffect when isAuthenticated becomes true
+                        console.log('✅ AuthContext: Cart merge will be handled by CartContext');
+                    } catch (mergeError) {
+                        console.error('❌ AuthContext: Cart merge setup failed:', mergeError);
+                        // Don't fail registration if cart merge setup fails
+                    }
+                } else {
+                    console.log('❌ AuthContext: No local cart to merge');
+                }
+
                 return { success: true };
             }
         } catch (error) {
-            console.error('Registration failed:', error);
-            
+            console.error('❌ AuthContext: Registration failed:', error);
+
             // Handle different error response formats
             let errorMessage = 'Đăng ký thất bại';
-            
+
             if (error.response?.data) {
                 const { data } = error.response;
                 if (data.error) {
@@ -202,7 +233,7 @@ export const AuthProvider = ({ children }) => {
                     errorMessage = data.message;
                 }
             }
-            
+
             throw new Error(errorMessage);
         } finally {
             setLoading(false);

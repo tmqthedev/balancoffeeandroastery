@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/sharedAuth';
-import FacebookLoginButton from '../../components/auth/FacebookLoginButton';
+import { useCart } from '../../constants/cartConstants';
 
 const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { login } = useAuth();
+    const { addToCart } = useCart();
     
     const [formData, setFormData] = useState({
         email: '',
@@ -15,10 +16,41 @@ const Login = () => {
         remember: false
     });
     const [loading, setLoading] = useState(false);
-    const [facebookLoading, setFacebookLoading] = useState(false);
     const [error, setError] = useState('');
+    const [buyNowProduct, setBuyNowProduct] = useState(null);
+
+    console.log('🔐 Login: Component mounted/rendered');
+    console.log('🔗 Login: Current location:', location.pathname);
+    console.log('📍 Login: Location state:', location.state);
 
     const from = location.state?.from?.pathname || '/';
+
+    // Check for buy now product on component mount
+    useEffect(() => {
+        const savedBuyNowProduct = localStorage.getItem('buyNowProduct');
+        console.log('🔍 Login: Checking for buy now product in localStorage:', savedBuyNowProduct);
+        
+        if (savedBuyNowProduct) {
+            try {
+                const product = JSON.parse(savedBuyNowProduct);
+                console.log('📦 Login: Parsed buy now product:', product);
+                
+                // Check if product is not too old (within 30 minutes)
+                if (Date.now() - product.timestamp < 30 * 60 * 1000) {
+                    console.log('✅ Login: Buy now product is valid, setting state');
+                    setBuyNowProduct(product);
+                } else {
+                    console.log('⏰ Login: Buy now product is too old, removing');
+                    localStorage.removeItem('buyNowProduct');
+                }
+            } catch (error) {
+                console.error('❌ Login: Error parsing buy now product:', error);
+                localStorage.removeItem('buyNowProduct');
+            }
+        } else {
+            console.log('❌ Login: No buy now product found in localStorage');
+        }
+    }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -34,63 +66,49 @@ const Login = () => {
         setError('');
 
         try {
+            console.log('🔐 Login: Starting login process');
             await login(formData.email, formData.password, formData.remember);
+            console.log('✅ Login: Login successful');
+            
+            // If there's a buy now product, add it to cart
+            if (buyNowProduct) {
+                console.log('🛒 Login: Found buy now product, attempting to add to cart:', buyNowProduct);
+                try {
+                    const productToAdd = {
+                        id: buyNowProduct.productId,
+                        name: buyNowProduct.name,
+                        price: buyNowProduct.price,
+                        selectedWeight: buyNowProduct.selectedWeight,
+                        image_url: buyNowProduct.image_url
+                    };
+                    console.log('📦 Login: Product to add:', productToAdd);
+                    
+                    await addToCart(productToAdd, buyNowProduct.quantity);
+                    console.log('✅ Login: Successfully added buy now product to cart');
+                    
+                    localStorage.removeItem('buyNowProduct');
+                    console.log('🗑️ Login: Removed buy now product from localStorage');
+                    
+                    // Navigate to checkout instead of the original 'from' path
+                    console.log('🔄 Login: Navigating to checkout');
+                    navigate('/checkout', { replace: true });
+                    return;
+                } catch (cartError) {
+                    console.error('❌ Login: Failed to add buy now product to cart:', cartError);
+                    // Continue with normal navigation if cart addition fails
+                }
+            } else {
+                console.log('❌ Login: No buy now product found');
+            }
+            
+            console.log('🔄 Login: Navigating to original path:', from);
             navigate(from, { replace: true });
         } catch (error) {
+            console.error('❌ Login: Login failed:', error);
             setError(error.response?.data?.message || 'Đăng nhập thất bại');
         } finally {
             setLoading(false);
         }
-    };
-
-    // Handler for official Facebook Login Button
-    const handleFacebookLoginSuccess = async (facebookData) => {
-        try {
-            setFacebookLoading(true);
-            setError('');
-            
-            console.log('Facebook login success:', facebookData);
-            
-            // Send Facebook data to your backend for authentication
-            const authResponse = await fetch('/api/auth/facebook/callback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    accessToken: facebookData.authResponse.accessToken,
-                    userProfile: facebookData.userProfile
-                })
-            });
-            
-            if (authResponse.ok) {
-                const result = await authResponse.json();
-                console.log('Backend authentication success:', result);
-                
-                // Update auth context with user data
-                if (result.token && result.user) {
-                    localStorage.setItem('authToken', result.token);
-                    // You might want to update auth context here
-                }
-                
-                // Navigate to the intended page or home
-                navigate(from, { replace: true });
-            } else {
-                const errorData = await authResponse.json();
-                setError(errorData.message || 'Đăng nhập Facebook thất bại');
-            }
-        } catch (error) {
-            console.error('Facebook login error:', error);
-            setError('Có lỗi xảy ra khi đăng nhập với Facebook. Vui lòng thử lại.');
-        } finally {
-            setFacebookLoading(false);
-        }
-    };
-
-    const handleFacebookLoginError = (error) => {
-        console.error('Facebook login error:', error);
-        setError(error.message || 'Có lỗi xảy ra khi đăng nhập với Facebook');
-        setFacebookLoading(false);
     };
 
     return (
@@ -114,6 +132,19 @@ const Login = () => {
 
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
+                        {buyNowProduct && (
+                            <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="text-sm">
+                                        Đăng nhập để thêm "{buyNowProduct.name}" vào giỏ hàng và thanh toán
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {error && (
                             <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
                                 {error}
@@ -189,29 +220,6 @@ const Login = () => {
                                 </button>
                             </div>
 
-                            <div className="mt-6">
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-300" />
-                                    </div>
-                                    <div className="relative flex justify-center text-sm">
-                                        <span className="px-2 bg-white text-brand-primary">Or continue with</span>
-                                    </div>
-                                </div>
-
-                                <div className="mt-6">
-                                    {/* Official Facebook Login Button */}
-                                    <FacebookLoginButton
-                                        onLoginSuccess={handleFacebookLoginSuccess}
-                                        onLoginError={handleFacebookLoginError}
-                                        size="large"
-                                        buttonText="continue_with"
-                                        scope="email,public_profile"
-                                        disabled={facebookLoading || loading}
-                                        className="w-full"
-                                    />
-                                </div>
-                            </div>
                         </form>
 
                         <div className="mt-6 text-center">

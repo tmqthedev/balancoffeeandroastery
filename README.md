@@ -4,13 +4,13 @@
 
 ## ✅ Current Status (Updated)
 
-- ✅ **SQL Server Database** - Configured for production use
-- ✅ **Backend API** - Products, categories, authentication, Facebook login
+- ✅ **MongoDB Database** - Configured for production use
+- ✅ **Backend API** - Products, categories, authentication, orders
 - ✅ **Frontend React App** - Responsive design with Tailwind CSS
-- ✅ **Facebook SDK** - Complete login integration
+- ✅ **Local Authentication** - Email/password authentication system
 - ✅ **Environment Config** - Single .env file for both frontend & backend
 - ✅ **Production Ready** - Full configuration for deployment
-- ✅ **Payment Integration** - MoMo payment gateway configured
+- ✅ **Payment Integration** - Contact-based payment system configured
 
 ## 🚀 Quick Start
 
@@ -55,18 +55,18 @@ npm run dev
 
 ### Backend
 - Node.js với Express
-- Microsoft SQL Server (MSSQL)  
-- Passport.js (Facebook OAuth)
+- MongoDB với Mongoose
+- Passport.js (Local Authentication)
 - JWT (JSON Web Tokens)
 - Bcryptjs (Mã hóa mật khẩu)
-- Facebook SDK Integration
+- Email Service Integration
 
 ## Cài đặt
 
 ### Yêu cầu hệ thống
 - Node.js v16.x trở lên
 - NPM v8.x trở lên
-- Microsoft SQL Server hoặc cấu hình mock database
+- MongoDB hoặc cấu hình mock database
 
 ### Cài đặt frontend
 ```bash
@@ -100,11 +100,9 @@ npm run dev
 
 ### Cấu hình database
 ```bash
-# Di chuyển đến thư mục database
-cd database
-
-# Chạy script SQL để tạo database và tables
-# Kết nối với SQL Server và chạy file schema.sql
+# MongoDB connection string được cấu hình trong file .env
+# MONGODB_URI=mongodb://localhost:27017/balancoffee
+# Hoặc sử dụng MongoDB Atlas cho production
 ```
 
 ## Cấu trúc dự án
@@ -127,7 +125,7 @@ cd database
 ## Triển khai
 - Frontend: Vite build, Netlify, Vercel, hoặc hosting tương tự
 - Backend: Node.js hosting như Heroku, Railway, hoặc VPS
-- Database: MSSQL Cloud hoặc máy chủ riêng
+- Database: MongoDB Atlas hoặc máy chủ MongoDB riêng
 
 ## Người đóng góp
 - Đội ngũ phát triển Balan Coffee & Roastery

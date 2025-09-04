@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/sharedAuth';
+import { useCart } from '../../constants/cartConstants';
 import { LoadingSpinner } from '../../components/common/Loading';
 
 const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { loginWithToken } = useAuth();
+    const { addToCart } = useCart();
     
     const [verificationState, setVerificationState] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('');
@@ -48,6 +50,39 @@ const VerifyEmail = () => {
                     if (data.token) {
                         try {
                             await loginWithToken(data.token);
+                            
+                            // Check for buy now product in localStorage
+                            const buyNowProduct = localStorage.getItem('buyNowProduct');
+                            if (buyNowProduct) {
+                                try {
+                                    const product = JSON.parse(buyNowProduct);
+                                    // Check if product is not too old (within 30 minutes)
+                                    if (Date.now() - product.timestamp < 30 * 60 * 1000) {
+                                        const productToAdd = {
+                                            id: product.productId,
+                                            name: product.name,
+                                            price: product.price,
+                                            selectedWeight: product.selectedWeight,
+                                            image_url: product.image_url
+                                        };
+                                        
+                                        await addToCart(productToAdd, product.quantity);
+                                        localStorage.removeItem('buyNowProduct');
+                                        
+                                        // Navigate to checkout instead of home
+                                        setTimeout(() => {
+                                            navigate('/checkout');
+                                        }, 3000);
+                                        return;
+                                    } else {
+                                        localStorage.removeItem('buyNowProduct');
+                                    }
+                                } catch (cartError) {
+                                    console.error('Failed to add buy now product to cart:', cartError);
+                                    localStorage.removeItem('buyNowProduct');
+                                }
+                            }
+                            
                             setTimeout(() => {
                                 navigate('/');
                             }, 3000);
