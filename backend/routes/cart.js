@@ -77,7 +77,10 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { productId, quantity = 1, variant = {} } = req.body;
 
+    console.log('🛒 Cart API: Add to cart request:', { productId, quantity, variant, userId: req.user.userId });
+
     if (!productId) {
+      console.log('❌ Cart API: Missing productId');
       return res.status(400).json({ 
         success: false, 
         error: 'Product ID is required' 
@@ -85,6 +88,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     if (quantity <= 0) {
+      console.log('❌ Cart API: Invalid quantity:', quantity);
       return res.status(400).json({ 
         success: false, 
         error: 'Quantity must be greater than 0' 
@@ -92,28 +96,109 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Check if product exists
+    console.log('🔍 Cart API: Looking up product with ID:', productId);
     const product = await Product.findById(productId);
+    console.log('📦 Cart API: Product lookup result:', product ? { 
+      id: product._id, 
+      name: product.name, 
+      price: product.price,
+      pricingType: product.pricingType 
+    } : 'NOT FOUND');
+    
     if (!product) {
+      console.log('❌ Cart API: Product not found for ID:', productId);
       return res.status(404).json({ 
         success: false, 
         error: 'Product not found' 
       });
     }
 
+    // Calculate the correct price based on product type
+    let productPrice;
+    if (product.pricingType === 'weight-based') {
+      // Find price based on variant weight
+      const selectedWeight = variant.weight; // e.g., "250g"
+      if (!selectedWeight) {
+        console.log('❌ Cart API: Weight variant is required for weight-based product');
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Weight selection is required for this product' 
+        });
+      }
+      
+      // Convert weight string to number (remove 'g' or 'kg')
+      const weightValue = selectedWeight.includes('kg') 
+        ? parseFloat(selectedWeight.replace('kg', '')) * 1000
+        : parseInt(selectedWeight.replace('g', ''));
+      
+      console.log('⚖️ Cart API: Looking for weight option:', { selectedWeight, weightValue });
+      
+      // Find the matching weight option
+      const weightOption = product.weightPricing.find(option => 
+        option.weight === weightValue && option.isAvailable
+      );
+      
+      if (!weightOption) {
+        console.log('❌ Cart API: Weight option not found or unavailable:', selectedWeight);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Selected weight option is not available' 
+        });
+      }
+      
+      productPrice = weightOption.price;
+      console.log('💰 Cart API: Weight-based price found:', productPrice);
+    } else {
+      // Fixed pricing
+      productPrice = product.price;
+      console.log('💰 Cart API: Fixed price used:', productPrice);
+    }
+
+    if (typeof productPrice !== 'number' || productPrice < 0) {
+      console.log('❌ Cart API: Invalid product price:', productPrice);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Product price is not valid' 
+      });
+    }
+
     // Get or create user cart
+    console.log('🔍 Cart API: Looking up cart for user:', req.user.userId);
     let cart = await Cart.findOne({ customerId: req.user.userId });
+    console.log('🛒 Cart API: Existing cart:', cart ? { id: cart._id, itemCount: cart.itemCount } : 'NO CART');
+    
     if (!cart) {
+      console.log('🆕 Cart API: Creating new cart for user:', req.user.userId);
       cart = new Cart({
         customerId: req.user.userId,
         items: [],
         itemCount: 0,
         subtotal: 0
       });
+      console.log('🆕 Cart API: Created new cart');
     }
 
     // Add item to cart using the model method
-    cart.addItem(productId, quantity, product.price, variant);
-    await cart.save();
+    console.log('➕ Cart API: Adding item to cart...');
+    console.log('📋 Cart API: Using calculated price:', productPrice);
+    console.log('📋 Cart API: Variant data:', variant);
+    
+    try {
+      cart.addItem(productId, quantity, productPrice, variant);
+      console.log('✅ Cart API: Item added, saving cart...');
+    } catch (addError) {
+      console.error('❌ Cart API: addItem failed:', addError);
+      throw addError;
+    }
+    
+    try {
+      await cart.save();
+      console.log('💾 Cart API: Cart saved successfully');
+    } catch (saveError) {
+      console.error('❌ Cart API: cart.save() failed:', saveError);
+      console.error('❌ Cart API: Cart data before save:', JSON.stringify(cart.toObject(), null, 2));
+      throw saveError;
+    }
 
     res.json({
       success: true,
@@ -127,10 +212,34 @@ router.post('/', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Add to cart error:', error);
+    console.error('❌ Cart API: Add to cart error:', error);
+    console.error('❌ Cart API: Error name:', error.name);
+    console.error('❌ Cart API: Error message:', error.message);
+    console.error('❌ Cart API: Error stack:', error.stack);
+    
+    // Provide more specific error messages
+    if (error.name === 'ValidationError') {
+      console.error('❌ Cart API: Validation errors:', error.errors);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Validation failed',
+        details: Object.keys(error.errors).map(key => error.errors[key].message)
+      });
+    }
+    
+    if (error.name === 'CastError') {
+      console.error('❌ Cart API: Cast error - invalid ID format');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid ID format',
+        details: error.message
+      });
+    }
+    
     res.status(500).json({ 
       success: false,
-      error: 'Failed to add item to cart' 
+      error: 'Failed to add item to cart',
+      details: error.message
     });
   }
 });

@@ -38,6 +38,10 @@ const PaymentMethods = ({ orderData, onPaymentError, selectedMethod: propSelecte
             // Uncontrolled component - use internal state
             setInternalSelectedMethod(methodId);
         }
+
+        if (onPaymentMethodSelect) {
+            onPaymentMethodSelect(methodId);
+        }
     };
 
     const handleSubmitOrder = async () => {

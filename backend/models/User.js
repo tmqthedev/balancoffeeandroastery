@@ -150,10 +150,10 @@ userSchema.index({ status: 1 });
 // userSchema.index({ 'providers.google.id': 1 }); // Removed - Google login disabled
 userSchema.index({ lastActivityAt: -1 });
 
-// Virtual for full name (removed - using real field instead)
-// userSchema.virtual('fullName').get(function() {
-//   return this.displayName || this.fullName || `${this.lastName || ''} ${this.firstName || ''}`.trim();
-// });
+// Virtual for computed display name (avoiding conflict with real fullName field)
+userSchema.virtual('computedFullName').get(function() {
+  return this.displayName || this.fullName || `${this.lastName || ''} ${this.firstName || ''}`.trim();
+});
 
 // Methods
 userSchema.methods.getDefaultAddress = function() {

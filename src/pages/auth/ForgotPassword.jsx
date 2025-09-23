@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
-import TitleLogo from '../../assets/logos/title.png';
 
 // Configure axios base URL
 const api = axios.create({
@@ -46,7 +45,7 @@ const ForgotPassword = () => {
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center">
             <Link to="/" className="flex items-center">
-              <img src={TitleLogo} alt="Balan Coffee & Roastery" className="h-12 w-auto" />
+              <img src="/images/logos/title.png" alt="Balan Coffee & Roastery" className="h-12 w-auto" />
             </Link>
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold text-brand-primary">

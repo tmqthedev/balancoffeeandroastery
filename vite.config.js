@@ -3,8 +3,7 @@ import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
-  plugins: [react(), basicSsl()],
-  publicDir: 'src/assets', // This makes src/assets available as static files
+  plugins: [react()], // Removed basicSsl() to avoid HTTPS certificate issues in development
   server: {
     port: 5173,
     host: 'localhost',
@@ -22,6 +21,11 @@ export default defineConfig({
         secure: false,
       },
       '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/backend/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,

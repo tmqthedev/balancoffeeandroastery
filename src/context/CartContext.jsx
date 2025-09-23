@@ -201,9 +201,12 @@ export const CartProvider = ({ children }) => {
             if (currentIsAuthenticated) {
                 console.log('🔐 CartContext: User is authenticated, calling API');
                 // For authenticated users, call API
+                const variant = product.selectedWeight ? { weight: product.selectedWeight } : {};
                 const response = await api.post('/cart', { 
                     productId: productId,
-                    quantity: quantity 
+                    quantity: quantity,
+                    variant: variant
+                    // Remove price from request body - API gets it from Product model
                 });
                 console.log('📡 CartContext: API response:', response.data);
                 
@@ -214,8 +217,10 @@ export const CartProvider = ({ children }) => {
                     console.log('🧹 CartContext: Cleared localStorage cart');
                     // Reload cart to get updated data with populated product info
                     await loadCart();
+                    return { success: true };
                 } else {
                     console.log('❌ CartContext: API call failed:', response.data);
+                    throw new Error(response.data.error || 'Failed to add item to cart');
                 }
             } else {
                 console.log('👤 CartContext: User is not authenticated, handling locally');
@@ -242,9 +247,11 @@ export const CartProvider = ({ children }) => {
                 setCartItems(newItems);
                 localStorage.setItem('cart', JSON.stringify(newItems));
                 console.log('✅ CartContext: Local cart updated:', newItems);
+                return { success: true };
             }
         } catch (error) {
             console.error('❌ CartContext: Failed to add to cart:', error);
+            throw error; // Re-throw so callers can handle it
         } finally {
             setLoading(false);
         }

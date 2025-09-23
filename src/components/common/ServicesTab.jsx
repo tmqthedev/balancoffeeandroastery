@@ -6,40 +6,6 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
 
     const services = [
         {
-            id: 'coffee-supply',
-            name: 'Cung cấp cà phê',
-            icon: '☕',
-            shortDesc: 'Cung cấp cà phê chất lượng cao, rang mộc tại Lâm Đồng',
-            description: 'Chúng tôi cung cấp các loại hạt cà phê rang mộc cao cấp từ những vùng trồng nổi tiếng, đảm bảo chất lượng và hương vị tuyệt hảo cho quán cà phê của bạn.',
-            features: [
-                'Cà phê Arabica Cầu Đất Lâm Đồng',
-                'Cà phê Robusta rang mộc truyền thống',
-                'Blends độc quyền theo yêu cầu',
-                'Đóng gói chân không bảo quản',
-                'Giao hàng định kỳ theo lịch',
-                'Tư vấn lựa chọn loại cà phê phù hợp'
-            ],
-            price: '160,000đ/kg',
-            duration: 'Đơn hàng tối thiểu 10kg'
-        },
-        {
-            id: 'equipment-materials',
-            name: 'Cung ứng nguyên vật liệu, thiết bị pha chế',
-            icon: '⚙️',
-            shortDesc: 'Cung cấp thiết bị pha chế và nguyên vật liệu chuyên nghiệp',
-            description: 'Một trong những nhà cung cấp hàng đầu các thiết bị pha chế cà phê chuyên nghiệp và nguyên vật liệu chất lượng cao cho quán cà phê.',
-            features: [
-                'Máy espresso các thương hiệu nổi tiếng',
-                'Máy xay cà phê công nghiệp',
-                'Dụng cụ pha chế V60, French Press, Chemex',
-                'Cốc, ly, dĩa chuyên dụng cao cấp',
-                'Nguyên liệu: sữa, syrup, topping',
-                'Bảo hành và bảo trì thiết bị'
-            ],
-            price: '65,000,000đ',
-            duration: 'Combo thiết bị chuyên nghiệp'
-        },
-        {
             id: 'product-rd',
             name: 'R&D Sản phẩm',
             icon: '🔬',
@@ -53,29 +19,13 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                 'Tư vấn menu theo mùa',
                 'Đào tạo cách pha chế sản phẩm mới'
             ],
-            price: '25,000,000đ',
+            price: '10,000,000đ',
             duration: '5-7 sản phẩm độc quyền'
         },
-        {
-            id: 'store-operation',
-            name: 'Vận hành cửa hàng',
-            icon: '🏪',
-            shortDesc: 'Tư vấn và hỗ trợ vận hành cửa hàng cà phê hiệu quả',
-            description: 'Dịch vụ tư vấn và hỗ trợ vận hành cửa hàng cà phê, từ quy trình phục vụ đến quản lý hiệu quả.',
-            features: [
-                'Thiết lập quy trình vận hành chuẩn',
-                'Hệ thống quản lý bán hàng (POS)',
-                'Quy trình kiểm soát chất lượng',
-                'Quản lý kho và nhập xuất',
-                'Tối ưu hóa chi phí vận hành',
-                'Hỗ trợ marketing và bán hàng'
-            ],
-            price: '35,000,000đ',
-            duration: 'Hỗ trợ toàn diện 6 tháng'
-        },
+        
         {
             id: 'owner-training',
-            name: 'Đào tạo chủ quán',
+            name: 'Đào tạo quản lý/ chủ quán',
             icon: '👨‍💼',
             shortDesc: 'Đào tạo kỹ năng quản lý và điều hành cho chủ quán cà phê',
             description: 'Chương trình đào tạo chuyên sâu dành cho chủ quán cà phê về quản lý, kinh doanh và phát triển thương hiệu.',
@@ -88,41 +38,7 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                 'Kỹ năng lãnh đạo và giao tiếp'
             ],
             price: '15,000,000đ',
-            duration: '5 ngày (40 giờ)'
-        },
-        {
-            id: 'management-training',
-            name: 'Đào tạo quản lý',
-            icon: '📋',
-            shortDesc: 'Đào tạo kỹ năng quản lý cho trưởng ca và quản lý cửa hàng',
-            description: 'Chương trình đào tạo quản lý chuyên nghiệp cho các vị trí trưởng ca, phó quản lý và quản lý cửa hàng cà phê.',
-            features: [
-                'Quản lý ca làm việc hiệu quả',
-                'Kiểm soát chất lượng sản phẩm',
-                'Xử lý tình huống khó khăn',
-                'Quản lý nhân viên và phân ca',
-                'Báo cáo doanh thu và tồn kho',
-                'Kỹ năng giao tiếp với khách hàng'
-            ],
-            price: '7,500,000đ/người',
-            duration: '3 ngày (24 giờ)'
-        },
-        {
-            id: 'staff-training',
-            name: 'Training nhân sự',
-            icon: '👥',
-            shortDesc: 'Đào tạo nhân viên phục vụ và kỹ năng bán hàng',
-            description: 'Chương trình đào tạo toàn diện cho nhân viên phục vụ, từ kỹ năng giao tiếp đến kỹ thuật bán hàng chuyên nghiệp.',
-            features: [
-                'Kỹ năng giao tiếp và phục vụ khách hàng',
-                'Hiểu biết về sản phẩm cà phê',
-                'Kỹ thuật bán hàng và up-sell',
-                'Xử lý khiếu nại và tình huống khó khăn',
-                'Quy trình vệ sinh và an toàn thực phẩm',
-                'Làm việc nhóm và tinh thần teamwork'
-            ],
-            price: '2,500,000đ/người',
-            duration: '2 ngày (16 giờ)'
+            duration: 'Hướng dẫn trọn đời'
         },
         {
             id: 'barista-training',
@@ -138,8 +54,25 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                 'Vận hành và bảo trì máy espresso',
                 'Tham gia thi đấu và chứng chỉ quốc tế'
             ],
-            price: '12,000,000đ/người',
+            price: '7,000,000đ/người',
             duration: '10 ngày (80 giờ)'
+        },
+        {
+            id: 'store-operation',
+            name: 'Vận hành cửa hàng',
+            icon: '🏪',
+            shortDesc: 'Tư vấn và hỗ trợ vận hành cửa hàng cà phê hiệu quả',
+            description: 'Dịch vụ tư vấn và hỗ trợ vận hành cửa hàng cà phê, từ quy trình phục vụ đến quản lý hiệu quả.',
+            features: [
+                'Thiết lập quy trình vận hành chuẩn',
+                'Hệ thống quản lý bán hàng (POS)',
+                'Quy trình kiểm soát chất lượng',
+                'Quản lý kho và nhập xuất',
+                'Tối ưu hóa chi phí vận hành',
+                'Hỗ trợ marketing và bán hàng'
+            ],
+            price: '60,000,000đ',
+            duration: 'Hỗ trợ toàn diện 4 tháng'
         }
     ];
 

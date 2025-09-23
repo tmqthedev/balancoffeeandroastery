@@ -162,16 +162,16 @@ const orderValidationRules = [
   body('customerInfo.firstName')
     .optional()
     .trim()
-    .isLength({ min: 1, max: 50 })
-    .withMessage('Tên phải có từ 1 đến 50 ký tự'),
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Tên phải có từ 2 đến 50 ký tự'),
   body('customerInfo.lastName')
     .optional()
     .trim()
-    .isLength({ min: 1, max: 50 })
-    .withMessage('Họ phải có từ 1 đến 50 ký tự'),
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Họ phải có từ 2 đến 50 ký tự'),
   body('customerInfo.phone')
     .optional()
-    .matches(/^[\d\s\-\+\(\)]{8,20}$/)
+    .matches(/^[0-9+\-\s()]{8,20}$/)
     .withMessage('Số điện thoại không hợp lệ'),
   body('shippingAddress.street')
     .trim()
@@ -179,12 +179,12 @@ const orderValidationRules = [
     .withMessage('Địa chỉ phải có từ 5 đến 200 ký tự'),
   body('shippingAddress.wardCommune')
     .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Phường/Xã phải có từ 1 đến 100 ký tự'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Phường/Xã phải có từ 2 đến 100 ký tự'),
   body('shippingAddress.district')
     .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Quận/Huyện phải có từ 1 đến 100 ký tự'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Quận/Huyện phải có từ 2 đến 100 ký tự'),
   body('shippingAddress.province')
     .trim()
     .isLength({ min: 2, max: 100 })

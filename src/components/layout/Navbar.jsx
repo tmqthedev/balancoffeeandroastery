@@ -29,7 +29,7 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">                    {/* Logo */}
                     <div className="flex-shrink-0">
                         <Link to="/" className="flex items-center hover:opacity-80 transition-opacity focus:outline-none">
-                            <img src="src/assets/logos/logo.png" alt="Balan Coffee Logo" className='h-12 w-24 object-cover'/>                      
+                            <img src="/images/logos/logo.png" alt="Balan Coffee Logo" className='h-12 w-24 object-cover'/>                      
                         </Link>
                     </div>
 

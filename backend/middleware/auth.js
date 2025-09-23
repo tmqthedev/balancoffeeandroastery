@@ -14,7 +14,7 @@ const authenticateToken = async (req, res, next) => {
             });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
         
         // Verify user still exists and is active using MongoDB
         const user = await User.findById(decoded.userId);
@@ -67,7 +67,7 @@ const optionalAuth = async (req, res, next) => {
             return next();
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
         const user = await User.findById(decoded.userId);
 
         if (user) {

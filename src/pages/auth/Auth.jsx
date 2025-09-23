@@ -165,8 +165,12 @@ const Auth = () => {
                     console.log('⏳ Auth: Waiting for authentication state to update...');
                     await new Promise(resolve => setTimeout(resolve, 200));
                     
-                    await addToCart(productToAdd, buyNowProduct.quantity);
-                    console.log('✅ Auth: Buy now product added to cart successfully');
+                    const cartResult = await addToCart(productToAdd, buyNowProduct.quantity);
+                    if (cartResult && cartResult.success) {
+                        console.log('✅ Auth: Buy now product added to cart successfully');
+                    } else {
+                        throw new Error('Failed to add product to cart');
+                    }
                     
                     // Clear the buy now product from localStorage
                     localStorage.removeItem('buyNowProduct');
@@ -220,8 +224,8 @@ const Auth = () => {
 
             // Split full name for backend compatibility
             const splitFullName = (fullName) => {
-                if (!fullName || !fullName.trim()) return { firstName: '', lastName: '' };
-                
+                if (!fullName?.trim()) return { firstName: '', lastName: '' };
+
                 const nameParts = fullName.trim().split(' ');
                 if (nameParts.length === 1) {
                     return { firstName: nameParts[0], lastName: '' };
@@ -237,22 +241,22 @@ const Auth = () => {
             registrationData.lastName = nameParts.lastName;
 
             // Only add optional fields if they have values
-            if (registerData.dateOfBirth && registerData.dateOfBirth.trim()) {
+            if (registerData.dateOfBirth?.trim()) {
                 registrationData.dateOfBirth = formatDateForBackend(registerData.dateOfBirth);
             }
-            if (registerData.gender && registerData.gender.trim()) {
+            if (registerData.gender?.trim()) {
                 registrationData.gender = registerData.gender;
             }
-            if (registerData.address && registerData.address.trim()) {
+            if (registerData.address?.trim()) {
                 registrationData.address = registerData.address;
             }
-            if (registerData.city && registerData.city.trim()) {
+            if (registerData.city?.trim()) {
                 registrationData.city = registerData.city;
             }
-            if (registerData.province && registerData.province.trim()) {
+            if (registerData.province?.trim()) {
                 registrationData.province = registerData.province;
             }
-            if (registerData.postalCode && registerData.postalCode.trim()) {
+            if (registerData.postalCode?.trim()) {
                 registrationData.postalCode = registerData.postalCode;
             }
 
@@ -287,8 +291,12 @@ const Auth = () => {
                         console.log('⏳ Auth: Waiting for authentication state to update...');
                         await new Promise(resolve => setTimeout(resolve, 200));
                         
-                        await addToCart(productToAdd, buyNowProduct.quantity);
-                        console.log('✅ Auth: Buy now product added to cart successfully');
+                        const cartResult = await addToCart(productToAdd, buyNowProduct.quantity);
+                        if (cartResult && cartResult.success) {
+                            console.log('✅ Auth: Buy now product added to cart successfully');
+                        } else {
+                            throw new Error('Failed to add product to cart');
+                        }
                         
                         // Clear the buy now product from localStorage
                         localStorage.removeItem('buyNowProduct');
@@ -346,7 +354,7 @@ const Auth = () => {
                     <div className="text-center mb-8">
                         <Link to="/" className="inline-block">
                             <img 
-                                src="src/assets/logos/title.png"
+                                src="/images/logos/title.png"
                                 alt="Balan Coffee" 
                                 className="h-16 w-auto mx-auto mb-4"
                                 onError={(e) => {

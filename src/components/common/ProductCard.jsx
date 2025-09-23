@@ -55,14 +55,45 @@ const ProductCard = ({ product, searchTerm }) => {
 
     const renderProductImage = () => {
         if (product.image_url) {
-            return (
-                <img
-                    src={product.image_url}
-                    alt={product.name || 'Sản phẩm'}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                />
-            );
+            // Handle different image URL formats
+            let imageUrl = product.image_url;
+
+            // If image_url starts with '/images/', it's already correct for public folder
+            if (imageUrl.startsWith('/images/')) {
+                // Use as is - Vite will serve from public folder
+            }
+            // If image_url starts with 'backend/', convert to proper API endpoint
+            else if (imageUrl.startsWith('backend/uploads/')) {
+                imageUrl = `http://localhost:5000/${imageUrl}`;
+            }
+            // If it's already a full URL, use as is
+            else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                // Use as is
+            }
+            // If it's a relative path, assume it's from assets
+            else if (imageUrl.startsWith('src/assets/')) {
+                // Convert to proper public path
+                imageUrl = imageUrl.replace('src/assets/', '/images/');
+            }
+
+            if (imageUrl) {
+                return (
+                    <img
+                        src={imageUrl}
+                        alt={product.name || 'Sản phẩm'}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                            console.warn('Image load failed:', imageUrl);
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                        }}
+                        onLoad={() => {
+                            console.log('Image loaded successfully:', imageUrl);
+                        }}
+                    />
+                );
+            }
         }
 
         return (
@@ -76,10 +107,16 @@ const ProductCard = ({ product, searchTerm }) => {
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-primary/40 group">
-            <Link to={`/products/${product.id}`} className="block">
+            <Link to={`/products/${product._id || product.id}`} className="block">
                 {/* Product Image */}
                 <div className="relative h-48 bg-gray-100 overflow-hidden">
                     {renderProductImage()}
+                    {/* Fallback placeholder */}
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100" style={{display: 'none'}}>
+                        <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
                 </div>
             </Link>
 
@@ -102,7 +139,7 @@ const ProductCard = ({ product, searchTerm }) => {
                     
                     {/* View Details Button */}
                     <Link
-                        to={`/products/${product.id}`}
+                        to={`/products/${product._id || product.id}`}
                         className="px-4 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md inline-block text-center"
                         aria-label={`Xem chi tiết ${product.name || 'sản phẩm'}`}
                     >

@@ -5,7 +5,7 @@ const cartSchema = new mongoose.Schema({
   sessionId: String,
   
   items: [{
-    productId: { type: String, ref: 'Product', required: true },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     quantity: { type: Number, required: true, min: 1 },
     price: Number,
     variant: {
@@ -66,26 +66,59 @@ cartSchema.index({ lastActivity: -1 });
 
 // Methods
 cartSchema.methods.addItem = function(productId, quantity, price, variant = {}) {
-  const existingItem = this.items.find(item => 
-    item.productId === productId && 
-    JSON.stringify(item.variant) === JSON.stringify(variant)
-  );
+  console.log('🛒 Cart Model: addItem called with:', { productId, quantity, price, variant });
   
-  if (existingItem) {
-    existingItem.quantity += quantity;
-    existingItem.addedAt = new Date();
-  } else {
-    this.items.push({
-      productId,
-      quantity,
-      price,
-      variant,
-      addedAt: new Date()
+  try {
+    // Validate inputs
+    if (!productId) {
+      throw new Error('Product ID is required');
+    }
+    if (typeof quantity !== 'number' || quantity <= 0) {
+      throw new Error('Quantity must be a positive number');
+    }
+    if (typeof price !== 'number' || price < 0) {
+      throw new Error('Price must be a non-negative number');
+    }
+    
+    console.log('✅ Cart Model: Input validation passed');
+    
+    const existingItem = this.items.find(item => 
+      item.productId === productId && 
+      JSON.stringify(item.variant) === JSON.stringify(variant)
+    );
+    
+    console.log('🔍 Cart Model: Existing item found:', existingItem ? 'YES' : 'NO');
+    
+    if (existingItem) {
+      existingItem.quantity += quantity;
+      existingItem.addedAt = new Date();
+      console.log('➕ Cart Model: Updated existing item quantity to:', existingItem.quantity);
+    } else {
+      const newItem = {
+        productId,
+        quantity,
+        price,
+        variant,
+        addedAt: new Date()
+      };
+      console.log('🆕 Cart Model: Creating new item:', newItem);
+      this.items.push(newItem);
+      console.log('🆕 Cart Model: Added new item to cart, total items:', this.items.length);
+    }
+    
+    console.log('🔄 Cart Model: Updating totals...');
+    this.updateTotals();
+    this.lastActivity = new Date();
+    console.log('✅ Cart Model: addItem completed successfully, itemCount:', this.itemCount, 'subtotal:', this.subtotal);
+  } catch (error) {
+    console.error('❌ Cart Model: addItem error:', error);
+    console.error('❌ Cart Model: Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
     });
+    throw error;
   }
-  
-  this.updateTotals();
-  this.lastActivity = new Date();
 };
 
 cartSchema.methods.removeItem = function(productId, variant = {}) {

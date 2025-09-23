@@ -261,14 +261,37 @@ const ProductDetail = () => {
                                     console.log('🖼️ Product object:', product);
                                     
                                     if (product.image_url) {
+                                        // Handle different image URL formats
+                                        let imageUrl = product.image_url;
+                                        
+                                        // If image_url starts with '/images/', it's already correct for public folder
+                                        if (imageUrl.startsWith('/images/')) {
+                                            // Use as is - Vite will serve from public folder
+                                            console.log('🌐 Using public images URL:', imageUrl);
+                                        }
+                                        // If image_url starts with 'backend/', convert to proper API endpoint
+                                        else if (imageUrl.startsWith('backend/uploads/')) {
+                                            imageUrl = `http://localhost:5000/${imageUrl}`;
+                                            console.log('🔄 Converted backend URL:', imageUrl);
+                                        }
+                                        // If it's already a full URL, use as is
+                                        else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                                            console.log('🌐 Using full URL:', imageUrl);
+                                        }
+                                        // If it's a relative path, assume it's from assets
+                                        else if (imageUrl.startsWith('src/assets/')) {
+                                            imageUrl = imageUrl.replace('src/assets/', '/images/');
+                                            console.log('🖼️ Using images URL:', imageUrl);
+                                        }
+
                                         return (
                                             <img
-                                                src={product.image_url}
+                                                src={imageUrl}
                                                 alt={product.name}
                                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                                                onLoad={() => console.log('✅ Image loaded successfully:', product.image_url)}
+                                                onLoad={() => console.log('✅ Image loaded successfully:', imageUrl)}
                                                 onError={(e) => {
-                                                    console.error('❌ Image failed to load:', product.image_url);
+                                                    console.error('❌ Image failed to load:', imageUrl);
                                                     console.error('❌ Error event:', e);
                                                 }}
                                             />
@@ -486,7 +509,10 @@ const ProductDetail = () => {
                                         <div className="h-48 bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 flex items-center justify-center">
                                             {relatedProduct.image_url ? (
                                                 <img
-                                                    src={relatedProduct.image_url}
+                                                    src={relatedProduct.image_url.startsWith('/images/') ? relatedProduct.image_url :
+                                                         relatedProduct.image_url.startsWith('/assets/') ? relatedProduct.image_url.replace('/assets/', '/images/') :
+                                                         relatedProduct.image_url.startsWith('backend/uploads/') ? `http://localhost:5000/${relatedProduct.image_url}` :
+                                                         relatedProduct.image_url}
                                                     alt={relatedProduct.name}
                                                     className="w-full h-full object-cover"
                                                 />
