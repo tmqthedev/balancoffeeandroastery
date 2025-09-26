@@ -70,25 +70,6 @@ const CoffeeBeansTab = ({
                 </div>
             )}
 
-            {/* No Products Found */}
-            {!loading && !error && products.length === 0 && (
-                <div className="text-center py-16">
-                    <div className="text-6xl mb-4">☕</div>
-                    <h3 className="text-xl font-semibold text-brand-primary mb-2">
-                        Không tìm thấy sản phẩm cà phê hạt
-                    </h3>
-                    <p className="text-gray-700 mb-4">
-                        Hãy thử điều chỉnh bộ lọc hoặc tìm kiếm từ khóa khác
-                    </p>
-                    <button
-                        onClick={clearFilters}
-                        className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-                    >
-                        Xóa bộ lọc
-                    </button>
-                </div>
-            )}
-
             {/* Products Grid */}
             {!loading && !error && products.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

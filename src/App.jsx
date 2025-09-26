@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { HelmetProvider, Helmet } from 'react-helmet-async';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/layout/Navbar';
@@ -15,11 +15,6 @@ const PublicRoutes = React.lazy(() => import('./routes/PublicRoutes'));
 const AppLayout = () => {
   return (
     <div className="App min-h-screen">
-      <Helmet>
-        <title>Balan Coffee & Roastery - Cà phê rang mộc Việt Nam</title>
-        <meta name="description" content="Cà phê rang mộc chất lượng cao từ Balan Coffee & Roastery. Arabica Cầu Đất, Robusta Lâm Đồng nguyên chất." />
-      </Helmet>
-      
       <Navbar />
       
       <main className="pt-16">

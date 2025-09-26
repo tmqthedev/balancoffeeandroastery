@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import SEOHelmet from '../components/common/SEOHelmet';
 import ErrorBoundary from '../components/common/ErrorBoundary';
-import { LoadingSpinner } from '../components/common/Loading';
+import { LoadingSpinner, BlogCardSkeleton, ListSkeleton } from '../components/common/LoadingComponents';
+import OptimizedImage from '../components/common/OptimizedImage';
+import { useDebounce, useIntersectionObserver } from '../hooks/usePerformance';
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -16,8 +18,11 @@ const Blog = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const API_BASE_URL = '/api';
+  
+  // Performance optimization
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/blogs/categories`);
       if (Array.isArray(response.data)) {
@@ -29,7 +34,7 @@ const Blog = () => {
       console.error('Error fetching categories:', error);
       setCategories([]);
     }
-  };
+  }, []);
 
   const fetchBlogs = useCallback(async () => {
     try {
@@ -37,7 +42,7 @@ const Blog = () => {
       const params = {
         page: currentPage,
         limit: 6,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         category: selectedCategory,
         lang: 'vi'
       };
@@ -58,27 +63,38 @@ const Blog = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, selectedCategory]);
+  }, [currentPage, debouncedSearchTerm, selectedCategory]);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   useEffect(() => {
     fetchBlogs();
   }, [fetchBlogs]);
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = useCallback((category) => {
     setSelectedCategory(category);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleSearch = (e) => {
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearch = useCallback((e) => {
     if (e.key === 'Enter') {
       setSearchTerm(e.target.value);
       setCurrentPage(1);
     }
-  };
+  }, []);
+
+  const handlePageChange = useCallback((page) => {
+    setCurrentPage(page);
+    // Smooth scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';

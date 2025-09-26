@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const { authenticateToken } = require('../middleware/auth');
@@ -297,18 +298,67 @@ router.put('/items/:productId', authenticateToken, async (req, res) => {
 router.delete('/items/:productId', authenticateToken, async (req, res) => {
   try {
     const { productId } = req.params;
-    const { variant = {} } = req.body;
+    const variant = (req.body && req.body.variant) ? req.body.variant : {};
+
+    console.log('🗑️ Cart API: Remove item request:', { productId, variant, userId: req.user.userId });
+    console.log('🗑️ Cart API: Request body:', req.body);
+
+    // Validate productId format
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      console.log('❌ Cart API: Invalid productId format:', productId);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid product ID format' 
+      });
+    }
 
     const cart = await Cart.findOne({ customerId: req.user.userId });
     if (!cart) {
+      console.log('❌ Cart API: Cart not found for user:', req.user.userId);
       return res.status(404).json({ 
         success: false, 
         error: 'Cart not found' 
       });
     }
 
+    console.log('🛒 Cart API: Found cart with items:', cart.items.length);
+    console.log('📦 Cart API: Cart items before removal:', cart.items.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity
+    })));
+
+    // Use the model's removeItem method
     cart.removeItem(productId, variant);
-    await cart.save();
+    
+    console.log('📦 Cart API: Cart items after removal:', cart.items.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity
+    })));
+
+    try {
+      await cart.save();
+      console.log('💾 Cart API: Cart saved successfully after removal');
+    } catch (saveError) {
+      console.error('❌ Cart API: Failed to save cart after removal:', saveError);
+      console.error('❌ Cart API: Save error name:', saveError.name);
+      console.error('❌ Cart API: Save error message:', saveError.message);
+      
+      if (saveError.name === 'ValidationError') {
+        console.error('❌ Cart API: Validation errors:', Object.keys(saveError.errors).map(key => ({
+          field: key,
+          message: saveError.errors[key].message
+        })));
+        return res.status(400).json({ 
+          success: false,
+          error: 'Cart validation failed after removal',
+          details: Object.keys(saveError.errors).map(key => saveError.errors[key].message)
+        });
+      }
+      
+      throw saveError; // Re-throw for general error handling
+    }
+
+    console.log('✅ Cart API: Item removed successfully');
 
     res.json({
       success: true,
@@ -322,10 +372,42 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Remove from cart error:', error);
+    console.error('❌ Remove from cart error:', error);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+    
+    // Provide more specific error messages
+    if (error.name === 'ValidationError') {
+      console.error('❌ Validation errors:', error.errors);
+      return res.status(400).json({ 
+        success: false,
+        error: 'Validation failed',
+        details: Object.keys(error.errors).map(key => error.errors[key].message)
+      });
+    }
+    
+    if (error.name === 'CastError') {
+      console.error('❌ Cast error - invalid ID format');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid ID format',
+        details: error.message
+      });
+    }
+    
+    if (error.message && error.message.includes('Invalid product ID format')) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid product ID format',
+        details: error.message
+      });
+    }
+    
     res.status(500).json({ 
       success: false,
-      error: 'Failed to remove item from cart' 
+      error: 'Failed to remove item from cart',
+      details: error.message
     });
   }
 });

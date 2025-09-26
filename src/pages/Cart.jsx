@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../constants/cartConstants';
-import { useAuth } from '../context/sharedAuth';
+import { useAuth } from '../constants/authConstants';
 import { formatVND } from '../utils/currency';
 
 const Cart = () => {
@@ -19,11 +19,32 @@ const Cart = () => {
 
     const { subtotal, itemCount } = getCartTotals();
 
-    const handleQuantityChange = (productId, newQuantity) => {
+    const handleQuantityChange = (productId, newQuantity, variant = {}) => {
         if (newQuantity < 1) {
-            removeFromCart(productId);
+            handleRemoveItem(productId, variant);
         } else {
-            updateQuantity(productId, newQuantity);
+            updateQuantity(productId, newQuantity, variant);
+        }
+    };
+
+    const handleRemoveItem = async (productId, variant = {}) => {
+        try {
+            console.log('🗑️ Cart: Removing item:', { productId, variant });
+            console.log('🗑️ Cart: Item details from cartItems:', cartItems.find(item => item.product_id === productId));
+            console.log('🔍 Cart: Variant details:', {
+                variant,
+                variantType: typeof variant,
+                variantKeys: Object.keys(variant || {}),
+                variantJSON: JSON.stringify(variant),
+                variantIsEmpty: !variant || Object.keys(variant).length === 0
+            });
+            await removeFromCart(productId, variant);
+            console.log('✅ Cart: Item removed successfully');
+        } catch (error) {
+            console.error('❌ Cart: Failed to remove item:', error);
+            console.error('❌ Cart: Error details:', error.response?.data || error.message);
+            // Could add user notification here if needed
+            alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
         }
     };
 
@@ -140,7 +161,7 @@ const Cart = () => {
                                                                 {/* Quantity Controls */}
                                                                 <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
                                                                     <button
-                                                                        onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
+                                                                        onClick={() => handleQuantityChange(item.product_id, item.quantity - 1, item.variant)}
                                                                         className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200"
                                                                         aria-label="Giảm số lượng"
                                                                     >
@@ -152,7 +173,7 @@ const Cart = () => {
                                                                         {item.quantity}
                                                                     </span>
                                                                     <button
-                                                                        onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
+                                                                        onClick={() => handleQuantityChange(item.product_id, item.quantity + 1, item.variant)}
                                                                         className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200"
                                                                         aria-label="Tăng số lượng"
                                                                     >
@@ -164,7 +185,7 @@ const Cart = () => {
                                                                 
                                                                 {/* Remove Button */}
                                                                 <button
-                                                                    onClick={() => removeFromCart(item.product_id)}
+                                                                    onClick={() => handleRemoveItem(item.product_id, item.variant)}
                                                                     className="flex items-center space-x-2 text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-xl transition-all duration-200"
                                                                     aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
                                                                 >

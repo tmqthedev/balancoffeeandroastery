@@ -1,12 +1,39 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import SEOHelmet from '../components/common/SEOHelmet';
-import CoffeeBeansTab from '../components/common/CoffeeBeansTab';
-import BeveragesTab from '../components/common/BeveragesTab';
-import ServicesTab from '../components/common/ServicesTab';
 import { useCart } from '../constants/cartConstants';
+import { useSearch, useDebounce, useIntersectionObserver } from '../hooks/usePerformance';
+import { LoadingSpinner, ProductCardSkeleton } from '../components/common/LoadingComponents';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+
+// Lazy load tab components để giảm initial bundle size
+const CoffeeBeansTab = React.lazy(() => import('../components/common/CoffeeBeansTab'));
+const BeveragesTab = React.lazy(() => import('../components/common/BeveragesTab'));
+const ServicesTab = React.lazy(() => import('../components/common/ServicesTab'));
 
 // Use Vite proxy instead of hardcoded URL
 const API_BASE_URL = '/api';
+
+// Memoized tab configuration
+const TAB_CONFIG = {
+    'coffee-beans': { 
+        title: 'Hạt Cà Phê', 
+        component: CoffeeBeansTab,
+        seoTitle: 'Hạt Cà Phê Rang Mộc Nguyên Chất - Arabica & Robusta',
+        seoDescription: 'Khám phá bộ sưu tập hạt cà phê rang mộc Arabica và Robusta chất lượng cao từ Cầu Đất, Lâm Đồng.'
+    },
+    'beverages': { 
+        title: 'Đồ Uống', 
+        component: BeveragesTab,
+        seoTitle: 'Đồ Uống Cà Phê & Trà Đặc Biệt - Pha Chế Thủ Công',
+        seoDescription: 'Thưởng thức các loại đồ uống cà phê và trà được pha chế thủ công với hương vị độc đáo.'
+    },
+    'services': { 
+        title: 'Dịch Vụ', 
+        component: ServicesTab,
+        seoTitle: 'Dịch Vụ Cà Phê Chuyên Nghiệp - Tư Vấn & Rang Xay',
+        seoDescription: 'Dịch vụ tư vấn cà phê chuyên nghiệp, rang xay theo yêu cầu và các giải pháp cà phê doanh nghiệp.'
+    }
+};
 
 const Products = () => {
     const [activeTab, setActiveTab] = useState('coffee-beans');
@@ -32,8 +59,20 @@ const Products = () => {
     // keep useCart for potential future use
     useCart();
 
+    // Performance hooks
+    const debouncedSearch = useDebounce(filters.search, 300);
+    const { searchResults, isSearching } = useSearch(debouncedSearch, products);
+
+    // Intersection observer để lazy load content
+    const [shouldLoadContent, setShouldLoadContent] = useState(false);
+    const contentRef = useRef(null);
+    
+    useIntersectionObserver(contentRef, () => {
+        setShouldLoadContent(true);
+    }, { threshold: 0.1 });
+
     // Tab change handler (used by desktop & mobile tab buttons)
-    const handleTabChange = (tabId) => {
+    const handleTabChange = useCallback((tabId) => {
         setActiveTab(tabId);
         setCurrentPage(1);
         setFilters({
@@ -49,7 +88,54 @@ const Products = () => {
             const headerHeight = 64;
             window.scrollTo({ top: navTop - headerHeight - 10, behavior: 'smooth' });
         }
-    };
+    }, []);
+
+    // Memoized current tab config
+    const currentTabConfig = useMemo(() => TAB_CONFIG[activeTab], [activeTab]);
+
+    // Memoized tab component
+    const CurrentTabComponent = useMemo(() => {
+        const Component = currentTabConfig.component;
+        return (
+            <ErrorBoundary>
+                <Suspense fallback={
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {Array.from({ length: 6 }, (_, i) => (
+                            <ProductCardSkeleton key={i} />
+                        ))}
+                    </div>
+                }>
+                    <Component 
+                        products={debouncedSearch ? searchResults : products}
+                        loading={loading || isSearching}
+                        error={error}
+                        currentPage={currentPage}
+                        filters={filters}
+                        setFilters={setFilters}
+                        sortBy={sortBy}
+                        setCurrentPage={setCurrentPage}
+                    />
+                </Suspense>
+            </ErrorBoundary>
+        );
+    }, [currentTabConfig.component, debouncedSearch, searchResults, products, loading, isSearching, error, currentPage, filters, sortBy, setCurrentPage]);
+
+    // Scroll effect với debounce
+    useEffect(() => {
+        let timeoutId;
+        const handleScroll = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                setIsScrolled(window.scrollY > 100);
+            }, 10);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            clearTimeout(timeoutId);
+        };
+    }, []);
 
     const productsPerPage = 12;
 
@@ -143,6 +229,11 @@ const Products = () => {
 
     return (
         <div className="min-h-screen bg-white">
+            <SEOHelmet
+                title="Sản phẩm - Balan Coffee & Roastery"
+                description="Khám phá bộ sưu tập cà phê rang mộc chất lượng cao từ Balan Coffee & Roastery. Hạt cà phê Arabica Cầu Đất, Typica Kongo, Robusta Lâm Đồng và các dịch vụ cà phê tuyệt vời."
+                keywords="sản phẩm cà phê, hạt cà phê rang mộc, Arabica Cầu Đất, Typica Kongo, Robusta Lâm Đồng, dịch vụ cà phê, đồ uống cà phê"
+            />
             {/* Enhanced Sticky Tab Navigation - Always Visible Below Header */}
             <div 
                 ref={tabNavigationRef}
@@ -268,7 +359,10 @@ const Products = () => {
                     {/* Services Tab */}
                     {activeTab === 'services' && (
                         <div className="animate-fadeIn">
-                            <ServicesTab />
+                            <ServicesTab 
+                                searchTerm={filters.search}
+                                onClearSearch={handleClearSearch}
+                            />
                         </div>
                     )}
                 </div>

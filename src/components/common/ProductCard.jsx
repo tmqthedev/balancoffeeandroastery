@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { highlightSearchTerm } from '../../utils/searchUtils';
 import { formatVND } from '../../utils/currency';
+import OptimizedImage from './OptimizedImage';
+import { useIntersectionObserver } from '../../hooks/usePerformance';
 
-const ProductCard = ({ product, searchTerm }) => {
+const ProductCard = memo(({ product, searchTerm = '' }) => {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [setRef, entry] = useIntersectionObserver({
+        threshold: 0.1,
+        rootMargin: '50px'
+    });
 
-    const renderPrice = () => {
+    const isVisible = entry?.isIntersecting;
+
+    const handleImageLoad = useCallback(() => {
+        setImageLoaded(true);
+    }, []);
+
+    const renderPrice = useCallback(() => {
         const isWeightBased = product.pricingType === 'weight-based' && 
                               product.weightPricing && 
                               product.weightPricing.length > 0;
@@ -51,9 +64,17 @@ const ProductCard = ({ product, searchTerm }) => {
                 Liên hệ để biết giá
             </span>
         );
-    };
+    }, [product.pricingType, product.weightPricing, product.price]);
 
     const renderProductImage = () => {
+        if (!isVisible) {
+            return (
+                <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                </div>
+            );
+        }
+
         if (product.image_url) {
             // Handle different image URL formats
             let imageUrl = product.image_url;
@@ -78,19 +99,15 @@ const ProductCard = ({ product, searchTerm }) => {
 
             if (imageUrl) {
                 return (
-                    <img
+                    <OptimizedImage
                         src={imageUrl}
                         alt={product.name || 'Sản phẩm'}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        width={300}
+                        height={200}
                         loading="lazy"
-                        onError={(e) => {
-                            console.warn('Image load failed:', imageUrl);
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                        }}
-                        onLoad={() => {
-                            console.log('Image loaded successfully:', imageUrl);
-                        }}
+                        onLoad={handleImageLoad}
+                        placeholder="/images/placeholder.jpg"
                     />
                 );
             }
@@ -99,14 +116,14 @@ const ProductCard = ({ product, searchTerm }) => {
         return (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
                 <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             </div>
         );
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-primary/40 group">
+        <div ref={setRef} className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-primary/40 group">
             <Link to={`/products/${product._id || product.id}`} className="block">
                 {/* Product Image */}
                 <div className="relative h-48 bg-gray-100 overflow-hidden">
@@ -124,11 +141,7 @@ const ProductCard = ({ product, searchTerm }) => {
             <div className="p-4">
                 {/* Product Name */}
                 <h3 className="text-base font-semibold text-brand-primary mb-3 line-clamp-2 group-hover:text-brand-primary/80 transition-colors leading-snug">
-                    <span 
-                        dangerouslySetInnerHTML={{
-                            __html: highlightSearchTerm(product.name || 'Sản phẩm', searchTerm)
-                        }}
-                    />
+                    {product.name || 'Sản phẩm'}
                 </h3>
 
                 {/* Price and Add to Cart */}
@@ -149,7 +162,7 @@ const ProductCard = ({ product, searchTerm }) => {
             </div>
         </div>
     );
-};
+});
 
 ProductCard.propTypes = {
     product: PropTypes.shape({
@@ -176,7 +189,7 @@ ProductCard.propTypes = {
         weightPricing: PropTypes.arrayOf(PropTypes.shape({
             weight: PropTypes.number,
             price: PropTypes.number,
-            discount: PropTypes.number
+            discount: PropTypes.oneOfType([PropTypes.number, PropTypes.object])
         })),
         comparePrice: PropTypes.number,
         image_url: PropTypes.string,
@@ -185,10 +198,6 @@ ProductCard.propTypes = {
         isFeatured: PropTypes.bool
     }).isRequired,
     searchTerm: PropTypes.string
-};
-
-ProductCard.defaultProps = {
-    searchTerm: ''
 };
 
 export default ProductCard;

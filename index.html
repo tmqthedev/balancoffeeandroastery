@@ -2,7 +2,7 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="backend\public\images\logos\title.png" />
+    <link rel="icon" type="image/png" href="/images/logos/title.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- SEO Meta Tags -->
@@ -31,12 +31,26 @@
     <meta name="twitter:description" content="Cà phê rang mộc chất lượng cao từ Việt Nam. Chuyên về Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng." />
     <meta name="twitter:image" content="https://balancoffee.com/logo.png" />
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="192x192" href="/images/logos/logo.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/images/logos/logo.png" />
+    
+    <!-- Microsoft Icons -->
+    <meta name="msapplication-square70x70logo" content="/images/logos/logo.png" />
+    <meta name="msapplication-square150x150logo" content="/images/logos/logo.png" />
+    
     <!-- Additional SEO Meta Tags -->
-    <meta name="theme-color" content="#1A3C34" />
-    <meta name="msapplication-TileColor" content="#1A3C34" />
+    <meta name="theme-color" content="#8B4513" />
+    <meta name="msapplication-TileColor" content="#8B4513" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Balan Coffee" />
+    
+    <!-- Resource Hints - removed problematic preloads -->
     
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,6 +60,45 @@
     <!-- DNS Prefetch for External Resources -->
     <link rel="dns-prefetch" href="//www.google-analytics.com" />
     <link rel="dns-prefetch" href="//connect.facebook.net" />
+    <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+    
+    <!-- Critical CSS (inline small critical styles) -->
+    <style>
+      /* Critical loading styles */
+      body { 
+        margin: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #root { 
+        min-height: 100vh; 
+      }
+      .app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FFF8DC;
+        z-index: 9999;
+      }
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #8B4513;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
     
     <!-- Structured Data for SEO -->
     <script type="application/ld+json">
@@ -58,14 +111,14 @@
       "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng beans",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "123 Đường Cà Phê",
-        "addressLocality": "Quận 1",
+        "streetAddress": "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
+        "addressLocality": "Thủ Đức",
         "addressRegion": "TP.HCM",
         "addressCountry": "VN"
       },
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+84-123-456-789",
+        "telephone": "+84 964 822 269",
         "contactType": "customer service",
         "email": "info@balancoffee.com"
       },
@@ -77,29 +130,74 @@
     }
     </script>
     
-    <title>Balan Coffee & Roastery - Cà phê rang mộc chất lượng cao</title>
+    <title>Balan Coffee & Roastery</title>
   </head>
   <body>
+    <!-- App loading spinner -->
+    <div id="app-loading" class="app-loading">
+      <div class="loading-spinner"></div>
+    </div>
+    
     <div id="fb-root"></div>
     <script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js"></script>
     
     <div id="root"></div>
     
-    <!-- Facebook SDK Initialization -->
+    <!-- Service Worker Registration -->
     <script>
-      window.fbAsyncInit = function() {
-        FB.init({
-          appId      : '649133454778917',
-          cookie     : true,
-          xfbml      : true,
-          version    : 'v19.0'
+      // Register service worker for caching and offline support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New content is available, refresh the page
+                    if (confirm('Có phiên bản mới! Tải lại trang để cập nhật?')) {
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
         });
-          
-        FB.AppEvents.logPageView();
-        
-        // Dispatch custom event when SDK is ready
-        window.dispatchEvent(new Event('fb-sdk-ready'));
-      };
+      }
+
+      // Hide loading spinner when React app loads
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const loadingEl = document.getElementById('app-loading');
+          if (loadingEl) {
+            loadingEl.style.display = 'none';
+          }
+        }, 1000);
+      });
+
+      // Performance monitoring
+      if ('performance' in window) {
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            const perfData = performance.getEntriesByType('navigation')[0];
+            console.log('Page Load Time:', perfData.loadEventEnd - perfData.loadEventStart);
+            
+            // Send to analytics if configured
+            if (window.gtag) {
+              gtag('event', 'timing_complete', {
+                name: 'load',
+                value: perfData.loadEventEnd - perfData.loadEventStart
+              });
+            }
+          }, 0);
+        });
+      }
     </script>
     
     <script type="module" src="/src/main.jsx"></script>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/sharedAuth';
+import { useAuth } from '../../constants/authConstants';
 import { useCart } from '../../constants/cartConstants';
 
 const Navbar = () => {

@@ -1,9 +1,34 @@
 ﻿import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import basicSsl from '@vitejs/plugin-basic-ssl';
+import { resolve } from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
-  plugins: [react()], // Removed basicSsl() to avoid HTTPS certificate issues in development
+  plugins: [
+    react(),
+    // Bundle analyzer - chỉ chạy khi build với ANALYZE=true
+    process.env.ANALYZE && visualizer({
+      filename: 'dist/stats.html',
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    })
+  ].filter(Boolean),
+  
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+      '@components': resolve(__dirname, 'src/components'),
+      '@pages': resolve(__dirname, 'src/pages'),
+      '@services': resolve(__dirname, 'src/services'),
+      '@utils': resolve(__dirname, 'src/utils'),
+      '@assets': resolve(__dirname, 'src/assets'),
+      '@hooks': resolve(__dirname, 'src/hooks'),
+      '@context': resolve(__dirname, 'src/context'),
+      '@config': resolve(__dirname, 'src/config')
+    }
+  },
+  
   server: {
     port: 5173,
     host: 'localhost',
@@ -32,49 +57,52 @@ export default defineConfig({
       }
     }
   },
+  
   build: {
     outDir: 'dist',
-    sourcemap: false, // Disable sourcemaps in production to reduce size
-    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit
+    target: 'es2015',
+    minify: 'terser',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000,
+    
+    // Tối ưu terser
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info'],
+        passes: 2
+      },
+      mangle: {
+        safari10: true
+      },
+      format: {
+        comments: false
+      }
+    },
+    
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Vendor chunk for React and core libraries
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor';
-            }
-            if (id.includes('axios') || id.includes('prop-types')) {
-              return 'utils';
-            }
-            if (id.includes('react-helmet')) {
-              return 'ui';
-            }
-            // Other node_modules go to vendor
-            return 'vendor';
-          }
-          
-          // Admin chunk for admin-only components
-          if (id.includes('/pages/admin/') || id.includes('/routes/AdminRoutes')) {
-            return 'admin';
-          }
-          
-          // Auth chunk for authentication components
-          if (id.includes('/pages/auth/') || id.includes('/components/auth/')) {
-            return 'auth';
-          }
-          
-          // Payment chunk for payment components
-          if (id.includes('/payment/') || id.includes('Checkout')) {
-            return 'payment';
-          }
+        // Manual chunking để tối ưu loading
+        manualChunks: {
+          // Vendor chunks
+          'react-vendor': ['react', 'react-dom'],
+          'router-vendor': ['react-router-dom'],
+          'ui-vendor': ['react-helmet-async'],
+          'utils-vendor': ['axios', 'prop-types']
         },
-        // Optimize chunk names
+        
+        // Tối ưu chunk filename
         chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop().replace('.jsx', '').replace('.js', '') : 'chunk';
-          return `js/${facadeModuleId}-[hash].js`;
+          const facadeModuleId = chunkInfo.facadeModuleId 
+            ? chunkInfo.facadeModuleId.split('/').pop().replace('.jsx', '').replace('.js', '')
+            : 'chunk';
+          return `js/[name]-[hash].js`;
         },
+        
         entryFileNames: 'js/[name]-[hash].js',
+        
+        // Tối ưu asset filename
         assetFileNames: (assetInfo) => {
           const fileName = assetInfo.names?.[0] || 'asset';
           const info = fileName.split('.');
@@ -87,16 +115,42 @@ export default defineConfig({
           }
           return `assets/[name]-[hash][extname]`;
         }
+      },
+      
+      // Tree shaking optimization
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false
       }
     },
-    // Optimize build performance
-    target: 'esnext',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.log in production
-        drop_debugger: true
-      }
-    }
+    
+    // CSS code splitting
+    cssCodeSplit: true,
+    
+    // Asset optimization
+    assetsDir: 'assets',
+    assetsInlineLimit: 4096,
+    
+    // Build info
+    reportCompressedSize: true
+  },
+
+  // Optimize deps
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'axios',
+      'react-helmet-async'
+    ],
+    exclude: ['fsevents']
+  },
+  
+  // Preview server config
+  preview: {
+    port: 4173,
+    strictPort: true
   }
 });

@@ -1,8 +1,11 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, createContext } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { CartContext } from '../constants/cartConstants';
-import { useAuth } from './sharedAuth';
+
+// Create the CartContext here instead of importing it
+export const CartContext = createContext(null);
+
+console.log('🛒 CartContext created:', CartContext);
 
 // Configure axios for cart API
 const API_BASE_URL = '/api';
@@ -26,9 +29,18 @@ api.interceptors.request.use((config) => {
 
 
 export const CartProvider = ({ children }) => {
+    console.log('🛒 CartProvider rendering with children:', !!children);
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { isAuthenticated } = useAuth();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    
+    // Update authentication status
+    const updateAuthStatus = useCallback(() => {
+        const token = localStorage.getItem('authToken');
+        const newIsAuthenticated = !!token;
+        setIsAuthenticated(newIsAuthenticated);
+        return newIsAuthenticated;
+    }, []);
 
     // Utility function to clear all cart-related localStorage
     const clearCartLocalStorage = useCallback(() => {
@@ -48,6 +60,8 @@ export const CartProvider = ({ children }) => {
             }
 
             const localCartItems = JSON.parse(localCart);
+            console.log('🔍 CartContext: Raw localStorage cart:', localCart);
+            console.log('📦 CartContext: Parsed localStorage cart:', localCartItems);
             if (!localCartItems || localCartItems.length === 0) {
                 console.log('❌ CartContext: Local cart is empty');
                 // Still clear localStorage even if empty
@@ -61,10 +75,18 @@ export const CartProvider = ({ children }) => {
             // Add each item from local cart to user cart
             for (const item of localCartItems) {
                 try {
-                    console.log('🛒 CartContext: Adding item to user cart:', item);
+                    const productId = item.product_id || item.id || item.productId;
+                    console.log('🛒 CartContext: Processing item:', { 
+                        item, 
+                        extractedProductId: productId,
+                        quantity: item.quantity,
+                        variant: item.variant 
+                    });
+                    
                     const response = await api.post('/cart', {
-                        productId: item.product_id || item.id,
-                        quantity: item.quantity
+                        productId: productId,
+                        quantity: item.quantity,
+                        variant: item.variant || {}
                     });
                     console.log('✅ CartContext: Item added successfully:', response.data);
                 } catch (error) {
@@ -75,6 +97,10 @@ export const CartProvider = ({ children }) => {
             // Clear local cart after successful merge
             localStorage.removeItem('cart');
             console.log('🧹 CartContext: Local cart cleared after merge');
+            
+            // Reload cart to get the merged items
+            await loadCart();
+            console.log('🔄 CartContext: Cart reloaded after merge');
 
         } catch (error) {
             console.error('❌ CartContext: Failed to merge local cart:', error);
@@ -88,12 +114,7 @@ export const CartProvider = ({ children }) => {
     const loadCart = useCallback(async () => {
         console.log('🔄 CartContext: loadCart called, isAuthenticated:', isAuthenticated);
         try {
-            // Force check authentication status from localStorage
-            const token = localStorage.getItem('authToken');
-            const currentIsAuthenticated = !!token;
-            console.log('🔍 CartContext: Forced authentication check:', currentIsAuthenticated);
-            
-            if (currentIsAuthenticated) {
+            if (isAuthenticated) {
                 console.log('🔐 CartContext: Loading cart from API');
                 // Load from API for authenticated users
                 const response = await api.get('/cart');
@@ -110,6 +131,7 @@ export const CartProvider = ({ children }) => {
                     name: item.name || 'Sản phẩm',
                     price: item.price || 0,
                     quantity: item.quantity || 1,
+                    variant: item.variant || {},
                     image_url: item.image_url || '',
                     description: item.description || ''
                 }));
@@ -127,7 +149,8 @@ export const CartProvider = ({ children }) => {
                 } else {
                     console.log('📦 CartContext: No cart in localStorage');
                 }
-            }        } catch (error) {
+            }
+        } catch (error) {
             console.error('❌ CartContext: Failed to load cart:', error);
             // Fallback to localStorage for guests
             const savedCart = localStorage.getItem('cart');
@@ -136,6 +159,21 @@ export const CartProvider = ({ children }) => {
             }
         }
     }, [isAuthenticated]);
+
+    // Initialize authentication status and listen for changes
+    useEffect(() => {
+        updateAuthStatus();
+        
+        // Listen for storage changes (login/logout in other tabs)
+        const handleStorageChange = (e) => {
+            if (e.key === 'authToken') {
+                updateAuthStatus();
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [updateAuthStatus]);
 
     // Clear localStorage on page unload for authenticated users
     useEffect(() => {
@@ -193,12 +231,7 @@ export const CartProvider = ({ children }) => {
             const productId = product.product_id || product.id;
             console.log('🆔 CartContext: Product ID:', productId);
             
-            // Force reload authentication status to ensure we have latest state
-            const token = localStorage.getItem('authToken');
-            const currentIsAuthenticated = !!token;
-            console.log('🔍 CartContext: Current authentication check:', currentIsAuthenticated);
-            
-            if (currentIsAuthenticated) {
+            if (isAuthenticated) {
                 console.log('🔐 CartContext: User is authenticated, calling API');
                 // For authenticated users, call API
                 const variant = product.selectedWeight ? { weight: product.selectedWeight } : {};
@@ -259,23 +292,56 @@ export const CartProvider = ({ children }) => {
 
     // Remove item from cart
     const removeFromCart = useCallback(async (productId) => {
+        console.log('🗑️ CartContext: removeFromCart called with productId:', productId, 'isAuthenticated:', isAuthenticated);
         try {
             setLoading(true);
             
             if (isAuthenticated) {
+                console.log('🔐 CartContext: Removing from API');
                 // For authenticated users, call API
-                const response = await api.delete(`/cart/items/${productId}`);
-                if (response.data.success) {
-                    await loadCart(); // Reload cart from API
+                try {
+                    const response = await api.delete(`/cart/items/${productId}`);
+                    console.log('📡 CartContext: Remove API response:', response);
+                    if (response.data.success) {
+                        console.log('✅ CartContext: Item removed successfully, reloading cart');
+                        await loadCart(); // Reload cart from API
+                        return { success: true };
+                    } else {
+                        console.log('❌ CartContext: API returned success=false:', response.data);
+                        throw new Error(response.data.error || 'Failed to remove item');
+                    }
+                } catch (apiError) {
+                    console.error('❌ CartContext: API call failed:', apiError);
+                    
+                    // Fallback: Remove from local state if API fails
+                    console.log('🔄 CartContext: Falling back to local removal due to API error');
+                    const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
+                    setCartItems(newItems);
+                    
+                    // Don't update localStorage for authenticated users unless explicitly needed
+                    // This is just for immediate UI feedback
+                    
+                    throw apiError; // Still throw the original error for proper error handling
                 }
             } else {
+                console.log('👤 CartContext: Removing locally');
                 // For guests, handle locally
                 const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
                 setCartItems(newItems);
                 localStorage.setItem('cart', JSON.stringify(newItems));
+                console.log('✅ CartContext: Item removed locally');
+                return { success: true };
             }
         } catch (error) {
-            console.error('Failed to remove from cart:', error);        } finally {
+            console.error('❌ CartContext: Failed to remove from cart:', error);
+            console.error('❌ CartContext: Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            // Re-throw the error so callers can handle it
+            throw error;
+        } finally {
             setLoading(false);
         }
     }, [cartItems, isAuthenticated, loadCart]);

@@ -249,55 +249,6 @@ const About = () => {
             </div>
           </div>
         </section>
-
-        {/* Certifications Section */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Chứng nhận chất lượng
-              </h2>
-              <p className="text-xl text-gray-600">
-                Các chứng nhận quốc tế đảm bảo chất lượng và tính bền vững
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="text-center">
-                <img
-                  src="/images/certifications/organic.png"
-                  alt="Organic Certification"
-                  className="h-20 mx-auto mb-4"
-                />
-                <h3 className="font-semibold text-gray-900">Organic</h3>
-              </div>
-              <div className="text-center">
-                <img
-                  src="/images/certifications/fair-trade.png"
-                  alt="Fair Trade Certification"
-                  className="h-20 mx-auto mb-4"
-                />
-                <h3 className="font-semibold text-gray-900">Fair Trade</h3>
-              </div>
-              <div className="text-center">
-                <img
-                  src="/images/certifications/rainforest.png"
-                  alt="Rainforest Alliance"
-                  className="h-20 mx-auto mb-4"
-                />
-                <h3 className="font-semibold text-gray-900">Rainforest Alliance</h3>
-              </div>
-              <div className="text-center">
-                <img
-                  src="/images/certifications/haccp.png"
-                  alt="HACCP Certification"
-                  className="h-20 mx-auto mb-4"
-                />
-                <h3 className="font-semibold text-gray-900">HACCP</h3>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

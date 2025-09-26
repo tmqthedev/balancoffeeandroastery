@@ -1,8 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, createContext } from 'react';
 import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { AuthContext } from '../constants/authConstants';
+
+// Create the AuthContext here instead of importing it
+export const AuthContext = createContext(null);
+
+console.log('🔧 AuthContext created:', AuthContext);
 
 // Configure axios defaults
 const API_BASE_URL = '/api';
@@ -23,6 +27,7 @@ api.interceptors.request.use((config) => {
 });
 
 export const AuthProvider = ({ children }) => {
+    console.log('🔧 AuthProvider rendering with children:', !!children);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
