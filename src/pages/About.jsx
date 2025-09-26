@@ -44,29 +44,34 @@ const About = () => {
 
   const milestones = [
     {
-      year: "2022",
-      title: "Khởi đầu hành trình",
-      description: "Bắt đầu quán cà phê tại một góc nhỏ ở Bình Thạnh"
+      year: "Tuổi thơ",
+      title: "Tách cà phê của Bố",
+      description: "Mỗi sáng, một tách cà phê là cách duy nhất người cha thể hiện tình yêu cho con gái. Dù tình yêu đó ẩn sau những lời la mắng, nhưng chính điều ấy đã dạy cô rằng tình yêu không chỉ ngọt ngào – đôi khi nó mang vị đắng, như cà phê."
     },
     {
-      year: "2023",
-      title: "Thay đổi địa điểm",
-      description: "Chọn Vinhomes Grand Park trở thành nơi phát triển lâu dài"
+      year: "Lớn lên từ đắng cay",
+      title: "Nghị lực hình thành từ vị đắng",
+      description: "Từ những cay đắng trong tuổi thơ, cô gái tìm thấy nghị lực để trở thành “nhân tố ngọt bùi” cho gia đình mình và dần nuôi dưỡng ước mơ cống hiến cho xã hội."
     },
     {
-      year: "1/2024",
-      title: "Ra mắt thương hiệu",
-      description: "Chính thức ra mắt thương hiệu Balan Coffee & Roastery tại Vinhomes Grand Park"
+      year: "Khởi nghiệp",
+      title: "Sai lầm và bài học",
+      description: "Bước vào kinh doanh, những vấp ngã đầu tiên trở thành vốn sống quý báu. Chính những sai lầm ấy giúp cô rút ra kinh nghiệm để đồng hành, hỗ trợ các chủ quán khác tránh lặp lại, cùng nhau phát triển."
     },
     {
-      year: "3/2024",
-      title: "Một tầm nhìn xa hơn",
-      description: "Chúng tôi chọn đưa trải nghiệm cà phê cá nhân hóa đến gần hơn với mọi người"
+      year: "Năm đầu tiên",
+      title: "Ý nghĩ bỏ cuộc và sự kiên trì",
+      description: "Có lúc tưởng chừng phải dừng lại vì thua lỗ nặng nề. Nhưng cô vẫn lựa chọn làm lại từ đầu, sai đâu sửa đó. Từ một thương hiệu lặng lẽ, sau một năm kiên trì, Balan Coffee đã trở thành một cửa hàng nhộn nhịp, với nhiều lời mời hợp tác kinh doanh."
     },
     {
-      year: "2025",
-      title: "Trở thành một doanh nghiệp",
-      description: "Ra mắt nền tảng thương mại điện tử"
+      year: "Cột mốc trưởng thành",
+      title: "Niềm tự hào và sự biết ơn",
+      description: "Có người từng ngỏ ý mua lại thương hiệu, nhưng cô từ chối. Bởi Balan Coffee không chỉ là một thương hiệu – mà là “đứa con” cô đã nuôi dưỡng. Tự hào hơn nữa, “đứa con” ấy còn tạo công ăn việc làm, giúp đỡ nhiều nhân sự gắn bó đến tận hôm nay."
+    },
+    {
+      year: "Tương lai",
+      title: "Phát triển cùng nhau",
+      description: "Với cô, thành công của Balan Coffee không chỉ là doanh thu hay thương hiệu được biết đến rộng rãi – mà là khi tập thể nhân sự đồng hành cùng phát triển, cùng hưởng thành quả và cùng viết tiếp hành trình phía trước."
     }
   ];
 
@@ -118,7 +123,7 @@ const About = () => {
           <div className="absolute inset-0 z-10"></div>
           <img src="/images/banners/about_banner.png"
             alt="About Banner"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain sm:object-contain sm:object-center"
           />
           <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
             <Link
@@ -139,19 +144,23 @@ const About = () => {
                 </h2>
                 <div className="prose prose-lg text-gray-700">
                   <p className="mb-4">
-                    Balan Coffee & Roastery ra đời với một niềm tin đơn giản: "Mỗi ly cà phê phải phản chiếu câu chuyện của người thưởng thức."
-                    Chúng tôi không chỉ pha chế cà phê – chúng tôi kiến tạo trải nghiệm 
-                    cá nhân hóa, nơi mỗi vị đắng, ngọt, chua hay hậu vị đều được điều chỉnh để chạm đúng gu của bạn.
+                    Balan Coffee & Roastery khởi nguồn từ một triết lý rất giản dị: 
+                    kinh doanh và xây dựng thương hiệu phải bắt đầu từ những điều mộc mạc 
+                    và cơ bản nhất. Với chúng tôi, cà phê không chỉ để uống – mà để thưởng thức, 
+                    từ hương vị, từ thái độ phục vụ đến trải nghiệm mà khách hàng cảm nhận.
                   </p>
                   <p className="mb-4">
-                    Balan khởi đầu với một niềm đam mê giản dị dành cho cà phê và mong muốn tạo ra trải nghiệm khác biệt. 
-                    Chúng tôi vẫn đang từng bước thử nghiệm, lắng nghe và hoàn thiện, để mỗi ly cà phê mang lại cảm giác gần với “gu” mà bạn tìm kiếm.
+                    Chúng tôi tin rằng, chỉ khi làm từ Tâm và xuất phát từ sự Chân Thành, 
+                    từng hạt cà phê mới thực sự chạm đến trái tim người thưởng thức. 
+                    Cũng như bản chất mộc mạc của cà phê, Balan giữ trọn sự tử tế: 
+                    từ khâu chọn nguyên liệu, cách rang xay cho đến cách đưa từng ly 
+                    cà phê đến tay khách hàng.
                   </p>
                   <p>
-                    Cà phê ở Việt Nam chưa bao giờ chỉ là một thức uống. 
-                    Đó là không gian của đối thoại, của suy tư và của sự kết nối. 
-                    Balan Coffee & Roastery được sinh ra để trở thành nơi bạn có thể dừng lại, 
-                    tận hưởng và tìm thấy gu của chính mình.
+                    Balan Coffee & Roastery mong muốn trở thành một nơi thật gần gũi – 
+                    nơi bạn có thể dừng lại giữa nhịp sống hối hả, nhâm nhi một ly cà phê 
+                    được tạo ra bằng tất cả sự chân thành, để rồi tìm thấy sự kết nối, 
+                    sự an yên và hương vị đúng “gu” của riêng mình.
                   </p>
                 </div>
               </div>
@@ -199,7 +208,7 @@ const About = () => {
                       <div className="text-2xl font-bold text-brand-primary mb-2">
                         {milestone.year}
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      <h3 className="text-xl text-gray-900 mb-2 italic">
                         {milestone.title}
                       </h3>
                       <p className="text-gray-600">
@@ -237,7 +246,7 @@ const About = () => {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       {member.name}
                     </h3>
-                    <div className="text-brand-primary font-medium mb-3">
+                    <div className="text-brand-primary font-medium mb-3 italic">
                       {member.position}
                     </div>
                     <p className="text-gray-600 text-sm">

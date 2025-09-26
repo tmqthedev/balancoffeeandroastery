@@ -239,24 +239,89 @@ cartSchema.methods.removeItem = function(productId, variant = {}) {
 };
 
 cartSchema.methods.updateItemQuantity = function(productId, quantity, variant = {}) {
-  // Convert productId to ObjectId if it's a string
-  const targetProductId = typeof productId === 'string' ? 
-    new mongoose.Types.ObjectId(productId) : productId;
+  console.log('📝 Cart Model: updateItemQuantity called with:', { productId, quantity, variant });
   
-  const item = this.items.find(item => 
-    item.productId.equals(targetProductId) && 
-    JSON.stringify(item.variant) === JSON.stringify(variant)
-  );
-  
-  if (item) {
-    if (quantity <= 0) {
-      this.removeItem(productId, variant);
-    } else {
-      item.quantity = quantity;
-      item.addedAt = new Date();
-      this.updateTotals();
-      this.lastActivity = new Date();
+  try {
+    // Handle null/undefined productId
+    if (!productId) {
+      console.error('❌ Cart Model: productId is null or undefined');
+      throw new Error('Product ID is required');
     }
+    
+    // Validate quantity
+    if (typeof quantity !== 'number' || isNaN(quantity)) {
+      console.error('❌ Cart Model: Invalid quantity:', quantity);
+      throw new Error('Quantity must be a valid number');
+    }
+    
+    // Convert productId to ObjectId if it's a string
+    let targetProductId;
+    if (typeof productId === 'string') {
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        console.error('❌ Cart Model: Invalid ObjectId format:', productId);
+        throw new Error(`Invalid product ID format: ${productId}`);
+      }
+      targetProductId = new mongoose.Types.ObjectId(productId);
+    } else if (productId instanceof mongoose.Types.ObjectId) {
+      targetProductId = productId;
+    } else {
+      console.error('❌ Cart Model: productId is neither string nor ObjectId:', typeof productId, productId);
+      throw new Error('Product ID must be a string or ObjectId');
+    }
+    
+    // Normalize variants for comparison
+    const normalizeVariant = (v) => {
+      if (!v || typeof v !== 'object') return {};
+      const sorted = {};
+      Object.keys(v).sort().forEach(key => {
+        if (v[key] !== undefined && v[key] !== null) {
+          sorted[key] = v[key];
+        }
+      });
+      return sorted;
+    };
+    
+    const normalizedTargetVariant = normalizeVariant(variant);
+    
+    console.log('🔍 Cart Model: Looking for item with productId:', targetProductId, 'and variant:', normalizedTargetVariant);
+    
+    const item = this.items.find(item => {
+      if (!item.productId || !item.productId.equals(targetProductId)) {
+        return false;
+      }
+      
+      const normalizedItemVariant = normalizeVariant(item.variant);
+      const bothEmpty = Object.keys(normalizedItemVariant).length === 0 && 
+                       Object.keys(normalizedTargetVariant).length === 0;
+      
+      return bothEmpty || JSON.stringify(normalizedItemVariant) === JSON.stringify(normalizedTargetVariant);
+    });
+    
+    if (item) {
+      console.log('✅ Cart Model: Found item to update:', item);
+      
+      if (quantity <= 0) {
+        console.log('📝 Cart Model: Quantity is 0 or negative, removing item');
+        this.removeItem(productId, variant);
+      } else {
+        console.log('📝 Cart Model: Updating item quantity from', item.quantity, 'to', quantity);
+        item.quantity = quantity;
+        item.addedAt = new Date();
+        this.updateTotals();
+        this.lastActivity = new Date();
+        console.log('✅ Cart Model: Item quantity updated successfully');
+      }
+    } else {
+      console.warn('⚠️ Cart Model: Item not found for update');
+      console.log('🔍 Cart Model: Available items:', this.items.map(item => ({
+        productId: item.productId,
+        variant: item.variant,
+        quantity: item.quantity
+      })));
+    }
+  } catch (error) {
+    console.error('❌ Cart Model: updateItemQuantity error:', error);
+    throw error;
   }
 };
 

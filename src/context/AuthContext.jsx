@@ -1,12 +1,11 @@
-import React, { useState, useMemo, useEffect, createContext } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
+import { AuthContext } from './SharedContexts';
 
-// Create the AuthContext here instead of importing it
-export const AuthContext = createContext(null);
-
-console.log('🔧 AuthContext created:', AuthContext);
+// Re-export for backward compatibility
+export { AuthContext };
 
 // Configure axios defaults
 const API_BASE_URL = '/api';
@@ -93,6 +92,15 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             setIsAuthenticated(true);
             console.log('🔄 AuthContext: User state updated:', userData);
+            
+            // Trigger cart merge by dispatching storage event
+            console.log('🔄 AuthContext: Triggering cart merge after login');
+            setTimeout(() => {
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'authToken',
+                    newValue: token
+                }));
+            }, 100);
             
             return { success: true };
         } catch (error) {
@@ -206,11 +214,25 @@ export const AuthProvider = ({ children }) => {
                 console.log('🔄 AuthContext: Checking for local cart to merge after registration');
                 const localCart = localStorage.getItem('cart');
                 if (localCart) {
-                    console.log('📦 AuthContext: Found local cart, will merge after registration');
+                    console.log('📦 AuthContext: Found local cart, importing CartContext for merge');
                     try {
-                        // Import cart context to merge cart
-                        // Note: This will be handled by the CartContext useEffect when isAuthenticated becomes true
-                        console.log('✅ AuthContext: Cart merge will be handled by CartContext');
+                        // Import CartContext dynamically to avoid circular dependency
+                        const { CartContext } = await import('./CartContext');
+                        
+                        // Get cart context from React context
+                        // Note: This approach won't work directly, we need a different solution
+                        // The merge will be handled by CartContext useEffect when isAuthenticated becomes true
+                        console.log('✅ AuthContext: Cart merge will be handled by CartContext useEffect');
+                        
+                        // Add a small delay to ensure authentication state propagates
+                        setTimeout(async () => {
+                            console.log('🔄 AuthContext: Triggering storage event for cart merge');
+                            // Trigger a storage event to ensure CartContext picks up the authentication change
+                            window.dispatchEvent(new StorageEvent('storage', {
+                                key: 'authToken',
+                                newValue: token
+                            }));
+                        }, 100);
                     } catch (mergeError) {
                         console.error('❌ AuthContext: Cart merge setup failed:', mergeError);
                         // Don't fail registration if cart merge setup fails

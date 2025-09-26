@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCart } from '../constants/cartConstants';
-import { useAuth } from '../context/sharedAuth';
+import { useAuth } from '../constants/authConstants';
 import PaymentMethods from '../components/payment/PaymentMethods';
 
 const Checkout = () => {

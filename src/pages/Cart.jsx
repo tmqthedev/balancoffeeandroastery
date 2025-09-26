@@ -19,31 +19,24 @@ const Cart = () => {
 
     const { subtotal, itemCount } = getCartTotals();
 
-    const handleQuantityChange = (productId, newQuantity, variant = {}) => {
-        if (newQuantity < 1) {
-            handleRemoveItem(productId, variant);
-        } else {
-            updateQuantity(productId, newQuantity, variant);
+    const handleQuantityChange = async (productId, newQuantity, variant = {}) => {
+        try {
+            if (newQuantity < 1) {
+                await handleRemoveItem(productId, variant);
+            } else {
+                await updateQuantity(productId, newQuantity, variant);
+            }
+        } catch (error) {
+            console.error('Failed to update quantity:', error);
+            alert('Không thể cập nhật số lượng. Vui lòng thử lại.');
         }
     };
 
     const handleRemoveItem = async (productId, variant = {}) => {
         try {
-            console.log('🗑️ Cart: Removing item:', { productId, variant });
-            console.log('🗑️ Cart: Item details from cartItems:', cartItems.find(item => item.product_id === productId));
-            console.log('🔍 Cart: Variant details:', {
-                variant,
-                variantType: typeof variant,
-                variantKeys: Object.keys(variant || {}),
-                variantJSON: JSON.stringify(variant),
-                variantIsEmpty: !variant || Object.keys(variant).length === 0
-            });
             await removeFromCart(productId, variant);
-            console.log('✅ Cart: Item removed successfully');
         } catch (error) {
-            console.error('❌ Cart: Failed to remove item:', error);
-            console.error('❌ Cart: Error details:', error.response?.data || error.message);
-            // Could add user notification here if needed
+            console.error('Failed to remove item:', error);
             alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
         }
     };
@@ -162,7 +155,8 @@ const Cart = () => {
                                                                 <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
                                                                     <button
                                                                         onClick={() => handleQuantityChange(item.product_id, item.quantity - 1, item.variant)}
-                                                                        className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200"
+                                                                        disabled={loading}
+                                                                        className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                         aria-label="Giảm số lượng"
                                                                     >
                                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +168,8 @@ const Cart = () => {
                                                                     </span>
                                                                     <button
                                                                         onClick={() => handleQuantityChange(item.product_id, item.quantity + 1, item.variant)}
-                                                                        className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200"
+                                                                        disabled={loading}
+                                                                        className="px-3 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                         aria-label="Tăng số lượng"
                                                                     >
                                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,7 +181,8 @@ const Cart = () => {
                                                                 {/* Remove Button */}
                                                                 <button
                                                                     onClick={() => handleRemoveItem(item.product_id, item.variant)}
-                                                                    className="flex items-center space-x-2 text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-xl transition-all duration-200"
+                                                                    disabled={loading}
+                                                                    className="flex items-center space-x-2 text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                     aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
                                                                 >
                                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

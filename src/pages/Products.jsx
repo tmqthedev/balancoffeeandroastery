@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import SEOHelmet from '../components/common/SEOHelmet';
 import { useCart } from '../constants/cartConstants';
-import { useSearch, useDebounce, useIntersectionObserver } from '../hooks/usePerformance';
+import { useSafeDebounce, useSafeSearch, useSafeIntersectionObserver } from '../hooks/useSafeHooks';
 import { LoadingSpinner, ProductCardSkeleton } from '../components/common/LoadingComponents';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
@@ -59,17 +59,19 @@ const Products = () => {
     // keep useCart for potential future use
     useCart();
 
-    // Performance hooks
-    const debouncedSearch = useDebounce(filters.search, 300);
-    const { searchResults, isSearching } = useSearch(debouncedSearch, products);
+    // Performance hooks - using safe versions
+    const debouncedSearch = useSafeDebounce(filters.search, 300);
+    const { searchResults, isSearching } = useSafeSearch(debouncedSearch, products);
 
     // Intersection observer để lazy load content
     const [shouldLoadContent, setShouldLoadContent] = useState(false);
-    const contentRef = useRef(null);
+    const [setContentRef, entry] = useSafeIntersectionObserver({ threshold: 0.1 });
     
-    useIntersectionObserver(contentRef, () => {
-        setShouldLoadContent(true);
-    }, { threshold: 0.1 });
+    useEffect(() => {
+        if (entry?.isIntersecting) {
+            setShouldLoadContent(true);
+        }
+    }, [entry]);
 
     // Tab change handler (used by desktop & mobile tab buttons)
     const handleTabChange = useCallback((tabId) => {
@@ -371,4 +373,11 @@ const Products = () => {
     );
 };
 
-export default Products;
+// Wrap với ErrorBoundary để catch hook errors
+const ProductsWithErrorBoundary = () => (
+    <ErrorBoundary showErrorDetails={true}>
+        <Products />
+    </ErrorBoundary>
+);
+
+export default ProductsWithErrorBoundary;

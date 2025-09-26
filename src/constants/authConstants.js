@@ -1,30 +1,19 @@
 // Constants and utility functions for AuthContext
 import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/SharedContexts';
 
 export { AuthContext };
 
 export const useAuth = () => {
-    try {
-        // Check if we're in a React component context
-        if (typeof useContext !== 'function') {
-            console.warn('useAuth called outside React component, using fallback');
-            return getFallbackAuth();
-        }
-        
-        const context = useContext(AuthContext);
-        
-        // If context is null or undefined, use fallback
-        if (context === null || context === undefined) {
-            console.warn('AuthContext is null or undefined, using fallback auth');
-            return getFallbackAuth();
-        }
-        
-        return context;
-    } catch (error) {
-        console.error('useAuth hook error:', error);
+    const context = useContext(AuthContext);
+    
+    // If context is null or undefined, use fallback
+    if (context === null || context === undefined) {
+        console.warn('❌ AuthContext is not available - component may be outside AuthProvider');
         return getFallbackAuth();
     }
+    
+    return context;
 };
 
 const getFallbackAuth = () => {

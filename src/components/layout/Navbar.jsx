@@ -1,14 +1,28 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../constants/authConstants';
-import { useCart } from '../../constants/cartConstants';
+import ContextConsumer from '../common/ContextConsumer';
 
 const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, isAuthenticated, logout } = useAuth();
-    const { getCartTotals } = useCart();
+    
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => <NavbarContent 
+                location={location}
+                navigate={navigate}
+                auth={auth}
+                cart={cart}
+            />}
+        </ContextConsumer>
+    );
+};
+
+const NavbarContent = ({ location, navigate, auth, cart }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    
+    const { user, isAuthenticated, logout } = auth;
+    const { getCartTotals } = cart;
 
     const cartItemsCount = getCartTotals()?.itemCount || 0;
 
@@ -237,6 +251,6 @@ const Navbar = () => {
             </div>
         </nav>
     );
-};
+}; // Closing NavbarContent
 
 export default Navbar;

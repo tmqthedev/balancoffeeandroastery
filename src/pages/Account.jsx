@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../context/sharedAuth';
+import { useAuth } from '../constants/authConstants';
 import { formatDateForInput, formatDateForBackend } from '../utils/dateUtils';
 import axios from 'axios';
 

@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import { highlightSearchTerm } from '../../utils/searchUtils';
 import { formatVND } from '../../utils/currency';
 import OptimizedImage from './OptimizedImage';
-import { useIntersectionObserver } from '../../hooks/usePerformance';
+import { useSafeIntersectionObserver } from '../../hooks/useSafeHooks';
 
 const ProductCard = memo(({ product, searchTerm = '' }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [setRef, entry] = useIntersectionObserver({
+    const [setRef, entry] = useSafeIntersectionObserver({
         threshold: 0.1,
         rootMargin: '50px'
     });
@@ -102,7 +102,7 @@ const ProductCard = memo(({ product, searchTerm = '' }) => {
                     <OptimizedImage
                         src={imageUrl}
                         alt={product.name || 'Sản phẩm'}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="max-w-full max-h-full object-contain transition-opacity duration-300 group-hover:opacity-90"
                         width={300}
                         height={200}
                         loading="lazy"
@@ -126,7 +126,7 @@ const ProductCard = memo(({ product, searchTerm = '' }) => {
         <div ref={setRef} className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-primary/40 group">
             <Link to={`/products/${product._id || product.id}`} className="block">
                 {/* Product Image */}
-                <div className="relative h-48 bg-gray-100 overflow-hidden">
+                <div className="relative h-48 bg-gray-100 overflow-hidden flex items-center justify-center">
                     {renderProductImage()}
                     {/* Fallback placeholder */}
                     <div className="w-full h-full flex items-center justify-center bg-gray-100" style={{display: 'none'}}>

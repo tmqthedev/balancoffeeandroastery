@@ -5,7 +5,7 @@ import SEOHelmet from '../components/common/SEOHelmet';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import { LoadingSpinner, BlogCardSkeleton, ListSkeleton } from '../components/common/LoadingComponents';
 import OptimizedImage from '../components/common/OptimizedImage';
-import { useDebounce, useIntersectionObserver } from '../hooks/usePerformance';
+import { useSafeDebounce, useSafeIntersectionObserver } from '../hooks/useSafeHooks';
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -20,7 +20,7 @@ const Blog = () => {
   const API_BASE_URL = '/api';
   
   // Performance optimization
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedSearchTerm = useSafeDebounce(searchTerm, 300);
 
   const fetchCategories = useCallback(async () => {
     try {

@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useEffect, useCallback, createContext } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
+import { CartContext } from './SharedContexts';
 
-// Create the CartContext here instead of importing it
-export const CartContext = createContext(null);
-
-console.log('🛒 CartContext created:', CartContext);
+// Re-export for backward compatibility  
+export { CartContext };
 
 // Configure axios for cart API
 const API_BASE_URL = '/api';
@@ -47,67 +46,6 @@ export const CartProvider = ({ children }) => {
         console.log('🧹 CartContext: Clearing all cart-related localStorage');
         localStorage.removeItem('cart');
         localStorage.removeItem('buyNowProduct');
-    }, []);
-
-    // Merge local cart to user cart when user logs in
-    const mergeLocalCartToUserCart = useCallback(async () => {
-        console.log('🔄 CartContext: mergeLocalCartToUserCart called');
-        try {
-            const localCart = localStorage.getItem('cart');
-            if (!localCart) {
-                console.log('❌ CartContext: No local cart to merge');
-                return;
-            }
-
-            const localCartItems = JSON.parse(localCart);
-            console.log('🔍 CartContext: Raw localStorage cart:', localCart);
-            console.log('📦 CartContext: Parsed localStorage cart:', localCartItems);
-            if (!localCartItems || localCartItems.length === 0) {
-                console.log('❌ CartContext: Local cart is empty');
-                // Still clear localStorage even if empty
-                localStorage.removeItem('cart');
-                console.log('🧹 CartContext: Cleared empty localStorage cart');
-                return;
-            }
-
-            console.log('📦 CartContext: Merging local cart items:', localCartItems);
-
-            // Add each item from local cart to user cart
-            for (const item of localCartItems) {
-                try {
-                    const productId = item.product_id || item.id || item.productId;
-                    console.log('🛒 CartContext: Processing item:', { 
-                        item, 
-                        extractedProductId: productId,
-                        quantity: item.quantity,
-                        variant: item.variant 
-                    });
-                    
-                    const response = await api.post('/cart', {
-                        productId: productId,
-                        quantity: item.quantity,
-                        variant: item.variant || {}
-                    });
-                    console.log('✅ CartContext: Item added successfully:', response.data);
-                } catch (error) {
-                    console.error('❌ CartContext: Failed to add item:', item, error);
-                }
-            }
-
-            // Clear local cart after successful merge
-            localStorage.removeItem('cart');
-            console.log('🧹 CartContext: Local cart cleared after merge');
-            
-            // Reload cart to get the merged items
-            await loadCart();
-            console.log('🔄 CartContext: Cart reloaded after merge');
-
-        } catch (error) {
-            console.error('❌ CartContext: Failed to merge local cart:', error);
-            // Clear localStorage even if merge fails to prevent future conflicts
-            localStorage.removeItem('cart');
-            console.log('🧹 CartContext: Local cart cleared after merge failure');
-        }
     }, []);
 
     // Load cart from localStorage (guest) or API (authenticated user)
@@ -159,6 +97,78 @@ export const CartProvider = ({ children }) => {
             }
         }
     }, [isAuthenticated]);
+
+    // Merge local cart to user cart when user logs in
+    const mergeLocalCartToUserCart = useCallback(async (forceReload = false) => {
+        console.log('🔄 CartContext: mergeLocalCartToUserCart called, forceReload:', forceReload);
+        try {
+            const localCart = localStorage.getItem('cart');
+            if (!localCart) {
+                console.log('❌ CartContext: No local cart to merge');
+                if (forceReload) {
+                    await loadCart();
+                }
+                return { success: true, merged: 0 };
+            }
+
+            const localCartItems = JSON.parse(localCart);
+            console.log('🔍 CartContext: Raw localStorage cart:', localCart);
+            console.log('📦 CartContext: Parsed localStorage cart:', localCartItems);
+            if (!localCartItems || localCartItems.length === 0) {
+                console.log('❌ CartContext: Local cart is empty');
+                // Still clear localStorage even if empty
+                localStorage.removeItem('cart');
+                console.log('🧹 CartContext: Cleared empty localStorage cart');
+                if (forceReload) {
+                    await loadCart();
+                }
+                return { success: true, merged: 0 };
+            }
+
+            console.log('📦 CartContext: Merging local cart items:', localCartItems);
+
+            let mergedCount = 0;
+            // Add each item from local cart to user cart
+            for (const item of localCartItems) {
+                try {
+                    const productId = item.product_id || item.id || item.productId;
+                    console.log('🛒 CartContext: Processing item:', { 
+                        item, 
+                        extractedProductId: productId,
+                        quantity: item.quantity,
+                        variant: item.variant 
+                    });
+                    
+                    const response = await api.post('/cart', {
+                        productId: productId,
+                        quantity: item.quantity,
+                        variant: item.variant || {}
+                    });
+                    console.log('✅ CartContext: Item added successfully:', response.data);
+                    mergedCount++;
+                } catch (error) {
+                    console.error('❌ CartContext: Failed to add item:', item, error);
+                }
+            }
+
+            // Clear local cart after successful merge
+            localStorage.removeItem('cart');
+            console.log('🧹 CartContext: Local cart cleared after merge');
+            
+            // Reload cart to get the merged items
+            await loadCart();
+            console.log('🔄 CartContext: Cart reloaded after merge');
+
+            return { success: true, merged: mergedCount };
+
+        } catch (error) {
+            console.error('❌ CartContext: Failed to merge local cart:', error);
+            // Clear localStorage even if merge fails to prevent future conflicts
+            localStorage.removeItem('cart');
+            console.log('🧹 CartContext: Local cart cleared after merge failure');
+            return { success: false, merged: 0, error: error.message };
+        }
+    }, [loadCart]);
 
     // Initialize authentication status and listen for changes
     useEffect(() => {
@@ -257,22 +267,36 @@ export const CartProvider = ({ children }) => {
                 }
             } else {
                 console.log('👤 CartContext: User is not authenticated, handling locally');
-                // For guests, handle locally
+                // For guests, handle locally with proper variant support
+                const productVariant = product.selectedWeight ? { weight: product.selectedWeight } : {};
+                
                 const newItems = (() => {
-                    const existingItem = cartItems.find(item => (item.product_id || item.id) === productId);
+                    // Find existing item with same productId AND same variant
+                    const existingItem = cartItems.find(item => {
+                        const isSameProduct = (item.product_id || item.id) === productId;
+                        const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(productVariant);
+                        return isSameProduct && isSameVariant;
+                    });
                     
                     if (existingItem) {
-                        return cartItems.map(item =>
-                            (item.product_id || item.id) === productId
-                                ? { ...item, quantity: item.quantity + quantity }
-                                : item
-                        );
+                        // Update quantity of existing item
+                        return cartItems.map(item => {
+                            const isSameProduct = (item.product_id || item.id) === productId;
+                            const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(productVariant);
+                            
+                            if (isSameProduct && isSameVariant) {
+                                return { ...item, quantity: item.quantity + quantity };
+                            }
+                            return item;
+                        });
                     } else {
+                        // Add new item with variant
                         return [...cartItems, { 
                             ...product, 
                             quantity, 
                             product_id: productId,
-                            id: productId 
+                            id: productId,
+                            variant: productVariant
                         }];
                     }
                 })();
@@ -291,8 +315,8 @@ export const CartProvider = ({ children }) => {
     }, [cartItems, loadCart, isAuthenticated]);
 
     // Remove item from cart
-    const removeFromCart = useCallback(async (productId) => {
-        console.log('🗑️ CartContext: removeFromCart called with productId:', productId, 'isAuthenticated:', isAuthenticated);
+    const removeFromCart = useCallback(async (productId, variant = {}) => {
+        console.log('🗑️ CartContext: removeFromCart called with productId:', productId, 'variant:', variant, 'isAuthenticated:', isAuthenticated);
         try {
             setLoading(true);
             
@@ -300,7 +324,12 @@ export const CartProvider = ({ children }) => {
                 console.log('🔐 CartContext: Removing from API');
                 // For authenticated users, call API
                 try {
-                    const response = await api.delete(`/cart/items/${productId}`);
+                    // Use axios config to send data in DELETE request
+                    const response = await api.request({
+                        method: 'DELETE',
+                        url: `/cart/items/${productId}`,
+                        data: { variant: variant || {} }
+                    });
                     console.log('📡 CartContext: Remove API response:', response);
                     if (response.data.success) {
                         console.log('✅ CartContext: Item removed successfully, reloading cart');
@@ -313,9 +342,14 @@ export const CartProvider = ({ children }) => {
                 } catch (apiError) {
                     console.error('❌ CartContext: API call failed:', apiError);
                     
-                    // Fallback: Remove from local state if API fails
+                    // Fallback: Remove from local state if API fails with variant matching
                     console.log('🔄 CartContext: Falling back to local removal due to API error');
-                    const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
+                    const newItems = cartItems.filter(item => {
+                        const isSameProduct = (item.product_id || item.id) === productId;
+                        const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant || {});
+                        // Remove item if it matches both product and variant
+                        return !(isSameProduct && isSameVariant);
+                    });
                     setCartItems(newItems);
                     
                     // Don't update localStorage for authenticated users unless explicitly needed
@@ -325,8 +359,13 @@ export const CartProvider = ({ children }) => {
                 }
             } else {
                 console.log('👤 CartContext: Removing locally');
-                // For guests, handle locally
-                const newItems = cartItems.filter(item => (item.product_id || item.id) !== productId);
+                // For guests, handle locally with variant matching
+                const newItems = cartItems.filter(item => {
+                    const isSameProduct = (item.product_id || item.id) === productId;
+                    const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant || {});
+                    // Remove item if it matches both product and variant
+                    return !(isSameProduct && isSameVariant);
+                });
                 setCartItems(newItems);
                 localStorage.setItem('cart', JSON.stringify(newItems));
                 console.log('✅ CartContext: Item removed locally');
@@ -347,33 +386,71 @@ export const CartProvider = ({ children }) => {
     }, [cartItems, isAuthenticated, loadCart]);
 
     // Update item quantity
-    const updateQuantity = useCallback(async (productId, quantity) => {
+    const updateQuantity = useCallback(async (productId, quantity, variant = {}) => {
+        console.log('🔄 CartContext: updateQuantity called with:', { productId, quantity, variant, isAuthenticated });
         try {
             setLoading(true);
+            
             if (quantity <= 0) {
-                await removeFromCart(productId);
+                console.log('⚠️ CartContext: Quantity <= 0, calling removeFromCart');
+                await removeFromCart(productId, variant);
                 return;
             }
             
             if (isAuthenticated) {
+                console.log('🔐 CartContext: Updating quantity via API');
                 // For authenticated users, call API
-                const response = await api.put(`/cart/items/${productId}`, { quantity });
-                if (response.data.success) {
-                    await loadCart(); // Reload cart from API
+                try {
+                    const response = await api.put(`/cart/items/${productId}`, { 
+                        quantity,
+                        variant: variant || {}
+                    });
+                    console.log('📡 CartContext: Update quantity API response:', response.data);
+                    
+                    if (response.data && response.data.success) {
+                        console.log('✅ CartContext: API update successful, reloading cart');
+                        await loadCart(); // Reload cart from API
+                    } else {
+                        console.error('❌ CartContext: API returned success=false:', response.data);
+                        throw new Error(response.data?.error || 'Failed to update quantity');
+                    }
+                } catch (apiError) {
+                    console.error('❌ CartContext: API call failed:', apiError);
+                    // Fallback to local update for immediate feedback with variant matching
+                    console.log('🔄 CartContext: Falling back to local update');
+                    const newItems = cartItems.map(item => {
+                        const isSameProduct = (item.product_id || item.id) === productId;
+                        const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant || {});
+                        
+                        if (isSameProduct && isSameVariant) {
+                            return { ...item, quantity };
+                        }
+                        return item;
+                    });
+                    setCartItems(newItems);
+                    throw apiError;
                 }
             } else {
-                // For guests, handle locally
-                const newItems = cartItems.map(item =>
-                    (item.product_id || item.id) === productId
-                        ? { ...item, quantity }
-                        : item
-                );
+                console.log('👤 CartContext: Updating quantity locally');
+                // For guests, handle locally with variant matching
+                const newItems = cartItems.map(item => {
+                    // Match by productId and variant
+                    const isSameProduct = (item.product_id || item.id) === productId;
+                    const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant || {});
+                    
+                    if (isSameProduct && isSameVariant) {
+                        return { ...item, quantity };
+                    }
+                    return item;
+                });
                 
                 setCartItems(newItems);
                 localStorage.setItem('cart', JSON.stringify(newItems));
+                console.log('✅ CartContext: Local quantity updated');
             }
         } catch (error) {
-            console.error('Failed to update quantity:', error);
+            console.error('❌ CartContext: Failed to update quantity:', error);
+            throw error; // Re-throw so callers can handle it
         } finally {
             setLoading(false);
         }

@@ -48,7 +48,7 @@ const Contact = () => {
   const storeInfo = {
     address: "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
     phone: "+84 964 822 269",
-    email: "info@balancoffee.com",
+    email: "info@balancoffeeroastery.com.vn",
     hours: "6:30 - 22:30"
   }; 
 
@@ -84,7 +84,7 @@ const Contact = () => {
               "addressCountry": "VN"
             },
             "telephone": "+84-123-456-789",
-            "email": "info@balancoffee.com",
+            "email": "info@balancoffeeroastery.com.vn",
             "openingHours": [
               "Mo-Fr 07:00-21:00",
               "Sa-Su 06:30-22:00"
@@ -348,7 +348,7 @@ const Contact = () => {
                     <FaTiktok className="w-6 h-6" />
                   </a>
                   <a
-                    href="https://zalo.me/balancoffee"
+                    href="https://zalo.me/0902456359"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center w-12 h-12 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../../context/sharedAuth';
+import { useAuth } from '../../constants/authConstants';
 import { useCart } from '../../constants/cartConstants';
 import { LoadingSpinner } from '../../components/common/Loading';
 
@@ -247,7 +247,7 @@ const VerifyEmail = () => {
                     <div className="text-center text-sm text-gray-600">
                         <p>Cần hỗ trợ? Liên hệ chúng tôi:</p>
                         <p>
-                            📧 <a href="mailto:support@balancoffee.com" className="text-coffee-dark hover:underline">support@balancoffee.com</a>
+                            📧 <a href="mailto:support@balancoffeeroastery.com.vn" className="text-coffee-dark hover:underline">support@balancoffeeroastery.com.vn</a>
                             {' | '}
                             📞 <a href="tel:02812345678" className="text-coffee-dark hover:underline">(028) 1234 5678</a>
                         </p>

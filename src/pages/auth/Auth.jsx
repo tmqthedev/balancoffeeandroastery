@@ -1,15 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../../context/sharedAuth';
-import { useCart } from '../../constants/cartConstants';
+import useCartMerge from '../../hooks/useCartMerge';
 import { formatDateForBackend } from '../../utils/dateUtils';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
+import ContextConsumer from '../../components/common/ContextConsumer';
 
 const Auth = () => {
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => <AuthContent auth={auth} cart={cart} />}
+        </ContextConsumer>
+    );
+};
+
+const AuthContent = ({ auth, cart }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, register } = useAuth();
-    const { addToCart } = useCart(); // Updated import
+    const { login, register } = auth;
+    const { addToCart } = cart;
+    
+    // Safe cart merge hook - may need to be called manually if hooks fail
+    let forceCartMerge, hasLocalCart;
+    try {
+        const cartMerge = useCartMerge();
+        forceCartMerge = cartMerge.forceCartMerge;
+        hasLocalCart = cartMerge.hasLocalCart;
+    } catch (error) {
+        console.error('❌ useCartMerge failed:', error);
+        forceCartMerge = () => Promise.resolve({ success: false });
+        hasLocalCart = () => false;
+    }
     
     // Determine initial mode based on URL
     const initialMode = location.pathname === '/register' ? 'register' : 'login';
@@ -37,6 +58,7 @@ const Auth = () => {
     const [error, setError] = useState('');
     const [registerErrors, setRegisterErrors] = useState({});
     const [buyNowProduct, setBuyNowProduct] = useState(null);
+    const [cartMergeMessage, setCartMergeMessage] = useState('');
 
     const from = location.state?.from?.pathname || '/';
 
@@ -145,6 +167,32 @@ const Auth = () => {
             
             await login(loginData.email, loginData.password, loginData.remember);
             console.log('✅ Auth: Login successful');
+            
+            // Force merge local cart after successful login
+            console.log('🔄 Auth: Checking for local cart to merge after login');
+            if (hasLocalCart()) {
+                console.log('📦 Auth: Found local cart, forcing merge to user account');
+                try {
+                    // Add a delay to ensure authentication state is fully propagated
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    const mergeResult = await forceCartMerge();
+                    console.log('📦 Auth: Cart merge result:', mergeResult);
+                    
+                    if (mergeResult.success && mergeResult.merged > 0) {
+                        console.log(`✅ Auth: Successfully merged ${mergeResult.merged} items from local cart`);
+                        setCartMergeMessage(`✅ Đã thêm ${mergeResult.merged} sản phẩm từ giỏ hàng tạm thời vào tài khoản của bạn!`);
+                        // Clear message after 5 seconds
+                        setTimeout(() => setCartMergeMessage(''), 5000);
+                    } else {
+                        console.error('❌ Auth: Cart merge failed:', mergeResult.error);
+                    }
+                } catch (mergeError) {
+                    console.error('❌ Auth: Cart merge error:', mergeError);
+                }
+            } else {
+                console.log('❌ Auth: No local cart found to merge');
+            }
             
             // If there's a buy now product, add it to cart
             if (buyNowProduct) {
@@ -272,6 +320,32 @@ const Auth = () => {
             } else {
                 console.log('🎉 Auth: Registration completed without verification required');
                 
+                // Force merge local cart to user cart after successful registration
+                console.log('🔄 Auth: Checking for local cart to merge after registration');
+                if (hasLocalCart()) {
+                    console.log('📦 Auth: Found local cart, forcing merge to user account');
+                    try {
+                        // Add a delay to ensure authentication state is fully propagated
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        
+                        const mergeResult = await forceCartMerge();
+                        console.log('📦 Auth: Cart merge result:', mergeResult);
+                        
+                        if (mergeResult.success && mergeResult.merged > 0) {
+                            console.log(`✅ Auth: Successfully merged ${mergeResult.merged} items from local cart`);
+                            setCartMergeMessage(`✅ Đã thêm ${mergeResult.merged} sản phẩm từ giỏ hàng tạm thời vào tài khoản của bạn!`);
+                            // Clear message after 5 seconds
+                            setTimeout(() => setCartMergeMessage(''), 5000);
+                        } else {
+                            console.error('❌ Auth: Cart merge failed:', mergeResult.error);
+                        }
+                    } catch (mergeError) {
+                        console.error('❌ Auth: Cart merge error:', mergeError);
+                    }
+                } else {
+                    console.log('❌ Auth: No local cart found to merge');
+                }
+                
                 // If there's a buy now product, add it to cart
                 if (buyNowProduct) {
                     console.log('🛒 Auth: Adding buy now product to cart after registration');
@@ -287,8 +361,8 @@ const Auth = () => {
                         console.log('📦 Auth: Product to add:', productToAdd);
                         console.log('📦 Auth: Quantity:', buyNowProduct.quantity);
                         
-                        // Add a small delay to ensure authentication state is updated
-                        console.log('⏳ Auth: Waiting for authentication state to update...');
+                        // Add a small delay to ensure cart merge is complete
+                        console.log('⏳ Auth: Waiting for cart merge to complete...');
                         await new Promise(resolve => setTimeout(resolve, 200));
                         
                         const cartResult = await addToCart(productToAdd, buyNowProduct.quantity);
@@ -333,6 +407,7 @@ const Auth = () => {
         setMode(newMode);
         setError('');
         setRegisterErrors({});
+        setCartMergeMessage('');
     };
 
     return (
@@ -405,6 +480,18 @@ const Auth = () => {
 
                     {/* Forms Container */}
                     <div className="bg-brand-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                        {/* Cart Merge Success Message */}
+                        {cartMergeMessage && (
+                            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    <p className="text-sm text-green-700">{cartMergeMessage}</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Error Message */}
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -889,7 +976,14 @@ const Auth = () => {
             </div>
         </>
     );
-};
+}; // Closing AuthContent
 
-export default Auth;
+// Wrap với ErrorBoundary để catch hook errors
+const AuthWithErrorBoundary = () => (
+    <ErrorBoundary showErrorDetails={true}>
+        <Auth />
+    </ErrorBoundary>
+);
+
+export default AuthWithErrorBoundary;
 

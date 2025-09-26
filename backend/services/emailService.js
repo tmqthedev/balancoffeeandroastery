@@ -162,7 +162,7 @@ class EmailService {
                             
                             <p>Nếu bạn gặp khó khăn trong việc xác thực email, vui lòng liên hệ với chúng tôi:</p>
                             <ul>
-                                <li>📧 Email: support@balancoffee.com</li>
+                                <li>📧 Email: support@balancoffeeroastery.com.vn</li>
                                 <li>📞 Điện thoại: (028) 1234 5678</li>
                                 <li>💬 Live Chat: Trên website của chúng tôi</li>
                             </ul>
@@ -240,7 +240,7 @@ class EmailService {
                             
                             <p>Nếu bạn gặp khó khăn, vui lòng liên hệ với chúng tôi qua:</p>
                             <ul>
-                                <li>📧 Email: support@balancoffee.com</li>
+                                <li>📧 Email: support@balancoffeeroastery.com.vn</li>
                                 <li>📞 Điện thoại: (028) 1234 5678</li>
                             </ul>
                         </div>
@@ -362,9 +362,9 @@ class EmailService {
                             
                             <p>Nếu bạn có bất kỳ câu hỏi nào về đơn hàng, vui lòng liên hệ với chúng tôi:</p>
                             <ul>
-                                <li>📧 Email: support@balancoffee.com</li>
+                                <li>📧 Email: support@balancoffeeroastery.com.vn</li>
                                 <li>📞 Điện thoại: (028) 1234 5678</li>
-                                <li>🌐 Website: https://balancoffee.com</li>
+                                <li>🌐 Website: https://balancoffeeroastery.com.vn</li>
                             </ul>
                         </div>
                         
@@ -396,7 +396,7 @@ class EmailService {
             }
 
             // Multiple admin emails can be configured
-            const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || 'admin@balancoffee.com').split(',').map(email => email.trim());
+            const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || 'admin@balancoffeeroastery.com.vn').split(',').map(email => email.trim());
             
             const formatCurrency = (amount) => {
                 return new Intl.NumberFormat('vi-VN', {
@@ -536,7 +536,7 @@ class EmailService {
                 return { success: false, error: 'Email service not configured' };
             }
 
-            const adminEmail = process.env.ADMIN_EMAIL || 'admin@balancoffee.com';
+            const adminEmail = process.env.ADMIN_EMAIL || 'admin@balancoffeeroastery.com.vn';
             
             const mailOptions = {
                 from: `"Balan Coffee System" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,

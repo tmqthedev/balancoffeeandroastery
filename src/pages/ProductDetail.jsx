@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useCart } from '../constants/cartConstants';
-import { useAuth } from '../context/sharedAuth';
+import { useAuth } from '../constants/authConstants';
 import { formatVND } from '../utils/currency';
 
 // Configure axios defaults
@@ -22,6 +22,7 @@ const ProductDetail = () => {
     const [quantity, setQuantity] = useState(1);
     const [selectedWeight, setSelectedWeight] = useState('');
     const [addingToCart, setAddingToCart] = useState(false);
+    const [addToCartSuccess, setAddToCartSuccess] = useState(false);
 
     // Get price based on selected weight from product data
     const getCurrentPrice = () => {
@@ -112,6 +113,7 @@ const ProductDetail = () => {
         if (!product) return;
         
         setAddingToCart(true);
+        setAddToCartSuccess(false);
         try {
             // Create product object with selected options
             const productToAdd = {
@@ -120,10 +122,19 @@ const ProductDetail = () => {
                 price: getCurrentPrice(), // Use current price based on weight
                 id: product.id || product._id
             };
-            await addToCart(productToAdd, quantity);
-            // Show success message or redirect
+            
+            console.log('🛒 ProductDetail: Adding to cart:', productToAdd);
+            const result = await addToCart(productToAdd, quantity);
+            console.log('✅ ProductDetail: Add to cart result:', result);
+            
+            if (result && result.success) {
+                setAddToCartSuccess(true);
+                // Hide success message after 3 seconds
+                setTimeout(() => setAddToCartSuccess(false), 3000);
+            }
         } catch (error) {
-            console.error('Failed to add to cart:', error);
+            console.error('❌ ProductDetail: Failed to add to cart:', error);
+            alert('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
         } finally {
             setAddingToCart(false);
         }
@@ -443,6 +454,18 @@ const ProductDetail = () => {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Success Message */}
+                                {addToCartSuccess && (
+                                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                                        <div className="flex items-center">
+                                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-sm font-medium">✅ Đã thêm sản phẩm vào giỏ hàng!</span>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="space-y-3">
                                     <button

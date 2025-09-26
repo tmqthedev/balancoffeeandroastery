@@ -18,6 +18,8 @@ const Blog = React.lazy(() => import('../pages/Blog'));
 const BlogPost = React.lazy(() => import('../pages/BlogPost'));
 const About = React.lazy(() => import('../pages/About'));
 const Contact = React.lazy(() => import('../pages/Contact'));
+const Privacy = React.lazy(() => import('../pages/Privacy'));
+const Terms = React.lazy(() => import('../pages/Terms'));
 const Auth = React.lazy(() => import('../pages/auth/Auth'));
 const VerifyEmail = React.lazy(() => import('../pages/auth/VerifyEmail'));
 const ForgotPassword = React.lazy(() => import('../pages/auth/ForgotPassword'));
@@ -42,7 +44,11 @@ const PublicRoutes = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/contact" element={<Contact />} />{/* Auth Routes */}
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/chinh-sach-bao-mat" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/dieu-khoan-su-dung" element={<Terms />} />{/* Auth Routes */}
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
         <Route path="/auth" element={<Auth />} />

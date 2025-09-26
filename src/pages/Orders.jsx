@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../context/sharedAuth';
+import { useAuth } from '../constants/authConstants';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 

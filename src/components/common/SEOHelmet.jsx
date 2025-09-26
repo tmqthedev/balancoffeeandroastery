@@ -18,7 +18,7 @@ const SEOHelmet = ({
   noIndex = false,
   noFollow = false
 }) => {
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://balancoffee.com';
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://balancoffeeroastery.com.vn';
   const finalCanonicalUrl = canonicalUrl || currentUrl;
   const finalOgUrl = ogUrl || currentUrl;
   const finalOgTitle = ogTitle || title;
@@ -33,8 +33,8 @@ const SEOHelmet = ({
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Balan Coffee & Roastery",
-    "url": "https://balancoffee.com",
-    "logo": `https://balancoffee.com${ogImage}`,
+    "url": "https://balancoffeeroastery.com.vn",
+    "logo": `https://balancoffeeroastery.com.vn${ogImage}`,
     "description": description,
     "address": {
       "@type": "PostalAddress",
@@ -47,7 +47,7 @@ const SEOHelmet = ({
       "@type": "ContactPoint",
       "telephone": "+84-123-456-789",
       "contactType": "customer service",
-      "email": "info@balancoffee.com"
+      "email": "info@balancoffeeroastery.com.vn"
     },
     "sameAs": [
       "https://facebook.com/balancoffee",
@@ -68,7 +68,7 @@ const SEOHelmet = ({
       {/* Open Graph Meta Tags */}
       <meta property="og:title" content={finalOgTitle} />
       <meta property="og:description" content={finalOgDescription} />
-      <meta property="og:image" content={`https://balancoffee.com${ogImage}`} />
+      <meta property="og:image" content={`https://balancoffeeroastery.com.vn${ogImage}`} />
       <meta property="og:url" content={finalOgUrl} />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Balan Coffee & Roastery" />
@@ -76,10 +76,10 @@ const SEOHelmet = ({
 
       {/* Twitter Card Meta Tags */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@balancoffee" />
+      <meta name="twitter:site" content="@balancoffeeroastery" />
       <meta name="twitter:title" content={finalTwitterTitle} />
       <meta name="twitter:description" content={finalTwitterDescription} />
-      <meta name="twitter:image" content={`https://balancoffee.com${finalTwitterImage}`} />
+      <meta name="twitter:image" content={`https://balancoffeeroastery.com.vn${finalTwitterImage}`} />
 
       {/* Structured Data */}
       <script type="application/ld+json">
