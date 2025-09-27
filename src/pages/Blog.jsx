@@ -5,7 +5,7 @@ import SEOHelmet from '../components/common/SEOHelmet';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import { LoadingSpinner, BlogCardSkeleton, ListSkeleton } from '../components/common/LoadingComponents';
 import OptimizedImage from '../components/common/OptimizedImage';
-import { useSafeDebounce, useSafeIntersectionObserver } from '../hooks/useSafeHooks';
+// Removed useSafeHooks - using native React hooks instead
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -20,7 +20,18 @@ const Blog = () => {
   const API_BASE_URL = '/api';
   
   // Performance optimization
-  const debouncedSearchTerm = useSafeDebounce(searchTerm, 300);
+  // Native debounce implementation
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
   const fetchCategories = useCallback(async () => {
     try {

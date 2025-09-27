@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import SEOHelmet from '../components/common/SEOHelmet';
 import { useCart } from '../constants/cartConstants';
-import { useSafeDebounce, useSafeSearch, useSafeIntersectionObserver } from '../hooks/useSafeHooks';
+// Removed useSafeHooks imports - using native React hooks instead
 import { LoadingSpinner, ProductCardSkeleton } from '../components/common/LoadingComponents';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
@@ -60,18 +60,43 @@ const Products = () => {
     useCart();
 
     // Performance hooks - using safe versions
-    const debouncedSearch = useSafeDebounce(filters.search, 300);
-    const { searchResults, isSearching } = useSafeSearch(debouncedSearch, products);
-
-    // Intersection observer để lazy load content
-    const [shouldLoadContent, setShouldLoadContent] = useState(false);
-    const [setContentRef, entry] = useSafeIntersectionObserver({ threshold: 0.1 });
+    // Native debounce implementation
+    const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
     
     useEffect(() => {
-        if (entry?.isIntersecting) {
-            setShouldLoadContent(true);
+        const handler = setTimeout(() => {
+            setDebouncedSearch(filters.search);
+        }, 300);
+        
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [filters.search]);
+    
+    // Native search implementation
+    const searchResults = useMemo(() => {
+        if (!debouncedSearch || !debouncedSearch.trim()) {
+            return products;
         }
-    }, [entry]);
+        
+        return products.filter(item => {
+            if (!item) return false;
+            const searchText = JSON.stringify(item).toLowerCase();
+            return searchText.includes(debouncedSearch.toLowerCase());
+        });
+    }, [debouncedSearch, products]);
+    
+    const isSearching = false; // Simplified for now
+
+    // Intersection observer để lazy load content - temporarily disabled
+    const [shouldLoadContent, setShouldLoadContent] = useState(true); // Always load for now
+    // const [setContentRef, entry] = useSafeIntersectionObserver({ threshold: 0.1 });
+    
+    // useEffect(() => {
+    //     if (entry?.isIntersecting) {
+    //         setShouldLoadContent(true);
+    //     }
+    // }, [entry]);
 
     // Tab change handler (used by desktop & mobile tab buttons)
     const handleTabChange = useCallback((tabId) => {

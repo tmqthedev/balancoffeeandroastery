@@ -1,11 +1,24 @@
 // Constants and utility functions for CartContext
 import { useContext } from 'react';
-import { CartContext } from '../context/SharedContexts';
+import { CartContext } from '../context/CartContext';
 
 export { CartContext };
 
 export const useCart = () => {
-    const context = useContext(CartContext);
+    try {
+        const context = useContext(CartContext);
+        
+        // If context is null or undefined, use fallback
+        if (context === null || context === undefined) {
+            console.warn('❌ CartContext is not available - component may be outside CartProvider');
+            return getCartFallback();
+        }
+        
+        return context;
+    } catch (error) {
+        console.error('❌ useCart error:', error);
+        return getCartFallback();
+    }
     
     // If context is null or undefined, use fallback
     if (context === null || context === undefined) {

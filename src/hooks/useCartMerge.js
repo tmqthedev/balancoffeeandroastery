@@ -7,8 +7,12 @@ import { useCart } from '../constants/cartConstants';
  * This ensures that items in localStorage cart are merged to user cart after authentication
  */
 export const useCartMerge = () => {
-    const { isAuthenticated } = useAuth();
-    const { mergeLocalCartToUserCart } = useCart();
+    // Get context values with safe fallbacks
+    const auth = useAuth();
+    const cart = useCart();
+    
+    const { isAuthenticated } = auth || { isAuthenticated: false };
+    const { mergeLocalCartToUserCart } = cart || { mergeLocalCartToUserCart: null };
 
     /**
      * Force merge local cart to user cart

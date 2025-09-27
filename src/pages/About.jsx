@@ -181,37 +181,41 @@ const About = () => {
         </section>
 
         {/* Timeline Section */}
-        <section className="py-20 bg-white">
+        <section className="py-12 md:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-8 md:mb-16">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
                 Hành trình phát triển
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-lg md:text-xl text-gray-600">
                 Những cột mốc quan trọng trong lịch sử phát triển
               </p>
             </div>
 
             <div className="relative">
-              {/* Timeline line */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-primary/20"></div>              
+              {/* Timeline line - hidden on mobile, visible on desktop */}
+              <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-brand-primary/20"></div>
+              {/* Mobile timeline line - vertical line on left */}
+              <div className="md:hidden absolute left-4 top-0 w-0.5 h-full bg-brand-primary/20"></div>
+              
               {milestones.map((milestone, index) => (
-                <div key={milestone.year} className={`relative flex items-center mb-12 ${
-                  index % 2 === 0 ? 'justify-start' : 'justify-end'
+                <div key={milestone.year} className={`relative mb-8 md:mb-12 ${
+                  // Desktop: alternating layout, Mobile: all items aligned left
+                  'md:flex md:items-center ' + (index % 2 === 0 ? 'md:justify-start' : 'md:justify-end')
                 }`}>
                   {/* Timeline dot */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-brand-primary rounded-full border-4 border-white shadow-lg z-10"></div>
+                  <div className="absolute w-3 h-3 md:w-4 md:h-4 bg-brand-primary rounded-full border-2 md:border-4 border-white shadow-lg z-10 left-3 md:left-1/2 md:transform md:-translate-x-1/2 top-2"></div>
                   
                   {/* Content */}
-                  <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-right' : 'pl-8'}`}>
-                    <div className="bg-cream-50 p-6 rounded-lg shadow-md">
-                      <div className="text-2xl font-bold text-brand-primary mb-2">
+                  <div className={`ml-8 md:ml-0 md:w-5/12 ${index % 2 === 0 ? 'md:pr-8 md:text-right' : 'md:pl-8'}`}>
+                    <div className="bg-cream-50 p-4 md:p-6 rounded-lg shadow-md">
+                      <div className="text-lg md:text-2xl font-bold text-brand-primary mb-1 md:mb-2">
                         {milestone.year}
                       </div>
-                      <h3 className="text-xl text-gray-900 mb-2 italic">
+                      <h3 className="text-base md:text-xl text-gray-900 mb-1 md:mb-2 italic">
                         {milestone.title}
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-sm md:text-base text-gray-600 leading-relaxed">
                         {milestone.description}
                       </p>
                     </div>

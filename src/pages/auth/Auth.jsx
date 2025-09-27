@@ -20,7 +20,7 @@ const AuthContent = ({ auth, cart }) => {
     const { login, register } = auth;
     const { addToCart } = cart;
     
-    // Safe cart merge hook - may need to be called manually if hooks fail
+    // Safe cart merge hook with error handling
     let forceCartMerge, hasLocalCart;
     try {
         const cartMerge = useCartMerge();

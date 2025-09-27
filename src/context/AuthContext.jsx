@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { createContext, useState, useMemo, useEffect } from 'react';
 import { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { AuthContext } from './SharedContexts';
 
-// Re-export for backward compatibility
-export { AuthContext };
+// Create AuthContext directly
+export const AuthContext = createContext(null);
 
 // Configure axios defaults
 const API_BASE_URL = '/api';

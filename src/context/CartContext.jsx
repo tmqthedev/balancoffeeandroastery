@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useMemo, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import { CartContext } from './SharedContexts';
 
-// Re-export for backward compatibility  
-export { CartContext };
+// Create CartContext directly
+export const CartContext = createContext(null);
 
 // Configure axios for cart API
 const API_BASE_URL = '/api';
@@ -342,6 +341,11 @@ export const CartProvider = ({ children }) => {
                 } catch (apiError) {
                     console.error('❌ CartContext: API call failed:', apiError);
                     
+                    // If 401, user might not be properly authenticated - fallback to local
+                    if (apiError.response?.status === 401) {
+                        console.log('🔐 CartContext: 401 Unauthorized - treating as guest user');
+                    }
+                    
                     // Fallback: Remove from local state if API fails with variant matching
                     console.log('🔄 CartContext: Falling back to local removal due to API error');
                     const newItems = cartItems.filter(item => {
@@ -350,12 +354,14 @@ export const CartProvider = ({ children }) => {
                         // Remove item if it matches both product and variant
                         return !(isSameProduct && isSameVariant);
                     });
+                    
                     setCartItems(newItems);
+                    localStorage.setItem('cart', JSON.stringify(newItems));
+                    console.log('✅ CartContext: Local fallback removal successful');
                     
-                    // Don't update localStorage for authenticated users unless explicitly needed
-                    // This is just for immediate UI feedback
-                    
-                    throw apiError; // Still throw the original error for proper error handling
+                    // Don't throw error for cart operations - just show a warning
+                    console.warn('⚠️ CartContext: Removed locally, but server sync failed');
+                    return { success: true }; // Return success since local operation worked
                 }
             } else {
                 console.log('👤 CartContext: Removing locally');
@@ -399,6 +405,9 @@ export const CartProvider = ({ children }) => {
             
             if (isAuthenticated) {
                 console.log('🔐 CartContext: Updating quantity via API');
+                console.log('🔑 CartContext: Auth token:', localStorage.getItem('authToken') ? 'exists' : 'missing');
+                console.log('👤 CartContext: isAuthenticated:', isAuthenticated);
+                
                 // For authenticated users, call API
                 try {
                     const response = await api.put(`/cart/items/${productId}`, { 
@@ -416,6 +425,12 @@ export const CartProvider = ({ children }) => {
                     }
                 } catch (apiError) {
                     console.error('❌ CartContext: API call failed:', apiError);
+                    
+                    // If 401, user might not be properly authenticated - fallback to local
+                    if (apiError.response?.status === 401) {
+                        console.log('🔐 CartContext: 401 Unauthorized - treating as guest user');
+                    }
+                    
                     // Fallback to local update for immediate feedback with variant matching
                     console.log('🔄 CartContext: Falling back to local update');
                     const newItems = cartItems.map(item => {
@@ -427,8 +442,14 @@ export const CartProvider = ({ children }) => {
                         }
                         return item;
                     });
+                    
                     setCartItems(newItems);
-                    throw apiError;
+                    localStorage.setItem('cart', JSON.stringify(newItems));
+                    console.log('✅ CartContext: Local fallback update successful');
+                    
+                    // Don't throw error for cart updates - just show a warning
+                    console.warn('⚠️ CartContext: Updated locally, but server sync failed');
+                    return; // Exit early, don't re-throw
                 }
             } else {
                 console.log('👤 CartContext: Updating quantity locally');

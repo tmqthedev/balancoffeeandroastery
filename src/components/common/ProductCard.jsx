@@ -4,16 +4,12 @@ import { Link } from 'react-router-dom';
 import { highlightSearchTerm } from '../../utils/searchUtils';
 import { formatVND } from '../../utils/currency';
 import OptimizedImage from './OptimizedImage';
-import { useSafeIntersectionObserver } from '../../hooks/useSafeHooks';
+// Removed useSafeIntersectionObserver - using standard approach
 
 const ProductCard = memo(({ product, searchTerm = '' }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [setRef, entry] = useSafeIntersectionObserver({
-        threshold: 0.1,
-        rootMargin: '50px'
-    });
-
-    const isVisible = entry?.isIntersecting;
+    // Simplified - always visible (removed intersection observer)
+    const isVisible = true;
 
     const handleImageLoad = useCallback(() => {
         setImageLoaded(true);
@@ -123,7 +119,7 @@ const ProductCard = memo(({ product, searchTerm = '' }) => {
     };
 
     return (
-        <div ref={setRef} className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-primary/40 group">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-brand-primary/40 group">
             <Link to={`/products/${product._id || product.id}`} className="block">
                 {/* Product Image */}
                 <div className="relative h-48 bg-gray-100 overflow-hidden flex items-center justify-center">
