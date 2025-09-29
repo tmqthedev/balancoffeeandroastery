@@ -40,6 +40,18 @@ const About = () => {
       image: "/images/team/DuongChiCong.jpg",
       description: ""
     },
+    {
+      name: "Từ Châu Giang",
+      position: "Branding & Digital Marketing Manager",
+      image: "/images/team/TuChauGiang.jpg",
+      description: ""
+    },
+    {
+      name: "Nguyễn Quang Thanh",
+      position: "Sales Manager",
+      image: "/images/team/NguyenQuangThanh.jpg",
+      description: ""
+    }
   ];
 
   const milestones = [
