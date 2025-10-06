@@ -31,13 +31,7 @@ const About = () => {
     {
       name: "Trần Thái Thiện",
       position: "Production Manager",
-      image: "/images/team/TranThaiThien.png",
-      description: ""
-    },
-    {
-      name: "Dương Chí Công",
-      position: "Branding & Digital Marketing Manager",
-      image: "/images/team/DuongChiCong.jpg",
+      image: "/images/team/TranThaiThien.jpg",
       description: ""
     },
     {
@@ -255,7 +249,7 @@ const About = () => {
                     <img
                       src={member.image}
                       alt={member.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="p-6">

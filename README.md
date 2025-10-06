@@ -71,7 +71,7 @@ npm run dev
 ### Cài đặt frontend
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/balancoffeeandroastery.git
+git clone https://github.com/tmqthedev/balancoffeeandroastery.git
 cd balancoffeeandroastery
 
 # Cài đặt dependencies
