@@ -60,12 +60,17 @@ export default defineConfig({
   
   build: {
     outDir: 'dist',
-    target: 'es2015',
+    target: 'es2020',
+    cssTarget: 'chrome80',
     minify: 'terser',
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
+    assetsDir: 'assets',
+    assetsInlineLimit: 4096,
+    copyPublicDir: true,
+    reportCompressedSize: true,
     
-    // Tối ưu terser
+    // Tối ưi terser
     terserOptions: {
       compress: {
         drop_console: true,
@@ -123,17 +128,7 @@ export default defineConfig({
     },
     
     // CSS code splitting
-    cssCodeSplit: true,
-    
-    // Asset optimization for Vercel
-    assetsDir: 'assets',
-    assetsInlineLimit: 4096, // Inline assets smaller than 4kb
-    
-    // Copy public assets to build directory
-    copyPublicDir: true,
-    
-    // Build info
-    reportCompressedSize: true
+    cssCodeSplit: true
   },
 
   // Optimize deps
