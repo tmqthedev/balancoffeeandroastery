@@ -210,22 +210,35 @@ if (process.env.VERCEL) {
     process.exit(0);
   });
 
-  // Start server for local development
-  const startServer = async () => {
-    try {
-      await connectDB();
-      isConnected = true;
-      
-      app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-        console.log(`📍 Health check: http://localhost:${PORT}/health`);
-        console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-      });
-    } catch (error) {
-      console.error('❌ Failed to start server:', error);
-      process.exit(1);
-    }
-  };
+  // Start server for local development or export for Vercel
+  if (process.env.NODE_ENV !== 'production') {
+    const startServer = async () => {
+      try {
+        await connectDB();
+        isConnected = true;
+        
+        app.listen(PORT, () => {
+          console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+          console.log(`📍 Health check: http://localhost:${PORT}/health`);
+          console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+        });
+      } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+      }
+    };
 
-  startServer();
+    startServer();
+  } else {
+    // For Vercel serverless deployment
+    connectDB().then(() => {
+      isConnected = true;
+      console.log('✅ Database connected for Vercel deployment');
+    }).catch(error => {
+      console.error('❌ Database connection failed:', error);
+    });
+  }
 }
+
+// Export the Express app for Vercel
+module.exports = app;

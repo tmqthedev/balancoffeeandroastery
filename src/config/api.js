@@ -15,8 +15,8 @@ const config = {
     }
   },
   production: {
-    // Change this to your actual backend Vercel URL
-    API_BASE_URL: 'https://your-backend-api.vercel.app',
+    // Same domain deployment - use relative paths
+    API_BASE_URL: '',
     API_ENDPOINTS: {
       products: '/api/products',
       users: '/api/users', 
