@@ -11,15 +11,53 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB Connection with Native Driver for Production
-const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery.@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
+const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
 
-const client = new MongoClient(uri, {
+console.log('🔗 MongoDB Configuration:');
+console.log('   Environment:', process.env.NODE_ENV || 'development');
+console.log('   Using ENV URI:', !!process.env.MONGODB_URI);
+console.log('   URI Domain:', uri.split('@')[1]?.split('/')[0] || 'not found');
+
+// MongoDB Client with optimized configuration for production
+const clientOptions = {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
-});
+  },
+  // Connection timeouts - increased for better reliability
+  connectTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 30000,
+  
+  // Connection pool settings optimized for Vercel serverless
+  maxPoolSize: process.env.NODE_ENV === 'production' ? 5 : 10,
+  minPoolSize: 1,
+  maxIdleTimeMS: 30000,
+  
+  // Retry settings
+  retryWrites: true,
+  retryReads: true,
+  
+  // Heartbeat settings
+  heartbeatFrequencyMS: 10000,
+  
+  // Compression for better performance
+  compressors: ['zlib'],
+  
+  // SSL/TLS settings - relaxed for development, strict for production
+  ...(process.env.NODE_ENV === 'development' ? {
+    tls: true,
+    tlsAllowInvalidCertificates: true,
+    tlsAllowInvalidHostnames: true
+  } : {
+    tls: true,
+    tlsAllowInvalidCertificates: false,
+    tlsAllowInvalidHostnames: false
+  })
+};
+
+const client = new MongoClient(uri, clientOptions);
 
 // Global database connection flag
 let isConnected = false;
@@ -196,9 +234,6 @@ app.use((req, res, next) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Maps /backend/uploads/products/file.jpg to backend/uploads/products/file.jpg  
 app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Health check endpoint with database status
-app.get('/health', createHealthCheck());
 
 // Root endpoint - API info
 app.get('/', (req, res) => {
