@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files (use Vercel dashboard)
+.env*
+!.env.example
+
+# Backend (deploy separately)
+backend/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Build artifacts (auto-generated)
+dist/
+coverage/
+.nyc_output/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Logs
+logs/
+*.log

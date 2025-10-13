@@ -1,11 +1,11 @@
 // Authentication Service - API Integration
-const API_BASE_URL = '/api';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api.js';
 
 class AuthService {
   // Register new user
   async register(userData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ class AuthService {
   // Login user
   async login(email, password, remember = false) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ class AuthService {
       const token = localStorage.getItem('authToken');
       
       if (token) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
+        await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -90,7 +90,7 @@ class AuthService {
   // Reset password
   async resetPassword(email) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ class AuthService {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -153,7 +153,7 @@ class AuthService {
         return { success: false, user: null };
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }

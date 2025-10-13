@@ -1,5 +1,5 @@
 // Product Service - API Integration
-const API_BASE_URL = '/api';
+import { buildApiUrl, API_ENDPOINTS } from '../config/api.js';
 
 class ProductService {
   // Get all products
@@ -13,7 +13,7 @@ class ProductService {
       if (options.sortBy) params.append('sortBy', options.sortBy);
       if (options.order) params.append('order', options.order);
 
-      const response = await fetch(`${API_BASE_URL}/products?${params}`);
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.products)}?${params}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -36,7 +36,7 @@ class ProductService {
   // Get product by ID
   async getProduct(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/${id}`);
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.products)}/${id}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -65,7 +65,7 @@ class ProductService {
       if (options.limit) params.append('limit', options.limit);
       if (options.page) params.append('page', options.page);
 
-      const response = await fetch(`${API_BASE_URL}/products/search?${params}`);
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.products)}/search?${params}`);
 
       if (!response.ok) {
         throw new Error('Failed to search products');
@@ -87,7 +87,7 @@ class ProductService {
   // Get featured products
   async getFeaturedProducts(limit = 6) {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/featured?limit=${limit}`);
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.products)}/featured?limit=${limit}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch featured products');
@@ -114,7 +114,7 @@ class ProductService {
       if (options.sortBy) params.append('sortBy', options.sortBy);
       if (options.order) params.append('order', options.order);
 
-      const response = await fetch(`${API_BASE_URL}/products/category/${category}?${params}`);
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.products)}/category/${category}?${params}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch products by category');
@@ -136,7 +136,7 @@ class ProductService {
   // Get related products
   async getRelatedProducts(productId, limit = 4) {
     try {
-      const response = await fetch(`${API_BASE_URL}/products/${productId}/related?limit=${limit}`);
+      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.products)}/${productId}/related?limit=${limit}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch related products');
