@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../constants/authConstants';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ContextConsumer from '../components/common/ContextConsumer';
 
-const Orders = () => {
-  const { isAuthenticated } = useAuth();
+const OrdersContent = ({ auth }) => {
+  const { isAuthenticated } = auth;
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -485,6 +485,17 @@ const Orders = () => {
         </div>
       </div>
     </>
+  );
+};
+
+// Main component using ContextConsumer
+const Orders = () => {
+  return (
+    <ContextConsumer>
+      {({ auth }) => (
+        <OrdersContent auth={auth} />
+      )}
+    </ContextConsumer>
   );
 };
 

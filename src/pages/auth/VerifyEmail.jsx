@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../../constants/authConstants';
-import { useCart } from '../../constants/cartConstants';
 import { LoadingSpinner } from '../../components/common/Loading';
+import ContextConsumer from '../../components/common/ContextConsumer';
 
-const VerifyEmail = () => {
+const VerifyEmailContent = ({ auth, cart }) => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { loginWithToken } = useAuth();
-    const { addToCart } = useCart();
+    const { loginWithToken } = auth;
+    const { addToCart } = cart;
     
     const [verificationState, setVerificationState] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('');
@@ -255,6 +254,17 @@ const VerifyEmail = () => {
                 </div>
             </div>
         </>
+    );
+};
+
+// Main component using ContextConsumer
+const VerifyEmail = () => {
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => (
+                <VerifyEmailContent auth={auth} cart={cart} />
+            )}
+        </ContextConsumer>
     );
 };
 

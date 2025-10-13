@@ -1,12 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const Blog = require('../models/Blog');
+const {
+  getCollection,
+  toObjectId,
+  createDocument,
+  updateDocument,
+  paginateQuery,
+  buildSort,
+  handleDatabaseError,
+  validateRequired,
+  cleanData
+} = require('../middleware/mongoHelpers');
 
-console.log('📝 Blogs router loading with MongoDB support');
+console.log('📝 Backend: Blogs router loading');
 
 // Get all blogs with filtering, search and pagination
 router.get('/', async (req, res) => {
   try {
+    console.log('📝 Fetching blogs');
+    
     const {
       page = 1,
       limit = 6,
@@ -16,6 +28,9 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     console.log('📝 Blogs query params:', { page, limit, search, category, lang });
+
+    // Get blogs collection
+    const blogsCollection = getCollection(req, 'blogs');
 
     // Build filter object
     const filter = { status: 'published' };
@@ -46,27 +61,43 @@ router.get('/', async (req, res) => {
     // Build sort object (newest first)
     const sort = { publishedAt: -1, createdAt: -1 };
 
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    const totalBlogs = await Blog.countDocuments(filter);
-    const totalPages = Math.ceil(totalBlogs / limit);
+    // Calculate pagination using helper
+    const { skip, limit: actualLimit } = paginateQuery(page, limit);
+    const totalBlogs = await blogsCollection.countDocuments(filter);
+    const totalPages = Math.ceil(totalBlogs / actualLimit);
 
     console.log('📊 Blogs count:', totalBlogs);
 
     // Fetch blogs
-    const blogs = await Blog.find(filter)
+    const blogs = await blogsCollection
+      .find(filter)
       .sort(sort)
       .skip(skip)
-      .limit(Number(limit))
-      .select('title excerpt featuredImage category publishedAt author readingTime slug')
-      .lean();
+      .limit(actualLimit)
+      .project({ 
+        title: 1, 
+        excerpt: 1, 
+        featuredImage: 1, 
+        category: 1, 
+        publishedAt: 1, 
+        author: 1, 
+        readingTime: 1, 
+        slug: 1 
+      })
+      .toArray();
 
     console.log('📝 Blogs found:', blogs.length);
     
+    // Add id field for frontend compatibility
+    const blogsWithId = blogs.map(blog => ({
+      ...blog,
+      id: blog._id.toString()
+    }));
+    
     // Debug: Log first few blogs with their categories
-    if (blogs.length > 0) {
+    if (blogsWithId.length > 0) {
       console.log('🔍 Sample blog categories:');
-      blogs.slice(0, 2).forEach(blog => {
+      blogsWithId.slice(0, 2).forEach(blog => {
         console.log(`- Blog: ${blog.title}`);
         console.log(`  Category:`, blog.category);
         console.log(`  Category type:`, typeof blog.category);
@@ -74,7 +105,11 @@ router.get('/', async (req, res) => {
     } else if (category) {
       // If no results with filter, let's check what categories exist
       console.log('🔍 No results found. Checking all published blogs...');
-      const allBlogs = await Blog.find({ status: 'published' }, 'title category').limit(5).lean();
+      const allBlogs = await blogsCollection
+        .find({ status: 'published' })
+        .project({ title: 1, category: 1 })
+        .limit(5)
+        .toArray();
       allBlogs.forEach(blog => {
         console.log(`- Blog: ${blog.title}`);
         console.log(`  Category:`, blog.category);
@@ -84,7 +119,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       success: true,
-      blogs,
+      blogs: blogsWithId,
       pagination: {
         currentPage: Number(page),
         totalPages,
@@ -96,11 +131,7 @@ router.get('/', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error fetching blogs:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi tải danh sách blog',
-      error: error.message
-    });
+    return handleDatabaseError(error, res, 'Fetch blogs');
   }
 });
 
@@ -109,8 +140,14 @@ router.get('/categories', async (req, res) => {
   try {
     console.log('📁 Fetching blog categories...');
     
+    // Get blogs collection
+    const blogsCollection = getCollection(req, 'blogs');
+    
     // Get all published blogs and extract categories manually
-    const blogs = await Blog.find({ status: 'published' }, 'category').lean();
+    const blogs = await blogsCollection
+      .find({ status: 'published' })
+      .project({ category: 1 })
+      .toArray();
     
     const categoriesSet = new Set();
     blogs.forEach(blog => {
@@ -138,11 +175,7 @@ router.get('/categories', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error fetching blog categories:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi tải danh mục blog',
-      error: error.message
-    });
+    return handleDatabaseError(error, res, 'Fetch blog categories');
   }
 });
 
@@ -153,10 +186,13 @@ router.get('/:slug', async (req, res) => {
     
     console.log('📝 Fetching blog by slug:', slug);
 
-    const blog = await Blog.findOne({ 
+    // Get blogs collection
+    const blogsCollection = getCollection(req, 'blogs');
+
+    const blog = await blogsCollection.findOne({ 
       slug, 
       status: 'published' 
-    }).lean();
+    });
 
     if (!blog) {
       return res.status(404).json({
@@ -166,35 +202,39 @@ router.get('/:slug', async (req, res) => {
     }
 
     // Get related blogs (same category, excluding current blog)
-    const relatedBlogs = await Blog.find({
-      _id: { $ne: blog._id },
-      category: blog.category,
-      status: 'published'
-    })
-    .sort({ publishedAt: -1, createdAt: -1 })
-    .limit(3)
-    .select('title excerpt image category publishedAt slug')
-    .lean();
+    const relatedBlogs = await blogsCollection
+      .find({
+        _id: { $ne: blog._id },
+        category: blog.category,
+        status: 'published'
+      })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .limit(3)
+      .project({ title: 1, excerpt: 1, image: 1, category: 1, publishedAt: 1, slug: 1 })
+      .toArray();
 
     // Increment view count
-    await Blog.updateOne({ slug }, { $inc: { viewCount: 1 } });
+    await blogsCollection.updateOne({ slug }, { $inc: { viewCount: 1 } });
+
+    // Add id field for frontend compatibility
+    const blogWithId = { ...blog, id: blog._id.toString() };
+    const relatedBlogsWithId = relatedBlogs.map(blog => ({
+      ...blog,
+      id: blog._id.toString()
+    }));
 
     console.log('📝 Blog found:', blog.title);
     console.log('🔗 Related blogs:', relatedBlogs.length);
 
     res.json({
       success: true,
-      blog,
-      relatedBlogs
+      blog: blogWithId,
+      relatedBlogs: relatedBlogsWithId
     });
 
   } catch (error) {
     console.error('❌ Error fetching blog:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi tải bài viết',
-      error: error.message
-    });
+    return handleDatabaseError(error, res, 'Fetch blog by slug');
   }
 });
 

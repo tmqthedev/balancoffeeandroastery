@@ -3,9 +3,20 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { orderValidationRules } = require('../middleware/validation');
-const db = require('../config/database');
-const Order = require('../models/Order');
 const emailService = require('../services/emailService');
+const {
+  getCollection,
+  toObjectId,
+  createDocument,
+  updateDocument,
+  paginateQuery,
+  buildSort,
+  handleDatabaseError,
+  validateRequired,
+  cleanData
+} = require('../middleware/mongoHelpers');
+
+console.log('🛍️ Backend: Orders router loading');
 
 // Middleware to authenticate token (required for getting orders)
 const authenticateToken = (req, res, next) => {
@@ -43,35 +54,62 @@ const optionalAuth = (req, res, next) => {
  */
 router.post('/debug', async (req, res) => {
   try {
-    console.log('=== DEBUG ORDER CREATION ===');
+    console.log('🛍️ === DEBUG ORDER CREATION ===');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
 
-    console.log('Attempting to save order...');
-    const savedOrder = await testOrder.save();
-    console.log('Order saved successfully:', savedOrder._id);
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
+
+    // Create test order data
+    const testOrderData = {
+      orderNumber: `TEST-${Date.now()}`,
+      customerInfo: {
+        email: 'test@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        fullName: 'Test User',
+        phone: '0123456789'
+      },
+      shippingAddress: {
+        street: 'Test Street',
+        wardCommune: 'Test Ward',
+        district: 'Test District',
+        province: 'Test Province',
+        country: 'Việt Nam'
+      },
+      items: [{
+        productId: 'test-product',
+        productName: 'Test Coffee',
+        price: 100000,
+        quantity: 1,
+        subtotal: 100000
+      }],
+      subtotal: 100000,
+      total: 100000,
+      payment: {
+        method: 'cod',
+        status: 'pending'
+      },
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    console.log('🛍️ Attempting to save order...');
+    const result = await ordersCollection.insertOne(testOrderData);
+    console.log('✅ Order saved successfully:', result.insertedId);
     
     res.json({
       success: true,
       message: 'Debug order created successfully',
-      orderId: savedOrder._id
+      orderId: result.insertedId.toString(),
+      orderNumber: testOrderData.orderNumber
     });
     
   } catch (error) {
-    console.error('=== DEBUG ORDER ERROR ===');
+    console.error('❌ === DEBUG ORDER ERROR ===');
     console.error('Error details:', error);
-    console.error('Error message:', error.message);
-    if (error.errors) {
-      console.error('Validation errors:', Object.keys(error.errors));
-      for (const field in error.errors) {
-        console.error(`${field}: ${error.errors[field].message}`);
-      }
-    }
-    res.status(400).json({
-      success: false,
-      message: 'Debug order creation failed',
-      error: error.message,
-      details: error.errors
-    });
+    return handleDatabaseError(error, res, 'Debug order creation');
   }
 });
 
@@ -142,20 +180,32 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
       status: 'pending'
     };
 
-    console.log('Creating order:', orderNumber);
+    console.log('🛍️ Creating order:', orderNumber);
 
-    // Create order in database using Mongoose
-    const order = new Order(orderData);
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
 
     // Handle different payment methods
     if (paymentMethod === 'contact') {
       // For contact payment, set status to pending and send notification
-      order.payment.method = 'contact';
-      order.payment.status = 'pending';
-      await order.save();
+      orderData.payment.method = 'contact';
+      orderData.payment.status = 'pending';
+    } else if (paymentMethod === 'cod') {
+      orderData.payment.method = 'cod';
+      orderData.payment.status = 'pending';
+    }
 
-      console.log('✅ Contact payment order created successfully:', orderNumber);
+    // Create order document with timestamps
+    const orderDoc = createDocument(orderData);
+    
+    // Insert order into MongoDB
+    const result = await ordersCollection.insertOne(orderDoc);
+    const order = { ...orderDoc, _id: result.insertedId };
 
+    console.log('✅ Order created successfully:', orderNumber);
+
+    // Send email notifications based on payment method
+    if (paymentMethod === 'contact') {
       // Send email notifications for contact orders
       try {
         // Prepare email data
@@ -213,11 +263,18 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
       return res.status(201).json({
         success: true,
         message: 'Đơn hàng đã được tạo thành công. Chúng tôi sẽ liên hệ với bạn để hướng dẫn thanh toán.',
-        order: order.toObject()
+        order: {
+          _id: order._id.toString(),
+          orderNumber: order.orderNumber,
+          total: order.total,
+          status: order.status,
+          payment: order.payment,
+          createdAt: order.createdAt
+        }
       });
     }
 
-    // COD payment - order is ready
+    // COD payment or other payment methods - continue with email notifications
     console.log('✅ Order created successfully:', orderNumber);
 
     // Send email notifications
@@ -277,16 +334,19 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Đơn hàng đã được tạo thành công',
-      order: order.toObject()
+      order: {
+        _id: order._id.toString(),
+        orderNumber: order.orderNumber,
+        total: order.total,
+        status: order.status,
+        payment: order.payment,
+        createdAt: order.createdAt
+      }
     });
 
   } catch (error) {
-    console.error('Order creation error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Có lỗi xảy ra khi tạo đơn hàng',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('❌ Order creation error:', error);
+    return handleDatabaseError(error, res, 'Create order');
   }
 });
 
@@ -297,10 +357,15 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    console.log('🛍️ Getting orders');
+    
     const { page = 1, limit = 10, status } = req.query;
     const userId = req.user.userId;
 
-    console.log(`Getting orders for user ${userId}`);
+    console.log(`📋 Getting orders for user ${userId}`);
+
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
 
     // Build query conditions
     const conditions = { customerId: userId };
@@ -308,38 +373,44 @@ router.get('/', authenticateToken, async (req, res) => {
       conditions.status = status;
     }
 
-    // Get orders from MongoDB using Mongoose
-    const orders = await Order.find(conditions)
+    // Calculate pagination
+    const { skip, limit: actualLimit } = paginateQuery(page, limit);
+
+    // Get orders from MongoDB
+    const orders = await ordersCollection
+      .find(conditions)
       .sort({ createdAt: -1 }) // Newest first
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
+      .limit(actualLimit)
+      .skip(skip)
+      .toArray();
 
     // Get total count for pagination
-    const totalOrders = await Order.countDocuments(conditions);
+    const totalOrders = await ordersCollection.countDocuments(conditions);
 
-    console.log(`Found ${orders.length} orders for user ${userId}`);
+    // Add id field for frontend compatibility
+    const ordersWithId = orders.map(order => ({
+      ...order,
+      id: order._id.toString()
+    }));
+
+    console.log(`📋 Found ${orders.length} orders for user ${userId}`);
 
     res.json({
       success: true,
       data: {
-        orders: orders,
+        orders: ordersWithId,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
           total: totalOrders,
-          totalPages: Math.ceil(totalOrders / limit)
+          totalPages: Math.ceil(totalOrders / actualLimit)
         }
       }
     });
 
   } catch (error) {
-    console.error('Get orders error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Không thể lấy danh sách đơn hàng',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('❌ Get orders error:', error);
+    return handleDatabaseError(error, res, 'Get orders');
   }
 });
 
@@ -350,13 +421,18 @@ router.get('/', authenticateToken, async (req, res) => {
  */
 router.get('/:orderNumber', authenticateToken, async (req, res) => {
   try {
+    console.log('🛍️ Getting order by number');
+    
     const { orderNumber } = req.params;
     const userId = req.user.userId;
 
-    console.log(`Getting order ${orderNumber} for user ${userId}`);
+    console.log(`📋 Getting order ${orderNumber} for user ${userId}`);
+
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
 
     // Get order from MongoDB
-    const order = await Order.findOne({ orderNumber }).exec();
+    const order = await ordersCollection.findOne({ orderNumber });
 
     if (!order) {
       return res.status(404).json({
@@ -373,18 +449,17 @@ router.get('/:orderNumber', authenticateToken, async (req, res) => {
       });
     }
 
+    // Add id field for frontend compatibility
+    const orderWithId = { ...order, id: order._id.toString() };
+
     res.json({
       success: true,
-      data: order
+      data: orderWithId
     });
 
   } catch (error) {
-    console.error('Get order error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Không thể lấy thông tin đơn hàng',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('❌ Get order error:', error);
+    return handleDatabaseError(error, res, 'Get order by number');
   }
 });
 
@@ -395,15 +470,21 @@ router.get('/:orderNumber', authenticateToken, async (req, res) => {
  */
 router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
   try {
+    console.log('🛍️ Cancelling order');
+    
     const { orderNumber } = req.params;
     const userId = req.user.userId;
 
-    console.log(`Cancelling order ${orderNumber} for user ${userId}`);
+    console.log(`❌ Cancelling order ${orderNumber} for user ${userId}`);
+
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
 
     // Get order from MongoDB
-    const order = await Order.findOne({ orderNumber }).exec();
+    const order = await ordersCollection.findOne({ orderNumber });
 
     if (!order) {
+      console.log('❌ Order not found:', orderNumber);
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy đơn hàng'
@@ -412,6 +493,7 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
 
     // Check if user owns this order
     if (order.customerId !== userId && !req.user.isAdmin) {
+      console.log('❌ User not authorized to cancel order:', userId);
       return res.status(403).json({
         success: false,
         message: 'Không có quyền huỷ đơn hàng này'
@@ -420,34 +502,46 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
 
     // Check if order can be cancelled
     if (order.status === 'delivered' || order.status === 'cancelled') {
+      console.log('❌ Order cannot be cancelled, status:', order.status);
       return res.status(400).json({
         success: false,
         message: 'Không thể huỷ đơn hàng này'
       });
     }
 
-    // Update order status using Mongoose
-    order.status = 'cancelled';
-    order.cancellation = {
-      reason: req.body.reason || 'Khách hàng yêu cầu huỷ',
-      cancelledAt: new Date(),
-      cancelledBy: userId
+    // Update order status
+    const updateData = {
+      status: 'cancelled',
+      cancellation: {
+        reason: req.body.reason || 'Khách hàng yêu cầu huỷ',
+        cancelledAt: new Date(),
+        cancelledBy: userId
+      },
+      updatedAt: new Date()
     };
-    order.updateStatus('cancelled', req.body.reason || 'Khách hàng yêu cầu huỷ', userId);
-    await order.save();
 
+    const result = await ordersCollection.updateOne(
+      { orderNumber },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) {
+      console.log('❌ Failed to update order:', orderNumber);
+      return res.status(404).json({
+        success: false,
+        message: 'Không thể cập nhật đơn hàng'
+      });
+    }
+
+    console.log('✅ Order cancelled successfully:', orderNumber);
     res.json({
       success: true,
       message: 'Đơn hàng đã được huỷ thành công'
     });
 
   } catch (error) {
-    console.error('Cancel order error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Không thể huỷ đơn hàng',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('❌ Cancel order error:', error);
+    return handleDatabaseError(error, res, 'Cancel order');
   }
 });
 
@@ -458,19 +552,39 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
  */
 router.get('/public/:orderNumber', async (req, res) => {
   try {
+    console.log('🛍️ Getting public order');
+    
     const { orderNumber } = req.params;
 
-    console.log(`Getting public order details for ${orderNumber}`);
+    console.log(`🔍 Getting public order details for ${orderNumber}`);
 
-    // Get order from database
-    const order = await db.getOrder(orderNumber);
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
+
+    // Get order from MongoDB
+    const order = await ordersCollection.findOne(
+      { orderNumber },
+      { 
+        projection: {
+          orderNumber: 1,
+          total: 1,
+          status: 1,
+          'payment.status': 1,
+          'payment.method': 1,
+          createdAt: 1
+        }
+      }
+    );
 
     if (!order) {
+      console.log('❌ Public order not found:', orderNumber);
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy đơn hàng'
       });
     }
+
+    console.log('✅ Public order retrieved successfully:', orderNumber);
 
     // Return limited info for public access
     res.json({
@@ -479,19 +593,15 @@ router.get('/public/:orderNumber', async (req, res) => {
         orderNumber: order.orderNumber,
         total: order.total,
         status: order.status,
-        paymentStatus: order.paymentStatus,
-        paymentMethod: order.paymentMethod,
+        paymentStatus: order.payment?.status || 'pending',
+        paymentMethod: order.payment?.method || 'cod',
         createdAt: order.createdAt
       }
     });
 
   } catch (error) {
-    console.error('Get public order error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Không thể lấy thông tin đơn hàng',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+    console.error('❌ Get public order error:', error);
+    return handleDatabaseError(error, res, 'Get public order');
   }
 });
 
@@ -502,9 +612,20 @@ router.get('/public/:orderNumber', async (req, res) => {
  */
 router.get('/test/mongodb', async (req, res) => {
   try {
+    console.log('🛍️ Testing MongoDB connection');
+    
+    // Get orders collection
+    const ordersCollection = getCollection(req, 'orders');
+
     // Test MongoDB connection
-    const orderCount = await Order.countDocuments();
-    const recentOrders = await Order.find().sort({ createdAt: -1 }).limit(5);
+    const orderCount = await ordersCollection.countDocuments();
+    const recentOrders = await ordersCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .toArray();
+
+    console.log('✅ MongoDB connection test successful');
     
     res.json({
       success: true,
@@ -512,6 +633,7 @@ router.get('/test/mongodb', async (req, res) => {
       data: {
         totalOrders: orderCount,
         recentOrders: recentOrders.map(order => ({
+          id: order._id.toString(),
           orderNumber: order.orderNumber,
           status: order.status,
           total: order.total,
@@ -520,11 +642,8 @@ router.get('/test/mongodb', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'MongoDB connection failed',
-      error: error.message
-    });
+    console.error('❌ MongoDB connection test failed:', error);
+    return handleDatabaseError(error, res, 'Test MongoDB connection');
   }
 });
 

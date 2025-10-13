@@ -13,8 +13,7 @@
     "ecommerce",
     "nodejs",
     "express",
-    "mongodb",
-    "mongoose"
+    "mongodb"
   ],
   "author": "Balan Coffee & Roastery",
   "license": "ISC",
@@ -29,8 +28,7 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.18.0",
-    "mongoose": "^8.17.2",
+    "mongodb": "^6.20.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",

@@ -2,18 +2,22 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
-const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 const { validateRequest, addressValidationRules } = require('../middleware/validation');
-const db = require('../config/database');
+const { getCollection, toObjectId, handleDatabaseError } = require('../middleware/mongoHelpers');
 
 // Get user profile (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findOne({ 
-      _id: req.user.userId,
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+    
+    const user = await usersCollection.findOne({ 
+      _id: userId,
       status: 'active' 
-    }).select('-password');
+    }, { 
+      projection: { password: 0 } // Exclude password field
+    });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -38,8 +42,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get user profile error:', error);
-    res.status(500).json({ error: 'Failed to fetch user profile' });
+    console.error('❌ Get user profile error:', error);
+    return handleDatabaseError(error, res, 'fetch user profile');
   }
 });
 
@@ -91,7 +95,10 @@ router.put('/profile', authenticateToken, [
       return res.status(400).json({ error: 'Email cannot be updated for security reasons' });
     }
 
-    const user = await User.findById(req.user.userId);
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+    
+    const user = await usersCollection.findOne({ _id: userId });
     if (!user) {
       console.log('❌ User not found with ID:', req.user.userId);
       return res.status(404).json({ 
@@ -106,12 +113,15 @@ router.put('/profile', authenticateToken, [
       currentAddresses: user.addresses?.length || 0
     });
 
-    // Update basic profile info
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.phone = phone || undefined;
-    user.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
-    user.gender = gender || undefined;
+    // Prepare update data
+    const updateData = {
+      firstName,
+      lastName,
+      phone: phone || undefined,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      gender: gender || undefined,
+      updatedAt: new Date()
+    };
 
     // Update or create default address if address information is provided
     if (address || wardCommune || district || province) {
@@ -119,7 +129,7 @@ router.put('/profile', authenticateToken, [
       
       // FORCE CREATE NEW ADDRESS WITH PROPER STRUCTURE
       // Remove existing default address
-      user.addresses = user.addresses.filter(addr => !addr.isDefault);
+      const addresses = (user.addresses || []).filter(addr => !addr.isDefault);
       
       // Create completely new address with Vietnamese format
       const newAddress = {
@@ -138,7 +148,8 @@ router.put('/profile', authenticateToken, [
         isDefault: true
       };
       
-      user.addresses.push(newAddress);
+      addresses.push(newAddress);
+      updateData.addresses = addresses;
       
       console.log('🆕 Force created new address with proper Vietnamese structure:', {
         street: newAddress.street,
@@ -151,37 +162,50 @@ router.put('/profile', authenticateToken, [
       });
     }
 
-    await user.save();
+    // Update user in database
+    const updateResult = await usersCollection.updateOne(
+      { _id: userId },
+      { $set: updateData }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+
+    // Get updated user data
+    const updatedUser = await usersCollection.findOne(
+      { _id: userId },
+      { projection: { password: 0 } }
+    );
     console.log('✅ User profile updated and saved successfully');
     console.log('📤 Returning user data:', {
-      addresses: user.addresses,
-      firstName: user.firstName,
-      lastName: user.lastName
+      addresses: updatedUser.addresses,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName
     });
 
     res.json({ 
       success: true, 
       message: 'Profile updated successfully',
       user: {
-        _id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        dateOfBirth: user.dateOfBirth,
-        gender: user.gender,
-        addresses: user.addresses,
-        role: user.role
+        _id: updatedUser._id,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        phone: updatedUser.phone,
+        dateOfBirth: updatedUser.dateOfBirth,
+        gender: updatedUser.gender,
+        addresses: updatedUser.addresses,
+        role: updatedUser.role
       }
     });
 
   } catch (error) {
     console.error('❌ Update user profile error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to update profile',
-      message: error.message
-    });
+    return handleDatabaseError(error, res, 'update user profile');
   }
 });
 
@@ -200,15 +224,20 @@ router.post('/addresses', authenticateToken, validateRequest(addressValidationRu
       isDefault = false
     } = req.body;
 
-    const user = await User.findById(req.user.userId);
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+    
+    const user = await usersCollection.findOne({ _id: userId });
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const addresses = user.addresses || [];
+
     // If this is set as default, unset all other default addresses
     if (isDefault) {
-      user.addresses.forEach(addr => {
+      addresses.forEach(addr => {
         addr.isDefault = false;
       });
     }
@@ -223,11 +252,21 @@ router.post('/addresses', authenticateToken, validateRequest(addressValidationRu
       city,
       postalCode: postalCode || undefined,
       label: label || 'Địa chỉ mới',
-      isDefault: isDefault || user.addresses.length === 0 // Set as default if first address
+      isDefault: isDefault || addresses.length === 0 // Set as default if first address
     };
 
-    user.addresses.push(newAddress);
-    await user.save();
+    addresses.push(newAddress);
+
+    // Update user with new addresses array
+    await usersCollection.updateOne(
+      { _id: userId },
+      { 
+        $set: { 
+          addresses: addresses,
+          updatedAt: new Date()
+        } 
+      }
+    );
 
     res.json({
       success: true,
@@ -236,15 +275,21 @@ router.post('/addresses', authenticateToken, validateRequest(addressValidationRu
     });
 
   } catch (error) {
-    console.error('Add address error:', error);
-    res.status(500).json({ error: 'Failed to save address' });
+    console.error('❌ Add address error:', error);
+    return handleDatabaseError(error, res, 'save address');
   }
 });
 
 // Get user addresses (protected route)
 router.get('/addresses', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('addresses');
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+    
+    const user = await usersCollection.findOne(
+      { _id: userId },
+      { projection: { addresses: 1 } }
+    );
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -256,8 +301,8 @@ router.get('/addresses', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get addresses error:', error);
-    res.status(500).json({ error: 'Failed to fetch addresses' });
+    console.error('❌ Get addresses error:', error);
+    return handleDatabaseError(error, res, 'fetch addresses');
   }
 });
 
@@ -278,41 +323,54 @@ router.put('/addresses/:addressId', authenticateToken, [
     const { addressId } = req.params;
     const updateData = req.body;
 
-    const user = await User.findById(req.user.userId);
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+    
+    const user = await usersCollection.findOne({ _id: userId });
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const address = user.addresses.id(addressId);
+    const addresses = user.addresses || [];
+    const addressIndex = addresses.findIndex(addr => addr._id?.toString() === addressId);
     
-    if (!address) {
+    if (addressIndex === -1) {
       return res.status(404).json({ error: 'Address not found' });
     }
 
     // If setting as default, unset other defaults
     if (updateData.isDefault) {
-      user.addresses.forEach(addr => {
-        if (addr._id.toString() !== addressId) {
+      addresses.forEach((addr, index) => {
+        if (index !== addressIndex) {
           addr.isDefault = false;
         }
       });
     }
 
     // Update address fields
-    Object.assign(address, updateData);
+    Object.assign(addresses[addressIndex], updateData);
     
-    await user.save();
+    // Save updated addresses to database
+    await usersCollection.updateOne(
+      { _id: userId },
+      { 
+        $set: { 
+          addresses: addresses,
+          updatedAt: new Date()
+        } 
+      }
+    );
 
     res.json({
       success: true,
       message: 'Address updated successfully',
-      address
+      address: addresses[addressIndex]
     });
 
   } catch (error) {
-    console.error('Update address error:', error);
-    res.status(500).json({ error: 'Failed to update address' });
+    console.error('❌ Update address error:', error);
+    return handleDatabaseError(error, res, 'update address');
   }
 });
 
@@ -321,27 +379,40 @@ router.delete('/addresses/:addressId', authenticateToken, async (req, res) => {
   try {
     const { addressId } = req.params;
 
-    const user = await User.findById(req.user.userId);
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+    
+    const user = await usersCollection.findOne({ _id: userId });
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === addressId);
+    const addresses = user.addresses || [];
+    const addressIndex = addresses.findIndex(addr => addr._id?.toString() === addressId);
     
     if (addressIndex === -1) {
       return res.status(404).json({ error: 'Address not found' });
     }
 
-    const wasDefault = user.addresses[addressIndex].isDefault;
-    user.addresses.splice(addressIndex, 1);
+    const wasDefault = addresses[addressIndex].isDefault;
+    addresses.splice(addressIndex, 1);
 
     // If deleted address was default, set first remaining address as default
-    if (wasDefault && user.addresses.length > 0) {
-      user.addresses[0].isDefault = true;
+    if (wasDefault && addresses.length > 0) {
+      addresses[0].isDefault = true;
     }
 
-    await user.save();
+    // Update user with modified addresses
+    await usersCollection.updateOne(
+      { _id: userId },
+      { 
+        $set: { 
+          addresses: addresses,
+          updatedAt: new Date()
+        } 
+      }
+    );
 
     res.json({
       success: true,
@@ -349,38 +420,66 @@ router.delete('/addresses/:addressId', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete address error:', error);
-    res.status(500).json({ error: 'Failed to delete address' });
+    console.error('❌ Delete address error:', error);
+    return handleDatabaseError(error, res, 'delete address');
   }
 });
 
 // Change password (protected route)
 router.put('/change-password', authenticateToken, [
-  body('current_password').isLength({ min: 1 }).withMessage('Current password is required'),
-  body('new_password').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+  body('current_password').isLength({ min: 1 }).withMessage('Mật khẩu hiện tại là bắt buộc'),
+  body('new_password').isLength({ min: 6 }).withMessage('Mật khẩu mới phải có ít nhất 6 ký tự'),
+  body('confirm_password').optional().custom((value, { req }) => {
+    if (value && value !== req.body.new_password) {
+      throw new Error('Mật khẩu xác nhận không khớp');
+    }
+    return true;
+  }),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ 
+        success: false,
+        message: errors.array()[0].msg,
+        errors: errors.array() 
+      });
     }
 
     const { current_password, new_password } = req.body;
 
+    const usersCollection = getCollection(req, 'users');
+    const userId = toObjectId(req.user.userId);
+
     // Get current user
-    const user = await User.findOne({ 
-      _id: req.user.userId,
+    const user = await usersCollection.findOne({ 
+      _id: userId,
       status: 'active' 
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy người dùng' 
+      });
     }
 
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(current_password, user.password);
     if (!isCurrentPasswordValid) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Mật khẩu hiện tại không đúng' 
+      });
+    }
+
+    // Check if new password is the same as current password
+    const isSamePassword = await bcrypt.compare(new_password, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Mật khẩu mới không được trùng khớp với mật khẩu hiện tại' 
+      });
     }
 
     // Hash new password
@@ -388,19 +487,23 @@ router.put('/change-password', authenticateToken, [
     const hashedNewPassword = await bcrypt.hash(new_password, saltRounds);
 
     // Update password
-    await User.findByIdAndUpdate(req.user.userId, {
-      password: hashedNewPassword,
-      updatedAt: new Date()
-    });
+    await usersCollection.updateOne(
+      { _id: userId },
+      { 
+        $set: {
+          password: hashedNewPassword,
+          updatedAt: new Date()
+        }
+      }
+    );
 
     res.json({ 
       success: true, 
-      message: 'Password changed successfully' 
+      message: 'Đổi mật khẩu thành công' 
     });
 
   } catch (error) {
-    console.error('Change password error:', error);
-    res.status(500).json({ error: 'Failed to change password' });
+    handleDatabaseError(res, error, 'Failed to change password');
   }
 });
 
@@ -408,101 +511,105 @@ router.put('/change-password', authenticateToken, [
 router.get('/orders', authenticateToken, async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
-    const offset = (page - 1) * limit;
+    const skip = (page - 1) * parseInt(limit);
+    
+    const ordersCollection = getCollection(req, 'orders');
+    const userId = toObjectId(req.user.userId);
 
     // Get total count
-    const countResult = await db.query(
-      'SELECT COUNT(*) as total FROM Orders WHERE userId = @userId',
-      { userId: req.user.userId }
-    );
-    const totalItems = countResult[0].total;
+    const totalItems = await ordersCollection.countDocuments({ userId });
 
-    // Get orders
-    const ordersQuery = `
-      SELECT 
-        o.id,
-        o.orderNumber,
-        o.total,
-        o.status,
-        o.paymentStatus,
-        o.createdAt,
-        (SELECT COUNT(*) FROM OrderProducts WHERE orderId = o.id) as itemCount
-      FROM Orders o
-      WHERE o.userId = @userId
-      ORDER BY o.createdAt DESC
-      OFFSET @offset ROWS
-      FETCH NEXT @limit ROWS ONLY
-    `;
+    // Get orders with pagination
+    const orders = await ordersCollection
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .project({
+        orderNumber: 1,
+        total: 1,
+        status: 1,
+        paymentStatus: 1,
+        createdAt: 1,
+        items: 1
+      })
+      .toArray();
 
-    const orders = await db.query(ordersQuery, {
-      userId: req.user.userId,
-      offset: offset,
-      limit: parseInt(limit)
-    });
+    // Add item count for each order
+    const ordersWithItemCount = orders.map(order => ({
+      ...order,
+      itemCount: order.items ? order.items.length : 0
+    }));
 
     res.json({
-      orders,
+      orders: ordersWithItemCount,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
         totalItems,
-        totalPages: Math.ceil(totalItems / limit)
+        totalPages: Math.ceil(totalItems / parseInt(limit))
       }
     });
 
   } catch (error) {
-    console.error('Get user orders error:', error);
-    res.status(500).json({ error: 'Failed to fetch orders' });
+    handleDatabaseError(res, error, 'Failed to fetch orders');
   }
 });
 
 // Get user cart items (protected route)
 router.get('/cart', authenticateToken, async (req, res) => {
   try {
-    const cartQuery = `
-      SELECT 
-        c.id,
-        c.quantity,
-        c.createdAt,
-        p.id as productId,
-        p.name,
-        p.nameVi,
-        p.slug,
-        p.price,
-        p.images,
-        p.stockQuantity,
-        p.weight
-      FROM CartItems c
-      INNER JOIN Products p ON c.productId = p.id
-      WHERE c.userId = @userId AND p.isActive = 1
-      ORDER BY c.createdAt DESC
-    `;
+    const cartCollection = getCollection(req, 'cart');
+    const productsCollection = getCollection(req, 'products');
+    const userId = toObjectId(req.user.userId);
 
-    const cartItems = await db.query(cartQuery, { userId: req.user.userId });
-
-    // Parse images for each item
-    const processedCartItems = cartItems.map(item => ({
-      ...item,
-      images: item.images ? JSON.parse(item.images) : []
-    }));
+    // Get cart items with product details using aggregation
+    const cartItems = await cartCollection.aggregate([
+      { $match: { userId } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      { $match: { 'product.isActive': true } },
+      {
+        $project: {
+          _id: 1,
+          quantity: 1,
+          createdAt: 1,
+          productId: '$product._id',
+          name: '$product.name',
+          nameVi: '$product.nameVi',
+          slug: '$product.slug',
+          price: '$product.price',
+          images: '$product.images',
+          stockQuantity: '$product.stockQuantity',
+          weight: '$product.weight'
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]).toArray();
 
     // Calculate totals
-    const subtotal = processedCartItems.reduce((sum, item) => 
+    const subtotal = cartItems.reduce((sum, item) => 
       sum + (item.price * item.quantity), 0
     );
 
     res.json({
-      items: processedCartItems,
+      items: cartItems,
       summary: {
-        itemCount: processedCartItems.length,
-        totalQuantity: processedCartItems.reduce((sum, item) => sum + item.quantity, 0),
+        itemCount: cartItems.length,
+        totalQuantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
         subtotal: subtotal
       }
     });
 
   } catch (error) {
-    console.error('Get user cart error:', error);
-    res.status(500).json({ error: 'Failed to fetch cart items' });
+    handleDatabaseError(res, error, 'Failed to fetch cart items');
   }
 });
 
@@ -515,53 +622,63 @@ router.post('/cart', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid product ID or quantity' });
     }
 
-    // Check if product exists and is active
-    const products = await db.query(
-      'SELECT id, stockQuantity FROM Products WHERE id = @productId AND isActive = 1',
-      { productId }
-    );
+    const cartCollection = getCollection(req, 'cart');
+    const productsCollection = getCollection(req, 'products');
+    const userId = toObjectId(req.user.userId);
+    const productObjectId = toObjectId(productId);
 
-    if (products.length === 0) {
+    // Check if product exists and is active
+    const product = await productsCollection.findOne({
+      _id: productObjectId,
+      isActive: true
+    });
+
+    if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-
-    const product = products[0];
 
     if (product.stockQuantity < quantity) {
       return res.status(400).json({ error: 'Insufficient stock' });
     }
 
     // Check if item already exists in cart
-    const existingItems = await db.query(
-      'SELECT id, quantity FROM CartItems WHERE userId = @userId AND productId = @productId',
-      { userId: req.user.userId, productId }
-    );
+    const existingItem = await cartCollection.findOne({
+      userId,
+      productId: productObjectId
+    });
 
-    if (existingItems.length > 0) {
+    if (existingItem) {
       // Update existing item
-      const newQuantity = existingItems[0].quantity + quantity;
+      const newQuantity = existingItem.quantity + quantity;
       
       if (product.stockQuantity < newQuantity) {
         return res.status(400).json({ error: 'Insufficient stock for requested quantity' });
       }
 
-      await db.execute(
-        'UPDATE CartItems SET quantity = @quantity, updatedAt = GETDATE() WHERE id = @id',
-        { quantity: newQuantity, id: existingItems[0].id }
+      await cartCollection.updateOne(
+        { _id: existingItem._id },
+        { 
+          $set: {
+            quantity: newQuantity,
+            updatedAt: new Date()
+          }
+        }
       );
     } else {
       // Add new item
-      await db.execute(
-        'INSERT INTO CartItems (userId, productId, quantity, createdAt, updatedAt) VALUES (@userId, @productId, @quantity, GETDATE(), GETDATE())',
-        { userId: req.user.userId, productId, quantity }
-      );
+      await cartCollection.insertOne({
+        userId,
+        productId: productObjectId,
+        quantity,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
     }
 
     res.json({ message: 'Item added to cart successfully' });
 
   } catch (error) {
-    console.error('Add to cart error:', error);
-    res.status(500).json({ error: 'Failed to add item to cart' });
+    handleDatabaseError(res, error, 'Failed to add item to cart');
   }
 });
 
@@ -575,33 +692,45 @@ router.put('/cart/:itemId', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid quantity' });
     }
 
-    // Check if item belongs to user
-    const cartItems = await db.query(
-      'SELECT c.id, p.stockQuantity FROM CartItems c INNER JOIN Products p ON c.productId = p.id WHERE c.id = @itemId AND c.userId = @userId',
-      { itemId: parseInt(itemId), userId: req.user.userId }
-    );
+    const cartCollection = getCollection(req, 'cart');
+    const productsCollection = getCollection(req, 'products');
+    const userId = toObjectId(req.user.userId);
+    const cartItemId = toObjectId(itemId);
 
-    if (cartItems.length === 0) {
+    // Check if item belongs to user and get product info
+    const cartItem = await cartCollection.findOne({
+      _id: cartItemId,
+      userId
+    });
+
+    if (!cartItem) {
       return res.status(404).json({ error: 'Cart item not found' });
     }
 
-    const item = cartItems[0];
+    // Check product stock
+    const product = await productsCollection.findOne({
+      _id: cartItem.productId
+    });
 
-    if (item.stockQuantity < quantity) {
+    if (!product || product.stockQuantity < quantity) {
       return res.status(400).json({ error: 'Insufficient stock' });
     }
 
     // Update quantity
-    await db.execute(
-      'UPDATE CartItems SET quantity = @quantity, updatedAt = GETDATE() WHERE id = @itemId',
-      { quantity, itemId: parseInt(itemId) }
+    await cartCollection.updateOne(
+      { _id: cartItemId },
+      { 
+        $set: {
+          quantity,
+          updatedAt: new Date()
+        }
+      }
     );
 
     res.json({ message: 'Cart item updated successfully' });
 
   } catch (error) {
-    console.error('Update cart item error:', error);
-    res.status(500).json({ error: 'Failed to update cart item' });
+    handleDatabaseError(res, error, 'Failed to update cart item');
   }
 });
 
@@ -609,21 +738,23 @@ router.put('/cart/:itemId', authenticateToken, async (req, res) => {
 router.delete('/cart/:itemId', authenticateToken, async (req, res) => {
   try {
     const { itemId } = req.params;
+    const cartCollection = getCollection(req, 'cart');
+    const userId = toObjectId(req.user.userId);
+    const cartItemId = toObjectId(itemId);
 
-    const result = await db.execute(
-      'DELETE FROM CartItems WHERE id = @itemId AND userId = @userId',
-      { itemId: parseInt(itemId), userId: req.user.userId }
-    );
+    const result = await cartCollection.deleteOne({
+      _id: cartItemId,
+      userId
+    });
 
-    if (result.rowsAffected[0] === 0) {
+    if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Cart item not found' });
     }
 
     res.json({ message: 'Item removed from cart successfully' });
 
   } catch (error) {
-    console.error('Remove cart item error:', error);
-    res.status(500).json({ error: 'Failed to remove cart item' });
+    handleDatabaseError(res, error, 'Failed to remove cart item');
   }
 });
 

@@ -12,7 +12,7 @@ class ErrorBoundary extends Component {
     };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     // Cập nhật state để hiển thị UI fallback
     return { hasError: true };
   }
@@ -125,7 +125,7 @@ class ErrorBoundary extends Component {
                 </button>
               </div>
 
-              {showErrorDetails && process.env.NODE_ENV === 'development' && error && (
+              {showErrorDetails && import.meta.env.DEV && error && (
                 <details className="mt-8 text-left">
                   <summary className="cursor-pointer text-sm font-medium text-gray-700 mb-2">
                     Chi tiết lỗi (Development mode)

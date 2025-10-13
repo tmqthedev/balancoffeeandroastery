@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../constants/authConstants';
 import { formatDateForInput, formatDateForBackend } from '../utils/dateUtils';
 import axios from 'axios';
+import ContextConsumer from '../components/common/ContextConsumer';
 
-const Account = () => {
-  const { user, updateUserInfo, logout } = useAuth();
+const AccountContent = ({ auth }) => {
+  const { user, updateUserInfo, logout } = auth;
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -140,13 +140,28 @@ const Account = () => {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     
-    if (passwordData.new_password !== passwordData.confirm_password) {
-      setError('Mật khẩu xác nhận không khớp');
+    if (!passwordData.current_password) {
+      setError('Vui lòng nhập mật khẩu hiện tại');
+      return;
+    }
+
+    if (!passwordData.new_password) {
+      setError('Vui lòng nhập mật khẩu mới');
       return;
     }
 
     if (passwordData.new_password.length < 6) {
       setError('Mật khẩu mới phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    if (passwordData.current_password === passwordData.new_password) {
+      setError('Mật khẩu mới không được trùng khớp với mật khẩu hiện tại');
+      return;
+    }
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setError('Mật khẩu xác nhận không khớp');
       return;
     }
 
@@ -567,6 +582,17 @@ const Account = () => {
         </div>
       </div>
     </>
+  );
+};
+
+// Main component using ContextConsumer
+const Account = () => {
+  return (
+    <ContextConsumer>
+      {({ auth }) => (
+        <AccountContent auth={auth} />
+      )}
+    </ContextConsumer>
   );
 };
 

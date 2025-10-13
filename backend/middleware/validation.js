@@ -63,35 +63,75 @@ const userValidationRules = [
   body('email')
     .isEmail()
     .normalizeEmail()
-    .withMessage('Email không hợp lệ'),
+    .withMessage('Email không hợp lệ')
+    .isLength({ max: 255 })
+    .withMessage('Email không được quá 255 ký tự'),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Mật khẩu phải có ít nhất 6 ký tự'),
+    .isLength({ min: 6, max: 128 })
+    .withMessage('Mật khẩu phải có từ 6 đến 128 ký tự')
+    .matches(/^(?=.*[a-zA-Z])/)
+    .withMessage('Mật khẩu phải chứa ít nhất 1 chữ cái')
+    .not()
+    .contains(' ')
+    .withMessage('Mật khẩu không được chứa khoảng trắng'),
   body('fullName')
-    .optional()
     .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Họ và tên phải có từ 1 đến 100 ký tự'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Họ và tên phải có từ 2 đến 100 ký tự')
+    .matches(/^[a-zA-ZÀ-ỹ\s]+$/)
+    .withMessage('Họ và tên chỉ được chứa chữ cái và khoảng trắng'),
   body('firstName')
     .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
-    .withMessage('Tên phải có từ 1 đến 50 ký tự'),
+    .withMessage('Tên phải có từ 1 đến 50 ký tự')
+    .matches(/^[a-zA-ZÀ-ỹ]+$/)
+    .withMessage('Tên chỉ được chứa chữ cái'),
   body('lastName')
     .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
-    .withMessage('Họ phải có từ 1 đến 50 ký tự'),
+    .withMessage('Họ phải có từ 1 đến 50 ký tự')
+    .matches(/^[a-zA-ZÀ-ỹ\s]+$/)
+    .withMessage('Họ chỉ được chứa chữ cái và khoảng trắng'),
   body('phone')
     .notEmpty()
     .withMessage('Số điện thoại là bắt buộc')
     .matches(/^[0-9+\-\s()]{8,20}$/)
-    .withMessage('Số điện thoại không hợp lệ'),
-  // Optional demographic fields
+    .withMessage('Số điện thoại không hợp lệ')
+    .custom((value) => {
+      const phoneClean = value.replace(/[\s\-\(\)]/g, '');
+      if (phoneClean.startsWith('0') && phoneClean.length !== 10) {
+        throw new Error('Số điện thoại Việt Nam phải có 10 chữ số (bắt đầu bằng 0)');
+      }
+      if (phoneClean.startsWith('+84') && phoneClean.length !== 12) {
+        throw new Error('Số điện thoại quốc tế phải có định dạng +84xxxxxxxxx');
+      }
+      return true;
+    }),
+  // Optional demographic fields with validation
   body('dateOfBirth')
     .optional({ checkFalsy: true })
     .isISO8601()
-    .withMessage('Ngày sinh không hợp lệ'),
+    .withMessage('Ngày sinh không hợp lệ')
+    .custom((value) => {
+      if (value) {
+        const birthDate = new Date(value);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        
+        if (birthDate > today) {
+          throw new Error('Ngày sinh không thể là ngày trong tương lai');
+        }
+        if (age < 13) {
+          throw new Error('Bạn phải từ 13 tuổi trở lên để đăng ký');
+        }
+        if (age > 120) {
+          throw new Error('Ngày sinh không hợp lệ');
+        }
+      }
+      return true;
+    }),
   body('gender')
     .optional({ checkFalsy: true })
     .isIn(['male', 'female', 'other'])
@@ -109,8 +149,8 @@ const userValidationRules = [
     .optional({ checkFalsy: true })
     .isBoolean()
     .withMessage('Đồng ý marketing phải là giá trị boolean'),
-  // Optional address fields
-  body('street')
+  // Optional address fields with better validation
+  body('address')
     .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 255 })
@@ -130,6 +170,11 @@ const userValidationRules = [
     .trim()
     .isLength({ max: 100 })
     .withMessage('Tỉnh/Thành phố không được quá 100 ký tự'),
+  body('province')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Tỉnh không được quá 100 ký tự'),
   body('postalCode')
     .optional({ checkFalsy: true })
     .trim()

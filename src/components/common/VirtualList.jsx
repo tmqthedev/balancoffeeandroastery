@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
 const VirtualList = ({
@@ -11,7 +11,6 @@ const VirtualList = ({
   onScroll
 }) => {
   const [scrollTop, setScrollTop] = useState(0);
-  const [containerElement, setContainerElement] = useState(null);
 
   // Calculate visible items
   const { visibleItems, totalHeight, offsetY } = useMemo(() => {

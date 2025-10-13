@@ -10,8 +10,7 @@ const CoffeeBeansTab = ({
     searchTerm, 
     searchTime, 
     totalProducts, 
-    onClearSearch,
-    clearFilters 
+    onClearSearch
 }) => {
     return (
         <>

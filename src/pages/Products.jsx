@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import SEOHelmet from '../components/common/SEOHelmet';
-import { useCart } from '../constants/cartConstants';
+import ContextConsumer from '../components/common/ContextConsumer';
 // Removed useSafeHooks imports - using native React hooks instead
 import { LoadingSpinner, ProductCardSkeleton } from '../components/common/LoadingComponents';
 import ErrorBoundary from '../components/common/ErrorBoundary';
@@ -49,15 +49,12 @@ const Products = () => {
         maxPrice: '',
         inStock: false
     });
-    const [sortBy] = useState('name'); // setSortBy not used yet
+    const [sortBy] = useState('name');
     
     // Ref for the tab navigation section
     const tabNavigationRef = useRef(null);
 
-    // Cart functionality
-    // addToCart is intentionally unused in this listing page; cart operations happen in product cards/components
-    // keep useCart for potential future use
-    useCart();
+    // Cart functionality is handled in individual product components
 
     // Performance hooks - using safe versions
     // Native debounce implementation
@@ -86,17 +83,7 @@ const Products = () => {
         });
     }, [debouncedSearch, products]);
     
-    const isSearching = false; // Simplified for now
-
-    // Intersection observer để lazy load content - temporarily disabled
-    const [shouldLoadContent, setShouldLoadContent] = useState(true); // Always load for now
-    // const [setContentRef, entry] = useSafeIntersectionObserver({ threshold: 0.1 });
-    
-    // useEffect(() => {
-    //     if (entry?.isIntersecting) {
-    //         setShouldLoadContent(true);
-    //     }
-    // }, [entry]);
+    const isSearching = false;
 
     // Tab change handler (used by desktop & mobile tab buttons)
     const handleTabChange = useCallback((tabId) => {
@@ -117,35 +104,7 @@ const Products = () => {
         });
     }, []);
 
-    // Memoized current tab config
-    const currentTabConfig = useMemo(() => TAB_CONFIG[activeTab], [activeTab]);
 
-    // Memoized tab component
-    const CurrentTabComponent = useMemo(() => {
-        const Component = currentTabConfig.component;
-        return (
-            <ErrorBoundary>
-                <Suspense fallback={
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        {Array.from({ length: 6 }, (_, i) => (
-                            <ProductCardSkeleton key={i} />
-                        ))}
-                    </div>
-                }>
-                    <Component 
-                        products={debouncedSearch ? searchResults : products}
-                        loading={loading || isSearching}
-                        error={error}
-                        currentPage={currentPage}
-                        filters={filters}
-                        setFilters={setFilters}
-                        sortBy={sortBy}
-                        setCurrentPage={setCurrentPage}
-                    />
-                </Suspense>
-            </ErrorBoundary>
-        );
-    }, [currentTabConfig.component, debouncedSearch, searchResults, products, loading, isSearching, error, currentPage, filters, sortBy, setCurrentPage]);
 
     // Scroll effect với debounce
     useEffect(() => {
@@ -360,36 +319,71 @@ const Products = () => {
                     {/* Coffee Beans Tab */}
                     {activeTab === 'coffee-beans' && (
                         <div className="animate-fadeIn">
-                            <CoffeeBeansTab
-                                products={products}
-                                loading={loading}
-                                error={error}
-                                searchTerm={filters.search}
-                                searchTime={0}
-                                totalProducts={totalProducts}
-                                onClearSearch={handleClearSearch}
-                                clearFilters={clearFilters}
-                            />
+                            <ErrorBoundary>
+                                <Suspense fallback={
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                        {Array.from({ length: 6 }, (_, i) => (
+                                            <ProductCardSkeleton key={i} />
+                                        ))}
+                                    </div>
+                                }>
+                                    <CoffeeBeansTab
+                                        products={debouncedSearch ? searchResults : products}
+                                        loading={loading || isSearching}
+                                        error={error}
+                                        searchTerm={filters.search}
+                                        searchTime={0}
+                                        totalProducts={totalProducts}
+                                        onClearSearch={handleClearSearch}
+                                        clearFilters={clearFilters}
+                                        currentPage={currentPage}
+                                        filters={filters}
+                                        setFilters={setFilters}
+                                        sortBy={sortBy}
+                                        setCurrentPage={setCurrentPage}
+                                    />
+                                </Suspense>
+                            </ErrorBoundary>
                         </div>
                     )}
 
                     {/* Beverages Tab */}
                     {activeTab === 'beverages' && (
                         <div className="animate-fadeIn">
-                            <BeveragesTab 
-                                searchTerm={filters.search}
-                                onClearSearch={handleClearSearch}
-                            />
+                            <ErrorBoundary>
+                                <Suspense fallback={
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                        {Array.from({ length: 6 }, (_, i) => (
+                                            <ProductCardSkeleton key={i} />
+                                        ))}
+                                    </div>
+                                }>
+                                    <BeveragesTab 
+                                        searchTerm={filters.search}
+                                        onClearSearch={handleClearSearch}
+                                    />
+                                </Suspense>
+                            </ErrorBoundary>
                         </div>
                     )}
 
                     {/* Services Tab */}
                     {activeTab === 'services' && (
                         <div className="animate-fadeIn">
-                            <ServicesTab 
-                                searchTerm={filters.search}
-                                onClearSearch={handleClearSearch}
-                            />
+                            <ErrorBoundary>
+                                <Suspense fallback={
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                        {Array.from({ length: 6 }, (_, i) => (
+                                            <ProductCardSkeleton key={i} />
+                                        ))}
+                                    </div>
+                                }>
+                                    <ServicesTab 
+                                        searchTerm={filters.search}
+                                        onClearSearch={handleClearSearch}
+                                    />
+                                </Suspense>
+                            </ErrorBoundary>
                         </div>
                     )}
                 </div>

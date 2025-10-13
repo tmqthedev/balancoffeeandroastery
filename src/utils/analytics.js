@@ -26,10 +26,10 @@ export const initGA4 = () => {
   window.gtag = gtag;
 };
 
-// Meta Pixel (Facebook) Implementation - DISABLED
+// Meta Pixel Implementation - DISABLED
 export const initMetaPixel = () => {
-  // Facebook Pixel disabled - removed for simplified system
-  console.log('Facebook Pixel disabled');
+  // Meta Pixel disabled - removed for simplified system
+  console.log('Meta Pixel disabled');
 };
 
 // TikTok Pixel Implementation
@@ -94,7 +94,7 @@ export const initAnalytics = () => {
   const enableAnalytics = false;
   if (enableAnalytics) {
     initGA4();
-    // initMetaPixel(); // Disabled - Facebook Pixel removed
+    // initMetaPixel(); // Disabled - Meta Pixel removed
     initTikTokPixel();
   }
 };
@@ -123,7 +123,7 @@ export const trackEcommerceEvent = (eventName, data) => {
   }
   
   // Meta Pixel disabled - removed for simplified system
-  // Facebook Pixel ecommerce events disabled
+  // Meta Pixel ecommerce events disabled
   
   // TikTok Pixel ecommerce events
   if (window.ttq) {

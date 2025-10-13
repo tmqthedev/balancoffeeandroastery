@@ -1,26 +1,48 @@
 const express = require('express');
 const router = express.Router();
-const Category = require('../models/Category');
+const {
+  getCollection,
+  toObjectId,
+  createDocument,
+  updateDocument,
+  paginateQuery,
+  buildSort,
+  handleDatabaseError,
+  validateRequired,
+  cleanData
+} = require('../middleware/mongoHelpers');
+
+console.log('📂 Backend: Categories router loading');
 
 // Get all categories
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find({ 
-      isActive: true 
-    }).sort({ name: 1 }).lean();
+    console.log('📂 Fetching categories');
+    
+    // Get categories collection
+    const categoriesCollection = getCollection(req, 'categories');
+    
+    const categories = await categoriesCollection
+      .find({ isActive: true })
+      .sort({ name: 1 })
+      .toArray();
+
+    // Add id field for frontend compatibility
+    const categoriesWithId = categories.map(category => ({
+      ...category,
+      id: category._id.toString()
+    }));
+
+    console.log('📂 Categories found:', categoriesWithId.length);
 
     res.json({
       success: true,
-      categories: categories || []
+      categories: categoriesWithId || []
     });
 
   } catch (error) {
     console.error('❌ Get categories error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi tải danh mục',
-      error: error.message
-    });
+    return handleDatabaseError(error, res, 'Get categories');
   }
 });
 

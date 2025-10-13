@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
-import { useCart } from '../constants/cartConstants';
-import { useAuth } from '../constants/authConstants';
 import { formatVND } from '../utils/currency';
+import ContextConsumer from '../components/common/ContextConsumer';
 
 // Configure axios defaults
 const API_BASE_URL = '/api';
 
-const ProductDetail = () => {
+const ProductDetailContent = ({ auth, cart }) => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { addToCart, isInCart, getItemQuantity } = useCart();
-    const { isAuthenticated } = useAuth();
+    
+    // Get context values with fallbacks
+    const { addToCart } = cart;
+    const { isAuthenticated } = auth;
     
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -50,9 +51,7 @@ const ProductDetail = () => {
 
     const fetchProduct = useCallback(async () => {
         try {
-            console.log('🔍 Fetching product with ID:', id);
             if (!id || id === 'undefined') {
-                console.error('❌ Invalid product ID:', id);
                 setError('ID sản phẩm không hợp lệ');
                 setLoading(false);
                 return;
@@ -60,8 +59,6 @@ const ProductDetail = () => {
 
             setLoading(true);
             const response = await axios.get(`${API_BASE_URL}/products/${id}`);
-            console.log('📦 Product data received:', response.data.product);
-            console.log('🖼️ Image URL from API:', response.data.product.image_url);
             setProduct(response.data.product);
             
             // Fetch related products
@@ -110,22 +107,21 @@ const ProductDetail = () => {
     }, [product, selectedWeight]);
 
     const handleAddToCart = async () => {
-        if (!product) return;
+        if (!product || !selectedWeight) return;
         
         setAddingToCart(true);
         setAddToCartSuccess(false);
         try {
-            // Create product object with selected options
+            // Create product object with selected options and variant
             const productToAdd = {
                 ...product,
                 selectedWeight,
                 price: getCurrentPrice(), // Use current price based on weight
-                id: product.id || product._id
+                id: product.id || product._id,
+                variant: { weight: selectedWeight } // Add variant info for cart matching
             };
             
-            console.log('🛒 ProductDetail: Adding to cart:', productToAdd);
             const result = await addToCart(productToAdd, quantity);
-            console.log('✅ ProductDetail: Add to cart result:', result);
             
             if (result && result.success) {
                 setAddToCartSuccess(true);
@@ -133,22 +129,40 @@ const ProductDetail = () => {
                 setTimeout(() => setAddToCartSuccess(false), 3000);
             }
         } catch (error) {
-            console.error('❌ ProductDetail: Failed to add to cart:', error);
+            console.error('Failed to add to cart:', error);
             alert('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
         } finally {
             setAddingToCart(false);
         }
     };
 
+    // Calculate cart status for current product variant (by weight)
+    // Must be called before any early returns to maintain hook order
+    const cartStatusForVariant = useMemo(() => {
+        if (!cart || !cart.items || !product || !selectedWeight) {
+            return { inCart: false, quantity: 0 };
+        }
+        
+        const productId = product.id || product._id;
+        
+        // Find item in cart that matches both product ID and selected weight
+        const cartItem = cart.items.find(item => {
+            const isSameProduct = (item.productId || item.product_id || item._id) === productId;
+            const isSameVariant = item.variant && item.variant.weight === selectedWeight;
+            return isSameProduct && isSameVariant;
+        });
+        
+        return {
+            inCart: !!cartItem,
+            quantity: cartItem ? cartItem.quantity : 0
+        };
+    }, [cart, product, selectedWeight]);
+
     const handleBuyNow = async () => {
         if (!product) return;
 
-        console.log('🛒 ProductDetail: handleBuyNow called');
-        console.log('🔐 ProductDetail: isAuthenticated:', isAuthenticated);
-
         // Check if user is authenticated
         if (!isAuthenticated) {
-            console.log('👤 ProductDetail: User not authenticated, saving to localStorage');
             // Save product info to localStorage for after login
             const buyNowProduct = {
                 productId: product.id || product._id,
@@ -160,15 +174,9 @@ const ProductDetail = () => {
                 timestamp: Date.now()
             };
 
-            console.log('💾 ProductDetail: Saving buy now product:', buyNowProduct);
             localStorage.setItem('buyNowProduct', JSON.stringify(buyNowProduct));
             
-            // Verify it was saved
-            const saved = localStorage.getItem('buyNowProduct');
-            console.log('✅ ProductDetail: Verified saved product:', saved);
-
             // Redirect to login with return path
-            console.log('🔄 ProductDetail: Redirecting to login');
             navigate('/login', {
                 state: {
                     from: { pathname: '/checkout' },
@@ -178,7 +186,7 @@ const ProductDetail = () => {
             return;
         }
 
-        console.log('✅ ProductDetail: User authenticated, proceeding with normal flow');
+
         // User is authenticated, proceed with normal flow
         await handleAddToCart();
         navigate('/checkout');
@@ -191,6 +199,9 @@ const ProductDetail = () => {
             </div>
         );
     }
+
+    // Get cart status for current variant BEFORE any early returns
+    const { inCart, quantity: cartQuantity } = cartStatusForVariant;
 
     if (error || !product) {
         return (
@@ -210,9 +221,6 @@ const ProductDetail = () => {
             </div>
         );
     }
-
-    const inCart = isInCart(product.id || product._id);
-    const cartQuantity = getItemQuantity(product.id || product._id);
 
     return (
         <>
@@ -267,55 +275,33 @@ const ProductDetail = () => {
                         {/* Product Images */}
                         <div className="space-y-4">
                             <div className="aspect-square bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 rounded-xl overflow-hidden shadow-lg">
-                                {(() => {
-                                    console.log('🖼️ Rendering image with URL:', product.image_url);
-                                    console.log('🖼️ Product object:', product);
-                                    
-                                    if (product.image_url) {
-                                        // Handle different image URL formats
-                                        let imageUrl = product.image_url;
-                                        
-                                        // If image_url starts with '/images/', it's already correct for public folder
-                                        if (imageUrl.startsWith('/images/')) {
-                                            // Use as is - Vite will serve from public folder
-                                            console.log('🌐 Using public images URL:', imageUrl);
-                                        }
-                                        // If image_url starts with 'backend/', convert to proper API endpoint
-                                        else if (imageUrl.startsWith('backend/uploads/')) {
-                                            imageUrl = `http://localhost:5000/${imageUrl}`;
-                                            console.log('🔄 Converted backend URL:', imageUrl);
-                                        }
-                                        // If it's already a full URL, use as is
-                                        else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-                                            console.log('🌐 Using full URL:', imageUrl);
-                                        }
-                                        // If it's a relative path, assume it's from assets
-                                        else if (imageUrl.startsWith('src/assets/')) {
-                                            imageUrl = imageUrl.replace('src/assets/', '/images/');
-                                            console.log('🖼️ Using images URL:', imageUrl);
-                                        }
-
-                                        return (
-                                            <img
-                                                src={imageUrl}
-                                                alt={product.name}
-                                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                                                onLoad={() => console.log('✅ Image loaded successfully:', imageUrl)}
-                                                onError={(e) => {
-                                                    console.error('❌ Image failed to load:', imageUrl);
-                                                    console.error('❌ Error event:', e);
-                                                }}
-                                            />
-                                        );
-                                    } else {
-                                        console.log('⚠️ No image_url found');
-                                        return (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <span className="text-8xl text-brand-primary/50">☕</span>
-                                            </div>
-                                        );
-                                    }
-                                })()}
+                                {product.image_url ? (
+                                    <img
+                                        src={(() => {
+                                            let imageUrl = product.image_url;
+                                            
+                                            if (imageUrl.startsWith('/images/')) {
+                                                return imageUrl;
+                                            } else if (imageUrl.startsWith('backend/uploads/')) {
+                                                return `http://localhost:5000/${imageUrl}`;
+                                            } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                                                return imageUrl;
+                                            } else if (imageUrl.startsWith('src/assets/')) {
+                                                return imageUrl.replace('src/assets/', '/images/');
+                                            }
+                                            return imageUrl;
+                                        })()}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                                        onError={(e) => {
+                                            console.error('Image failed to load:', e);
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-8xl text-brand-primary/50">☕</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -473,11 +459,12 @@ const ProductDetail = () => {
                                         disabled={addingToCart}
                                         className="w-full bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                                     >
-                                        {(() => {
-                                            if (addingToCart) return 'Đang thêm...';
-                                            if (inCart) return `Trong giỏ (${cartQuantity})`;
-                                            return 'Thêm vào giỏ';
-                                        })()}
+                                        {addingToCart 
+                                            ? 'Đang thêm...' 
+                                            : inCart 
+                                            ? `Trong giỏ (${cartQuantity})` 
+                                            : 'Thêm vào giỏ'
+                                        }
                                     </button>
                                     
                                     <button
@@ -559,6 +546,17 @@ const ProductDetail = () => {
                 </div>
             </div>
         </>
+    );
+};
+
+// Main component using ContextConsumer
+const ProductDetail = () => {
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => (
+                <ProductDetailContent auth={auth} cart={cart} />
+            )}
+        </ContextConsumer>
     );
 };
 

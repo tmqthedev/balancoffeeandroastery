@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../constants/cartConstants';
+import ContextConsumer from '../common/ContextConsumer';
 
-const PaymentMethods = ({ orderData, onPaymentError, selectedMethod: propSelectedMethod, onPaymentMethodSelect }) => {
+const PaymentMethodsContent = ({ cart, orderData, onPaymentError, selectedMethod: propSelectedMethod, onPaymentMethodSelect }) => {
     const navigate = useNavigate();
-    const { clearCart } = useCart();
+    const { clearCart } = cart;
     const [internalSelectedMethod, setInternalSelectedMethod] = useState(propSelectedMethod || 'contact');
     const [loading, setLoading] = useState(false);
 
@@ -242,6 +242,23 @@ const PaymentMethods = ({ orderData, onPaymentError, selectedMethod: propSelecte
                 </div>
             </div>
         </div>
+    );
+};
+
+// Main component using ContextConsumer
+const PaymentMethods = ({ orderData, onPaymentError, selectedMethod, onPaymentMethodSelect }) => {
+    return (
+        <ContextConsumer>
+            {({ cart }) => (
+                <PaymentMethodsContent 
+                    cart={cart}
+                    orderData={orderData}
+                    onPaymentError={onPaymentError}
+                    selectedMethod={selectedMethod}
+                    onPaymentMethodSelect={onPaymentMethodSelect}
+                />
+            )}
+        </ContextConsumer>
     );
 };
 

@@ -4,22 +4,64 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Import MongoDB connection
-const { connectDB } = require('./config/database');
-const { 
-  handleDatabaseError, 
-  checkDatabaseConnection, 
-  connectWithRetry,
-  createHealthCheck 
-} = require('./middleware/database');
+// MongoDB Connection for Production
+const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
+
+console.log('🔗 MongoDB Configuration (Backend):');
+console.log('   Environment:', process.env.NODE_ENV || 'development');
+console.log('   Using ENV URI:', !!process.env.MONGODB_URI);
+console.log('   URI Domain:', uri.split('@')[1]?.split('/')[0] || 'not found');
+
+// MongoDB Client with optimized configuration for production
+const clientOptions = {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+  // Connection timeouts - increased for better reliability
+  connectTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 30000,
+  
+  // Connection pool settings optimized for Vercel serverless
+  maxPoolSize: process.env.NODE_ENV === 'production' ? 5 : 10,
+  minPoolSize: 1,
+  maxIdleTimeMS: 30000,
+  
+  // Retry settings
+  retryWrites: true,
+  retryReads: true,
+  
+  // Heartbeat settings
+  heartbeatFrequencyMS: 10000,
+  
+  // Compression for better performance
+  compressors: ['zlib'],
+  
+  // SSL/TLS settings - relaxed for development, strict for production
+  ...(process.env.NODE_ENV === 'development' ? {
+    tls: true,
+    tlsAllowInvalidCertificates: true,
+    tlsAllowInvalidHostnames: true
+  } : {
+    tls: true,
+    tlsAllowInvalidCertificates: false,
+    tlsAllowInvalidHostnames: false
+  })
+};
+
+const client = new MongoClient(uri, clientOptions);
 
 // Global database connection flag
 let isConnected = false;
+let db = null;
 
 // Security middleware
 app.use(helmet({
@@ -75,6 +117,60 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// MongoDB Connection Function with Enhanced Logging
+async function connectToDatabase() {
+  if (isConnected && db) {
+    console.log('✅ Using existing MongoDB connection (Backend)');
+    return db;
+  }
+
+  try {
+    console.log('🔄 Backend: Attempting to connect to MongoDB...');
+    console.log('📍 Backend Connection URI prefix:', uri.substring(0, 50) + '...');
+    
+    const connectStart = Date.now();
+    await client.connect();
+    const connectTime = Date.now() - connectStart;
+    console.log(`⚡ Backend: MongoDB client connected in ${connectTime}ms`);
+    
+    // Send a ping to confirm a successful connection
+    console.log('🏓 Backend: Sending ping to MongoDB admin database...');
+    const pingStart = Date.now();
+    await client.db("admin").command({ ping: 1 });
+    const pingTime = Date.now() - pingStart;
+    console.log(`✅ Backend: MongoDB ping successful in ${pingTime}ms`);
+    
+    db = client.db("balancoffee");
+    isConnected = true;
+    
+    console.log('🎯 Backend: Connected to database: balancoffee');
+    console.log('📊 Backend Connection status:', { 
+      isConnected: true, 
+      timestamp: new Date().toISOString(),
+      serverApi: 'v1'
+    });
+    
+    return db;
+  } catch (error) {
+    console.error('❌ Backend: MongoDB connection failed:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Error Code:', error.code);
+    console.error('   Full Error:', error);
+    
+    if (error.code === 8000) {
+      console.error('🔐 Backend: Authentication failed - check username/password');
+    } else if (error.code === 6) {
+      console.error('🌐 Backend: Network error - check connection and firewall');
+    } else if (error.message.includes('ENOTFOUND')) {
+      console.error('🔍 Backend: DNS resolution failed - check connection string');
+    }
+    
+    isConnected = false;
+    throw error;
+  }
+}
+
 // Logging middleware
 app.use(morgan('combined'));
 
@@ -94,8 +190,52 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Maps /backend/uploads/products/file.jpg to backend/uploads/products/file.jpg  
 app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint with database status
-app.get('/health', createHealthCheck());
+// Health check endpoint with detailed logging
+app.get('/health', async (req, res) => {
+  console.log('🏥 Backend: Health check requested from:', req.ip);
+  
+  try {
+    const healthStart = Date.now();
+    const database = await connectToDatabase();
+    const healthTime = Date.now() - healthStart;
+    
+    console.log(`✅ Backend: Health check successful in ${healthTime}ms`);
+    
+    const healthData = { 
+      status: 'OK', 
+      message: 'Backend server and database are healthy',
+      timestamp: new Date().toISOString(),
+      database: isConnected ? 'Connected' : 'Disconnected',
+      responseTime: `${healthTime}ms`,
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0',
+      server: 'backend'
+    };
+    
+    console.log('📊 Backend: Health check response:', healthData);
+    res.json(healthData);
+    
+  } catch (error) {
+    console.error('❌ Backend: Health check failed:');
+    console.error('   IP Address:', req.ip);
+    console.error('   User Agent:', req.get('User-Agent'));
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+    
+    const errorData = { 
+      status: 'ERROR', 
+      message: 'Backend database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      server: 'backend'
+    };
+    
+    console.log('📊 Backend: Health check error response:', errorData);
+    res.status(503).json(errorData);
+  }
+});
 
 // Root endpoint - API info
 app.get('/', (req, res) => {
@@ -119,20 +259,45 @@ app.get('/', (req, res) => {
   });
 });
 
-// Initialize MongoDB connection
-connectDB().then((res) => {
-  if (res === false) {
-    console.error('\u274c MongoDB connection failed: continuing without DB connection for dev');
-  } else {
-    console.log('\u2705 Connected to MongoDB database');
-  }
-}).catch(err => {
-  console.error('\u274c MongoDB connection unexpected error:', err && err.message);
-  // Continue startup for debugging; routes should handle missing DB gracefully.
-});
-
 // Passport configuration
 require('./config/passport');
+
+// Database middleware - makes db available to routes with detailed logging
+app.use(async (req, res, next) => {
+  const middlewareStart = Date.now();
+  
+  try {
+    console.log(`🔌 Backend: Database middleware for ${req.method} ${req.originalUrl}`);
+    req.db = await connectToDatabase();
+    
+    // Make database globally available for passport
+    global.db = req.db;
+    
+    const middlewareTime = Date.now() - middlewareStart;
+    console.log(`✅ Backend: Database available for route in ${middlewareTime}ms`);
+    
+    next();
+  } catch (error) {
+    const middlewareTime = Date.now() - middlewareStart;
+    
+    console.error('❌ Backend: Database middleware failed:');
+    console.error('   Route:', `${req.method} ${req.originalUrl}`);
+    console.error('   IP:', req.ip);
+    console.error('   Time taken:', `${middlewareTime}ms`);
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+    
+    res.status(503).json({ 
+      success: false, 
+      message: 'Backend database connection failed',
+      error: error.message,
+      route: req.originalUrl,
+      timestamp: new Date().toISOString(),
+      server: 'backend'
+    });
+  }
+});
 
 // Routes with request logging
 app.use('/api/auth', require('./routes/auth'));
@@ -141,103 +306,228 @@ app.use('/api/cart', require('./routes/cart'));
 
 // Add request logging for products
 app.use('/api/products', (req, res, next) => {
-  console.log(`📝 Products API: ${req.method} ${req.originalUrl}`);
+  console.log(`📝 Backend Products API: ${req.method} ${req.originalUrl}`);
   console.log('Query params:', req.query);
   next();
 });
 
+// Routes with enhanced logging
+console.log('🛒 Backend: Products router loading');
 app.use('/api/products', require('./routes/products'));
+
+console.log('📂 Backend: Categories router loading');
 app.use('/api/categories', require('./routes/categories'));
+
+console.log('🛍️ Backend: Orders router loading');
 app.use('/api/orders', require('./routes/orders'));
+
+console.log('📝 Backend: Blogs router loading');
 app.use('/api/blogs', require('./routes/blogs'));
+
+console.log('📞 Backend: Contacts router loading');
 app.use('/api/contacts', require('./routes/contacts'));
-app.use('/api/payments', require('./routes/payments'));
+
+try {
+  console.log('💳 Backend: Payments router loading...');
+  app.use('/api/payments', require('./routes/payments'));
+  console.log('✅ Backend: Payments router loaded successfully');
+} catch (error) {
+  console.error('❌ Backend: Payments router failed to load:', error.message);
+}
 
 // Upload routes for file management
 app.use('/api/upload', require('./routes/upload'));
 
-// Database error handling middleware
-app.use(handleDatabaseError);
-
-// Error handling middleware
+// Enhanced Error handling middleware with detailed logging
 app.use((err, req, res, next) => {
-  console.error('❌ Server Error:', err.message);
-  console.error('Stack:', err.stack);
-  console.error('Request URL:', req.originalUrl);
-  console.error('Request Method:', req.method);
+  const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+  
+  console.error('🚨 BACKEND SERVER ERROR OCCURRED:');
+  console.error('   Error ID:', errorId);
+  console.error('   Timestamp:', new Date().toISOString());
+  console.error('   Error Type:', err.name || 'Unknown');
+  console.error('   Error Message:', err.message);
+  console.error('   HTTP Status:', err.status || 500);
+  console.error('   Request Details:');
+  console.error('     - Method:', req.method);
+  console.error('     - URL:', req.originalUrl);
+  console.error('     - IP:', req.ip);
+  console.error('     - User-Agent:', req.get('User-Agent'));
+  console.error('   Stack Trace:', err.stack);
+  
+  if (err.code) {
+    console.error('   Error Code:', err.code);
+  }
+  
+  const errorResponse = {
+    success: false,
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+    errorId: errorId,
+    timestamp: new Date().toISOString(),
+    server: 'backend'
+  };
   
   if (process.env.NODE_ENV === 'development') {
-    res.status(err.status || 500).json({
-      error: err.message,
-      stack: err.stack,
+    errorResponse.stack = err.stack;
+    errorResponse.details = {
       url: req.originalUrl,
-      method: req.method
-    });
-  } else {
-    res.status(err.status || 500).json({
-      error: 'Something went wrong!'
-    });
-  }
-});
-
-// 404 handler
-app.use((req, res) => {
-  console.log('❌ 404 Not Found:', req.originalUrl);
-  res.status(404).json({
-    error: 'Route not found',
-    url: req.originalUrl
-  });
-});
-
-// Vercel serverless function handler
-if (process.env.VERCEL) {
-  module.exports = app;
-} else {
-  // Graceful shutdown for local development
-  const { mongoose } = require('./config/database');
-
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    await mongoose.connection.close();
-    isConnected = false;
-    process.exit(0);
-  });
-
-  process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully');
-    await mongoose.connection.close();
-    isConnected = false;
-    process.exit(0);
-  });
-
-  // Start server for local development or export for Vercel
-  if (process.env.NODE_ENV !== 'production') {
-    const startServer = async () => {
-      try {
-        await connectDB();
-        isConnected = true;
-        
-        app.listen(PORT, () => {
-          console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-          console.log(`📍 Health check: http://localhost:${PORT}/health`);
-          console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-        });
-      } catch (error) {
-        console.error('❌ Failed to start server:', error);
-        process.exit(1);
-      }
+      method: req.method,
+      status: err.status || 500
     };
-
-    startServer();
-  } else {
-    // For Vercel serverless deployment
-    connectDB().then(() => {
-      isConnected = true;
-      console.log('✅ Database connected for Vercel deployment');
-    }).catch(error => {
-      console.error('❌ Database connection failed:', error);
-    });
   }
+  
+  console.error('📤 Backend: Error response sent:', errorResponse);
+  res.status(err.status || 500).json(errorResponse);
+});
+
+// Enhanced 404 handler with detailed logging
+app.use((req, res) => {
+  console.log('🔍 Backend: 404 NOT FOUND:');
+  console.log('   URL:', req.originalUrl);
+  console.log('   Method:', req.method);
+  console.log('   IP:', req.ip);
+  console.log('   User-Agent:', req.get('User-Agent'));
+  console.log('   Timestamp:', new Date().toISOString());
+  
+  const notFoundResponse = {
+    success: false,
+    error: 'Route not found',
+    url: req.originalUrl,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+    server: 'backend',
+    availableRoutes: [
+      '/health',
+      '/api/products',
+      '/api/auth',
+      '/api/cart',
+      '/api/orders',
+      '/api/blogs',
+      '/api/contacts',
+      '/api/payments'
+    ]
+  };
+  
+  console.log('📤 Backend: 404 response sent:', notFoundResponse);
+  res.status(404).json(notFoundResponse);
+});
+
+// Enhanced Graceful shutdown handlers with detailed logging
+process.on('SIGTERM', async () => {
+  console.log('🛑 Backend: SIGTERM received - initiating graceful shutdown');
+  console.log('   Timestamp:', new Date().toISOString());
+  console.log('   Process ID:', process.pid);
+  console.log('   Environment:', process.env.NODE_ENV);
+  
+  try {
+    console.log('🔌 Backend: Closing MongoDB connection...');
+    const closeStart = Date.now();
+    await client.close();
+    const closeTime = Date.now() - closeStart;
+    
+    isConnected = false;
+    console.log(`✅ Backend: MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log('👋 Backend: Server shutdown complete');
+  } catch (error) {
+    console.error('❌ Backend: Error during MongoDB connection close:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+  }
+  
+  console.log('🔚 Backend: Process exiting with code 0');
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 Backend: SIGINT received - initiating graceful shutdown');
+  console.log('   Timestamp:', new Date().toISOString());
+  console.log('   Process ID:', process.pid);
+  console.log('   Environment:', process.env.NODE_ENV);
+  
+  try {
+    console.log('🔌 Backend: Closing MongoDB connection...');
+    const closeStart = Date.now();
+    await client.close();
+    const closeTime = Date.now() - closeStart;
+    
+    isConnected = false;
+    console.log(`✅ Backend: MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log('👋 Backend: Server shutdown complete');
+  } catch (error) {
+    console.error('❌ Backend: Error during MongoDB connection close:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+  }
+  
+  console.log('🔚 Backend: Process exiting with code 0');
+  process.exit(0);
+});
+
+// Enhanced server initialization with detailed logging
+console.log('🚀 BALAN COFFEE BACKEND SERVER STARTING...');
+console.log('📊 Backend Server Information:');
+console.log('   Timestamp:', new Date().toISOString());
+console.log('   Node.js Version:', process.version);
+console.log('   Platform:', process.platform);
+console.log('   Architecture:', process.arch);
+console.log('   Process ID:', process.pid);
+console.log('   Environment:', process.env.NODE_ENV || 'development');
+console.log('   Vercel Environment:', process.env.VERCEL ? 'Yes' : 'No');
+
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+  console.log('🏭 Backend: PRODUCTION MODE - Vercel Serverless Functions');
+  console.log('⚡ Backend: Pre-connecting to database for optimal performance...');
+  
+  const initStart = Date.now();
+  connectToDatabase().then(() => {
+    const initTime = Date.now() - initStart;
+    console.log(`✅ Backend: Database pre-connected successfully in ${initTime}ms`);
+    console.log('🎯 Backend: Server ready for Vercel deployment');
+    console.log('📍 Backend: Health endpoint will be available at: /health');
+    console.log('🔗 Backend: API endpoints will be available at: /api/*');
+  }).catch(error => {
+    console.error('❌ Backend: Database pre-connection failed:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   This may cause API requests to fail!');
+    console.error('   Full Error:', error);
+  });
+} else {
+  console.log('🧪 Backend: DEVELOPMENT MODE - Local Server');
+  
+  const startServer = async () => {
+    try {
+      console.log('🔌 Backend: Initializing database connection for local development...');
+      const dbStart = Date.now();
+      await connectToDatabase();
+      const dbTime = Date.now() - dbStart;
+      console.log(`✅ Backend: Database connected in ${dbTime}ms`);
+      
+      console.log('🌐 Backend: Starting HTTP server...');
+      const serverStart = Date.now();
+      app.listen(PORT, () => {
+        const serverTime = Date.now() - serverStart;
+        console.log(`✅ Backend: HTTP server started in ${serverTime}ms`);
+        console.log('🎉 BACKEND SERVER READY!');
+        console.log('   📍 Health check: http://localhost:' + PORT + '/health');
+        console.log('   🔗 API Base URL: http://localhost:' + PORT + '/api');
+        console.log('   📊 Server Info: http://localhost:' + PORT + '/');
+        console.log('   🏠 Port:', PORT);
+        console.log('   🌍 Environment:', process.env.NODE_ENV || 'development');
+      });
+    } catch (error) {
+      console.error('❌ Backend: FAILED TO START SERVER:');
+      console.error('   Error Type:', error.name);
+      console.error('   Error Message:', error.message);
+      console.error('   Full Error:', error);
+      console.error('🔚 Backend: Exiting process...');
+      process.exit(1);
+    }
+  };
+
+  startServer();
 }
 
 // Export the Express app for Vercel

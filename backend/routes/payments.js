@@ -1,15 +1,28 @@
 const express = require('express');
 const crypto = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
-const { execute, query } = require('../config/database');
+const {
+  getCollection,
+  toObjectId,
+  createDocument,
+  updateDocument,
+  handleDatabaseError,
+  validateRequired,
+  cleanData
+} = require('../middleware/mongoHelpers');
 const router = express.Router();
 
-console.log('✅ Payments router loaded successfully');
+console.log('💳 Payments router loading');
 
 // SIMPLE TEST ROUTE
 router.get('/simple-test', (req, res) => {
-    console.log('🎯 Simple test route hit!');
-    res.json({ message: 'Simple test works!' });
+    console.log('🎯 Backend Payments: Simple test route hit!');
+    res.json({ 
+        success: true, 
+        message: 'Backend Payments API working!',
+        timestamp: new Date().toISOString(),
+        server: 'backend'
+    });
 });
 
 /**
@@ -60,6 +73,8 @@ router.get('/methods', (req, res) => {
  */
 router.post('/create', authenticateToken, async (req, res) => {
     try {
+        console.log('💳 Creating payment for order:', req.body);
+        
         const { orderNumber, paymentMethod } = req.body;
 
         if (!orderNumber || !paymentMethod) {
@@ -69,8 +84,11 @@ router.post('/create', authenticateToken, async (req, res) => {
             });
         }
 
-        // Get order details (mock for development)
-        const order = await db.getOrder(orderNumber);
+        // Get order details using MongoDB native driver
+        const ordersCollection = getCollection(req, 'orders');
+        const order = await ordersCollection.findOne({ orderNumber: orderNumber });
+        
+        console.log('📋 Order found:', order ? 'Yes' : 'No');
         
         if (!order) {
             return res.status(404).json({
@@ -89,11 +107,18 @@ router.post('/create', authenticateToken, async (req, res) => {
 
         // Handle different payment methods
         if (paymentMethod === 'contact') {
-            // Contact payment - just update status
-            await db.updateOrderPaymentInfo(orderNumber, {
+            // Contact payment - update status using MongoDB native driver
+            const updateData = updateDocument({
                 paymentMethod: 'contact',
                 paymentStatus: 'pending'
             });
+            
+            await ordersCollection.updateOne(
+                { orderNumber: orderNumber },
+                { $set: updateData }
+            );
+
+            console.log('✅ Contact payment status updated for order:', orderNumber);
 
             return res.json({
                 success: true,
@@ -104,11 +129,18 @@ router.post('/create', authenticateToken, async (req, res) => {
                 message: 'Contact payment confirmed'
             });
         } else if (paymentMethod === 'cod') {
-            // COD payment - just update status
-            await db.updateOrderPaymentInfo(orderNumber, {
+            // COD payment - update status using MongoDB native driver
+            const updateData = updateDocument({
                 paymentMethod: 'cod',
                 paymentStatus: 'pending'
             });
+            
+            await ordersCollection.updateOne(
+                { orderNumber: orderNumber },
+                { $set: updateData }
+            );
+
+            console.log('✅ COD payment status updated for order:', orderNumber);
 
             return res.json({
                 success: true,
@@ -126,12 +158,8 @@ router.post('/create', authenticateToken, async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Create payment error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to create payment',
-            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-        });
+        console.error('❌ Create payment error:', error);
+        return handleDatabaseError(error, res, 'Create payment');
     }
 });
 
@@ -142,10 +170,15 @@ router.post('/create', authenticateToken, async (req, res) => {
  */
 router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
     try {
+        console.log('📊 Checking payment status for order:', req.params.orderNumber);
+        
         const { orderNumber } = req.params;
 
-        // Get order details
-        const order = await db.getOrder(orderNumber);
+        // Get order details using MongoDB native driver
+        const ordersCollection = getCollection(req, 'orders');
+        const order = await ordersCollection.findOne({ orderNumber: orderNumber });
+        
+        console.log('📋 Order status check:', order ? 'Found' : 'Not found');
         
         if (!order) {
             return res.status(404).json({
@@ -162,12 +195,14 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
             });
         }
 
+        console.log('✅ Payment status retrieved for order:', orderNumber);
+
         res.json({
             success: true,
             data: {
                 orderNumber: order.orderNumber,
-                paymentMethod: order.paymentMethod,
-                paymentStatus: order.paymentStatus,
+                paymentMethod: order.paymentMethod || 'not_set',
+                paymentStatus: order.paymentStatus || 'pending',
                 total: order.total,
                 lastUpdated: order.updatedAt || order.createdAt
             },
@@ -175,12 +210,8 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Check payment status error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to check payment status',
-            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-        });
+        console.error('❌ Check payment status error:', error);
+        return handleDatabaseError(error, res, 'Check payment status');
     }
 });
 
@@ -191,6 +222,8 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
  */
 router.post('/verify', authenticateToken, async (req, res) => {
     try {
+        console.log('🔍 Verifying payment for order:', req.body);
+        
         const { orderNumber, paymentMethod } = req.body;
 
         if (!orderNumber || !paymentMethod) {
@@ -200,8 +233,11 @@ router.post('/verify', authenticateToken, async (req, res) => {
             });
         }
 
-        // Get order details
-        const order = await db.getOrder(orderNumber);
+        // Get order details using MongoDB native driver
+        const ordersCollection = getCollection(req, 'orders');
+        const order = await ordersCollection.findOne({ orderNumber: orderNumber });
+        
+        console.log('📋 Order verification:', order ? 'Found' : 'Not found');
         
         if (!order) {
             return res.status(404).json({
@@ -247,12 +283,8 @@ router.post('/verify', authenticateToken, async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Verify payment error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to verify payment',
-            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-        });
+        console.error('❌ Verify payment error:', error);
+        return handleDatabaseError(error, res, 'Verify payment');
     }
 });
 

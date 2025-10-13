@@ -1,24 +1,31 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../constants/authConstants';
+import ContextConsumer from '../common/ContextConsumer';
 
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
-      </div>
-    );
-  }
+  return (
+    <ContextConsumer>
+      {({ auth }) => {
+        const { user, loading } = auth;
 
-  if (!user) {
-    // Redirect to login with the attempted location
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+        if (loading) {
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+            </div>
+          );
+        }
 
-  return children;
+        if (!user) {
+          // Redirect to login with the attempted location
+          return <Navigate to="/login" state={{ from: location }} replace />;
+        }
+
+        return children;
+      }}
+    </ContextConsumer>
+  );
 };
 
 export default ProtectedRoute;

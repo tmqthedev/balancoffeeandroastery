@@ -1,12 +1,10 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { highlightSearchTerm } from '../../utils/searchUtils';
 import { formatVND } from '../../utils/currency';
 import OptimizedImage from './OptimizedImage';
-// Removed useSafeIntersectionObserver - using standard approach
 
-const ProductCard = memo(({ product, searchTerm = '' }) => {
+const ProductCard = ({ product }) => {
     // Simplified - always visible (removed intersection observer)
     const isVisible = true;
 
@@ -152,12 +150,12 @@ const ProductCard = memo(({ product, searchTerm = '' }) => {
             </div>
         </div>
     );
-});
+};
 
 ProductCard.propTypes = {
     product: PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        _id: PropTypes.string,
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         name: PropTypes.oneOfType([
             PropTypes.string,
             PropTypes.shape({
@@ -190,4 +188,4 @@ ProductCard.propTypes = {
     searchTerm: PropTypes.string
 };
 
-export default ProductCard;
+export default memo(ProductCard);

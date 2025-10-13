@@ -1,31 +1,62 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-const Cart = require('../models/Cart');
-const Product = require('../models/Product');
+const { ObjectId } = require('mongodb');
 const { authenticateToken } = require('../middleware/auth');
+const { getCollection, toObjectId, handleDatabaseError } = require('../middleware/mongoHelpers');
 
 // Get user cart (protected route)
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    let cart = await Cart.findOne({ customerId: req.user.userId });
+    console.log('🛒 Cart API: Getting cart for user:', req.user.userId);
+    console.log('🛒 Cart API: User ID type:', typeof req.user.userId);
+    
+    const cartCollection = getCollection(req, 'cart');
+    const productCollection = getCollection(req, 'products');
+    
+    let userId;
+    try {
+      userId = toObjectId(req.user.userId);
+      console.log('✅ Cart API: Successfully converted user ID to ObjectId');
+    } catch (conversionError) {
+      console.error('❌ Cart API: Failed to convert user ID to ObjectId:', conversionError.message);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid user ID format' 
+      });
+    }
+    
+    let cart = await cartCollection.findOne({ customerId: userId });
 
     if (!cart) {
       // Create empty cart if none exists
-      cart = new Cart({
-        customerId: req.user.userId,
+      console.log('🆕 Cart API: Creating new cart for user');
+      const newCart = {
+        customerId: userId,
         items: [],
         itemCount: 0,
-        subtotal: 0
-      });
-      await cart.save();
+        subtotal: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const insertResult = await cartCollection.insertOne(newCart);
+      cart = { ...newCart, _id: insertResult.insertedId };
+      console.log('✅ Cart API: New cart created with ID:', cart._id);
     }
 
     // Populate product details for each cart item
     const populatedItems = await Promise.all(
-      cart.items.map(async (item) => {
+      (cart.items || []).map(async (item) => {
         try {
-          const product = await Product.findById(item.productId);
+          let productId;
+          try {
+            productId = toObjectId(item.productId);
+          } catch (idError) {
+            console.error('❌ Cart API: Invalid product ID in cart item:', item.productId);
+            throw idError;
+          }
+          
+          const product = await productCollection.findOne({ _id: productId });
           return {
             productId: item.productId,
             product_id: item.productId, // Frontend compatibility
@@ -38,7 +69,7 @@ router.get('/', authenticateToken, async (req, res) => {
             addedAt: item.addedAt
           };
         } catch (error) {
-          console.error('Error populating product:', error);
+          console.error('❌ Cart API: Error populating product:', error);
           return {
             productId: item.productId,
             product_id: item.productId,
@@ -54,7 +85,15 @@ router.get('/', authenticateToken, async (req, res) => {
       })
     );
 
-    res.json({
+    console.log('✅ Cart API: Cart retrieved successfully');
+    console.log('📦 Cart API: Populated items count:', populatedItems.length);
+    console.log('📊 Cart API: Cart summary:', {
+      id: cart._id,
+      itemCount: cart.itemCount || 0,
+      subtotal: cart.subtotal || 0
+    });
+    
+    const response = {
       success: true,
       cart: {
         _id: cart._id,
@@ -63,13 +102,13 @@ router.get('/', authenticateToken, async (req, res) => {
         subtotal: cart.subtotal || 0,
         lastActivity: cart.lastActivity
       }
-    });
+    };
+    
+    console.log('📤 Cart API: Sending response');
+    res.json(response);
   } catch (error) {
-    console.error('Get cart error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to fetch cart' 
-    });
+    console.error('❌ Cart API: Get cart error:', error);
+    return handleDatabaseError(error, res, 'get user cart');
   }
 });
 
@@ -96,9 +135,26 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     }
 
+    const cartCollection = getCollection(req, 'cart');
+    const productCollection = getCollection(req, 'products');
+
     // Check if product exists
     console.log('🔍 Cart API: Looking up product with ID:', productId);
-    const product = await Product.findById(productId);
+    console.log('🔍 Cart API: Product ID type:', typeof productId);
+    console.log('🔍 Cart API: Product ID length:', productId?.length);
+    
+    let productObjectId;
+    try {
+      productObjectId = toObjectId(productId);
+      console.log('✅ Cart API: Successfully converted to ObjectId:', productObjectId);
+    } catch (conversionError) {
+      console.error('❌ Cart API: Failed to convert productId to ObjectId:', conversionError.message);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid product ID format' 
+      });
+    }
+    const product = await productCollection.findOne({ _id: productObjectId });
     console.log('📦 Cart API: Product lookup result:', product ? { 
       id: product._id, 
       name: product.name, 
@@ -165,41 +221,68 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Get or create user cart
     console.log('🔍 Cart API: Looking up cart for user:', req.user.userId);
-    let cart = await Cart.findOne({ customerId: req.user.userId });
+    const userId = toObjectId(req.user.userId);
+    let cart = await cartCollection.findOne({ customerId: userId });
     console.log('🛒 Cart API: Existing cart:', cart ? { id: cart._id, itemCount: cart.itemCount } : 'NO CART');
     
     if (!cart) {
       console.log('🆕 Cart API: Creating new cart for user:', req.user.userId);
-      cart = new Cart({
-        customerId: req.user.userId,
+      cart = {
+        customerId: userId,
         items: [],
         itemCount: 0,
-        subtotal: 0
-      });
-      console.log('🆕 Cart API: Created new cart');
+        subtotal: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const insertResult = await cartCollection.insertOne(cart);
+      cart._id = insertResult.insertedId;
+      console.log('🆕 Cart API: Created new cart with ID:', cart._id);
     }
 
-    // Add item to cart using the model method
+    // Add item to cart logic (without Mongoose model methods)
     console.log('➕ Cart API: Adding item to cart...');
     console.log('📋 Cart API: Using calculated price:', productPrice);
     console.log('📋 Cart API: Variant data:', variant);
     
-    try {
-      cart.addItem(productId, quantity, productPrice, variant);
-      console.log('✅ Cart API: Item added, saving cart...');
-    } catch (addError) {
-      console.error('❌ Cart API: addItem failed:', addError);
-      throw addError;
+    // Find existing item with same productId and variant
+    const existingItemIndex = cart.items.findIndex(item => {
+      const isSameProduct = item.productId.toString() === productId.toString();
+      const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant);
+      return isSameProduct && isSameVariant;
+    });
+
+    if (existingItemIndex >= 0) {
+      // Update existing item quantity
+      cart.items[existingItemIndex].quantity += quantity;
+      cart.items[existingItemIndex].updatedAt = new Date();
+      console.log('📈 Cart API: Updated existing item quantity');
+    } else {
+      // Add new item
+      cart.items.push({
+        productId: productObjectId,
+        quantity: quantity,
+        price: productPrice,
+        variant: variant,
+        addedAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log('➕ Cart API: Added new item to cart');
     }
-    
-    try {
-      await cart.save();
-      console.log('💾 Cart API: Cart saved successfully');
-    } catch (saveError) {
-      console.error('❌ Cart API: cart.save() failed:', saveError);
-      console.error('❌ Cart API: Cart data before save:', JSON.stringify(cart.toObject(), null, 2));
-      throw saveError;
-    }
+
+    // Recalculate cart totals
+    cart.itemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+    cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    cart.updatedAt = new Date();
+
+    // Save cart to database
+    console.log('💾 Cart API: Saving cart...');
+    await cartCollection.replaceOne(
+      { _id: cart._id },
+      cart,
+      { upsert: true }
+    );
+    console.log('✅ Cart API: Cart saved successfully');
 
     res.json({
       success: true,
@@ -214,34 +297,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('❌ Cart API: Add to cart error:', error);
-    console.error('❌ Cart API: Error name:', error.name);
-    console.error('❌ Cart API: Error message:', error.message);
-    console.error('❌ Cart API: Error stack:', error.stack);
-    
-    // Provide more specific error messages
-    if (error.name === 'ValidationError') {
-      console.error('❌ Cart API: Validation errors:', error.errors);
-      return res.status(400).json({ 
-        success: false,
-        error: 'Validation failed',
-        details: Object.keys(error.errors).map(key => error.errors[key].message)
-      });
-    }
-    
-    if (error.name === 'CastError') {
-      console.error('❌ Cart API: Cast error - invalid ID format');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Invalid ID format',
-        details: error.message
-      });
-    }
-    
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to add item to cart',
-      details: error.message
-    });
+    return handleDatabaseError(error, res, 'add item to cart');
   }
 });
 
@@ -258,7 +314,11 @@ router.put('/items/:productId', authenticateToken, async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ customerId: req.user.userId });
+    const cartCollection = getCollection(req, 'cart');
+    const userId = toObjectId(req.user.userId);
+    const productObjectId = toObjectId(productId);
+    
+    const cart = await cartCollection.findOne({ customerId: userId });
     if (!cart) {
       return res.status(404).json({ 
         success: false, 
@@ -266,13 +326,39 @@ router.put('/items/:productId', authenticateToken, async (req, res) => {
       });
     }
 
-    if (quantity === 0) {
-      cart.removeItem(productId, variant);
-    } else {
-      cart.updateItemQuantity(productId, quantity, variant);
+    // Find the item to update
+    const itemIndex = cart.items.findIndex(item => {
+      const isSameProduct = item.productId.toString() === productId.toString();
+      const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant);
+      return isSameProduct && isSameVariant;
+    });
+
+    if (itemIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found in cart'
+      });
     }
 
-    await cart.save();
+    if (quantity === 0) {
+      // Remove item from cart
+      cart.items.splice(itemIndex, 1);
+    } else {
+      // Update item quantity
+      cart.items[itemIndex].quantity = quantity;
+      cart.items[itemIndex].updatedAt = new Date();
+    }
+
+    // Recalculate cart totals
+    cart.itemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+    cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    cart.updatedAt = new Date();
+
+    // Save cart
+    await cartCollection.replaceOne(
+      { _id: cart._id },
+      cart
+    );
 
     res.json({
       success: true,
@@ -286,11 +372,8 @@ router.put('/items/:productId', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update cart error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to update cart' 
-    });
+    console.error('❌ Cart API: Update cart error:', error);
+    return handleDatabaseError(error, res, 'update cart item');
   }
 });
 
@@ -303,8 +386,8 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
     console.log('🗑️ Cart API: Remove item request:', { productId, variant, userId: req.user.userId });
     console.log('🗑️ Cart API: Request body:', req.body);
 
-    // Validate productId format
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    const productObjectId = toObjectId(productId);
+    if (!productObjectId) {
       console.log('❌ Cart API: Invalid productId format:', productId);
       return res.status(400).json({ 
         success: false, 
@@ -312,7 +395,10 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ customerId: req.user.userId });
+    const cartCollection = getCollection(req, 'cart');
+    const userId = toObjectId(req.user.userId);
+    
+    const cart = await cartCollection.findOne({ customerId: userId });
     if (!cart) {
       console.log('❌ Cart API: Cart not found for user:', req.user.userId);
       return res.status(404).json({ 
@@ -327,36 +413,39 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
       quantity: item.quantity
     })));
 
-    // Use the model's removeItem method
-    cart.removeItem(productId, variant);
+    // Find and remove the item
+    const initialItemCount = cart.items.length;
+    cart.items = cart.items.filter(item => {
+      const isSameProduct = item.productId.toString() === productId.toString();
+      const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(variant);
+      return !(isSameProduct && isSameVariant);
+    });
+    
+    const itemRemoved = cart.items.length < initialItemCount;
+    if (!itemRemoved) {
+      console.log('⚠️ Cart API: Item not found in cart for removal');
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found in cart'
+      });
+    }
     
     console.log('📦 Cart API: Cart items after removal:', cart.items.map(item => ({
       productId: item.productId,
       quantity: item.quantity
     })));
 
-    try {
-      await cart.save();
-      console.log('💾 Cart API: Cart saved successfully after removal');
-    } catch (saveError) {
-      console.error('❌ Cart API: Failed to save cart after removal:', saveError);
-      console.error('❌ Cart API: Save error name:', saveError.name);
-      console.error('❌ Cart API: Save error message:', saveError.message);
-      
-      if (saveError.name === 'ValidationError') {
-        console.error('❌ Cart API: Validation errors:', Object.keys(saveError.errors).map(key => ({
-          field: key,
-          message: saveError.errors[key].message
-        })));
-        return res.status(400).json({ 
-          success: false,
-          error: 'Cart validation failed after removal',
-          details: Object.keys(saveError.errors).map(key => saveError.errors[key].message)
-        });
-      }
-      
-      throw saveError; // Re-throw for general error handling
-    }
+    // Recalculate cart totals
+    cart.itemCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+    cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    cart.updatedAt = new Date();
+
+    // Save cart
+    await cartCollection.replaceOne(
+      { _id: cart._id },
+      cart
+    );
+    console.log('💾 Cart API: Cart saved successfully after removal');
 
     console.log('✅ Cart API: Item removed successfully');
 
@@ -372,50 +461,18 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Remove from cart error:', error);
-    console.error('❌ Error name:', error.name);
-    console.error('❌ Error message:', error.message);
-    console.error('❌ Error stack:', error.stack);
-    
-    // Provide more specific error messages
-    if (error.name === 'ValidationError') {
-      console.error('❌ Validation errors:', error.errors);
-      return res.status(400).json({ 
-        success: false,
-        error: 'Validation failed',
-        details: Object.keys(error.errors).map(key => error.errors[key].message)
-      });
-    }
-    
-    if (error.name === 'CastError') {
-      console.error('❌ Cast error - invalid ID format');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Invalid ID format',
-        details: error.message
-      });
-    }
-    
-    if (error.message && error.message.includes('Invalid product ID format')) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Invalid product ID format',
-        details: error.message
-      });
-    }
-    
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to remove item from cart',
-      details: error.message
-    });
+    console.error('❌ Cart API: Remove from cart error:', error);
+    return handleDatabaseError(error, res, 'remove item from cart');
   }
 });
 
 // Clear entire cart (protected route)
 router.delete('/', authenticateToken, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ customerId: req.user.userId });
+    const cartCollection = getCollection(req, 'cart');
+    const userId = toObjectId(req.user.userId);
+    
+    const cart = await cartCollection.findOne({ customerId: userId });
     if (!cart) {
       return res.status(404).json({ 
         success: false, 
@@ -423,26 +480,34 @@ router.delete('/', authenticateToken, async (req, res) => {
       });
     }
 
-    cart.clear();
-    await cart.save();
+    // Clear cart items
+    const clearedCart = {
+      ...cart,
+      items: [],
+      itemCount: 0,
+      subtotal: 0,
+      updatedAt: new Date()
+    };
+
+    await cartCollection.replaceOne(
+      { _id: cart._id },
+      clearedCart
+    );
 
     res.json({
       success: true,
       message: 'Cart cleared successfully',
       cart: {
-        _id: cart._id,
-        items: cart.items,
-        itemCount: cart.itemCount,
-        subtotal: cart.subtotal
+        _id: clearedCart._id,
+        items: clearedCart.items,
+        itemCount: clearedCart.itemCount,
+        subtotal: clearedCart.subtotal
       }
     });
 
   } catch (error) {
-    console.error('Clear cart error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to clear cart' 
-    });
+    console.error('❌ Cart API: Clear cart error:', error);
+    return handleDatabaseError(error, res, 'clear cart');
   }
 });
 

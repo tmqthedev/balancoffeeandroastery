@@ -1,13 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useCart } from '../constants/cartConstants';
-import { useAuth } from '../constants/authConstants';
 import { formatVND } from '../utils/currency';
+import ContextConsumer from '../components/common/ContextConsumer';
 
-const Cart = () => {
+const CartContent = ({ auth, cart }) => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated } = auth;
     const { 
         cartItems, 
         loading, 
@@ -15,7 +14,7 @@ const Cart = () => {
         removeFromCart, 
         clearCart, 
         getCartTotals 
-    } = useCart();
+    } = cart;
 
     const { subtotal, itemCount } = getCartTotals();
 
@@ -277,6 +276,17 @@ const Cart = () => {
                 </div>
             </div>
         </>
+    );
+};
+
+// Main component using ContextConsumer
+const Cart = () => {
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => (
+                <CartContent auth={auth} cart={cart} />
+            )}
+        </ContextConsumer>
     );
 };
 

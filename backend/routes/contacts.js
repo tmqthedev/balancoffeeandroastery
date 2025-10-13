@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const Contact = require('../models/Contact');
+const { getCollection, handleDatabaseError } = require('../middleware/mongoHelpers');
 
 // Create contact form submission
 router.post('/', [
@@ -19,9 +19,9 @@ router.post('/', [
 
     const { name, email, phone, subject, message } = req.body;
 
-
-    // Create and save contact using Mongoose
-    const contact = new Contact({
+    // Create and save contact using MongoDB native driver
+    const contactsCollection = getCollection(req, 'contacts');
+    const contactData = {
       name,
       email,
       phone,
@@ -31,9 +31,13 @@ router.post('/', [
       source: 'website',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
-      referrer: req.headers['referer'] || req.headers['referrer']
-    });
-    await contact.save();
+      referrer: req.headers['referer'] || req.headers['referrer'],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const insertResult = await contactsCollection.insertOne(contactData);
+    const contact = { ...contactData, _id: insertResult.insertedId };
 
     // Gửi email thông báo cho quản lý bộ phận
     const { notifyManagers } = require('../services/contactNotificationService');
@@ -55,8 +59,8 @@ router.post('/', [
     });
 
   } catch (error) {
-    console.error('Contact form error:', error);
-    res.status(500).json({ error: 'Failed to submit contact form' });
+    console.error('❌ Contact form error:', error);
+    return handleDatabaseError(error, res, 'submit contact form');
   }
 });
 
@@ -72,29 +76,29 @@ router.post('/newsletter', [
 
     const { email } = req.body;
 
-    // Check if email already exists
-    const existingSubscriptions = await db.query(
-      'SELECT id FROM Subscriptions WHERE email = @email',
-      { email }
-    );
+    const subscriptionsCollection = getCollection(req, 'subscriptions');
 
-    if (existingSubscriptions.length > 0) {
+    // Check if email already exists
+    const existingSubscription = await subscriptionsCollection.findOne({ email });
+
+    if (existingSubscription) {
       return res.status(400).json({ error: 'Email is already subscribed to our newsletter' });
     }
 
     // Insert subscription
-    await db.execute(`
-      INSERT INTO Subscriptions (email, isActive, createdAt)
-      VALUES (@email, 1, GETDATE())
-    `, { email });
+    await subscriptionsCollection.insertOne({
+      email,
+      isActive: true,
+      createdAt: new Date()
+    });
 
     res.status(201).json({
       message: 'Successfully subscribed to newsletter!'
     });
 
   } catch (error) {
-    console.error('Newsletter subscription error:', error);
-    res.status(500).json({ error: 'Failed to subscribe to newsletter' });
+    console.error('❌ Newsletter subscription error:', error);
+    return handleDatabaseError(error, res, 'subscribe to newsletter');
   }
 });
 
@@ -110,14 +114,20 @@ router.post('/newsletter/unsubscribe', [
 
     const { email } = req.body;
 
-    // Update subscription status
-    const result = await db.execute(`
-      UPDATE Subscriptions 
-      SET isActive = 0 
-      WHERE email = @email
-    `, { email });
+    const subscriptionsCollection = getCollection(req, 'subscriptions');
 
-    if (result.rowsAffected[0] === 0) {
+    // Update subscription status
+    const result = await subscriptionsCollection.updateOne(
+      { email },
+      { 
+        $set: { 
+          isActive: false,
+          updatedAt: new Date()
+        } 
+      }
+    );
+
+    if (result.matchedCount === 0) {
       return res.status(404).json({ error: 'Email not found in our subscription list' });
     }
 
@@ -126,8 +136,8 @@ router.post('/newsletter/unsubscribe', [
     });
 
   } catch (error) {
-    console.error('Newsletter unsubscribe error:', error);
-    res.status(500).json({ error: 'Failed to unsubscribe from newsletter' });
+    console.error('❌ Newsletter unsubscribe error:', error);
+    return handleDatabaseError(error, res, 'unsubscribe from newsletter');
   }
 });
 

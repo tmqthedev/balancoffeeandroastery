@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import useCartMerge from '../../hooks/useCartMerge';
 import { formatDateForBackend } from '../../utils/dateUtils';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import ContextConsumer from '../../components/common/ContextConsumer';
+import PasswordStrengthIndicator from '../../components/common/PasswordStrengthIndicator';
 
 const Auth = () => {
     return (
@@ -20,17 +20,43 @@ const AuthContent = ({ auth, cart }) => {
     const { login, register } = auth;
     const { addToCart } = cart;
     
-    // Safe cart merge hook with error handling
-    let forceCartMerge, hasLocalCart;
-    try {
-        const cartMerge = useCartMerge();
-        forceCartMerge = cartMerge.forceCartMerge;
-        hasLocalCart = cartMerge.hasLocalCart;
-    } catch (error) {
-        console.error('❌ useCartMerge failed:', error);
-        forceCartMerge = () => Promise.resolve({ success: false });
-        hasLocalCart = () => false;
-    }
+    // Cart merge functions using context values directly (avoid hooks issue)
+    const forceCartMerge = async () => {
+        console.log('🔄 AuthContent: forceCartMerge called, isAuthenticated:', auth.isAuthenticated);
+        
+        if (!auth.isAuthenticated) {
+            console.log('❌ AuthContent: User not authenticated, cannot merge cart');
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        if (!cart.mergeLocalCartToUserCart) {
+            console.log('❌ AuthContent: mergeLocalCartToUserCart not available');
+            return { success: false, error: 'Cart merge function not available' };
+        }
+
+        try {
+            console.log('🔄 AuthContent: Starting cart merge...');
+            const result = await cart.mergeLocalCartToUserCart(true);
+            console.log('✅ AuthContent: Cart merge completed:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ AuthContent: Cart merge failed:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    const hasLocalCart = () => {
+        const localCart = localStorage.getItem('cart');
+        if (!localCart) return false;
+        
+        try {
+            const cartItems = JSON.parse(localCart);
+            return Array.isArray(cartItems) && cartItems.length > 0;
+        } catch (error) {
+            console.error('❌ AuthContent: Error parsing local cart:', error);
+            return false;
+        }
+    };
     
     // Determine initial mode based on URL
     const initialMode = location.pathname === '/register' ? 'register' : 'login';
@@ -105,52 +131,185 @@ const AuthContent = ({ auth, cart }) => {
 
     const handleRegisterChange = (e) => {
         const { name, value, type, checked } = e.target;
+        const newValue = type === 'checkbox' ? checked : value;
+        
         setRegisterData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: newValue
         }));
         
-        // Clear error for this field
-        if (registerErrors[name]) {
-            setRegisterErrors(prev => ({ ...prev, [name]: '' }));
+        // Real-time validation for specific fields
+        if (name && registerErrors[name]) {
+            const tempData = { ...registerData, [name]: newValue };
+            const fieldError = validateSingleField(name, tempData);
+            
+            setRegisterErrors(prev => ({ 
+                ...prev, 
+                [name]: fieldError || '' 
+            }));
         }
+        
         setError('');
+    };
+
+    // Validate single field for real-time feedback
+    const validateSingleField = (fieldName, data) => {
+        switch (fieldName) {
+            case 'fullName': {
+                if (!data.fullName.trim()) return 'Họ và tên là bắt buộc';
+                if (data.fullName.trim().length < 2) return 'Họ và tên phải có ít nhất 2 ký tự';
+                if (data.fullName.trim().length > 100) return 'Họ và tên không được quá 100 ký tự';
+                if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(data.fullName.trim())) return 'Họ và tên chỉ được chứa chữ cái và khoảng trắng';
+                return '';
+            }
+                
+            case 'email': {
+                if (!data.email.trim()) return 'Email là bắt buộc';
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(data.email.trim())) return 'Email không hợp lệ';
+                if (data.email.trim().length > 255) return 'Email không được quá 255 ký tự';
+                return '';
+            }
+                
+            case 'phone': {
+                if (!data.phone.trim()) return 'Số điện thoại là bắt buộc';
+                const phoneClean = data.phone.replace(/[\s\-()]/g, '');
+                if (!/^[0-9+]{8,20}$/.test(phoneClean)) return 'Số điện thoại không hợp lệ (8-20 chữ số)';
+                if (phoneClean.startsWith('0') && phoneClean.length !== 10) return 'Số điện thoại Việt Nam phải có 10 chữ số (bắt đầu bằng 0)';
+                if (phoneClean.startsWith('+84') && phoneClean.length !== 12) return 'Số điện thoại quốc tế phải có định dạng +84xxxxxxxxx';
+                return '';
+            }
+                
+            case 'password': {
+                if (!data.password) return 'Mật khẩu là bắt buộc';
+                if (data.password.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+                if (data.password.length > 128) return 'Mật khẩu không được quá 128 ký tự';
+                if (!/(?=.*[a-zA-Z])/.test(data.password)) return 'Mật khẩu phải chứa ít nhất 1 chữ cái';
+                if (data.password.includes(' ')) return 'Mật khẩu không được chứa khoảng trắng';
+                return '';
+            }
+                
+            case 'confirmPassword': {
+                if (!data.confirmPassword) return 'Xác nhận mật khẩu là bắt buộc';
+                if (data.password !== data.confirmPassword) return 'Mật khẩu xác nhận không khớp';
+                return '';
+            }
+                
+            case 'dateOfBirth': {
+                if (data.dateOfBirth) {
+                    const birthDate = new Date(data.dateOfBirth);
+                    const today = new Date();
+                    const age = today.getFullYear() - birthDate.getFullYear();
+                    
+                    if (birthDate > today) return 'Ngày sinh không thể là ngày trong tương lai';
+                    if (age < 13) return 'Bạn phải từ 13 tuổi trở lên để đăng ký';
+                    if (age > 120) return 'Ngày sinh không hợp lệ';
+                }
+                return '';
+            }
+                
+            case 'postalCode': {
+                if (data.postalCode && !/^[0-9]{5,6}$/.test(data.postalCode.trim())) {
+                    return 'Mã bưu điện phải có 5-6 chữ số';
+                }
+                return '';
+            }
+                
+            default:
+                return '';
+        }
     };
 
     const validateRegisterForm = () => {
         const newErrors = {};
         
+        // Full name validation
         if (!registerData.fullName.trim()) {
-            newErrors.fullName = 'Trường này là bắt buộc';
+            newErrors.fullName = 'Họ và tên là bắt buộc';
+        } else if (registerData.fullName.trim().length < 2) {
+            newErrors.fullName = 'Họ và tên phải có ít nhất 2 ký tự';
+        } else if (registerData.fullName.trim().length > 100) {
+            newErrors.fullName = 'Họ và tên không được quá 100 ký tự';
+        } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(registerData.fullName.trim())) {
+            newErrors.fullName = 'Họ và tên chỉ được chứa chữ cái và khoảng trắng';
         }
         
+        // Email validation
         if (!registerData.email.trim()) {
-            newErrors.email = 'Trường này là bắt buộc';
-        } else if (!/\S+@\S+\.\S+/.test(registerData.email)) {
-            newErrors.email = 'Email không hợp lệ';
+            newErrors.email = 'Email là bắt buộc';
+        } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(registerData.email.trim())) {
+                newErrors.email = 'Email không hợp lệ';
+            } else if (registerData.email.trim().length > 255) {
+                newErrors.email = 'Email không được quá 255 ký tự';
+            }
         }
         
-        // Phone validation - now required
+        // Phone validation - more comprehensive
         if (!registerData.phone.trim()) {
             newErrors.phone = 'Số điện thoại là bắt buộc';
-        } else if (!/^[0-9]{10,11}$/.test(registerData.phone.replace(/\s/g, ''))) {
-            newErrors.phone = 'Số điện thoại không hợp lệ (10-11 chữ số)';
+        } else {
+            const phoneClean = registerData.phone.replace(/[\s\-\(\)]/g, '');
+            if (!/^[0-9+]{8,20}$/.test(phoneClean)) {
+                newErrors.phone = 'Số điện thoại không hợp lệ (8-20 chữ số)';
+            } else if (phoneClean.startsWith('0') && phoneClean.length !== 10) {
+                newErrors.phone = 'Số điện thoại Việt Nam phải có 10 chữ số (bắt đầu bằng 0)';
+            } else if (phoneClean.startsWith('+84') && phoneClean.length !== 12) {
+                newErrors.phone = 'Số điện thoại quốc tế phải có định dạng +84xxxxxxxxx';
+            }
         }
         
+        // Password validation - more comprehensive
         if (!registerData.password) {
-            newErrors.password = 'Trường này là bắt buộc';
+            newErrors.password = 'Mật khẩu là bắt buộc';
         } else if (registerData.password.length < 6) {
             newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+        } else if (registerData.password.length > 128) {
+            newErrors.password = 'Mật khẩu không được quá 128 ký tự';
+        } else if (!/(?=.*[a-zA-Z])/.test(registerData.password)) {
+            newErrors.password = 'Mật khẩu phải chứa ít nhất 1 chữ cái';
+        } else if (registerData.password.includes(' ')) {
+            newErrors.password = 'Mật khẩu không được chứa khoảng trắng';
         }
         
+        // Confirm password validation
         if (!registerData.confirmPassword) {
-            newErrors.confirmPassword = 'Trường này là bắt buộc';
+            newErrors.confirmPassword = 'Xác nhận mật khẩu là bắt buộc';
         } else if (registerData.password !== registerData.confirmPassword) {
             newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
         }
         
+        // Terms agreement validation
         if (!registerData.agreeTerms) {
-            newErrors.agreeTerms = 'Bạn phải đồng ý với điều khoản sử dụng';
+            newErrors.agreeTerms = 'Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật';
+        }
+        
+        // Optional field validations
+        if (registerData.dateOfBirth) {
+            const birthDate = new Date(registerData.dateOfBirth);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear();
+            
+            if (birthDate > today) {
+                newErrors.dateOfBirth = 'Ngày sinh không thể là ngày trong tương lai';
+            } else if (age < 13) {
+                newErrors.dateOfBirth = 'Bạn phải từ 13 tuổi trở lên để đăng ký';
+            } else if (age > 120) {
+                newErrors.dateOfBirth = 'Ngày sinh không hợp lệ';
+            }
+        }
+        
+        if (registerData.address && registerData.address.trim().length > 255) {
+            newErrors.address = 'Địa chỉ không được quá 255 ký tự';
+        }
+        
+        if (registerData.city && registerData.city.trim().length > 100) {
+            newErrors.city = 'Tên thành phố không được quá 100 ký tự';
+        }
+        
+        if (registerData.postalCode && !/^[0-9]{5,6}$/.test(registerData.postalCode.trim())) {
+            newErrors.postalCode = 'Mã bưu điện phải có 5-6 chữ số';
         }
         
         return newErrors;
@@ -638,11 +797,17 @@ const AuthContent = ({ auth, cart }) => {
                                         id="phone"
                                         name="phone"
                                         type="tel"
+                                        required
                                         value={registerData.phone}
                                         onChange={handleRegisterChange}
-                                        className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
-                                        placeholder="Nhập số điện thoại"
+                                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                            registerErrors.phone ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
+                                        }`}
+                                        placeholder="Ví dụ: 0912345678"
                                     />
+                                    {registerErrors.phone && (
+                                        <p className="mt-1 text-sm text-red-600">{registerErrors.phone}</p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -661,6 +826,7 @@ const AuthContent = ({ auth, cart }) => {
                                         }`}
                                         placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
                                     />
+                                    <PasswordStrengthIndicator password={registerData.password} />
                                     {registerErrors.password && (
                                         <p className="mt-1 text-sm text-red-600">{registerErrors.password}</p>
                                     )}
@@ -704,8 +870,15 @@ const AuthContent = ({ auth, cart }) => {
                                                 type="date"
                                                 value={registerData.dateOfBirth}
                                                 onChange={handleRegisterChange}
-                                                className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
+                                                max={new Date().toISOString().split('T')[0]}
+                                                min={new Date(new Date().getFullYear() - 120, 0, 1).toISOString().split('T')[0]}
+                                                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                                    registerErrors.dateOfBirth ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
+                                                }`}
                                             />
+                                            {registerErrors.dateOfBirth && (
+                                                <p className="mt-1 text-sm text-red-600">{registerErrors.dateOfBirth}</p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -737,9 +910,15 @@ const AuthContent = ({ auth, cart }) => {
                                             type="text"
                                             value={registerData.address}
                                             onChange={handleRegisterChange}
-                                            className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
+                                            maxLength="255"
+                                            className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                                registerErrors.address ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
+                                            }`}
                                             placeholder="Số nhà, đường, phường/xã"
                                         />
+                                        {registerErrors.address && (
+                                            <p className="mt-1 text-sm text-red-600">{registerErrors.address}</p>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-3 gap-4 mt-4">
@@ -753,8 +932,15 @@ const AuthContent = ({ auth, cart }) => {
                                                 type="text"
                                                 value={registerData.city}
                                                 onChange={handleRegisterChange}
-                                                className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
+                                                maxLength="100"
+                                                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                                    registerErrors.city ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
+                                                }`}
+                                                placeholder="Nhập tên thành phố"
                                             />
+                                            {registerErrors.city && (
+                                                <p className="mt-1 text-sm text-red-600">{registerErrors.city}</p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -845,8 +1031,16 @@ const AuthContent = ({ auth, cart }) => {
                                                 type="text"
                                                 value={registerData.postalCode}
                                                 onChange={handleRegisterChange}
-                                                className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
+                                                pattern="[0-9]{5,6}"
+                                                maxLength="6"
+                                                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-brand-secondary transition-colors ${
+                                                    registerErrors.postalCode ? 'border-red-500' : 'border-brand-primary focus:border-brand-secondary'
+                                                }`}
+                                                placeholder="Ví dụ: 700000"
                                             />
+                                            {registerErrors.postalCode && (
+                                                <p className="mt-1 text-sm text-red-600">{registerErrors.postalCode}</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

@@ -36,10 +36,10 @@ export const BlogCardSkeleton = memo(() => (
 BlogCardSkeleton.displayName = 'BlogCardSkeleton';
 
 // Generic list skeleton
-export const ListSkeleton = memo(({ count = 6, ItemSkeleton = ProductCardSkeleton }) => (
+export const ListSkeleton = memo(({ count = 6, ItemSkeleton: SkeletonComponent = ProductCardSkeleton }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {Array.from({ length: count }, (_, index) => (
-      <ItemSkeleton key={index} />
+      <SkeletonComponent key={index} />
     ))}
   </div>
 ));

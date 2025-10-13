@@ -2,7 +2,6 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
-const { bucket } = require('../config/database');
 
 class ImageService {
   constructor() {
@@ -170,19 +169,15 @@ class ImageService {
     }
   }
 
-  // Upload to Firebase Storage (Cloud)
-  async uploadToFirebaseStorage(file, folder = 'general', generateVariants = false) {
+  // Upload image locally with variants
+  async uploadLocalImage(file, folder = 'general', generateVariants = false) {
     try {
-      if (!bucket) {
-        throw new Error('Firebase Storage not initialized');
-      }
-
       const folderName = this.imageFolder[folder] || folder;
       const timestamp = Date.now();
       const randomId = Math.round(Math.random() * 1E9);
       const ext = path.extname(file.originalname);
       const baseName = file.originalname.replace(ext, '').replace(/[^a-zA-Z0-9]/g, '-');
-      const fileName = `${folderName}/${baseName}-${timestamp}-${randomId}`;
+      const fileName = `${baseName}-${timestamp}-${randomId}`;
 
       if (generateVariants) {
         // Generate multiple sizes
@@ -195,33 +190,21 @@ class ImageService {
         };
 
         for (const [sizeName, dimensions] of Object.entries(sizes)) {
-          const processedBuffer = await sharp(file.buffer)
+          const variantFileName = `${fileName}-${sizeName}.webp`;
+          const outputPath = path.join(this.publicDir, 'images', folderName, sizeName, variantFileName);
+          
+          await sharp(file.buffer || file.path)
             .resize(dimensions.width, dimensions.height, { 
               fit: 'cover',
               position: 'center'
             })
             .webp({ quality: 85 })
-            .toBuffer();
-
-          const variantFileName = `${fileName}-${sizeName}.webp`;
-          const firebaseFile = bucket.file(variantFileName);
-          
-          await firebaseFile.save(processedBuffer, {
-            metadata: {
-              contentType: 'image/webp'
-            }
-          });
-
-          // Get public URL
-          const [url] = await firebaseFile.getSignedUrl({
-            action: 'read',
-            expires: '03-01-2500'
-          });
+            .toFile(outputPath);
 
           variants[sizeName] = {
             fileName: variantFileName,
-            url,
-            path: variantFileName,
+            url: `/images/${folderName}/${sizeName}/${variantFileName}`,
+            path: outputPath,
             size: sizeName,
             width: dimensions.width,
             height: dimensions.height
@@ -235,61 +218,50 @@ class ImageService {
         };
       } else {
         // Single image upload
-        const processedBuffer = await sharp(file.buffer)
-          .webp({ quality: 90 })
-          .toBuffer();
-
         const fullFileName = `${fileName}.webp`;
-        const firebaseFile = bucket.file(fullFileName);
+        const outputPath = path.join(this.publicDir, 'images', folderName, fullFileName);
         
-        await firebaseFile.save(processedBuffer, {
-          metadata: {
-            contentType: 'image/webp'
-          }
-        });
-
-        const [url] = await firebaseFile.getSignedUrl({
-          action: 'read',
-          expires: '03-01-2500'
-        });
+        await sharp(file.buffer || file.path)
+          .webp({ quality: 90 })
+          .toFile(outputPath);
 
         return {
           fileName: fullFileName,
-          url,
-          path: fullFileName,
+          url: `/images/${folderName}/${fullFileName}`,
+          path: outputPath,
           folder: folderName
         };
       }
     } catch (error) {
-      console.error('Error uploading to Firebase Storage:', error);
+      console.error('Error uploading local image:', error);
       throw error;
     }
   }
 
-  // Delete image from Firebase Storage
-  async deleteFromFirebaseStorage(filePath) {
+  // Delete image from local storage
+  async deleteLocalImage(filePath) {
     try {
-      if (!bucket) {
-        console.warn('Firebase Storage not initialized');
-        return false;
+      if (filePath.startsWith('/')) {
+        // Convert URL path to filesystem path
+        filePath = path.join(this.publicDir, filePath);
       }
 
-      await bucket.file(filePath).delete();
-      console.log(`✅ Deleted image: ${filePath}`);
+      await fs.unlink(filePath);
+      console.log(`✅ Deleted local image: ${filePath}`);
       return true;
     } catch (error) {
-      console.error('Error deleting image from Firebase:', error);
+      console.error('Error deleting local image:', error);
       return false;
     }
   }
 
-  // Delete multiple variants
+  // Delete multiple variants from local storage
   async deleteImageVariants(variants) {
     if (!variants || typeof variants !== 'object') return false;
 
     const deletePromises = Object.values(variants).map(variant => {
       if (variant.path) {
-        return this.deleteFromFirebaseStorage(variant.path);
+        return this.deleteLocalImage(variant.path);
       }
       return Promise.resolve(false);
     });

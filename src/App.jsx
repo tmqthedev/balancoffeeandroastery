@@ -38,7 +38,7 @@ function App() {
       <ErrorBoundary>
         <AuthProvider>
           <CartProvider>
-            <Router>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <AppLayout />
             </Router>
           </CartProvider>

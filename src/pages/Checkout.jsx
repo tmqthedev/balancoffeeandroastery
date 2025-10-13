@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useCart } from '../constants/cartConstants';
-import { useAuth } from '../constants/authConstants';
+import ContextConsumer from '../components/common/ContextConsumer';
 import PaymentMethods from '../components/payment/PaymentMethods';
 
-const Checkout = () => {
+const CheckoutContent = ({ auth, cart }) => {
     const navigate = useNavigate();
-    const { user, refreshUser } = useAuth();
-    const { cartItems, getCartTotals } = useCart();
+    const { user, refreshUser } = auth;
+    const { cartItems, getCartTotals } = cart;
     
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -1076,6 +1075,17 @@ const Checkout = () => {
                 </div>
             </div>
         </>
+    );
+};
+
+// Main component using ContextConsumer
+const Checkout = () => {
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => (
+                <CheckoutContent auth={auth} cart={cart} />
+            )}
+        </ContextConsumer>
     );
 };
 

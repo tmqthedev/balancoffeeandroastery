@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '../../constants/authConstants';
-import { useCart } from '../../constants/cartConstants';
+import ContextConsumer from '../../components/common/ContextConsumer';
 
-const Login = () => {
+const LoginContent = ({ auth, cart }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
-    const { addToCart, loadCart } = useCart();
+    const { login } = auth;
+    const { addToCart, loadCart } = cart;
     
     const [formData, setFormData] = useState({
         email: '',
@@ -234,6 +233,17 @@ const Login = () => {
                 </div>
             </div>
         </>
+    );
+};
+
+// Main component using ContextConsumer
+const Login = () => {
+    return (
+        <ContextConsumer>
+            {({ auth, cart }) => (
+                <LoginContent auth={auth} cart={cart} />
+            )}
+        </ContextConsumer>
     );
 };
 

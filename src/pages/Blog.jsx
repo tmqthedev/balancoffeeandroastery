@@ -89,22 +89,11 @@ const Blog = () => {
     setCurrentPage(1);
   }, []);
 
-  const handleSearchChange = useCallback((e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  }, []);
-
   const handleSearch = useCallback((e) => {
     if (e.key === 'Enter') {
       setSearchTerm(e.target.value);
       setCurrentPage(1);
     }
-  }, []);
-
-  const handlePageChange = useCallback((page) => {
-    setCurrentPage(page);
-    // Smooth scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const formatDate = (dateString) => {

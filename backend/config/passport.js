@@ -1,17 +1,37 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const { ObjectId } = require('mongodb');
+
+// Helper function to get database instance
+let dbInstance = null;
+const getDatabase = () => {
+  if (!dbInstance && global.db) {
+    dbInstance = global.db;
+  }
+  return dbInstance;
+};
 
 // Local Strategy
 passport.use(new LocalStrategy({
   usernameField: 'email',
-  passwordField: 'password'
-}, async (email, password, done) => {
+  passwordField: 'password',
+  passReqToCallback: true // This allows us to access req.db
+}, async (req, email, password, done) => {
   try {
     console.log('🔍 Passport Local Strategy - Email:', email);
+    
+    // Get database instance from request or global
+    const db = req.db || getDatabase();
+    if (!db) {
+      console.error('❌ No database connection available in passport strategy');
+      return done(new Error('Database connection not available'));
+    }
+
+    const usersCollection = db.collection('users');
+    
     // Find user regardless of status to check email verification
-    const user = await User.findOne({ email });
+    const user = await usersCollection.findOne({ email: email.toLowerCase() });
 
     console.log('🔍 Passport Local Strategy - User found:', !!user);
     if (!user) {
@@ -75,7 +95,25 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id, done) => {
   try {
     console.log('🔍 Deserializing user:', id);
-    const user = await User.findOne({ _id: id, status: 'active' });
+    
+    // Get database instance from global or try to reconnect
+    const db = getDatabase();
+    if (!db) {
+      console.error('❌ No database connection available in passport deserializeUser');
+      return done(new Error('Database connection not available'));
+    }
+
+    const usersCollection = db.collection('users');
+    
+    // Handle both ObjectId and string _id formats
+    let query;
+    if (ObjectId.isValid(id) && id.length === 24) {
+      query = { _id: new ObjectId(id), status: 'active' };
+    } else {
+      query = { _id: id, status: 'active' };
+    }
+
+    const user = await usersCollection.findOne(query);
 
     if (!user) {
       console.log('❌ User not found during deserialization:', id);
@@ -84,12 +122,13 @@ passport.deserializeUser(async (id, done) => {
 
     const userObject = {
       _id: user._id,
-      id: user._id, // for backwards compatibility
+      id: user._id.toString(), // for backwards compatibility
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      status: user.status
+      status: user.status,
+      emailVerified: user.emailVerified
     };
     
     console.log('✅ User deserialized successfully:', user.email);
