@@ -4,22 +4,26 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Import MongoDB connection
-const { connectDB } = require('../backend/config/database');
-const { 
-  handleDatabaseError, 
-  checkDatabaseConnection, 
-  connectWithRetry,
-  createHealthCheck 
-} = require('../backend/middleware/database');
+// MongoDB Connection with Native Driver for Production
+const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery.@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
 
 // Global database connection flag
 let isConnected = false;
+let db = null;
 
 // Security middleware
 app.use(helmet({
@@ -75,6 +79,53 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// MongoDB Connection Function
+async function connectToDatabase() {
+  if (isConnected && db) {
+    console.log('✅ Using existing MongoDB connection');
+    return db;
+  }
+
+  try {
+    console.log('🔄 Connecting to MongoDB...');
+    await client.connect();
+    
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("✅ Pinged MongoDB deployment. Successfully connected!");
+    
+    db = client.db("balancoffee"); // Use your database name
+    isConnected = true;
+    
+    return db;
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    isConnected = false;
+    throw error;
+  }
+}
+
+// Health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    const database = await connectToDatabase();
+    res.json({ 
+      status: 'OK', 
+      message: 'Server and database are healthy',
+      timestamp: new Date().toISOString(),
+      database: isConnected ? 'Connected' : 'Disconnected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      status: 'ERROR', 
+      message: 'Database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Logging middleware
 app.use(morgan('combined'));
 
@@ -119,20 +170,25 @@ app.get('/', (req, res) => {
   });
 });
 
-// Initialize MongoDB connection
-connectDB().then((res) => {
-  if (res === false) {
-    console.error('\u274c MongoDB connection failed: continuing without DB connection for dev');
-  } else {
-    console.log('\u2705 Connected to MongoDB database');
-  }
-}).catch(err => {
-  console.error('\u274c MongoDB connection unexpected error:', err && err.message);
-  // Continue startup for debugging; routes should handle missing DB gracefully.
-});
+// MongoDB native driver connection will be handled in connectToDatabase() function
 
 // Passport configuration
 require('../backend/config/passport');
+
+// Database middleware - makes db available to routes
+app.use(async (req, res, next) => {
+  try {
+    req.db = await connectToDatabase();
+    next();
+  } catch (error) {
+    console.error('Database middleware error:', error);
+    res.status(503).json({ 
+      success: false, 
+      message: 'Database connection failed',
+      error: error.message 
+    });
+  }
+});
 
 // Routes with request logging
 app.use('/api/auth', require('../backend/routes/auth'));
@@ -156,8 +212,7 @@ app.use('/api/payments', require('../backend/routes/payments'));
 // Upload routes for file management
 app.use('/api/upload', require('../backend/routes/upload'));
 
-// Database error handling middleware
-app.use(handleDatabaseError);
+// Database error handling will be done within route handlers
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -189,55 +244,57 @@ app.use((req, res) => {
   });
 });
 
-// Vercel serverless function handler
-if (process.env.VERCEL) {
-  module.exports = app;
-} else {
-  // Graceful shutdown for local development
-  const { mongoose } = require('../backend/config/database');
-
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    await mongoose.connection.close();
+// Graceful shutdown handlers
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  try {
+    await client.close();
     isConnected = false;
-    process.exit(0);
-  });
-
-  process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully');
-    await mongoose.connection.close();
-    isConnected = false;
-    process.exit(0);
-  });
-
-  // Start server for local development or export for Vercel
-  if (process.env.NODE_ENV !== 'production') {
-    const startServer = async () => {
-      try {
-        await connectDB();
-        isConnected = true;
-        
-        app.listen(PORT, () => {
-          console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-          console.log(`📍 Health check: http://localhost:${PORT}/health`);
-          console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-        });
-      } catch (error) {
-        console.error('❌ Failed to start server:', error);
-        process.exit(1);
-      }
-    };
-
-    startServer();
-  } else {
-    // For Vercel serverless deployment
-    connectDB().then(() => {
-      isConnected = true;
-      console.log('✅ Database connected for Vercel deployment');
-    }).catch(error => {
-      console.error('❌ Database connection failed:', error);
-    });
+    console.log('✅ MongoDB connection closed');
+  } catch (error) {
+    console.error('❌ Error closing MongoDB connection:', error);
   }
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully');
+  try {
+    await client.close();
+    isConnected = false;
+    console.log('✅ MongoDB connection closed');
+  } catch (error) {
+    console.error('❌ Error closing MongoDB connection:', error);
+  }
+  process.exit(0);
+});
+
+// Initialize database connection for production/Vercel
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+  // Pre-connect to database for Vercel serverless
+  connectToDatabase().then(() => {
+    console.log('✅ Database pre-connected for Vercel deployment');
+  }).catch(error => {
+    console.error('❌ Database pre-connection failed:', error);
+  });
+} else {
+  // Start server for local development
+  const startServer = async () => {
+    try {
+      await connectToDatabase();
+      
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+        console.log(`📍 Health check: http://localhost:${PORT}/health`);
+        console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
+  };
+
+  startServer();
 }
 
 // Export the Express app for Vercel

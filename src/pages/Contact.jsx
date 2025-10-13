@@ -48,7 +48,7 @@ const Contact = () => {
   const storeInfo = {
     address: "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
     phone: "+84 964 822 269",
-    email: "info@balancoffeeroastery.com.vn",
+    email: "balancoffee.roastery@gmail.com",
     hours: "6:30 - 22:30"
   }; 
 
