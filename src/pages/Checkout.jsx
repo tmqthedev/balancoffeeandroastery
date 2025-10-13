@@ -326,13 +326,22 @@ const Checkout = () => {
             };
 
             // Prepare items for new API
-            const items = cartItems.map(item => ({
-                productId: item.product_id,
-                productName: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                subtotal: item.quantity * item.price
-            }));
+            const items = cartItems.map(item => {
+                // Merge product name with weight variant
+                let productName = item.name;
+                if (item.variant?.weight) {
+                    productName = `${item.name} (${item.variant.weight})`;
+                }
+                
+                return {
+                    productId: item.product_id,
+                    productName: productName,
+                    price: item.price,
+                    quantity: item.quantity,
+                    subtotal: item.quantity * item.price,
+                    variant: item.variant // Keep variant data for reference
+                };
+            });
 
             const orderData = {
                 customerInfo,
@@ -1020,7 +1029,14 @@ const Checkout = () => {
                                     {cartItems.map((item) => (
                                         <div key={item.product_id} className="flex justify-between items-center">
                                             <div className="flex-1">
-                                                <h4 className="text-sm font-medium text-brand-primary">{item.name}</h4>
+                                                <h4 className="text-sm font-medium text-brand-primary">
+                                                    {item.name}
+                                                    {item.variant?.weight && (
+                                                        <span className="text-xs font-normal text-gray-600 ml-1">
+                                                            ({item.variant.weight})
+                                                        </span>
+                                                    )}
+                                                </h4>
                                                 <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                                             </div>                                            <span className="text-sm font-semibold text-brand-primary">
                                                 {formatCurrency(item.price * item.quantity)}

@@ -137,6 +137,11 @@ const Cart = () => {
                                                                     className="text-lg font-semibold text-brand-primary hover:text-brand-primary/80 transition-colors"
                                                                 >
                                                                     {item.name}
+                                                                    {item.variant?.weight && (
+                                                                        <span className="text-sm font-normal text-gray-600 ml-2">
+                                                                            ({item.variant.weight})
+                                                                        </span>
+                                                                    )}
                                                                 </Link>
                                                                 <p className="text-gray-600 text-sm mt-1">
                                                                     {item.description && item.description.length > 100 

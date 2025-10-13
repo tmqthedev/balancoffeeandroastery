@@ -109,12 +109,12 @@ const Products = () => {
             maxPrice: '',
             inStock: false
         });
-        // Scroll to the tab navigation position for better UX
-        if (tabNavigationRef.current) {
-            const navTop = tabNavigationRef.current.offsetTop;
-            const headerHeight = 64;
-            window.scrollTo({ top: navTop - headerHeight - 10, behavior: 'smooth' });
-        }
+        
+        // Always scroll to top of page when switching tabs
+        window.scrollTo({ 
+            top: 0, 
+            behavior: 'smooth' 
+        });
     }, []);
 
     // Memoized current tab config

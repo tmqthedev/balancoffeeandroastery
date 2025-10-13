@@ -31,6 +31,21 @@ const NavbarContent = ({ location, navigate, auth, cart }) => {
         navigate('/');
     };
 
+    // Handle navigation with scroll to top
+    const handleNavigation = (href) => {
+        // Close mobile menu if open
+        setIsMenuOpen(false);
+        
+        // Navigate to the page
+        navigate(href);
+        
+        // Scroll to top with smooth animation
+        window.scrollTo({ 
+            top: 0, 
+            behavior: 'smooth' 
+        });
+    };
+
     const navigation = [
         { name: 'Giới thiệu', href: '/about' },
         { name: 'Sản phẩm', href: '/products' },
@@ -62,15 +77,15 @@ const NavbarContent = ({ location, navigate, auth, cart }) => {
                                 }
                                 
                                 return (
-                                    <Link
+                                    <button
                                         key={item.name}
-                                        to={item.href}
-                                        className={`text-base font-medium transition-all duration-200 hover:text-brand-secondary relative py-2 px-1 ${
+                                        onClick={() => handleNavigation(item.href)}
+                                        className={`text-base font-medium transition-all duration-200 hover:text-brand-secondary relative py-2 px-1 cursor-pointer ${
                                             isActive ? 'text-brand-secondary' : 'text-brand-white'
                                         }`}
                                     >
                                         {item.name}
-                                    </Link>
+                                    </button>
                                 );
                             })}
                         </div>
@@ -107,25 +122,25 @@ const NavbarContent = ({ location, navigate, auth, cart }) => {
                                     <div className="px-4 py-2 border-b border-gray-100">
                                         <p className="text-sm font-medium text-brand-primary truncate">{user?.fullName || user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email}</p>
                                         <p className="text-xs text-gray-600 truncate">{user?.email}</p>
-                                    </div>                                    <Link 
-                                        to="/account" 
-                                        className="flex items-center px-4 py-2 text-sm text-brand-primary hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-100"
+                                    </div>                                    <button 
+                                        onClick={() => handleNavigation("/account")}
+                                        className="flex items-center w-full text-left px-4 py-2 text-sm text-brand-primary hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-100"
                                     >
                                         <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                         Tài khoản
-                                    </Link>
+                                    </button>
 
-                                    <Link 
-                                        to="/orders" 
-                                        className="flex items-center px-4 py-2 text-sm text-brand-primary hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-100"
+                                    <button 
+                                        onClick={() => handleNavigation("/orders")}
+                                        className="flex items-center w-full text-left px-4 py-2 text-sm text-brand-primary hover:bg-gray-50 transition-colors focus:outline-none focus:bg-gray-100"
                                     >
                                         <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                         </svg>
                                         Đơn hàng
-                                    </Link>
+                                    </button>
 
                                     <hr className="my-2 border-gray-100" />
                                     <button
@@ -138,15 +153,15 @@ const NavbarContent = ({ location, navigate, auth, cart }) => {
                                         Đăng xuất
                                     </button>
                                 </div>
-                            </div>                        ) : (                            <Link 
-                                to="/auth" 
+                            </div>                        ) : (                            <button 
+                                onClick={() => handleNavigation("/auth")}
                                 className="hidden lg:inline-flex items-center space-x-2 bg-brand-secondary hover:bg-brand-secondary/90 text-black px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                                 <span>Tài khoản</span>
-                            </Link>
+                            </button>
                         )}                        {/* Mobile Menu Button */}                        <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="lg:hidden p-2 text-brand-white hover:text-brand-secondary hover:bg-brand-primary/10 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary"
@@ -178,58 +193,54 @@ const NavbarContent = ({ location, navigate, auth, cart }) => {
                                 }
                                 
                                 return (
-                                    <Link
+                                    <button
                                         key={item.name}
-                                        to={item.href}
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className={`block px-4 py-3 text-base font-medium transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary ${
+                                        onClick={() => handleNavigation(item.href)}
+                                        className={`block w-full text-left px-4 py-3 text-base font-medium transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-brand-primary ${
                                             isActive
                                                 ? 'text-brand-secondary bg-brand-white/10 border-l-4 border-brand-secondary'
                                                 : 'text-brand-white hover:text-brand-secondary hover:bg-brand-white/10'
                                         }`}
                                     >
                                         {item.name}
-                                    </Link>
+                                    </button>
                                 );
                             })}
 
                             {!isAuthenticated ? (
-                                <div className="border-t border-brand-white/20 pt-4 mt-4">                                    <Link
-                                        to="/auth"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center justify-center space-x-2 px-4 py-3 text-base font-medium bg-brand-secondary text-black hover:bg-brand-secondary/90 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2"
+                                <div className="border-t border-brand-white/20 pt-4 mt-4">                                    <button
+                                        onClick={() => handleNavigation("/auth")}
+                                        className="flex items-center justify-center space-x-2 px-4 py-3 text-base font-medium bg-brand-secondary text-black hover:bg-brand-secondary/90 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 w-full"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                         <span>Tài khoản</span>
-                                    </Link>
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="border-t border-brand-white/20 pt-4 mt-4 space-y-2">
                                     <div className="px-4 py-2 bg-brand-white/10 rounded-lg">
                                         <p className="text-sm font-medium text-brand-white">{user?.fullName || user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email}</p>
                                         <p className="text-xs text-brand-white/70">{user?.email}</p>
-                                    </div>                                    <Link
-                                        to="/account"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center px-4 py-3 text-base font-medium text-brand-white hover:text-brand-secondary hover:bg-brand-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2"
+                                    </div>                                    <button
+                                        onClick={() => handleNavigation("/account")}
+                                        className="flex items-center w-full text-left px-4 py-3 text-base font-medium text-brand-white hover:text-brand-secondary hover:bg-brand-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2"
                                     >
                                         <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                         Tài khoản
-                                    </Link>
-                                    <Link
-                                        to="/orders"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center px-4 py-3 text-base font-medium text-brand-white hover:text-brand-secondary hover:bg-brand-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2"
+                                    </button>
+                                    <button
+                                        onClick={() => handleNavigation("/orders")}
+                                        className="flex items-center w-full text-left px-4 py-3 text-base font-medium text-brand-white hover:text-brand-secondary hover:bg-brand-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2"
                                     >
                                         <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                         </svg>
                                         Đơn hàng
-                                    </Link>
+                                    </button>
 
                                     <button
                                         onClick={() => {

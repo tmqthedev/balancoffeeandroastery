@@ -7,13 +7,8 @@ import OptimizedImage from './OptimizedImage';
 // Removed useSafeIntersectionObserver - using standard approach
 
 const ProductCard = memo(({ product, searchTerm = '' }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
     // Simplified - always visible (removed intersection observer)
     const isVisible = true;
-
-    const handleImageLoad = useCallback(() => {
-        setImageLoaded(true);
-    }, []);
 
     const renderPrice = useCallback(() => {
         const isWeightBased = product.pricingType === 'weight-based' && 
@@ -102,7 +97,6 @@ const ProductCard = memo(({ product, searchTerm = '' }) => {
                         width={300}
                         height={200}
                         loading="lazy"
-                        onLoad={handleImageLoad}
                         placeholder="/images/placeholder.jpg"
                     />
                 );

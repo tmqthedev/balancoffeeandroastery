@@ -93,10 +93,7 @@ export default defineConfig({
         },
         
         // Tối ưu chunk filename
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId 
-            ? chunkInfo.facadeModuleId.split('/').pop().replace('.jsx', '').replace('.js', '')
-            : 'chunk';
+        chunkFileNames: () => {
           return `js/[name]-[hash].js`;
         },
         
@@ -128,9 +125,12 @@ export default defineConfig({
     // CSS code splitting
     cssCodeSplit: true,
     
-    // Asset optimization
+    // Asset optimization for Vercel
     assetsDir: 'assets',
-    assetsInlineLimit: 4096,
+    assetsInlineLimit: 4096, // Inline assets smaller than 4kb
+    
+    // Copy public assets to build directory
+    copyPublicDir: true,
     
     // Build info
     reportCompressedSize: true

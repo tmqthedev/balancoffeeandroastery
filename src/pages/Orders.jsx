@@ -341,7 +341,9 @@ const Orders = () => {
                                     </svg>
                                   </div>
                                   <div className="flex-1">
-                                    <h5 className="font-semibold text-gray-900 mb-1">{item.productName || item.name}</h5>
+                                    <h5 className="font-semibold text-gray-900 mb-1">
+                                      {item.productName || item.name}
+                                    </h5>
                                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                                       <span className="flex items-center space-x-1">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -472,16 +474,6 @@ const Orders = () => {
                             </svg>
                             <span>Phương thức: {order.paymentMethod === 'cod' ? 'COD' : order.paymentMethod === 'contact' ? 'Liên hệ' : order.paymentMethod.toUpperCase()}</span>
                           </div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <button className="px-4 py-2 text-sm font-medium text-brand-primary bg-white border border-brand-primary rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:ring-offset-2">
-                          Chi tiết
-                        </button>
-                        {order.status === 'delivered' && (
-                          <button className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:ring-offset-2">
-                            Mua lại
-                          </button>
                         )}
                       </div>
                     </div>

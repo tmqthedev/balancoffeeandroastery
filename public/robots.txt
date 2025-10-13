@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://balancoffeeandroastery.vercel.app/sitemap.xml
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /account/
+Disallow: /checkout/
+
+# Allow important pages
+Allow: /
+Allow: /products
+Allow: /blog
+Allow: /about
+Allow: /contact
+
+# Crawl delay
+Crawl-delay: 1

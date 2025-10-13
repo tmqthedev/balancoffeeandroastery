@@ -100,6 +100,14 @@ export const CartProvider = ({ children }) => {
     // Merge local cart to user cart when user logs in
     const mergeLocalCartToUserCart = useCallback(async (forceReload = false) => {
         console.log('🔄 CartContext: mergeLocalCartToUserCart called, forceReload:', forceReload);
+        
+        // Double-check authentication status
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.log('❌ CartContext: No auth token found, cannot merge cart');
+            return { success: false, merged: 0, error: 'User not authenticated' };
+        }
+        
         try {
             const localCart = localStorage.getItem('cart');
             if (!localCart) {
@@ -110,30 +118,58 @@ export const CartProvider = ({ children }) => {
                 return { success: true, merged: 0 };
             }
 
-            const localCartItems = JSON.parse(localCart);
-            console.log('🔍 CartContext: Raw localStorage cart:', localCart);
-            console.log('📦 CartContext: Parsed localStorage cart:', localCartItems);
-            if (!localCartItems || localCartItems.length === 0) {
-                console.log('❌ CartContext: Local cart is empty');
-                // Still clear localStorage even if empty
+            let localCartItems;
+            try {
+                localCartItems = JSON.parse(localCart);
+                console.log('🔍 CartContext: Raw localStorage cart:', localCart);
+                console.log('📦 CartContext: Parsed localStorage cart:', localCartItems);
+            } catch (parseError) {
+                console.error('❌ CartContext: Failed to parse local cart JSON:', parseError);
                 localStorage.removeItem('cart');
-                console.log('🧹 CartContext: Cleared empty localStorage cart');
+                console.log('🧹 CartContext: Cleared corrupted localStorage cart');
+                if (forceReload) {
+                    await loadCart();
+                }
+                return { success: false, merged: 0, error: 'Local cart data corrupted' };
+            }
+            
+            if (!Array.isArray(localCartItems) || localCartItems.length === 0) {
+                console.log('❌ CartContext: Local cart is empty or invalid');
+                localStorage.removeItem('cart');
+                console.log('🧹 CartContext: Cleared empty/invalid localStorage cart');
                 if (forceReload) {
                     await loadCart();
                 }
                 return { success: true, merged: 0 };
             }
 
-            console.log('📦 CartContext: Merging local cart items:', localCartItems);
+            console.log('📦 CartContext: Merging', localCartItems.length, 'local cart items');
 
             let mergedCount = 0;
+            let failedCount = 0;
+            const errors = [];
+            
             // Add each item from local cart to user cart
-            for (const item of localCartItems) {
+            for (const [index, item] of localCartItems.entries()) {
                 try {
                     const productId = item.product_id || item.id || item.productId;
-                    console.log('🛒 CartContext: Processing item:', { 
-                        item, 
-                        extractedProductId: productId,
+                    
+                    if (!productId) {
+                        console.warn('⚠️ CartContext: Item missing productId, skipping:', item);
+                        failedCount++;
+                        errors.push(`Item ${index + 1}: Missing product ID`);
+                        continue;
+                    }
+                    
+                    if (!item.quantity || item.quantity <= 0) {
+                        console.warn('⚠️ CartContext: Item has invalid quantity, skipping:', item);
+                        failedCount++;
+                        errors.push(`Item ${index + 1}: Invalid quantity`);
+                        continue;
+                    }
+                    
+                    console.log('🛒 CartContext: Processing item', index + 1, ':', { 
+                        productId,
                         quantity: item.quantity,
                         variant: item.variant 
                     });
@@ -143,29 +179,81 @@ export const CartProvider = ({ children }) => {
                         quantity: item.quantity,
                         variant: item.variant || {}
                     });
-                    console.log('✅ CartContext: Item added successfully:', response.data);
-                    mergedCount++;
-                } catch (error) {
-                    console.error('❌ CartContext: Failed to add item:', item, error);
+                    
+                    if (response.data && response.data.success) {
+                        console.log('✅ CartContext: Item', index + 1, 'added successfully');
+                        mergedCount++;
+                    } else {
+                        console.error('❌ CartContext: API returned success=false for item', index + 1, ':', response.data);
+                        failedCount++;
+                        errors.push(`Item ${index + 1}: ${response.data?.error || 'Unknown API error'}`);
+                    }
+                } catch (itemError) {
+                    console.error('❌ CartContext: Failed to add item', index + 1, ':', item, itemError);
+                    failedCount++;
+                    
+                    if (itemError.response?.status === 401) {
+                        errors.push(`Item ${index + 1}: Authentication failed`);
+                        // If we get 401, user might have been logged out
+                        console.error('❌ CartContext: Authentication failed during merge, stopping process');
+                        break;
+                    } else if (itemError.response?.status === 404) {
+                        errors.push(`Item ${index + 1}: Product not found`);
+                    } else {
+                        errors.push(`Item ${index + 1}: ${itemError.response?.data?.error || itemError.message}`);
+                    }
+                }
+                
+                // Add small delay between requests to avoid overwhelming the server
+                if (index < localCartItems.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
             }
 
-            // Clear local cart after successful merge
+            console.log('📊 CartContext: Merge summary - merged:', mergedCount, 'failed:', failedCount);
+
+            // Clear local cart after merge attempt (regardless of success/failure)
             localStorage.removeItem('cart');
             console.log('🧹 CartContext: Local cart cleared after merge');
             
             // Reload cart to get the merged items
-            await loadCart();
-            console.log('🔄 CartContext: Cart reloaded after merge');
+            try {
+                await loadCart();
+                console.log('🔄 CartContext: Cart reloaded after merge');
+            } catch (loadError) {
+                console.error('❌ CartContext: Failed to reload cart after merge:', loadError);
+            }
 
-            return { success: true, merged: mergedCount };
+            const result = {
+                success: mergedCount > 0 || (mergedCount === 0 && failedCount === 0),
+                merged: mergedCount,
+                failed: failedCount,
+                errors: errors.length > 0 ? errors : undefined
+            };
+            
+            console.log('📋 CartContext: Final merge result:', result);
+            return result;
 
         } catch (error) {
             console.error('❌ CartContext: Failed to merge local cart:', error);
+            
             // Clear localStorage even if merge fails to prevent future conflicts
             localStorage.removeItem('cart');
             console.log('🧹 CartContext: Local cart cleared after merge failure');
-            return { success: false, merged: 0, error: error.message };
+            
+            // Try to reload cart anyway
+            try {
+                await loadCart();
+            } catch (loadError) {
+                console.error('❌ CartContext: Failed to reload cart after merge error:', loadError);
+            }
+            
+            return { 
+                success: false, 
+                merged: 0, 
+                failed: 1,
+                error: error.message || 'Cart merge failed' 
+            };
         }
     }, [loadCart]);
 
@@ -176,13 +264,57 @@ export const CartProvider = ({ children }) => {
         // Listen for storage changes (login/logout in other tabs)
         const handleStorageChange = (e) => {
             if (e.key === 'authToken') {
-                updateAuthStatus();
+                console.log('🔄 CartContext: Storage event detected, updating auth status');
+                const wasAuthenticated = isAuthenticated;
+                const newIsAuthenticated = updateAuthStatus();
+                
+                // If user just became authenticated, force cart merge
+                if (!wasAuthenticated && newIsAuthenticated) {
+                    console.log('🔐 CartContext: User just authenticated via storage event, checking for local cart');
+                    setTimeout(async () => {
+                        const localCart = localStorage.getItem('cart');
+                        if (localCart) {
+                            console.log('📦 CartContext: Found local cart, merging...');
+                            try {
+                                await mergeLocalCartToUserCart(true);
+                                console.log('✅ CartContext: Cart merge completed via storage event');
+                            } catch (error) {
+                                console.error('❌ CartContext: Cart merge failed via storage event:', error);
+                            }
+                        }
+                    }, 100);
+                }
             }
         };
         
+        // Listen for custom auth events
+        const handleAuthLoginComplete = async () => {
+            console.log('🔄 CartContext: Auth login complete event detected');
+            setTimeout(async () => {
+                const newIsAuthenticated = updateAuthStatus();
+                if (newIsAuthenticated) {
+                    const localCart = localStorage.getItem('cart');
+                    if (localCart) {
+                        console.log('📦 CartContext: Found local cart after login complete, merging...');
+                        try {
+                            await mergeLocalCartToUserCart(true);
+                            console.log('✅ CartContext: Cart merge completed after login');
+                        } catch (error) {
+                            console.error('❌ CartContext: Cart merge failed after login:', error);
+                        }
+                    }
+                }
+            }, 50);
+        };
+        
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, [updateAuthStatus]);
+        window.addEventListener('auth-login-complete', handleAuthLoginComplete);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('auth-login-complete', handleAuthLoginComplete);
+        };
+    }, [updateAuthStatus, isAuthenticated, mergeLocalCartToUserCart]);
 
     // Clear localStorage on page unload for authenticated users
     useEffect(() => {
@@ -206,27 +338,53 @@ export const CartProvider = ({ children }) => {
     // Load cart on mount and when authentication state changes
     useEffect(() => {
         console.log('🔄 CartContext: useEffect triggered, isAuthenticated:', isAuthenticated);
+        console.log('🔄 CartContext: Current token exists:', !!localStorage.getItem('authToken'));
         
         const handleAuthenticationChange = async () => {
+            console.log('🔄 CartContext: handleAuthenticationChange started');
+            
             // If user just became authenticated, merge local cart to user cart
             if (isAuthenticated) {
                 console.log('🔐 CartContext: User is authenticated, checking for local cart to merge');
                 const localCart = localStorage.getItem('cart');
+                console.log('📦 CartContext: Local cart exists:', !!localCart);
+                
                 if (localCart) {
-                    console.log('📦 CartContext: Found local cart, merging to user cart');
+                    console.log('📦 CartContext: Local cart content preview:', localCart.substring(0, 100) + '...');
+                    console.log('📦 CartContext: Starting merge process to user cart');
+                    
                     try {
-                        await mergeLocalCartToUserCart();
-                        console.log('✅ CartContext: Local cart merged successfully');
+                        const mergeResult = await mergeLocalCartToUserCart();
+                        console.log('✅ CartContext: Local cart merge completed with result:', mergeResult);
+                        
+                        if (mergeResult.success && mergeResult.merged > 0) {
+                            console.log('🎉 CartContext: Successfully merged', mergeResult.merged, 'items');
+                        } else if (mergeResult.failed > 0) {
+                            console.warn('⚠️ CartContext: Merge completed with', mergeResult.failed, 'failures');
+                        }
                     } catch (error) {
                         console.error('❌ CartContext: Failed to merge local cart:', error);
+                        console.error('❌ CartContext: Error details:', {
+                            name: error.name,
+                            message: error.message,
+                            stack: error.stack
+                        });
                     }
                 } else {
                     console.log('❌ CartContext: No local cart to merge');
                 }
+            } else {
+                console.log('👤 CartContext: User not authenticated, skipping merge');
             }
             
             // Always load cart after authentication check
-            await loadCart();
+            console.log('🔄 CartContext: Loading cart...');
+            try {
+                await loadCart();
+                console.log('✅ CartContext: Cart loaded successfully');
+            } catch (loadError) {
+                console.error('❌ CartContext: Failed to load cart:', loadError);
+            }
         };
         
         handleAuthenticationChange();

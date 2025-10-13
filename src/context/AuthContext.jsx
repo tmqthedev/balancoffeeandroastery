@@ -83,23 +83,30 @@ export const AuthProvider = ({ children }) => {
 
             const { token, user: userData } = response.data;
             
-            // Store token in localStorage
+            // Store token in localStorage first
             localStorage.setItem('authToken', token);
             console.log('💾 AuthContext: Token stored in localStorage');
             
-            // Update state
+            // Update state immediately
             setUser(userData);
             setIsAuthenticated(true);
             console.log('🔄 AuthContext: User state updated:', userData);
             
-            // Trigger cart merge by dispatching storage event
+            // Force a state update to ensure contexts are synchronized
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // Trigger cart merge after authentication state is updated
             console.log('🔄 AuthContext: Triggering cart merge after login');
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'authToken',
+                newValue: token,
+                oldValue: null
+            }));
+            
+            // Additional trigger with a small delay to ensure CartContext is ready
             setTimeout(() => {
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'authToken',
-                    newValue: token
-                }));
-            }, 100);
+                window.dispatchEvent(new Event('auth-login-complete'));
+            }, 150);
             
             return { success: true };
         } catch (error) {
@@ -213,31 +220,27 @@ export const AuthProvider = ({ children }) => {
                 console.log('🔄 AuthContext: Checking for local cart to merge after registration');
                 const localCart = localStorage.getItem('cart');
                 if (localCart) {
-                    console.log('📦 AuthContext: Found local cart, importing CartContext for merge');
-                    try {
-                        // Import CartContext dynamically to avoid circular dependency
-                        const { CartContext } = await import('./CartContext');
-                        
-                        // Get cart context from React context
-                        // Note: This approach won't work directly, we need a different solution
-                        // The merge will be handled by CartContext useEffect when isAuthenticated becomes true
-                        console.log('✅ AuthContext: Cart merge will be handled by CartContext useEffect');
-                        
-                        // Add a small delay to ensure authentication state propagates
-                        setTimeout(async () => {
-                            console.log('🔄 AuthContext: Triggering storage event for cart merge');
-                            // Trigger a storage event to ensure CartContext picks up the authentication change
-                            window.dispatchEvent(new StorageEvent('storage', {
-                                key: 'authToken',
-                                newValue: token
-                            }));
-                        }, 100);
-                    } catch (mergeError) {
-                        console.error('❌ AuthContext: Cart merge setup failed:', mergeError);
-                        // Don't fail registration if cart merge setup fails
-                    }
+                    console.log('📦 AuthContext: Found local cart, setting up merge process');
+                    
+                    // Force a state update to ensure contexts are synchronized
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    
+                    // Trigger storage event for immediate merge
+                    window.dispatchEvent(new StorageEvent('storage', {
+                        key: 'authToken',
+                        newValue: token,
+                        oldValue: null
+                    }));
+                    
+                    // Additional trigger with delay to ensure CartContext is ready
+                    setTimeout(() => {
+                        console.log('🔄 AuthContext: Triggering delayed merge event after registration');
+                        window.dispatchEvent(new Event('auth-login-complete'));
+                    }, 150);
+                    
+                    console.log('✅ AuthContext: Cart merge triggers set up for registration');
                 } else {
-                    console.log('❌ AuthContext: No local cart to merge');
+                    console.log('❌ AuthContext: No local cart to merge after registration');
                 }
 
                 return { success: true };

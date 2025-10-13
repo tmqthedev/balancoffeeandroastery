@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import SEOHelmet from '../components/common/SEOHelmet';
 import ErrorBoundary from '../components/common/ErrorBoundary';
-import { LoadingSpinner, BlogCardSkeleton, ListSkeleton } from '../components/common/LoadingComponents';
+import { LoadingSpinner } from '../components/common/LoadingComponents';
 import OptimizedImage from '../components/common/OptimizedImage';
 // Removed useSafeHooks - using native React hooks instead
 
