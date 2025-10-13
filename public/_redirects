@@ -1,0 +1,12 @@
+# API routes
+/api/* /api/server 200
+/health /api/server 200
+
+# Static assets - serve as is
+/assets/* /assets/:splat 200
+/images/* /images/:splat 200
+/css/* /css/:splat 200
+/js/* /js/:splat 200
+
+# All other routes - fallback to index.html for React Router
+/* /index.html 200
