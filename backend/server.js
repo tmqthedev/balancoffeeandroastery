@@ -11,6 +11,15 @@ const PORT = process.env.PORT || 5000;
 
 // Import MongoDB connection
 const { connectDB } = require('./config/database');
+const { 
+  handleDatabaseError, 
+  checkDatabaseConnection, 
+  connectWithRetry,
+  createHealthCheck 
+} = require('./middleware/database');
+
+// Global database connection flag
+let isConnected = false;
 
 // Security middleware
 app.use(helmet({
@@ -85,15 +94,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Maps /backend/uploads/products/file.jpg to backend/uploads/products/file.jpg  
 app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
+// Health check endpoint with database status
+app.get('/health', createHealthCheck());
 
 // Root endpoint - API info
 app.get('/', (req, res) => {
@@ -154,6 +156,9 @@ app.use('/api/payments', require('./routes/payments'));
 // Upload routes for file management
 app.use('/api/upload', require('./routes/upload'));
 
+// Database error handling middleware
+app.use(handleDatabaseError);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('❌ Server Error:', err.message);
@@ -184,23 +189,43 @@ app.use((req, res) => {
   });
 });
 
-// Graceful shutdown
-const { mongoose } = require('./config/database');
+// Vercel serverless function handler
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  // Graceful shutdown for local development
+  const { mongoose } = require('./config/database');
 
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await mongoose.connection.close();
-  process.exit(0);
-});
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    await mongoose.connection.close();
+    isConnected = false;
+    process.exit(0);
+  });
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  await mongoose.connection.close();
-  process.exit(0);
-});
+  process.on('SIGINT', async () => {
+    console.log('SIGINT received, shutting down gracefully');
+    await mongoose.connection.close();
+    isConnected = false;
+    process.exit(0);
+  });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-});
+  // Start server for local development
+  const startServer = async () => {
+    try {
+      await connectDB();
+      isConnected = true;
+      
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+        console.log(`📍 Health check: http://localhost:${PORT}/health`);
+        console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
+  };
+
+  startServer();
+}

@@ -3,11 +3,31 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/balancoffee', {
-      // These options are no longer needed in Mongoose 6+
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
-    });
+    // Check if already connected
+    if (mongoose.connection.readyState === 1) {
+      console.log('✅ MongoDB already connected');
+      return mongoose.connection;
+    }
+
+    // Connection options optimized for Vercel
+    const options = {
+      bufferCommands: false, // Disable mongoose buffering
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      family: 4, // Use IPv4, skip trying IPv6
+    };
+
+    // Add authentication options if needed
+    if (process.env.MONGODB_URI.includes('@')) {
+      options.authSource = 'admin';
+    }
+
+    const conn = await mongoose.connect(
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/balancoffee',
+      options
+    );
     
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     
@@ -20,19 +40,22 @@ const connectDB = async () => {
       console.log('🔄 MongoDB disconnected');
     });
     
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      console.log('🔄 MongoDB connection closed through app termination');
-      process.exit(0);
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB reconnected');
     });
+
+    return conn.connection;
     
   } catch (error) {
-  console.error('❌ Database connection failed:', error);
-  // Don't exit the process in development: allow the server to start
-  // so HTTP endpoints can respond with clear 5xx JSON errors instead of causing socket resets.
-  // Return false so callers can detect failure if needed.
-  return false;
+    console.error('❌ Database connection failed:', error);
+    
+    // In production, throw the error to be handled by caller
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+    
+    // In development, don't exit the process
+    return false;
   }
 };
 

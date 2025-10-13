@@ -1,11 +1,12 @@
 {
   "version": 2,
   "name": "balancoffee-backend",
-  "functions": {
-    "server.js": {
-      "runtime": "@vercel/node@3"
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
@@ -14,5 +15,11 @@
   ],
   "env": {
     "NODE_ENV": "production"
+  },
+  "functions": {
+    "server.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
   }
 }
