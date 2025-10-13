@@ -3,25 +3,27 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+
+# Environment files (use Vercel dashboard)
+.env*
+!.env.example
 
 # Development files
-.env
-.env.local
-.env.development
-.env.test
-
-# Build files that shouldn't be deployed
 src/
 backend/
 docs/
 
-# IDE files
+# Build artifacts not needed for deployment
+dist/
+coverage/
+.nyc_output/
+
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS files
 .DS_Store
 .DS_Store?
 ._*
@@ -30,26 +32,23 @@ docs/
 ehthumbs.db
 Thumbs.db
 
-# Logs
+# Logs and temporary files
 logs/
 *.log
-
-# Temporary files
 tmp/
 temp/
 
-# Test files
-coverage/
-.nyc_output/
-
 # Git files
+.git/
 .gitignore
 .gitattributes
 
-# Documentation (keep deployment docs)
-README.md
+# Development tools
+eslint.config.js
+postcss.config.js
+tailwind.config.js
+vite.config*.js
 
-# Development scripts
-scripts/
+# Documentation (README kept for Vercel dashboard)
 *.md
-!DEPLOYMENT*.md
+!README.md
