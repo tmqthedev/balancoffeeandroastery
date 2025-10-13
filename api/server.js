@@ -79,7 +79,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MongoDB Connection Function
+// MongoDB Connection Function with Enhanced Logging
 async function connectToDatabase() {
   if (isConnected && db) {
     console.log('✅ Using existing MongoDB connection');
@@ -87,42 +87,94 @@ async function connectToDatabase() {
   }
 
   try {
-    console.log('🔄 Connecting to MongoDB...');
+    console.log('🔄 Attempting to connect to MongoDB...');
+    console.log('📍 Connection URI prefix:', uri.substring(0, 50) + '...');
+    
+    const connectStart = Date.now();
     await client.connect();
+    const connectTime = Date.now() - connectStart;
+    console.log(`⚡ MongoDB client connected in ${connectTime}ms`);
     
     // Send a ping to confirm a successful connection
+    console.log('🏓 Sending ping to MongoDB admin database...');
+    const pingStart = Date.now();
     await client.db("admin").command({ ping: 1 });
-    console.log("✅ Pinged MongoDB deployment. Successfully connected!");
+    const pingTime = Date.now() - pingStart;
+    console.log(`✅ MongoDB ping successful in ${pingTime}ms`);
     
-    db = client.db("balancoffee"); // Use your database name
+    db = client.db("balancoffee");
     isConnected = true;
+    
+    console.log('🎯 Connected to database: balancoffee');
+    console.log('📊 Connection status:', { 
+      isConnected: true, 
+      timestamp: new Date().toISOString(),
+      serverApi: 'v1'
+    });
     
     return db;
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
+    console.error('❌ MongoDB connection failed:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Error Code:', error.code);
+    console.error('   Full Error:', error);
+    
+    if (error.code === 8000) {
+      console.error('🔐 Authentication failed - check username/password');
+    } else if (error.code === 6) {
+      console.error('🌐 Network error - check connection and firewall');
+    } else if (error.message.includes('ENOTFOUND')) {
+      console.error('🔍 DNS resolution failed - check connection string');
+    }
+    
     isConnected = false;
     throw error;
   }
 }
 
-// Health check endpoint
+// Health check endpoint with detailed logging
 app.get('/health', async (req, res) => {
+  console.log('🏥 Health check requested from:', req.ip);
+  
   try {
+    const healthStart = Date.now();
     const database = await connectToDatabase();
-    res.json({ 
+    const healthTime = Date.now() - healthStart;
+    
+    console.log(`✅ Health check successful in ${healthTime}ms`);
+    
+    const healthData = { 
       status: 'OK', 
       message: 'Server and database are healthy',
       timestamp: new Date().toISOString(),
-      database: isConnected ? 'Connected' : 'Disconnected'
-    });
+      database: isConnected ? 'Connected' : 'Disconnected',
+      responseTime: `${healthTime}ms`,
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0'
+    };
+    
+    console.log('📊 Health check response:', healthData);
+    res.json(healthData);
+    
   } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(503).json({ 
+    console.error('❌ Health check failed:');
+    console.error('   IP Address:', req.ip);
+    console.error('   User Agent:', req.get('User-Agent'));
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+    
+    const errorData = { 
       status: 'ERROR', 
       message: 'Database connection failed',
       error: error.message,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    };
+    
+    console.log('📊 Health check error response:', errorData);
+    res.status(503).json(errorData);
   }
 });
 
@@ -175,17 +227,35 @@ app.get('/', (req, res) => {
 // Passport configuration
 require('../backend/config/passport');
 
-// Database middleware - makes db available to routes
+// Database middleware - makes db available to routes with detailed logging
 app.use(async (req, res, next) => {
+  const middlewareStart = Date.now();
+  
   try {
+    console.log(`🔌 Database middleware for ${req.method} ${req.originalUrl}`);
     req.db = await connectToDatabase();
+    
+    const middlewareTime = Date.now() - middlewareStart;
+    console.log(`✅ Database available for route in ${middlewareTime}ms`);
+    
     next();
   } catch (error) {
-    console.error('Database middleware error:', error);
+    const middlewareTime = Date.now() - middlewareStart;
+    
+    console.error('❌ Database middleware failed:');
+    console.error('   Route:', `${req.method} ${req.originalUrl}`);
+    console.error('   IP:', req.ip);
+    console.error('   Time taken:', `${middlewareTime}ms`);
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+    
     res.status(503).json({ 
       success: false, 
       message: 'Database connection failed',
-      error: error.message 
+      error: error.message,
+      route: req.originalUrl,
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -214,82 +284,195 @@ app.use('/api/upload', require('../backend/routes/upload'));
 
 // Database error handling will be done within route handlers
 
-// Error handling middleware
+// Enhanced Error handling middleware with detailed logging
 app.use((err, req, res, next) => {
-  console.error('❌ Server Error:', err.message);
-  console.error('Stack:', err.stack);
-  console.error('Request URL:', req.originalUrl);
-  console.error('Request Method:', req.method);
+  const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+  
+  console.error('🚨 SERVER ERROR OCCURRED:');
+  console.error('   Error ID:', errorId);
+  console.error('   Timestamp:', new Date().toISOString());
+  console.error('   Error Type:', err.name || 'Unknown');
+  console.error('   Error Message:', err.message);
+  console.error('   HTTP Status:', err.status || 500);
+  console.error('   Request Details:');
+  console.error('     - Method:', req.method);
+  console.error('     - URL:', req.originalUrl);
+  console.error('     - IP:', req.ip);
+  console.error('     - User-Agent:', req.get('User-Agent'));
+  console.error('     - Headers:', JSON.stringify(req.headers, null, 2));
+  console.error('   Stack Trace:', err.stack);
+  
+  if (err.code) {
+    console.error('   Error Code:', err.code);
+  }
+  
+  // Log request body for POST/PUT requests (be careful with sensitive data)
+  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
+    console.error('   Request Body:', JSON.stringify(req.body, null, 2));
+  }
+  
+  const errorResponse = {
+    success: false,
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+    errorId: errorId,
+    timestamp: new Date().toISOString()
+  };
   
   if (process.env.NODE_ENV === 'development') {
-    res.status(err.status || 500).json({
-      error: err.message,
-      stack: err.stack,
+    errorResponse.stack = err.stack;
+    errorResponse.details = {
       url: req.originalUrl,
-      method: req.method
-    });
-  } else {
-    res.status(err.status || 500).json({
-      error: 'Something went wrong!'
-    });
+      method: req.method,
+      status: err.status || 500
+    };
   }
+  
+  console.error('📤 Error response sent:', errorResponse);
+  res.status(err.status || 500).json(errorResponse);
 });
 
-// 404 handler
+// Enhanced 404 handler with detailed logging
 app.use((req, res) => {
-  console.log('❌ 404 Not Found:', req.originalUrl);
-  res.status(404).json({
+  console.log('🔍 404 NOT FOUND:');
+  console.log('   URL:', req.originalUrl);
+  console.log('   Method:', req.method);
+  console.log('   IP:', req.ip);
+  console.log('   User-Agent:', req.get('User-Agent'));
+  console.log('   Timestamp:', new Date().toISOString());
+  
+  const notFoundResponse = {
+    success: false,
     error: 'Route not found',
-    url: req.originalUrl
-  });
+    url: req.originalUrl,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+    availableRoutes: [
+      '/health',
+      '/api/products',
+      '/api/auth',
+      '/api/cart',
+      '/api/orders',
+      '/api/blogs',
+      '/api/contacts',
+      '/api/payments'
+    ]
+  };
+  
+  console.log('📤 404 response sent:', notFoundResponse);
+  res.status(404).json(notFoundResponse);
 });
 
-// Graceful shutdown handlers
+// Enhanced Graceful shutdown handlers with detailed logging
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  console.log('🛑 SIGTERM received - initiating graceful shutdown');
+  console.log('   Timestamp:', new Date().toISOString());
+  console.log('   Process ID:', process.pid);
+  console.log('   Environment:', process.env.NODE_ENV);
+  
   try {
+    console.log('🔌 Closing MongoDB connection...');
+    const closeStart = Date.now();
     await client.close();
+    const closeTime = Date.now() - closeStart;
+    
     isConnected = false;
-    console.log('✅ MongoDB connection closed');
+    console.log(`✅ MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log('👋 Server shutdown complete');
   } catch (error) {
-    console.error('❌ Error closing MongoDB connection:', error);
+    console.error('❌ Error during MongoDB connection close:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
   }
+  
+  console.log('🔚 Process exiting with code 0');
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
+  console.log('🛑 SIGINT received - initiating graceful shutdown');
+  console.log('   Timestamp:', new Date().toISOString());
+  console.log('   Process ID:', process.pid);
+  console.log('   Environment:', process.env.NODE_ENV);
+  
   try {
+    console.log('🔌 Closing MongoDB connection...');
+    const closeStart = Date.now();
     await client.close();
+    const closeTime = Date.now() - closeStart;
+    
     isConnected = false;
-    console.log('✅ MongoDB connection closed');
+    console.log(`✅ MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log('👋 Server shutdown complete');
   } catch (error) {
-    console.error('❌ Error closing MongoDB connection:', error);
+    console.error('❌ Error during MongoDB connection close:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
   }
+  
+  console.log('🔚 Process exiting with code 0');
   process.exit(0);
 });
 
-// Initialize database connection for production/Vercel
+// Enhanced server initialization with detailed logging
+console.log('🚀 BALAN COFFEE API SERVER STARTING...');
+console.log('📊 Server Information:');
+console.log('   Timestamp:', new Date().toISOString());
+console.log('   Node.js Version:', process.version);
+console.log('   Platform:', process.platform);
+console.log('   Architecture:', process.arch);
+console.log('   Process ID:', process.pid);
+console.log('   Environment:', process.env.NODE_ENV || 'development');
+console.log('   Vercel Environment:', process.env.VERCEL ? 'Yes' : 'No');
+
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-  // Pre-connect to database for Vercel serverless
+  console.log('🏭 PRODUCTION MODE - Vercel Serverless Functions');
+  console.log('⚡ Pre-connecting to database for optimal performance...');
+  
+  const initStart = Date.now();
   connectToDatabase().then(() => {
-    console.log('✅ Database pre-connected for Vercel deployment');
+    const initTime = Date.now() - initStart;
+    console.log(`✅ Database pre-connected successfully in ${initTime}ms`);
+    console.log('🎯 Server ready for Vercel deployment');
+    console.log('📍 Health endpoint will be available at: /health');
+    console.log('🔗 API endpoints will be available at: /api/*');
   }).catch(error => {
-    console.error('❌ Database pre-connection failed:', error);
+    console.error('❌ Database pre-connection failed:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   This may cause API requests to fail!');
+    console.error('   Full Error:', error);
   });
 } else {
-  // Start server for local development
+  console.log('🧪 DEVELOPMENT MODE - Local Server');
+  
   const startServer = async () => {
     try {
+      console.log('🔌 Initializing database connection for local development...');
+      const dbStart = Date.now();
       await connectToDatabase();
+      const dbTime = Date.now() - dbStart;
+      console.log(`✅ Database connected in ${dbTime}ms`);
       
+      console.log('🌐 Starting HTTP server...');
+      const serverStart = Date.now();
       app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-        console.log(`📍 Health check: http://localhost:${PORT}/health`);
-        console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
+        const serverTime = Date.now() - serverStart;
+        console.log(`✅ HTTP server started in ${serverTime}ms`);
+        console.log('🎉 SERVER READY!');
+        console.log('   📍 Health check: http://localhost:' + PORT + '/health');
+        console.log('   🔗 API Base URL: http://localhost:' + PORT + '/api');
+        console.log('   📊 Server Info: http://localhost:' + PORT + '/');
+        console.log('   🏠 Port:', PORT);
+        console.log('   🌍 Environment:', process.env.NODE_ENV || 'development');
       });
     } catch (error) {
-      console.error('❌ Failed to start server:', error);
+      console.error('❌ FAILED TO START SERVER:');
+      console.error('   Error Type:', error.name);
+      console.error('   Error Message:', error.message);
+      console.error('   Full Error:', error);
+      console.error('🔚 Exiting process...');
       process.exit(1);
     }
   };
