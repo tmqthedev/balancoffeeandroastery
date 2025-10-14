@@ -25,18 +25,32 @@ const OrdersContent = ({ auth }) => {
       setError(''); // Clear previous errors
       
       const token = localStorage.getItem('authToken');
+      console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'NULL');
+      
       if (!token) {
-        console.error('No auth token found');
+        console.error('❌ No auth token found');
         setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         navigate('/login');
         return;
       }
       
+      // Decode token to check expiry
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('📦 Token payload:', payload);
+        console.log('⏰ Token expires:', new Date(payload.exp * 1000).toLocaleString('vi-VN'));
+        console.log('🕐 Current time:', new Date().toLocaleString('vi-VN'));
+        console.log('✅ Token valid:', new Date(payload.exp * 1000) > new Date());
+      } catch (e) {
+        console.error('❌ Failed to decode token:', e);
+      }
+      
+      console.log('📡 Sending GET request to /api/orders...');
       const response = await axios.get('/api/orders', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log('Orders response:', response.data);
+      console.log('✅ Orders response:', response.data);
       
       // Handle different response formats
       const ordersData = response.data.data?.orders || response.data.orders || [];
@@ -128,47 +142,50 @@ const OrdersContent = ({ auth }) => {
           <title>Đơn hàng của tôi - Balan Coffee & Roastery</title>
         </Helmet>
         
+        {/* Hero Section - Responsive */}
         <div className="bg-gradient-to-r from-brand-primary to-brand-primary shadow-xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="container-responsive section-padding">
             <div className="text-center">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
-              <h1 className="text-4xl font-bold text-white mb-4">Đơn hàng của tôi</h1>
-              <p className="text-brand-white/80">Đang tải thông tin đơn hàng...</p>
+              <h1 className="heading-1 text-white mb-4">Đơn hàng của tôi</h1>
+              <p className="body-text text-brand-white/80">Đang tải thông tin đơn hàng...</p>
             </div>
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="space-y-8">
+        {/* Loading Skeletons - Responsive */}
+        <div className="container-responsive section-padding">
+          <div className="space-y-4 lg:space-y-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 animate-pulse">
-                <div className="px-8 py-6 bg-gray-100 border-b">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                      <div>
-                        <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-32"></div>
+              <div key={i} className="card-responsive animate-pulse">
+                {/* Order Header */}
+                <div className="pb-4 mb-4 border-b border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                    <div className="flex items-center space-x-3 lg:space-x-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-full flex-shrink-0"></div>
+                      <div className="min-w-0 flex-1">
+                        <div className="h-5 sm:h-6 bg-gray-200 rounded w-full max-w-xs mb-2"></div>
+                        <div className="h-3 sm:h-4 bg-gray-200 rounded w-32"></div>
                       </div>
                     </div>
-                    <div className="h-8 bg-gray-200 rounded-full w-24"></div>
+                    <div className="h-7 sm:h-8 bg-gray-200 rounded-full w-24 flex-shrink-0"></div>
                   </div>
                 </div>
-                <div className="px-8 py-6">
-                  <div className="grid lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-4">
-                      {[1, 2].map((j) => (
-                        <div key={j} className="h-20 bg-gray-100 rounded-lg"></div>
-                      ))}
-                    </div>
-                    <div className="space-y-4">
-                      <div className="h-32 bg-gray-100 rounded-lg"></div>
-                      <div className="h-24 bg-gray-100 rounded-lg"></div>
-                    </div>
+                
+                {/* Order Content - 2 columns on desktop */}
+                <div className="grid lg:grid-cols-3 gap-4 lg:gap-8">
+                  <div className="lg:col-span-2 space-y-3 lg:space-y-4">
+                    {[1, 2].map((j) => (
+                      <div key={j} className="h-16 sm:h-20 bg-gray-100 rounded-lg"></div>
+                    ))}
+                  </div>
+                  <div className="space-y-3 lg:space-y-4">
+                    <div className="h-24 sm:h-32 bg-gray-100 rounded-lg"></div>
+                    <div className="h-20 sm:h-24 bg-gray-100 rounded-lg"></div>
                   </div>
                 </div>
               </div>

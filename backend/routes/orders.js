@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { orderValidationRules } = require('../middleware/validation');
+const { authenticateToken, optionalAuth } = require('../middleware/auth'); // Use centralized auth middleware
 const emailService = require('../services/emailService');
 const {
   getCollection,
@@ -17,44 +17,6 @@ const {
 } = require('../middleware/mongoHelpers');
 
 console.log('🛍️ Backend: Orders router loading');
-
-// Middleware to authenticate token (required for getting orders)
-const authenticateToken = (req, res, next) => {
-  console.log('🔐 Authenticating token...');
-  const authHeader = req.headers['authorization'];
-  console.log('📋 Auth header:', authHeader ? 'Present' : 'Missing');
-  
-  const token = authHeader?.split(' ')[1];
-
-  if (!token) {
-    console.log('❌ No token provided');
-    return res.status(401).json({ error: 'Access token required' });
-  }
-
-  console.log('🔍 Verifying token...');
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.log('❌ Token verification failed:', err.message);
-      return res.status(403).json({ error: 'Invalid token', details: err.message });
-    }
-    console.log('✅ Token verified, user:', user.userId);
-    req.user = user;
-    next();
-  });
-};
-
-// Optional authentication middleware (for optional token)
-const optionalAuth = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1];
-
-  if (token) {
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (!err) req.user = user;
-    });
-  }
-  next();
-};
 
 /**
  * @route POST /api/orders/debug
