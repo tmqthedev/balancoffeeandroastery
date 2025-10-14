@@ -5,7 +5,7 @@ import axios from 'axios';
 import ContextConsumer from '../components/common/ContextConsumer';
 
 const AccountContent = ({ auth }) => {
-  const { user, updateUserInfo, logout } = auth;
+  const { user, updateUserInfo, logout, loading: authLoading } = auth;
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,6 +29,12 @@ const AccountContent = ({ auth }) => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  console.log('🔄 Account component render:', {
+    user: user?.email,
+    authLoading,
+    hasUser: !!user
+  });
 
   useEffect(() => {
     if (user) {
@@ -80,6 +86,18 @@ const AccountContent = ({ auth }) => {
       });
     }
   }, [user]); // This will trigger whenever user context changes
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Đang tải thông tin...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();

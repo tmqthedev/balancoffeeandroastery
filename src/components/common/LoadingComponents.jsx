@@ -36,13 +36,17 @@ export const BlogCardSkeleton = memo(() => (
 BlogCardSkeleton.displayName = 'BlogCardSkeleton';
 
 // Generic list skeleton
-export const ListSkeleton = memo(({ count = 6, ItemSkeleton: SkeletonComponent = ProductCardSkeleton }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {Array.from({ length: count }, (_, index) => (
-      <SkeletonComponent key={index} />
-    ))}
-  </div>
-));
+export const ListSkeleton = memo(({ count = 6, ItemSkeleton = ProductCardSkeleton }) => {
+  const SkeletonComponent = ItemSkeleton;
+  
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: count }, (_, index) => (
+        <SkeletonComponent key={index} />
+      ))}
+    </div>
+  );
+});
 
 ListSkeleton.propTypes = {
   count: PropTypes.number,

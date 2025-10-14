@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
-// Configure axios base URL
-const api = axios.create({
+// Create a separate axios instance for forgot password (without auth interceptors)
+const forgotPasswordApi = axios.create({
   baseURL: '/api'
 });
 
@@ -22,7 +22,10 @@ const ForgotPassword = () => {
     setMessage('');
 
     try {
-      const response = await api.post('/auth/forgot-password', { email });
+      // Clear any existing auth token that might be invalid
+      localStorage.removeItem('authToken');
+      
+      const response = await forgotPasswordApi.post('/auth/forgot-password', { email });
       setMessage(response.data.message || 'Email khôi phục mật khẩu đã được gửi đến địa chỉ email của bạn.');
       setEmailSent(true);
     } catch (error) {

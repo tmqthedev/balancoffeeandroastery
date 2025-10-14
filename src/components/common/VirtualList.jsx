@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 const VirtualList = ({
@@ -11,6 +11,7 @@ const VirtualList = ({
   onScroll
 }) => {
   const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = useRef(null);
 
   // Calculate visible items
   const { visibleItems, totalHeight, offsetY } = useMemo(() => {
@@ -64,7 +65,7 @@ const VirtualList = ({
 
   return (
     <div
-      ref={setContainerElement}
+      ref={containerRef}
       className={`overflow-auto ${className}`}
       style={{ height: containerHeight }}
       onScroll={debouncedHandleScroll}

@@ -25,8 +25,8 @@ const ProductDetailContent = ({ auth, cart }) => {
     const [addingToCart, setAddingToCart] = useState(false);
     const [addToCartSuccess, setAddToCartSuccess] = useState(false);
 
-    // Get price based on selected weight from product data
-    const getCurrentPrice = () => {
+    // Get price based on selected weight from product data - memoized for performance
+    const getCurrentPrice = useMemo(() => {
         if (!product) return 0;
         
         // For weight-based pricing, find the corresponding weight option
@@ -47,7 +47,25 @@ const ProductDetailContent = ({ auth, cart }) => {
         
         // For fixed pricing, return the product price
         return product.price || 0;
-    };
+    }, [product, selectedWeight]);
+
+    // Memoized image URL processing for better performance
+    const processedImageUrl = useMemo(() => {
+        if (!product?.image_url) return null;
+        
+        let imageUrl = product.image_url;
+        
+        if (imageUrl.startsWith('/images/')) {
+            return imageUrl;
+        } else if (imageUrl.startsWith('backend/uploads/')) {
+            return `http://localhost:5000/${imageUrl}`;
+        } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+            return imageUrl;
+        } else if (imageUrl.startsWith('src/assets/')) {
+            return imageUrl.replace('src/assets/', '/images/');
+        }
+        return imageUrl;
+    }, [product?.image_url]);
 
     const fetchProduct = useCallback(async () => {
         try {
@@ -116,7 +134,7 @@ const ProductDetailContent = ({ auth, cart }) => {
             const productToAdd = {
                 ...product,
                 selectedWeight,
-                price: getCurrentPrice(), // Use current price based on weight
+                price: getCurrentPrice, // Use current price based on weight (memoized value)
                 id: product.id || product._id,
                 variant: { weight: selectedWeight } // Add variant info for cart matching
             };
@@ -130,7 +148,13 @@ const ProductDetailContent = ({ auth, cart }) => {
             }
         } catch (error) {
             console.error('Failed to add to cart:', error);
-            alert('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
+            
+            // Check if it's an authentication error
+            if (error.response && error.response.status === 401) {
+                alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng. Sản phẩm đã được lưu tạm thời.');
+            } else {
+                alert('Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.');
+            }
         } finally {
             setAddingToCart(false);
         }
@@ -167,7 +191,7 @@ const ProductDetailContent = ({ auth, cart }) => {
             const buyNowProduct = {
                 productId: product.id || product._id,
                 name: product.name,
-                price: getCurrentPrice(),
+                price: getCurrentPrice,
                 selectedWeight,
                 quantity,
                 image_url: product.image_url,
@@ -232,7 +256,7 @@ const ProductDetailContent = ({ auth, cart }) => {
                 <meta property="og:description" content={Array.isArray(product.description) ? product.description.join(', ') : product.description} />
                 <meta property="og:type" content="product" />
                 <meta property="og:image" content={product.image_url} />
-                <meta property="product:price:amount" content={getCurrentPrice()} />
+                <meta property="product:price:amount" content={getCurrentPrice} />
                 <meta property="product:price:currency" content="VND" />
                 <link rel="canonical" href={window.location.href} />
                 
@@ -250,7 +274,7 @@ const ProductDetailContent = ({ auth, cart }) => {
                         },
                         "offers": {
                             "@type": "Offer",
-                            "price": getCurrentPrice(),
+                            "price": getCurrentPrice,
                             "priceCurrency": "VND",
                             "availability": "https://schema.org/InStock"
                         }
@@ -277,24 +301,11 @@ const ProductDetailContent = ({ auth, cart }) => {
                             <div className="aspect-square bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 rounded-xl overflow-hidden shadow-lg">
                                 {product.image_url ? (
                                     <img
-                                        src={(() => {
-                                            let imageUrl = product.image_url;
-                                            
-                                            if (imageUrl.startsWith('/images/')) {
-                                                return imageUrl;
-                                            } else if (imageUrl.startsWith('backend/uploads/')) {
-                                                return `http://localhost:5000/${imageUrl}`;
-                                            } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-                                                return imageUrl;
-                                            } else if (imageUrl.startsWith('src/assets/')) {
-                                                return imageUrl.replace('src/assets/', '/images/');
-                                            }
-                                            return imageUrl;
-                                        })()}
+                                        src={processedImageUrl}
                                         alt={product.name}
                                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                                         onError={(e) => {
-                                            console.error('Image failed to load:', e);
+                                            e.target.style.display = 'none';
                                         }}
                                     />
                                 ) : (
@@ -320,7 +331,7 @@ const ProductDetailContent = ({ auth, cart }) => {
 
             <div className="flex items-center space-x-4">
                 <span className="text-3xl font-bold text-brand-primary">
-                    {formatVND(getCurrentPrice())}
+                    {formatVND(getCurrentPrice)}
                 </span>
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                     Còn hàng
@@ -502,27 +513,37 @@ const ProductDetailContent = ({ auth, cart }) => {
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Related Products */}
-                    {relatedProducts.length > 0 && (
-                        <div className="mt-16">
-                            <h2 className="text-2xl font-bold text-brand-primary mb-8 text-center">
-                                Sản phẩm liên quan
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {relatedProducts.map(relatedProduct => (
+                {/* Related Products */}
+                {relatedProducts.length > 0 && (
+                    <div className="mt-16">
+                        <h2 className="text-2xl font-bold text-brand-primary mb-8 text-center">
+                            Sản phẩm liên quan
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {relatedProducts.map(relatedProduct => {
+                                // Process image URL inline for each product
+                                const processedImageUrl = relatedProduct.image_url 
+                                    ? relatedProduct.image_url.startsWith('/images/') 
+                                        ? relatedProduct.image_url
+                                        : relatedProduct.image_url.startsWith('/assets/')
+                                        ? relatedProduct.image_url.replace('/assets/', '/images/')
+                                        : relatedProduct.image_url.startsWith('backend/uploads/')
+                                        ? `http://localhost:5000/${relatedProduct.image_url}`
+                                        : relatedProduct.image_url
+                                    : null;
+
+                                return (
                                     <Link
                                         key={relatedProduct.id}
                                         to={`/products/${relatedProduct.id}`}
                                         className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                                     >
                                         <div className="h-48 bg-gradient-to-br from-brand-primary/20 to-brand-primary/30 flex items-center justify-center">
-                                            {relatedProduct.image_url ? (
+                                            {processedImageUrl ? (
                                                 <img
-                                                    src={relatedProduct.image_url.startsWith('/images/') ? relatedProduct.image_url :
-                                                         relatedProduct.image_url.startsWith('/assets/') ? relatedProduct.image_url.replace('/assets/', '/images/') :
-                                                         relatedProduct.image_url.startsWith('backend/uploads/') ? `http://localhost:5000/${relatedProduct.image_url}` :
-                                                         relatedProduct.image_url}
+                                                    src={processedImageUrl}
                                                     alt={relatedProduct.name}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -539,11 +560,11 @@ const ProductDetailContent = ({ auth, cart }) => {
                                             </p>
                                         </div>
                                     </Link>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </>
     );

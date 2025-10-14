@@ -17,9 +17,15 @@ const api = axios.create({
 
 // Add token to all requests
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    // Skip adding auth token for certain endpoints that don't require authentication
+    const skipAuthPaths = ['/auth/forgot-password', '/auth/reset-password', '/auth/verify-reset-token', '/auth/login', '/auth/register'];
+    const shouldSkipAuth = skipAuthPaths.some(path => config.url?.includes(path));
+    
+    if (!shouldSkipAuth) {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
     }
     return config;
 });
@@ -51,19 +57,29 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuthStatus = async () => {
         const token = localStorage.getItem('authToken');
+        console.log('🔍 AuthContext: checkAuthStatus called, hasToken:', !!token);
+        
         if (!token) {
+            console.log('❌ AuthContext: No token found, setting loading false');
             setLoading(false);
             return;
         }
 
         try {
+            console.log('📡 AuthContext: Making /auth/me API call');
             const response = await api.get('/auth/me');
+            console.log('✅ AuthContext: /auth/me response:', response.data);
+            
             setUser(response.data.user);
             setIsAuthenticated(true);
+            console.log('🔄 AuthContext: User state updated from /auth/me');
         } catch (error) {
-            console.error('Auth check failed:', error);
+            console.error('❌ AuthContext: Auth check failed:', error);
             localStorage.removeItem('authToken');
+            setUser(null);
+            setIsAuthenticated(false);
         } finally {
+            console.log('🏁 AuthContext: checkAuthStatus completed, setting loading false');
             setLoading(false);
         }
     };
@@ -87,13 +103,22 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('authToken', token);
             console.log('💾 AuthContext: Token stored in localStorage');
             
-            // Update state immediately
+            // Update state immediately with batched state updates
+            console.log('🔄 AuthContext: Updating user state:', userData);
             setUser(userData);
             setIsAuthenticated(true);
-            console.log('🔄 AuthContext: User state updated:', userData);
+            console.log('✅ AuthContext: Initial user state updated successfully');
             
-            // Force a state update to ensure contexts are synchronized
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Call checkAuthStatus to get fresh user data from /auth/me endpoint
+            // This will make sure we have the most up-to-date user info
+            console.log('🔄 AuthContext: Calling checkAuthStatus for fresh user data');
+            try {
+                await checkAuthStatus();
+                console.log('✅ AuthContext: Fresh user data loaded from /auth/me');
+            } catch (error) {
+                console.error('❌ AuthContext: Failed to load fresh user data:', error);
+                // Still keep the login successful since we have basic user data
+            }
             
             // Trigger cart merge after authentication state is updated
             console.log('🔄 AuthContext: Triggering cart merge after login');
@@ -108,7 +133,7 @@ export const AuthProvider = ({ children }) => {
                 window.dispatchEvent(new Event('auth-login-complete'));
             }, 150);
             
-            return { success: true };
+            return { success: true, user: userData };
         } catch (error) {
             console.error('❌ AuthContext: Login failed:', error);
             const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại';

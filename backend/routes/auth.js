@@ -220,20 +220,30 @@ router.get('/me', authenticateToken, async (req, res) => {
     console.log('🔍 Auth: User ID from token:', req.user.userId);
     console.log('🔍 Auth: User ID type:', typeof req.user.userId);
     
-    let query;
+    // Try both ObjectId and string ID formats for user lookup
+    let user = null;
     try {
-      const userObjectId = toObjectId(req.user.userId);
-      query = { _id: userObjectId };
-      console.log('✅ Auth: Successfully converted user ID to ObjectId');
-    } catch (conversionError) {
-      console.error('❌ Auth: Failed to convert user ID to ObjectId:', conversionError.message);
-      return res.status(400).json({ error: 'Invalid user ID format' });
+        // First try as ObjectId if it matches the format
+        if (typeof req.user.userId === 'string' && req.user.userId.match(/^[0-9a-fA-F]{24}$/)) {
+            const objectId = toObjectId(req.user.userId);
+            user = await usersCollection.findOne(
+                { _id: objectId },
+                { projection: { password: 0 } }
+            );
+            console.log('🔍 Auth /me: Tried ObjectId lookup:', !!user);
+        }
+    } catch (error) {
+        console.log('⚠️ Auth /me: ObjectId lookup failed, trying string lookup');
     }
     
-    const user = await usersCollection.findOne(
-      query,
-      { projection: { password: 0 } }
-    );
+    // If ObjectId lookup failed or user ID is not ObjectId format, try string lookup
+    if (!user) {
+        user = await usersCollection.findOne(
+            { _id: req.user.userId },
+            { projection: { password: 0 } }
+        );
+        console.log('🔍 Auth /me: Tried string ID lookup:', !!user);
+    }
 
     if (!user) {
       console.log('❌ User not found:', req.user.userId);
@@ -484,8 +494,13 @@ router.post('/forgot-password', [
     body('email').isEmail().withMessage('Email không hợp lệ')
 ], async (req, res) => {
     try {
+        console.log('🔐 Forgot password request received');
+        console.log('   Headers:', req.headers);
+        console.log('   Body:', req.body);
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log('❌ Validation errors:', errors.array());
             return res.status(400).json({
                 success: false,
                 message: 'Dữ liệu không hợp lệ',
@@ -586,9 +601,27 @@ router.post('/verify-reset-token', [
 
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        console.log('🔍 Verify Token: Decoded userId:', decoded.userId, 'Type:', typeof decoded.userId);
         
         // Check if user exists and token is still valid
-        const user = await usersCollection.findOne({ _id: new ObjectId(decoded.userId) });
+        // Try both ObjectId and string ID formats for user lookup
+        let user = null;
+        try {
+            // First try as ObjectId if it matches the format
+            if (typeof decoded.userId === 'string' && decoded.userId.match(/^[0-9a-fA-F]{24}$/)) {
+                const objectId = toObjectId(decoded.userId);
+                user = await usersCollection.findOne({ _id: objectId });
+                console.log('🔍 Verify Token: Tried ObjectId lookup:', !!user);
+            }
+        } catch (error) {
+            console.log('⚠️ Verify Token: ObjectId lookup failed, trying string lookup');
+        }
+        
+        // If ObjectId lookup failed or user ID is not ObjectId format, try string lookup
+        if (!user) {
+            user = await usersCollection.findOne({ _id: decoded.userId });
+            console.log('🔍 Verify Token: Tried string ID lookup:', !!user);
+        }
         
         if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < new Date()) {
             return res.status(400).json({
@@ -633,9 +666,27 @@ router.post('/reset-password', [
 
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        console.log('🔍 Reset Password: Decoded userId:', decoded.userId, 'Type:', typeof decoded.userId);
         
         // Check if user exists and token is still valid
-        const user = await usersCollection.findOne({ _id: new ObjectId(decoded.userId) });
+        // Try both ObjectId and string ID formats for user lookup
+        let user = null;
+        try {
+            // First try as ObjectId if it matches the format
+            if (typeof decoded.userId === 'string' && decoded.userId.match(/^[0-9a-fA-F]{24}$/)) {
+                const objectId = toObjectId(decoded.userId);
+                user = await usersCollection.findOne({ _id: objectId });
+                console.log('🔍 Reset Password: Tried ObjectId lookup:', !!user);
+            }
+        } catch (error) {
+            console.log('⚠️ Reset Password: ObjectId lookup failed, trying string lookup');
+        }
+        
+        // If ObjectId lookup failed or user ID is not ObjectId format, try string lookup
+        if (!user) {
+            user = await usersCollection.findOne({ _id: decoded.userId });
+            console.log('🔍 Reset Password: Tried string ID lookup:', !!user);
+        }
         
         if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < new Date()) {
             return res.status(400).json({

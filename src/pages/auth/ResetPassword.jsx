@@ -3,8 +3,8 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
-// Configure axios base URL
-const api = axios.create({
+// Create a separate axios instance for reset password (without auth interceptors)
+const resetPasswordApi = axios.create({
   baseURL: '/api'
 });
 
@@ -32,7 +32,7 @@ const ResetPassword = () => {
       }
 
       try {
-        const response = await api.post('/auth/verify-reset-token', { token });
+        const response = await resetPasswordApi.post('/auth/verify-reset-token', { token });
         if (response.data.success) {
           setTokenValid(true);
         } else {
@@ -67,7 +67,7 @@ const ResetPassword = () => {
     setMessage('');
 
     try {
-      await api.post('/auth/reset-password', {
+      await resetPasswordApi.post('/auth/reset-password', {
         token,
         newPassword: formData.newPassword
       });

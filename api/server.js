@@ -177,7 +177,7 @@ app.get('/health', async (req, res) => {
   
   try {
     const healthStart = Date.now();
-    const database = await connectToDatabase();
+    await connectToDatabase();
     const healthTime = Date.now() - healthStart;
     
     console.log(`✅ Health check successful in ${healthTime}ms`);
@@ -320,7 +320,7 @@ app.use('/api/upload', require('../backend/routes/upload'));
 // Database error handling will be done within route handlers
 
 // Enhanced Error handling middleware with detailed logging
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2);
   
   console.error('🚨 SERVER ERROR OCCURRED:');

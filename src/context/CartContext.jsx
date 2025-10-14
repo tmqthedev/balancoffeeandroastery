@@ -16,12 +16,31 @@ const api = axios.create({
 
 // Add token to requests
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    // Skip adding auth token for certain endpoints that don't require authentication
+    const skipAuthPaths = ['/auth/forgot-password', '/auth/reset-password', '/auth/verify-reset-token'];
+    const shouldSkipAuth = skipAuthPaths.some(path => config.url?.includes(path));
+    
+    if (!shouldSkipAuth) {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
     }
     return config;
 });
+
+// Handle 401 responses globally
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            console.log('🔐 CartContext API: Received 401, clearing auth state');
+            localStorage.removeItem('authToken');
+            // Don't automatically redirect, let the component handle it
+        }
+        return Promise.reject(error);
+    }
+);
 
 // Re-export the useCart hook
 
@@ -465,7 +484,60 @@ export const CartProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('❌ CartContext: Failed to add to cart:', error);
-            throw error; // Re-throw so callers can handle it
+            
+            // Handle 401 errors specifically - user not authenticated
+            if (error.response && error.response.status === 401) {
+                console.log('🔐 CartContext: Authentication failed, switching to local cart');
+                setIsAuthenticated(false);
+                localStorage.removeItem('authToken');
+                
+                // Fall back to local cart handling
+                try {
+                    const productId = product.product_id || product.id;
+                    const productVariant = product.selectedWeight ? { weight: product.selectedWeight } : {};
+                    
+                    const newItems = (() => {
+                        // Find existing item with same productId AND same variant
+                        const existingItem = cartItems.find(item => {
+                            const isSameProduct = (item.product_id || item.id) === productId;
+                            const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(productVariant);
+                            return isSameProduct && isSameVariant;
+                        });
+                        
+                        if (existingItem) {
+                            // Update quantity of existing item
+                            return cartItems.map(item => {
+                                const isSameProduct = (item.product_id || item.id) === productId;
+                                const isSameVariant = JSON.stringify(item.variant || {}) === JSON.stringify(productVariant);
+                                
+                                if (isSameProduct && isSameVariant) {
+                                    return { ...item, quantity: item.quantity + quantity };
+                                }
+                                return item;
+                            });
+                        } else {
+                            // Add new item with variant
+                            return [...cartItems, { 
+                                ...product, 
+                                quantity, 
+                                product_id: productId,
+                                id: productId,
+                                variant: productVariant
+                            }];
+                        }
+                    })();
+                    
+                    setCartItems(newItems);
+                    localStorage.setItem('cart', JSON.stringify(newItems));
+                    console.log('✅ CartContext: Switched to local cart, item added:', newItems);
+                    return { success: true };
+                } catch (localError) {
+                    console.error('❌ CartContext: Even local cart handling failed:', localError);
+                    throw localError;
+                }
+            }
+            
+            throw error; // Re-throw other errors
         } finally {
             setLoading(false);
         }

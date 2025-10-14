@@ -250,7 +250,7 @@ const AuthContent = ({ auth, cart }) => {
         if (!registerData.phone.trim()) {
             newErrors.phone = 'Số điện thoại là bắt buộc';
         } else {
-            const phoneClean = registerData.phone.replace(/[\s\-\(\)]/g, '');
+            const phoneClean = registerData.phone.replace(/[\s\-()]/g, '');
             if (!/^[0-9+]{8,20}$/.test(phoneClean)) {
                 newErrors.phone = 'Số điện thoại không hợp lệ (8-20 chữ số)';
             } else if (phoneClean.startsWith('0') && phoneClean.length !== 10) {

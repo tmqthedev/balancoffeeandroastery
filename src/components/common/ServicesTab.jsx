@@ -292,21 +292,14 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                                         <div className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-gray-200">
                                             <span>Với</span> {selectedService.duration}
                                         </div>
-                                        <button className="w-full mt-6 py-3 px-6 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-white font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
+                                        <button 
+                                            className="w-full mt-6 py-3 px-6 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-white font-bold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                                            onClick={() => window.location.href = '/contact'}
+                                        >
                                             Đặt dịch vụ ngay
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t-2 border-gray-200">
-                                <button className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/90 hover:from-brand-primary/90 hover:to-brand-primary text-brand-white py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg font-bold">
-                                    📅 Đặt lịch tư vấn miễn phí
-                                </button>
-                                <button className="flex-1 bg-gradient-to-r from-brand-secondary to-brand-secondary/90 hover:from-brand-secondary/90 hover:to-brand-secondary text-white py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg font-bold">
-                                    💬 Chat với chuyên gia
-                                </button>
                             </div>
 
                             {/* Trust Indicators */}
@@ -368,10 +361,16 @@ const ServicesTab = ({ searchTerm, onClearSearch }) => {
                     Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
-                        📞 Gọi ngay: 1900 xxxx
+                    <button 
+                        className="bg-brand-primary hover:bg-brand-primary/90 text-brand-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                        onClick={() => window.location.href = 'https://zalo.me/+84964822269'}
+                    >
+                        📞 Gọi ngay: +84 964 822 269
                     </button>
-                    <button className="bg-white hover:bg-brand-secondary/10 text-brand-primary border border-brand-primary/30 px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md">
+                    <button 
+                        className="bg-white hover:bg-brand-secondary/10 text-brand-primary border border-brand-primary/30 px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md"
+                        onClick={() => window.location.href = 'https://zalo.me/0902456359'}
+                    >
                         💬 Chat với chuyên gia
                     </button>
                 </div>
