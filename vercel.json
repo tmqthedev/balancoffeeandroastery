@@ -18,6 +18,18 @@
     {
       "src": "/uploads/(.*)",
       "dest": "/backend/server.js"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|webp|ico|json|txt|xml|woff|woff2|ttf|eot))",
+      "dest": "/dist/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/dist/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/index.html"
     }
   ]
 }
