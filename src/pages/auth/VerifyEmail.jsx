@@ -103,7 +103,7 @@ const VerifyEmailContent = ({ auth, cart }) => {
         };
 
         verifyEmail();
-    }, [token, loginWithToken, navigate, hasVerified]);
+    }, [token, loginWithToken, navigate, hasVerified, addToCart]);
 
     const handleResendVerification = async (e) => {
         e.preventDefault();

@@ -4,24 +4,33 @@
  */
 
 /* ========================================
-   BREAKPOINTS
+   BREAKPOINTS - SPECIFIC DEVICES
    ======================================== */
 :root {
-  /* Breakpoint values */
-  --breakpoint-xs: 320px;   /* Extra small devices (phones) */
-  --breakpoint-sm: 640px;   /* Small devices (large phones) */
-  --breakpoint-md: 768px;   /* Medium devices (tablets) */
-  --breakpoint-lg: 1024px;  /* Large devices (laptops) */
-  --breakpoint-xl: 1280px;  /* Extra large devices (desktops) */
-  --breakpoint-2xl: 1536px; /* 2X large devices (large desktops) */
+  /* Breakpoint values - Based on real devices */
+  --breakpoint-xs: 320px;   /* iPhone SE (old), Galaxy S5 */
+  --breakpoint-sm: 360px;   /* Samsung S8+, Galaxy A series */
+  --breakpoint-md: 375px;   /* iPhone SE (2020), iPhone 12/13 mini */
+  --breakpoint-lg: 390px;   /* iPhone 14 Pro, iPhone 15 */
+  --breakpoint-xl: 414px;   /* iPhone 14 Pro Max, iPhone 15 Plus */
+  --breakpoint-tablet: 768px;   /* iPad Mini, small tablets */
+  --breakpoint-tablet-lg: 820px; /* iPad Air */
+  --breakpoint-tablet-xl: 1024px; /* iPad Pro 11" */
+  --breakpoint-desktop: 1280px;  /* Desktop HD */
+  --breakpoint-desktop-lg: 1440px; /* Desktop Full HD */
+  --breakpoint-desktop-xl: 1920px; /* Desktop 2K */
   
   /* Container max widths */
   --container-xs: 100%;
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1536px;
+  --container-sm: 360px;
+  --container-md: 375px;
+  --container-lg: 414px;
+  --container-tablet: 768px;
+  --container-tablet-lg: 820px;
+  --container-tablet-xl: 1024px;
+  --container-desktop: 1280px;
+  --container-desktop-lg: 1440px;
+  --container-desktop-xl: 1920px;
   
   /* Spacing scale */
   --spacing-xs: 0.5rem;   /* 8px */
@@ -55,37 +64,74 @@
   padding-right: var(--spacing-md);
 }
 
-@media (min-width: 640px) {
+/* Samsung S8+ (360px) */
+@media (min-width: 360px) {
   .container-responsive {
     max-width: var(--container-sm);
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+  }
+}
+
+/* iPhone SE (375px) */
+@media (min-width: 375px) {
+  .container-responsive {
+    max-width: var(--container-md);
     padding-left: var(--spacing-lg);
     padding-right: var(--spacing-lg);
   }
 }
 
-@media (min-width: 768px) {
+/* iPhone 14 Pro Max (414px) */
+@media (min-width: 414px) {
   .container-responsive {
-    max-width: var(--container-md);
+    max-width: var(--container-lg);
   }
 }
 
-@media (min-width: 1024px) {
+/* iPad Mini (768px) */
+@media (min-width: 768px) {
   .container-responsive {
-    max-width: var(--container-lg);
+    max-width: var(--container-tablet);
+  }
+}
+
+/* iPad Air (820px) */
+@media (min-width: 820px) {
+  .container-responsive {
+    max-width: var(--container-tablet-lg);
     padding-left: var(--spacing-xl);
     padding-right: var(--spacing-xl);
   }
 }
 
-@media (min-width: 1280px) {
+/* iPad Pro (1024px) */
+@media (min-width: 1024px) {
   .container-responsive {
-    max-width: var(--container-xl);
+    max-width: var(--container-tablet-xl);
+    padding-left: var(--spacing-2xl);
+    padding-right: var(--spacing-2xl);
   }
 }
 
-@media (min-width: 1536px) {
+/* Desktop HD (1280px) */
+@media (min-width: 1280px) {
   .container-responsive {
-    max-width: var(--container-2xl);
+    max-width: var(--container-desktop);
+  }
+}
+
+/* Desktop Full HD (1440px) */
+@media (min-width: 1440px) {
+  .container-responsive {
+    max-width: var(--container-desktop-lg);
+  }
+}
+
+/* Desktop 2K (1920px) */
+@media (min-width: 1920px) {
+  .container-responsive {
+    max-width: var(--container-desktop-xl);
   }
 }
 
@@ -96,24 +142,60 @@
   display: grid;
   gap: var(--spacing-md);
   width: 100%;
-  grid-template-columns: 1fr; /* Mobile: 1 column */
+  grid-template-columns: 1fr; /* Mobile: 1 column (320px-767px) */
 }
 
-/* Tablet: 2 columns */
+/* Small phones still 1 column */
+@media (min-width: 360px) and (max-width: 767px) {
+  .grid-responsive {
+    gap: var(--spacing-md);
+  }
+}
+
+/* iPad Mini/Tablet: 2 columns */
 @media (min-width: 768px) {
   .grid-responsive-2 {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
   }
 }
 
-/* Desktop: 3-4 columns */
+/* iPad Air (820px): Better spacing */
+@media (min-width: 820px) {
+  .grid-responsive-2 {
+    gap: var(--spacing-xl);
+  }
+  
+  .grid-responsive-3 {
+    grid-template-columns: repeat(2, 1fr); /* Still 2 cols for better layout */
+  }
+}
+
+/* iPad Pro (1024px): 3 columns */
 @media (min-width: 1024px) {
   .grid-responsive-3 {
     grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xl);
   }
   
   .grid-responsive-4 {
+    grid-template-columns: repeat(3, 1fr); /* 3 cols on iPad Pro */
+  }
+}
+
+/* Desktop HD (1280px): 3-4 columns */
+@media (min-width: 1280px) {
+  .grid-responsive-4 {
     grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-2xl);
+  }
+}
+
+/* Desktop Full HD (1440px+): Optimal spacing */
+@media (min-width: 1440px) {
+  .grid-responsive-3,
+  .grid-responsive-4 {
+    gap: var(--spacing-2xl);
   }
 }
 
@@ -127,58 +209,100 @@
 
 /* H1 - Hero Heading */
 .heading-1 {
-  font-size: var(--text-2xl); /* 24px on mobile */
+  font-size: var(--text-xl); /* 20px on tiny phones (320px) */
+}
+
+@media (min-width: 360px) {
+  .heading-1 {
+    font-size: var(--text-2xl); /* 24px on Samsung S8+ */
+  }
+}
+
+@media (min-width: 375px) {
+  .heading-1 {
+    font-size: var(--text-2xl); /* 24px on iPhone SE */
+  }
 }
 
 @media (min-width: 768px) {
   .heading-1 {
-    font-size: var(--text-3xl); /* 30px on tablet */
+    font-size: var(--text-3xl); /* 30px on iPad Mini */
+  }
+}
+
+@media (min-width: 820px) {
+  .heading-1 {
+    font-size: var(--text-4xl); /* 36px on iPad Air */
   }
 }
 
 @media (min-width: 1024px) {
   .heading-1 {
-    font-size: var(--text-4xl); /* 36px on desktop */
+    font-size: var(--text-4xl); /* 36px on iPad Pro */
   }
 }
 
 @media (min-width: 1280px) {
   .heading-1 {
-    font-size: var(--text-5xl); /* 48px on large desktop */
+    font-size: var(--text-5xl); /* 48px on Desktop */
   }
 }
 
 /* H2 - Section Heading */
 .heading-2 {
-  font-size: var(--text-xl); /* 20px on mobile */
+  font-size: var(--text-lg); /* 18px on tiny phones */
+}
+
+@media (min-width: 360px) {
+  .heading-2 {
+    font-size: var(--text-xl); /* 20px on Samsung S8+ */
+  }
 }
 
 @media (min-width: 768px) {
   .heading-2 {
-    font-size: var(--text-2xl); /* 24px on tablet */
+    font-size: var(--text-2xl); /* 24px on iPad Mini */
+  }
+}
+
+@media (min-width: 820px) {
+  .heading-2 {
+    font-size: var(--text-3xl); /* 30px on iPad Air */
   }
 }
 
 @media (min-width: 1024px) {
   .heading-2 {
-    font-size: var(--text-3xl); /* 30px on desktop */
+    font-size: var(--text-3xl); /* 30px on iPad Pro */
   }
 }
 
 /* H3 - Subsection Heading */
 .heading-3 {
-  font-size: var(--text-lg); /* 18px on mobile */
+  font-size: var(--text-base); /* 16px on tiny phones */
+}
+
+@media (min-width: 360px) {
+  .heading-3 {
+    font-size: var(--text-lg); /* 18px on Samsung S8+ */
+  }
 }
 
 @media (min-width: 768px) {
   .heading-3 {
-    font-size: var(--text-xl); /* 20px on tablet */
+    font-size: var(--text-xl); /* 20px on iPad Mini */
+  }
+}
+
+@media (min-width: 820px) {
+  .heading-3 {
+    font-size: var(--text-xl); /* 20px on iPad Air */
   }
 }
 
 @media (min-width: 1024px) {
   .heading-3 {
-    font-size: var(--text-2xl); /* 24px on desktop */
+    font-size: var(--text-2xl); /* 24px on iPad Pro/Desktop */
   }
 }
 
@@ -188,9 +312,22 @@
   line-height: 1.6;
 }
 
+@media (min-width: 375px) {
+  .body-text {
+    font-size: var(--text-sm); /* 14px on iPhone SE */
+  }
+}
+
 @media (min-width: 768px) {
   .body-text {
     font-size: var(--text-base); /* 16px on tablet+ */
+    line-height: 1.7;
+  }
+}
+
+@media (min-width: 1024px) {
+  .body-text {
+    line-height: 1.8; /* Better readability on desktop */
   }
 }
 
@@ -358,7 +495,7 @@
 }
 
 /* ========================================
-   UTILITY CLASSES
+   UTILITY CLASSES - DEVICE SPECIFIC
    ======================================== */
 
 /* Display utilities */
@@ -372,12 +509,42 @@
   }
 }
 
+.hide-on-samsung-s8 {
+  display: block !important;
+}
+
+@media (min-width: 360px) and (max-width: 374px) {
+  .hide-on-samsung-s8 {
+    display: none !important;
+  }
+}
+
+.hide-on-iphone-se {
+  display: block !important;
+}
+
+@media (min-width: 375px) and (max-width: 413px) {
+  .hide-on-iphone-se {
+    display: none !important;
+  }
+}
+
 .hide-tablet {
   display: block !important;
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .hide-tablet {
+    display: none !important;
+  }
+}
+
+.hide-ipad-air {
+  display: block !important;
+}
+
+@media (min-width: 820px) and (max-width: 1023px) {
+  .hide-ipad-air {
     display: none !important;
   }
 }
@@ -389,6 +556,47 @@
 @media (min-width: 1024px) {
   .hide-desktop {
     display: none !important;
+  }
+}
+
+/* Show only on specific devices */
+.show-only-mobile {
+  display: block !important;
+}
+
+@media (min-width: 768px) {
+  .show-only-mobile {
+    display: none !important;
+  }
+}
+
+.show-only-tablet {
+  display: none !important;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .show-only-tablet {
+    display: block !important;
+  }
+}
+
+.show-only-ipad-air {
+  display: none !important;
+}
+
+@media (min-width: 820px) and (max-width: 1023px) {
+  .show-only-ipad-air {
+    display: block !important;
+  }
+}
+
+.show-only-desktop {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .show-only-desktop {
+    display: block !important;
   }
 }
 

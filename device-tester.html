@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Responsive Tester - Balan Coffee</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #8b4513;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .device-btn {
+      padding: 12px 20px;
+      border: 2px solid #8b4513;
+      background: white;
+      color: #8b4513;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 14px;
+    }
+
+    .device-btn:hover {
+      background: #8b4513;
+      color: white;
+    }
+
+    .device-btn.active {
+      background: #8b4513;
+      color: white;
+    }
+
+    .iframe-container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 600px;
+    }
+
+    .device-frame {
+      background: #333;
+      border-radius: 20px;
+      padding: 50px 10px;
+      position: relative;
+      transition: all 0.3s;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .device-frame::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 6px;
+      background: #555;
+      border-radius: 3px;
+    }
+
+    .device-frame.tablet {
+      padding: 60px 20px;
+    }
+
+    .device-frame.desktop {
+      padding: 40px 20px 60px;
+      border-radius: 8px;
+    }
+
+    .device-frame.desktop::before {
+      display: none;
+    }
+
+    .device-frame.desktop::after {
+      content: '';
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 20px;
+      background: #222;
+      border-radius: 4px;
+    }
+
+    iframe {
+      border: none;
+      background: white;
+      display: block;
+      transition: all 0.3s;
+    }
+
+    .info {
+      background: #fff8dc;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #8b4513;
+    }
+
+    .info h3 {
+      color: #8b4513;
+      margin-bottom: 8px;
+    }
+
+    .info p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .test-checklist {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .test-checklist h2 {
+      color: #8b4513;
+      margin-bottom: 15px;
+    }
+
+    .checklist-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checklist-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .checklist-item label {
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .rotate-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 8px 16px;
+      background: #8b4513;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .rotate-btn:hover {
+      background: #6d3710;
+    }
+
+    .device-info {
+      text-align: center;
+      margin-top: 15px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .device-info strong {
+      color: #8b4513;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 Device Responsive Tester</h1>
+    <p style="color: #666;">Test Balan Coffee website on different devices</p>
+  </div>
+
+  <div class="controls">
+    <button class="device-btn active" onclick="changeDevice('samsung-s8', 360, 740, 'mobile')">
+      📱 Samsung S8+ (360px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('iphone-se', 375, 667, 'mobile')">
+      📱 iPhone SE (375px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('iphone-14', 390, 844, 'mobile')">
+      📱 iPhone 14 Pro (390px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('iphone-14-max', 414, 896, 'mobile')">
+      📱 iPhone 14 Pro Max (414px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('ipad-mini', 768, 1024, 'tablet')">
+      📱 iPad Mini (768px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('ipad-air', 820, 1180, 'tablet')">
+      📱 iPad Air (820px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('ipad-pro', 1024, 1366, 'tablet')">
+      📱 iPad Pro (1024px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('desktop-hd', 1280, 720, 'desktop')">
+      🖥️ Desktop HD (1280px)
+    </button>
+    <button class="device-btn" onclick="changeDevice('desktop-fhd', 1440, 900, 'desktop')">
+      🖥️ Desktop FHD (1440px)
+    </button>
+  </div>
+
+  <div class="iframe-container">
+    <div style="position: relative;">
+      <button class="rotate-btn" onclick="rotateDevice()">🔄 Rotate</button>
+      <div id="deviceFrame" class="device-frame mobile">
+        <iframe 
+          id="testFrame" 
+          src="http://localhost:5173"
+          width="360" 
+          height="740"
+          title="Balan Coffee Website Preview"
+        ></iframe>
+      </div>
+      <div class="device-info">
+        <strong id="deviceName">Samsung S8+</strong> - 
+        <span id="deviceSize">360 x 740 px</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info">
+    <h3>📝 How to Use</h3>
+    <p>
+      1. Make sure your development server is running at <code>http://localhost:5173</code><br>
+      2. Click on different device buttons to test responsive design<br>
+      3. Use the 🔄 Rotate button to test landscape mode<br>
+      4. Check the testing checklist below to ensure all features work correctly<br>
+      5. Open browser DevTools (F12) to see console logs and network activity
+    </p>
+  </div>
+
+  <div class="test-checklist">
+    <h2>✅ Testing Checklist</h2>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check1">
+      <label for="check1">Layout doesn't break at any breakpoint</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check2">
+      <label for="check2">Text is readable (minimum 14px on mobile)</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check3">
+      <label for="check3">Tap targets are ≥ 44px on mobile devices</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check4">
+      <label for="check4">Images scale properly and don't overflow</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check5">
+      <label for="check5">Forms are usable on small screens</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check6">
+      <label for="check6">Navigation menu works on all devices</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check7">
+      <label for="check7">No horizontal scrolling on any device</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check8">
+      <label for="check8">Grid layouts adapt correctly (1/2/3/4 columns)</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check9">
+      <label for="check9">Spacing and padding are appropriate</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check10">
+      <label for="check10">Content hierarchy is maintained</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check11">
+      <label for="check11">All interactive elements are accessible</label>
+    </div>
+    
+    <div class="checklist-item">
+      <input type="checkbox" id="check12">
+      <label for="check12">Page loads within 3 seconds</label>
+    </div>
+  </div>
+
+  <script>
+    let isLandscape = false;
+    let currentDevice = {
+      width: 360,
+      height: 740,
+      type: 'mobile'
+    };
+
+    function changeDevice(name, width, height, type) {
+      isLandscape = false;
+      currentDevice = { width, height, type };
+      
+      const frame = document.getElementById('testFrame');
+      const deviceFrame = document.getElementById('deviceFrame');
+      const deviceNameEl = document.getElementById('deviceName');
+      const deviceSizeEl = document.getElementById('deviceSize');
+      
+      frame.width = width;
+      frame.height = height;
+      
+      deviceFrame.className = `device-frame ${type}`;
+      
+      const deviceNames = {
+        'samsung-s8': 'Samsung S8+',
+        'iphone-se': 'iPhone SE',
+        'iphone-14': 'iPhone 14 Pro',
+        'iphone-14-max': 'iPhone 14 Pro Max',
+        'ipad-mini': 'iPad Mini',
+        'ipad-air': 'iPad Air',
+        'ipad-pro': 'iPad Pro 11"',
+        'desktop-hd': 'Desktop HD',
+        'desktop-fhd': 'Desktop Full HD'
+      };
+      
+      deviceNameEl.textContent = deviceNames[name];
+      deviceSizeEl.textContent = `${width} x ${height} px`;
+      
+      // Update active button
+      document.querySelectorAll('.device-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+    }
+
+    function rotateDevice() {
+      const frame = document.getElementById('testFrame');
+      const deviceSizeEl = document.getElementById('deviceSize');
+      
+      if (!isLandscape) {
+        // Rotate to landscape
+        frame.width = currentDevice.height;
+        frame.height = currentDevice.width;
+        deviceSizeEl.textContent = `${currentDevice.height} x ${currentDevice.width} px (Landscape)`;
+      } else {
+        // Rotate back to portrait
+        frame.width = currentDevice.width;
+        frame.height = currentDevice.height;
+        deviceSizeEl.textContent = `${currentDevice.width} x ${currentDevice.height} px`;
+      }
+      
+      isLandscape = !isLandscape;
+    }
+
+    // Save checklist progress to localStorage
+    document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(checkbox => {
+      const savedState = localStorage.getItem(checkbox.id);
+      if (savedState === 'true') {
+        checkbox.checked = true;
+      }
+      
+      checkbox.addEventListener('change', function() {
+        localStorage.setItem(this.id, this.checked);
+      });
+    });
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+          case '1':
+            e.preventDefault();
+            changeDevice('samsung-s8', 360, 740, 'mobile');
+            break;
+          case '2':
+            e.preventDefault();
+            changeDevice('iphone-se', 375, 667, 'mobile');
+            break;
+          case '3':
+            e.preventDefault();
+            changeDevice('ipad-air', 820, 1180, 'tablet');
+            break;
+          case 'r':
+            e.preventDefault();
+            rotateDevice();
+            break;
+        }
+      }
+    });
+
+    console.log('%c🎨 Device Responsive Tester', 'font-size: 20px; color: #8b4513; font-weight: bold;');
+    console.log('%cKeyboard Shortcuts:', 'font-size: 14px; color: #666;');
+    console.log('Ctrl/Cmd + 1: Samsung S8+');
+    console.log('Ctrl/Cmd + 2: iPhone SE');
+    console.log('Ctrl/Cmd + 3: iPad Air');
+    console.log('Ctrl/Cmd + R: Rotate device');
+  </script>
+</body>
+</html>

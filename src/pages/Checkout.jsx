@@ -292,6 +292,44 @@ const CheckoutContent = ({ auth, cart }) => {
         console.error('Payment failed:', error);
         setErrors({ payment: error.message || 'Thanh toán thất bại. Vui lòng thử lại.' });
     };
+
+    // Function to save address to user account
+    const saveAddressToAccount = useCallback(async () => {
+        try {
+            const addressData = {
+                fullName: formData.billing.fullName,
+                address1: formData.billing.address,
+                street: formData.billing.address,
+                wardCommune: formData.billing.wardCommune,
+                district: formData.billing.district,
+                province: formData.billing.province,
+                postalCode: formData.billing.postalCode,
+                country: 'VN',
+                phone: formData.billing.phone,
+                type: 'both',
+                isDefault: !user.addresses || user.addresses.length === 0 // Set as default if no existing addresses
+            };
+
+            const response = await fetch('/api/users/addresses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(addressData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Failed to save address:', error);
+            } else {
+                console.log('Address saved successfully to user account');
+            }
+        } catch (error) {
+            console.error('Error saving address:', error);
+        }
+    }, [formData, user]); // Added dependencies for useCallback
+
     const createOrder = useCallback(async () => {
         try {
             // Save address to account if requested
@@ -364,44 +402,7 @@ const CheckoutContent = ({ auth, cart }) => {
             console.error('Order preparation failed:', error);
             throw error;
         }
-    }, [user, formData, cartItems, total]);
-
-    // Function to save address to user account
-    const saveAddressToAccount = async () => {
-        try {
-            const addressData = {
-                fullName: formData.billing.fullName,
-                address1: formData.billing.address,
-                street: formData.billing.address,
-                wardCommune: formData.billing.wardCommune,
-                district: formData.billing.district,
-                province: formData.billing.province,
-                postalCode: formData.billing.postalCode,
-                country: 'VN',
-                phone: formData.billing.phone,
-                type: 'both',
-                isDefault: !user.addresses || user.addresses.length === 0 // Set as default if no existing addresses
-            };
-
-            const response = await fetch('/api/users/addresses', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify(addressData)
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                console.error('Failed to save address:', error);
-            } else {
-                console.log('Address saved successfully to user account');
-            }
-        } catch (error) {
-            console.error('Error saving address:', error);
-        }
-    };
+    }, [user, formData, cartItems, total, saveAddressToAccount]); // Added saveAddressToAccount dependency
 
     if (cartItems.length === 0) {
         return null; // Will redirect in useEffect

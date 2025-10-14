@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -17,9 +17,9 @@ const OrdersContent = ({ auth }) => {
       return;
     }
     fetchOrders();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, fetchOrders]); // Added fetchOrders dependency
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(''); // Clear previous errors
@@ -77,7 +77,7 @@ const OrdersContent = ({ auth }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]); // Added navigate as dependency for useCallback
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {

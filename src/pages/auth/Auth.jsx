@@ -118,7 +118,7 @@ const AuthContent = ({ auth, cart }) => {
         } else {
             console.log('❌ Auth: No buy now product found in localStorage');
         }
-    }, []); // Empty dependency array to run only once on mount
+    }, [location.pathname, location.state]); // Added location dependencies
 
     const handleLoginChange = (e) => {
         const { name, value, type, checked } = e.target;
