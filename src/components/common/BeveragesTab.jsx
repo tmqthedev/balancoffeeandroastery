@@ -13,47 +13,48 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
         {
             name: 'Robusta',
             items: [
-                { name: 'Cà phê đen', price: '29,000đ' },
+                { name: 'Cà phê đen', price: '30,000đ' },
                 { name: 'Cà phê sữa', price: '35,000đ' },
-                { name: 'Bạc xỉu', price: '35,000đ' },
+                { name: 'Bạc xỉu', price: '40,000đ' },
                 { name: 'Cà phê muối', price: '45,000đ' },
-                { name: 'Cà phê dừa', price: '50,000đ' },
-                { name: 'Mokapot', price: '50,000đ' }
+                { name: 'Cà phê dừa', price: '50,000đ' }
             ]
         },
         {
             name: 'Arabica',
             items: [
                 { name: 'Espresso Single', price: '35,000đ' },
-                { name: 'Espresso Double', price: '42,000đ' },
+                { name: 'Espresso Double', price: '45,000đ' },
                 { name: 'Americano', price: '40,000đ' },
                 { name: 'Cappuccino', price: '50,000đ' },
                 { name: 'Latte', price: '50,000đ' },
-                { name: 'Caramel Machiatto', price: '52,000đ' },
-                { name: 'Cafe Mocha', price: '52,000đ' },
+                { name: 'Caramel Machiatto', price: '55,000đ' },
+                { name: 'Cafe Mocha', price: '55,000đ' },
                 { name: 'Cold Brew ( + Orange/ Pineapple/ Apple)', price: '50,000đ' }
-            ]
-        },
-        {
-            name: 'Chocolate',
-            items: [
-                { name: 'Chocolate Latte', price: '50,000đ' },
-                { name: 'Coconut Chocolate', price: '55,000đ' },
-                { name: 'Cookies & Cream', price: '55,000đ' },
-                { name: 'Chocolate Matcha Latte', price: '60,000đ' },
-                { name: 'Tiramisu Latte', price: '60,000đ' }
             ]
         },
         {
             name: 'Matcha',
             items: [
                 { name: 'Matcha Latte', price: '50,000đ' },
-                { name: 'Matcha Iceblended', price: '50,000đ' },
-                { name: 'Houjicha Latte', price: '50,000đ' },
+                { name: 'Matcha Iceblended', price: '55,000đ' },
                 { name: 'Matcha Latte ( + Mango/ Strawberry)', price: '60,000đ' },
-                { name: 'Orange Matcha', price: '60,000đ' },
                 { name: 'Coconut Matcha', price: '60,000đ' },
+                { name: 'Chocolate Matcha Latte', price: '60,000đ' },
+                { name: 'Matcha Espresso', price: '60,000đ' },
+                { name: 'Earlgrey Matcha', price: '60,000đ' },
                 { name: 'Matcha Tiramisu', price: '70,000đ' }
+            ]
+        },
+        {
+            name: 'Chocolate',
+            items: [
+                { name: 'Chocolate Latte', price: '50,000đ' },
+                { name: 'Chocolate Iceblended', price: '55,000đ' },
+                { name: 'Coconut Chocolate', price: '60,000đ' },
+                { name: 'Cookies & Cream', price: '60,000đ' },
+                { name: 'Dark Chocolate', price: '60,000đ' },
+                { name: 'Tiramisu Latte', price: '70,000đ' }
             ]
         },
         {
@@ -62,39 +63,42 @@ const BeveragesTab = ({ searchTerm, onClearSearch }) => {
                 { name: 'Xoài', price: '50,000đ' },
                 { name: 'Xoài Chanh dây', price: '50,000đ' },
                 { name: 'Xoài Ớt', price: '50,000đ' },
-                { name: 'Xoài Thơm Chuối Dâu', price: '50,000đ' },
-                { name: 'Dừa Dứa', price: '50,000đ' }
+                { name: 'Xoài Thơm', price: '50,000đ' },
+                { name: 'Dừa Dứa', price: '60,000đ' }
             ]
         },
         {
             name: 'Fruit Tea',
             items: [
-                { name: 'Trà Xoài', price: '45,000đ' },
-                { name: 'Trà Vải', price: '45,000đ' },
-                { name: 'Trà Lê Hoa Cúc', price: '45,000đ' }
+                { name: 'Trà Xoài', price: '50,000đ' },
+                { name: 'Trà Vải', price: '50,000đ' },
+                { name: 'Trà Lê Hoa Cúc', price: '50,000đ' },
+                { name: 'Trà Cam Đào', price: '50,000đ' },
+                { name: 'Trà Cam Bưởi', price: '50,000đ' },
+                { name: 'Lipton Chanh', price: '50,000đ' },
+                { name: 'Earlgrey Chanh', price: '50,000đ' }
             ]
         },
         {
             name: 'Juices',
             items: [
-                { name: 'Dừa Hạt Chia', price: '35,000đ' },
-                { name: 'Cam', price: '35,000đ' },
-                { name: 'Thơm', price: '35,000đ' },            
-                { name: 'Dưa Hấu', price: '35,000đ' },
-                { name: 'Chanh Mật ong', price: '35,000đ' },
-                { name: 'Táo Thơm', price: '40,000đ' },
-                { name: 'Cam Dừa', price: '40,000đ' },
-                { name: 'Cam Thơm', price: '40,000đ' },
-                { name: 'Dưa Hấu Thơm', price: '40,000đ' },
-                { name: 'Táo Thơm Cam', price: '45,000đ' },
-                { name: 'Táo Thơm Chanh dây', price: '45,000đ' }
+                { name: 'Táo', price: '40,000đ' },
+                { name: 'Cam', price: '40,000đ' },
+                { name: 'Thơm', price: '40,000đ' },            
+                { name: 'Dưa Hấu', price: '40,000đ' },
+                { name: 'Dừa', price: '40,000đ' },
+                { name: 'Chanh Mật ong', price: '40,000đ' },
+                { name: 'Mix 2 loại', price: '45,000đ' }
             ]
         },
         {
-            name: 'Milktea',
+            name: 'Yogurt',
             items: [
-                { name: 'Trà sữa Oolong', price: '35,000đ' },
-                { name: 'Trà sữa Lài', price: '35,000đ' }
+                { name: 'Yogurt Dâu', price: '55,000đ' },
+                { name: 'Yogurt Đào', price: '55,000đ' },
+                { name: 'Yogurt Xoài', price: '55,000đ' },
+                { name: 'Yogurt Đá', price: '45,000đ' },
+                { name: 'Yogurt Trái Cây', price: '60,000đ' }
             ]
         },
     ];
