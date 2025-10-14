@@ -10,10 +10,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// MongoDB Connection with Native Driver for Production
+// MongoDB Connection for Production
 const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
 
-console.log('🔗 MongoDB Configuration:');
+console.log('🔗 MongoDB Configuration (Backend):');
 console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Using ENV URI:', !!process.env.MONGODB_URI);
 console.log('   URI Domain:', uri.split('@')[1]?.split('/')[0] || 'not found');
@@ -120,31 +120,31 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // MongoDB Connection Function with Enhanced Logging
 async function connectToDatabase() {
   if (isConnected && db) {
-    console.log('✅ Using existing MongoDB connection');
+    console.log('✅ Using existing MongoDB connection (Backend)');
     return db;
   }
 
   try {
-    console.log('🔄 Attempting to connect to MongoDB...');
-    console.log('📍 Connection URI prefix:', uri.substring(0, 50) + '...');
+    console.log('🔄 Backend: Attempting to connect to MongoDB...');
+    console.log('📍 Backend Connection URI prefix:', uri.substring(0, 50) + '...');
     
     const connectStart = Date.now();
     await client.connect();
     const connectTime = Date.now() - connectStart;
-    console.log(`⚡ MongoDB client connected in ${connectTime}ms`);
+    console.log(`⚡ Backend: MongoDB client connected in ${connectTime}ms`);
     
     // Send a ping to confirm a successful connection
-    console.log('🏓 Sending ping to MongoDB admin database...');
+    console.log('🏓 Backend: Sending ping to MongoDB admin database...');
     const pingStart = Date.now();
     await client.db("admin").command({ ping: 1 });
     const pingTime = Date.now() - pingStart;
-    console.log(`✅ MongoDB ping successful in ${pingTime}ms`);
+    console.log(`✅ Backend: MongoDB ping successful in ${pingTime}ms`);
     
     db = client.db("balancoffee");
     isConnected = true;
     
-    console.log('🎯 Connected to database: balancoffee');
-    console.log('📊 Connection status:', { 
+    console.log('🎯 Backend: Connected to database: balancoffee');
+    console.log('📊 Backend Connection status:', { 
       isConnected: true, 
       timestamp: new Date().toISOString(),
       serverApi: 'v1'
@@ -152,69 +152,24 @@ async function connectToDatabase() {
     
     return db;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:');
+    console.error('❌ Backend: MongoDB connection failed:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Error Code:', error.code);
     console.error('   Full Error:', error);
     
     if (error.code === 8000) {
-      console.error('🔐 Authentication failed - check username/password');
+      console.error('🔐 Backend: Authentication failed - check username/password');
     } else if (error.code === 6) {
-      console.error('🌐 Network error - check connection and firewall');
+      console.error('🌐 Backend: Network error - check connection and firewall');
     } else if (error.message.includes('ENOTFOUND')) {
-      console.error('🔍 DNS resolution failed - check connection string');
+      console.error('🔍 Backend: DNS resolution failed - check connection string');
     }
     
     isConnected = false;
     throw error;
   }
 }
-
-// Health check endpoint with detailed logging
-app.get('/health', async (req, res) => {
-  console.log('🏥 Health check requested from:', req.ip);
-  
-  try {
-    const healthStart = Date.now();
-    await connectToDatabase();
-    const healthTime = Date.now() - healthStart;
-    
-    console.log(`✅ Health check successful in ${healthTime}ms`);
-    
-    const healthData = { 
-      status: 'OK', 
-      message: 'Server and database are healthy',
-      timestamp: new Date().toISOString(),
-      database: isConnected ? 'Connected' : 'Disconnected',
-      responseTime: `${healthTime}ms`,
-      environment: process.env.NODE_ENV || 'development',
-      version: '1.0.0'
-    };
-    
-    console.log('📊 Health check response:', healthData);
-    res.json(healthData);
-    
-  } catch (error) {
-    console.error('❌ Health check failed:');
-    console.error('   IP Address:', req.ip);
-    console.error('   User Agent:', req.get('User-Agent'));
-    console.error('   Error Type:', error.name);
-    console.error('   Error Message:', error.message);
-    console.error('   Full Error:', error);
-    
-    const errorData = { 
-      status: 'ERROR', 
-      message: 'Database connection failed',
-      error: error.message,
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
-    };
-    
-    console.log('📊 Health check error response:', errorData);
-    res.status(503).json(errorData);
-  }
-});
 
 // Logging middleware
 app.use(morgan('combined'));
@@ -234,6 +189,53 @@ app.use((req, res, next) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Maps /backend/uploads/products/file.jpg to backend/uploads/products/file.jpg  
 app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health check endpoint with detailed logging
+app.get('/health', async (req, res) => {
+  console.log('🏥 Backend: Health check requested from:', req.ip);
+  
+  try {
+    const healthStart = Date.now();
+    const database = await connectToDatabase();
+    const healthTime = Date.now() - healthStart;
+    
+    console.log(`✅ Backend: Health check successful in ${healthTime}ms`);
+    
+    const healthData = { 
+      status: 'OK', 
+      message: 'Backend server and database are healthy',
+      timestamp: new Date().toISOString(),
+      database: isConnected ? 'Connected' : 'Disconnected',
+      responseTime: `${healthTime}ms`,
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0',
+      server: 'backend'
+    };
+    
+    console.log('📊 Backend: Health check response:', healthData);
+    res.json(healthData);
+    
+  } catch (error) {
+    console.error('❌ Backend: Health check failed:');
+    console.error('   IP Address:', req.ip);
+    console.error('   User Agent:', req.get('User-Agent'));
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+    
+    const errorData = { 
+      status: 'ERROR', 
+      message: 'Backend database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      server: 'backend'
+    };
+    
+    console.log('📊 Backend: Health check error response:', errorData);
+    res.status(503).json(errorData);
+  }
+});
 
 // Root endpoint - API info
 app.get('/', (req, res) => {
@@ -257,27 +259,28 @@ app.get('/', (req, res) => {
   });
 });
 
-// MongoDB native driver connection will be handled in connectToDatabase() function
-
 // Passport configuration
-require('../backend/config/passport');
+require('./config/passport');
 
 // Database middleware - makes db available to routes with detailed logging
 app.use(async (req, res, next) => {
   const middlewareStart = Date.now();
   
   try {
-    console.log(`🔌 Database middleware for ${req.method} ${req.originalUrl}`);
+    console.log(`🔌 Backend: Database middleware for ${req.method} ${req.originalUrl}`);
     req.db = await connectToDatabase();
     
+    // Make database globally available for passport
+    global.db = req.db;
+    
     const middlewareTime = Date.now() - middlewareStart;
-    console.log(`✅ Database available for route in ${middlewareTime}ms`);
+    console.log(`✅ Backend: Database available for route in ${middlewareTime}ms`);
     
     next();
   } catch (error) {
     const middlewareTime = Date.now() - middlewareStart;
     
-    console.error('❌ Database middleware failed:');
+    console.error('❌ Backend: Database middleware failed:');
     console.error('   Route:', `${req.method} ${req.originalUrl}`);
     console.error('   IP:', req.ip);
     console.error('   Time taken:', `${middlewareTime}ms`);
@@ -287,43 +290,59 @@ app.use(async (req, res, next) => {
     
     res.status(503).json({ 
       success: false, 
-      message: 'Database connection failed',
+      message: 'Backend database connection failed',
       error: error.message,
       route: req.originalUrl,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      server: 'backend'
     });
   }
 });
 
 // Routes with request logging
-app.use('/api/auth', require('../backend/routes/auth'));
-app.use('/api/users', require('../backend/routes/users'));
-app.use('/api/cart', require('../backend/routes/cart'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/cart', require('./routes/cart'));
 
 // Add request logging for products
 app.use('/api/products', (req, res, next) => {
-  console.log(`📝 Products API: ${req.method} ${req.originalUrl}`);
+  console.log(`📝 Backend Products API: ${req.method} ${req.originalUrl}`);
   console.log('Query params:', req.query);
   next();
 });
 
-app.use('/api/products', require('../backend/routes/products'));
-app.use('/api/categories', require('../backend/routes/categories'));
-app.use('/api/orders', require('../backend/routes/orders'));
-app.use('/api/blogs', require('../backend/routes/blogs'));
-app.use('/api/contacts', require('../backend/routes/contacts'));
-app.use('/api/payments', require('../backend/routes/payments'));
+// Routes with enhanced logging
+console.log('🛒 Backend: Products router loading');
+app.use('/api/products', require('./routes/products'));
+
+console.log('📂 Backend: Categories router loading');
+app.use('/api/categories', require('./routes/categories'));
+
+console.log('🛍️ Backend: Orders router loading');
+app.use('/api/orders', require('./routes/orders'));
+
+console.log('📝 Backend: Blogs router loading');
+app.use('/api/blogs', require('./routes/blogs'));
+
+console.log('📞 Backend: Contacts router loading');
+app.use('/api/contacts', require('./routes/contacts'));
+
+try {
+  console.log('💳 Backend: Payments router loading...');
+  app.use('/api/payments', require('./routes/payments'));
+  console.log('✅ Backend: Payments router loaded successfully');
+} catch (error) {
+  console.error('❌ Backend: Payments router failed to load:', error.message);
+}
 
 // Upload routes for file management
-app.use('/api/upload', require('../backend/routes/upload'));
-
-// Database error handling will be done within route handlers
+app.use('/api/upload', require('./routes/upload'));
 
 // Enhanced Error handling middleware with detailed logging
-app.use((err, req, res, _next) => {
+app.use((err, req, res, next) => {
   const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2);
   
-  console.error('🚨 SERVER ERROR OCCURRED:');
+  console.error('🚨 BACKEND SERVER ERROR OCCURRED:');
   console.error('   Error ID:', errorId);
   console.error('   Timestamp:', new Date().toISOString());
   console.error('   Error Type:', err.name || 'Unknown');
@@ -334,23 +353,18 @@ app.use((err, req, res, _next) => {
   console.error('     - URL:', req.originalUrl);
   console.error('     - IP:', req.ip);
   console.error('     - User-Agent:', req.get('User-Agent'));
-  console.error('     - Headers:', JSON.stringify(req.headers, null, 2));
   console.error('   Stack Trace:', err.stack);
   
   if (err.code) {
     console.error('   Error Code:', err.code);
   }
   
-  // Log request body for POST/PUT requests (be careful with sensitive data)
-  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
-    console.error('   Request Body:', JSON.stringify(req.body, null, 2));
-  }
-  
   const errorResponse = {
     success: false,
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
     errorId: errorId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    server: 'backend'
   };
   
   if (process.env.NODE_ENV === 'development') {
@@ -362,13 +376,13 @@ app.use((err, req, res, _next) => {
     };
   }
   
-  console.error('📤 Error response sent:', errorResponse);
+  console.error('📤 Backend: Error response sent:', errorResponse);
   res.status(err.status || 500).json(errorResponse);
 });
 
 // Enhanced 404 handler with detailed logging
 app.use((req, res) => {
-  console.log('🔍 404 NOT FOUND:');
+  console.log('🔍 Backend: 404 NOT FOUND:');
   console.log('   URL:', req.originalUrl);
   console.log('   Method:', req.method);
   console.log('   IP:', req.ip);
@@ -381,6 +395,7 @@ app.use((req, res) => {
     url: req.originalUrl,
     method: req.method,
     timestamp: new Date().toISOString(),
+    server: 'backend',
     availableRoutes: [
       '/health',
       '/api/products',
@@ -393,66 +408,66 @@ app.use((req, res) => {
     ]
   };
   
-  console.log('📤 404 response sent:', notFoundResponse);
+  console.log('📤 Backend: 404 response sent:', notFoundResponse);
   res.status(404).json(notFoundResponse);
 });
 
 // Enhanced Graceful shutdown handlers with detailed logging
 process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM received - initiating graceful shutdown');
+  console.log('🛑 Backend: SIGTERM received - initiating graceful shutdown');
   console.log('   Timestamp:', new Date().toISOString());
   console.log('   Process ID:', process.pid);
   console.log('   Environment:', process.env.NODE_ENV);
   
   try {
-    console.log('🔌 Closing MongoDB connection...');
+    console.log('🔌 Backend: Closing MongoDB connection...');
     const closeStart = Date.now();
     await client.close();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
-    console.log(`✅ MongoDB connection closed successfully in ${closeTime}ms`);
-    console.log('👋 Server shutdown complete');
+    console.log(`✅ Backend: MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log('👋 Backend: Server shutdown complete');
   } catch (error) {
-    console.error('❌ Error during MongoDB connection close:');
+    console.error('❌ Backend: Error during MongoDB connection close:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Full Error:', error);
   }
   
-  console.log('🔚 Process exiting with code 0');
+  console.log('🔚 Backend: Process exiting with code 0');
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('🛑 SIGINT received - initiating graceful shutdown');
+  console.log('🛑 Backend: SIGINT received - initiating graceful shutdown');
   console.log('   Timestamp:', new Date().toISOString());
   console.log('   Process ID:', process.pid);
   console.log('   Environment:', process.env.NODE_ENV);
   
   try {
-    console.log('🔌 Closing MongoDB connection...');
+    console.log('🔌 Backend: Closing MongoDB connection...');
     const closeStart = Date.now();
     await client.close();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
-    console.log(`✅ MongoDB connection closed successfully in ${closeTime}ms`);
-    console.log('👋 Server shutdown complete');
+    console.log(`✅ Backend: MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log('👋 Backend: Server shutdown complete');
   } catch (error) {
-    console.error('❌ Error during MongoDB connection close:');
+    console.error('❌ Backend: Error during MongoDB connection close:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Full Error:', error);
   }
   
-  console.log('🔚 Process exiting with code 0');
+  console.log('🔚 Backend: Process exiting with code 0');
   process.exit(0);
 });
 
 // Enhanced server initialization with detailed logging
-console.log('🚀 BALAN COFFEE API SERVER STARTING...');
-console.log('📊 Server Information:');
+console.log('🚀 BALAN COFFEE BACKEND SERVER STARTING...');
+console.log('📊 Backend Server Information:');
 console.log('   Timestamp:', new Date().toISOString());
 console.log('   Node.js Version:', process.version);
 console.log('   Platform:', process.platform);
@@ -462,40 +477,40 @@ console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Vercel Environment:', process.env.VERCEL ? 'Yes' : 'No');
 
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-  console.log('🏭 PRODUCTION MODE - Vercel Serverless Functions');
-  console.log('⚡ Pre-connecting to database for optimal performance...');
+  console.log('🏭 Backend: PRODUCTION MODE - Vercel Serverless Functions');
+  console.log('⚡ Backend: Pre-connecting to database for optimal performance...');
   
   const initStart = Date.now();
   connectToDatabase().then(() => {
     const initTime = Date.now() - initStart;
-    console.log(`✅ Database pre-connected successfully in ${initTime}ms`);
-    console.log('🎯 Server ready for Vercel deployment');
-    console.log('📍 Health endpoint will be available at: /health');
-    console.log('🔗 API endpoints will be available at: /api/*');
+    console.log(`✅ Backend: Database pre-connected successfully in ${initTime}ms`);
+    console.log('🎯 Backend: Server ready for Vercel deployment');
+    console.log('📍 Backend: Health endpoint will be available at: /health');
+    console.log('🔗 Backend: API endpoints will be available at: /api/*');
   }).catch(error => {
-    console.error('❌ Database pre-connection failed:');
+    console.error('❌ Backend: Database pre-connection failed:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   This may cause API requests to fail!');
     console.error('   Full Error:', error);
   });
 } else {
-  console.log('🧪 DEVELOPMENT MODE - Local Server');
+  console.log('🧪 Backend: DEVELOPMENT MODE - Local Server');
   
   const startServer = async () => {
     try {
-      console.log('🔌 Initializing database connection for local development...');
+      console.log('🔌 Backend: Initializing database connection for local development...');
       const dbStart = Date.now();
       await connectToDatabase();
       const dbTime = Date.now() - dbStart;
-      console.log(`✅ Database connected in ${dbTime}ms`);
+      console.log(`✅ Backend: Database connected in ${dbTime}ms`);
       
-      console.log('🌐 Starting HTTP server...');
+      console.log('🌐 Backend: Starting HTTP server...');
       const serverStart = Date.now();
       app.listen(PORT, () => {
         const serverTime = Date.now() - serverStart;
-        console.log(`✅ HTTP server started in ${serverTime}ms`);
-        console.log('🎉 SERVER READY!');
+        console.log(`✅ Backend: HTTP server started in ${serverTime}ms`);
+        console.log('🎉 BACKEND SERVER READY!');
         console.log('   📍 Health check: http://localhost:' + PORT + '/health');
         console.log('   🔗 API Base URL: http://localhost:' + PORT + '/api');
         console.log('   📊 Server Info: http://localhost:' + PORT + '/');
@@ -503,11 +518,11 @@ if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
         console.log('   🌍 Environment:', process.env.NODE_ENV || 'development');
       });
     } catch (error) {
-      console.error('❌ FAILED TO START SERVER:');
+      console.error('❌ Backend: FAILED TO START SERVER:');
       console.error('   Error Type:', error.name);
       console.error('   Error Message:', error.message);
       console.error('   Full Error:', error);
-      console.error('🔚 Exiting process...');
+      console.error('🔚 Backend: Exiting process...');
       process.exit(1);
     }
   };
