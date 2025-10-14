@@ -1,24 +1,23 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "functions": {
-    "backend/server.js": {
-      "memory": 1024,
-      "maxDuration": 10
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
     }
-  },
-  "rewrites": [
+  ],
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/backend/server"
+      "src": "/api/(.*)",
+      "dest": "/backend/server.js"
     },
     {
-      "source": "/health",
-      "destination": "/backend/server"
+      "src": "/health",
+      "dest": "/backend/server.js"
     },
     {
-      "source": "/uploads/(.*)",
-      "destination": "/backend/server"
+      "src": "/uploads/(.*)",
+      "dest": "/backend/server.js"
     }
   ]
 }

@@ -51,7 +51,6 @@ vite.config.js
 # Redundant config (backend has its own)
 backend/vercel.json
 
-# Build artifacts that will be regenerated
-dist/
+# Build artifacts
 coverage/
 .nyc_output/

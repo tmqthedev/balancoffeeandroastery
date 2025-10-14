@@ -6,8 +6,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Build outputs
-dist/
+# Build outputs (keep dist for Vercel deployment)
+# dist/
 dist-ssr/
 build/
 .vite/

@@ -1,0 +1,93 @@
+{
+  "name": "Balan Coffee & Roastery",
+  "short_name": "Balan Coffee",
+  "description": "Cà phê rang mộc nguyên chất - Arabica Cầu Đất và Robusta Lâm Đồng chất lượng cao",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#8B4513",
+  "background_color": "#FFF8DC",
+  "lang": "vi",
+  "scope": "/",
+  "categories": ["food", "lifestyle", "business"],
+  "screenshots": [
+    {
+      "src": "/images/logos/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Logo Balan Coffee"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/images/logos/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logos/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sản phẩm",
+      "short_name": "Sản phẩm",
+      "description": "Xem tất cả sản phẩm cà phê",
+      "url": "/products",
+      "icons": [
+        {
+          "src": "/images/logos/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Giỏ hàng",
+      "short_name": "Giỏ hàng", 
+      "description": "Xem giỏ hàng của bạn",
+      "url": "/cart",
+      "icons": [
+        {
+          "src": "/images/logos/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Liên hệ",
+      "short_name": "Liên hệ",
+      "description": "Liên hệ với Balan Coffee",
+      "url": "/contact",
+      "icons": [
+        {
+          "src": "/images/logos/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text", 
+      "url": "url"
+    }
+  }
+}
