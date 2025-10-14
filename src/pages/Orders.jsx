@@ -11,14 +11,6 @@ const OrdersContent = ({ auth }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    fetchOrders();
-  }, [isAuthenticated, navigate, fetchOrders]); // Added fetchOrders dependency
-
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -78,6 +70,14 @@ const OrdersContent = ({ auth }) => {
       setLoading(false);
     }
   }, [navigate]); // Added navigate as dependency for useCallback
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    fetchOrders();
+  }, [isAuthenticated, navigate, fetchOrders]); // Added fetchOrders dependency
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {

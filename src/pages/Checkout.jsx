@@ -1052,7 +1052,6 @@ const CheckoutContent = ({ auth, cart }) => {
                                             className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary text-white px-6 py-3 sm:py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-primary text-base sm:text-sm"
                                         >
                                             <span className="hidden sm:inline">{hasCurrentStepErrors() ? 'Vui lòng điền đầy đủ thông tin' : 'Tiếp tục'}</span>
-                                            <span className="sm:hidden">{hasCurrentStepErrors() ? 'Điền đầy đủ thông tin' : 'Tiếp tục'}</span>
                                         </button>
                                     )}
                                 </div>
