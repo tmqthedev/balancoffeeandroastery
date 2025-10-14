@@ -20,15 +20,24 @@ console.log('🛍️ Backend: Orders router loading');
 
 // Middleware to authenticate token (required for getting orders)
 const authenticateToken = (req, res, next) => {
+  console.log('🔐 Authenticating token...');
   const authHeader = req.headers['authorization'];
+  console.log('📋 Auth header:', authHeader ? 'Present' : 'Missing');
+  
   const token = authHeader?.split(' ')[1];
 
   if (!token) {
+    console.log('❌ No token provided');
     return res.status(401).json({ error: 'Access token required' });
   }
 
+  console.log('🔍 Verifying token...');
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
+    if (err) {
+      console.log('❌ Token verification failed:', err.message);
+      return res.status(403).json({ error: 'Invalid token', details: err.message });
+    }
+    console.log('✅ Token verified, user:', user.userId);
     req.user = user;
     next();
   });
