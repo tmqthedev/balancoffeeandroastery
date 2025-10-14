@@ -16,7 +16,6 @@ backend/.env.development
 # Large upload files (not needed for deployment)
 backend/logs/
 backend/uploads/
-uploads/
 
 # Documentation and development files
 docs/
@@ -36,12 +35,8 @@ Thumbs.db
 .gitignore
 .gitattributes
 
-# Source code (will be built)
-src/
-
-# Development config
+# Development config (NOT needed for build)
 eslint.config.js
-vite.config.js
 
 # Test files
 coverage/
