@@ -1,16 +1,25 @@
 {
+  "version": 2,
+  "functions": {
+    "backend/server.js": {
+      "runtime": "@vercel/node"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/server"
+      "destination": "/backend/server.js"
     },
     {
       "source": "/health",
-      "destination": "/api/server"
+      "destination": "/backend/server.js"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
