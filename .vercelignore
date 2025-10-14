@@ -1,26 +1,30 @@
-# Node.js dependencies
+# Development dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment files (use Vercel dashboard for production)
+# Environment files (set in Vercel dashboard)
 .env.local
 .env.development
+backend/.env.local
+backend/.env.development
 
 # Development only files
 backend/logs/
 backend/uploads/temp/
+backend/uploads/avatars/
+backend/uploads/banners/
+backend/uploads/blogs/
+backend/uploads/categories/
+backend/uploads/products/
+backend/uploads/thumbnails/
+backend/uploads/users/
 
-# Documentation
+# Development tools and docs
 docs/
 *.md
 !README.md
-
-# Build artifacts (auto-generated)
-dist/
-coverage/
-.nyc_output/
 
 # IDE and OS files
 .vscode/
@@ -35,11 +39,19 @@ Thumbs.db
 .gitignore
 .gitattributes
 
-# Development source (already built)
+# Source files (will be built)
 src/
 
-# Config files not needed in production
+# Development config files
 eslint.config.js
 tailwind.config.js
 postcss.config.js
 vite.config.js
+
+# Redundant config (backend has its own)
+backend/vercel.json
+
+# Build artifacts that will be regenerated
+dist/
+coverage/
+.nyc_output/
