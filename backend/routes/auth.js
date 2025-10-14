@@ -17,6 +17,25 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
   try {
     console.log('👤 Registering user');
     
+    // Ensure database is available
+    if (!req.db) {
+      console.error('❌ Register: Database not available');
+      return res.status(500).json({
+        success: false,
+        message: 'Server error: Database connection not available'
+      });
+    }
+    
+    // Check JWT_SECRET early before processing
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('❌ Register: JWT_SECRET not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error'
+      });
+    }
+    
     const { 
       email, 
       password, 
@@ -61,7 +80,7 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     // Generate email verification token
     const verificationToken = jwt.sign(
       { email },
-      process.env.JWT_SECRET || 'balan-coffee-secret',
+      jwtSecret,
       { expiresIn: '24h' }
     );
 
@@ -156,19 +175,28 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
 router.post('/login', [
   body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
   body('password').isLength({ min: 1 }).withMessage('Password is required'),
-], (req, res, next) => {
+], async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
+  // Ensure database is available before passport authentication
+  if (!req.db) {
+    console.error('❌ Auth: Database not available for login');
+    return res.status(500).json({ error: 'Server error: Database connection not available' });
+  }
+
+  console.log('✅ Auth: Database available for login, proceeding with authentication');
+
   passport.authenticate('local', { session: false }, (err, user, info) => {
     if (err) {
-      console.error('Login error:', err);
-      return res.status(500).json({ error: 'Login failed' });
+      console.error('❌ Auth: Login error:', err);
+      return res.status(500).json({ error: 'Login failed', message: err.message || 'Internal server error' });
     }
 
     if (!user) {
+      console.log('❌ Auth: Authentication failed:', info?.message);
       return res.status(401).json({ error: info.message || 'Invalid credentials' });
     }
 
@@ -191,11 +219,19 @@ router.post('/login', [
     }
 
     // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('❌ Auth: JWT_SECRET not configured');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const token = jwt.sign(
       { userId: user._id || user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
+
+    console.log('✅ Auth: Login successful for user:', user.email);
 
     res.json({
       message: 'Login successful',
@@ -495,8 +531,18 @@ router.post('/forgot-password', [
 ], async (req, res) => {
     try {
         console.log('🔐 Forgot password request received');
-        console.log('   Headers:', req.headers);
-        console.log('   Body:', req.body);
+        console.log('   Method:', req.method);
+        console.log('   URL:', req.originalUrl);
+        console.log('   Body:', { email: req.body.email }); // Don't log sensitive data
+        
+        // Ensure database is available
+        if (!req.db) {
+            console.error('❌ Forgot password: Database not available');
+            return res.status(500).json({
+                success: false,
+                message: 'Server error: Database connection not available'
+            });
+        }
         
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -519,16 +565,27 @@ router.post('/forgot-password', [
         
         if (!user) {
             // Don't reveal if email exists or not for security
+            console.log('⚠️ Forgot password: User not found, but returning success for security');
             return res.json({
                 success: true,
                 message: 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu.'
             });
         }
 
+        // Check JWT_SECRET
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('❌ Forgot password: JWT_SECRET not configured');
+            return res.status(500).json({
+                success: false,
+                message: 'Server configuration error'
+            });
+        }
+
         // Generate reset token (you can use crypto.randomBytes or jwt)
         const resetToken = jwt.sign(
             { userId: user._id.toString(), email: user.email },
-            process.env.JWT_SECRET || 'balan-coffee-secret',
+            jwtSecret,
             { expiresIn: '1h' }
         );
 
@@ -547,7 +604,10 @@ router.post('/forgot-password', [
         console.log('✅ Reset token generated for user:', user.email);
 
         // Create reset link
-        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+        
+        console.log('🔗 Reset link generated (not logged in production)');
         
         // Send email with reset link
         try {
@@ -558,7 +618,7 @@ router.post('/forgot-password', [
             );
             
             if (emailResult.success) {
-                console.log('✅ Forgot password email sent successfully');
+                console.log('✅ Forgot password email sent successfully to:', user.email);
             } else {
                 console.error('❌ Failed to send forgot password email:', emailResult.error);
             }
@@ -586,6 +646,17 @@ router.post('/verify-reset-token', [
     body('token').notEmpty().withMessage('Token là bắt buộc')
 ], async (req, res) => {
     try {
+        console.log('🔐 Verify reset token request received');
+        
+        // Ensure database is available
+        if (!req.db) {
+            console.error('❌ Verify reset token: Database not available');
+            return res.status(500).json({
+                success: false,
+                message: 'Server error: Database connection not available'
+            });
+        }
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -595,12 +666,22 @@ router.post('/verify-reset-token', [
         }
 
         const { token } = req.body;
+        
+        // Check JWT_SECRET
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('❌ Verify reset token: JWT_SECRET not configured');
+            return res.status(500).json({
+                success: false,
+                message: 'Server configuration error'
+            });
+        }
 
         // Get users collection
         const usersCollection = getCollection(req, 'users');
 
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        const decoded = jwt.verify(token, jwtSecret);
         console.log('🔍 Verify Token: Decoded userId:', decoded.userId, 'Type:', typeof decoded.userId);
         
         // Check if user exists and token is still valid
@@ -650,6 +731,17 @@ router.post('/reset-password', [
     body('newPassword').isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
 ], async (req, res) => {
     try {
+        console.log('🔐 Reset password request received');
+        
+        // Ensure database is available
+        if (!req.db) {
+            console.error('❌ Reset password: Database not available');
+            return res.status(500).json({
+                success: false,
+                message: 'Server error: Database connection not available'
+            });
+        }
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -660,12 +752,22 @@ router.post('/reset-password', [
         }
 
         const { token, newPassword } = req.body;
+        
+        // Check JWT_SECRET
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('❌ Reset password: JWT_SECRET not configured');
+            return res.status(500).json({
+                success: false,
+                message: 'Server configuration error'
+            });
+        }
 
         // Get users collection
         const usersCollection = getCollection(req, 'users');
 
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        const decoded = jwt.verify(token, jwtSecret);
         console.log('🔍 Reset Password: Decoded userId:', decoded.userId, 'Type:', typeof decoded.userId);
         
         // Check if user exists and token is still valid
@@ -732,6 +834,17 @@ router.post('/verify-email', [
     body('token').notEmpty().withMessage('Token là bắt buộc')
 ], async (req, res) => {
     try {
+        console.log('🔐 Verify email request received');
+        
+        // Ensure database is available
+        if (!req.db) {
+            console.error('❌ Verify email: Database not available');
+            return res.status(500).json({
+                success: false,
+                message: 'Server error: Database connection not available'
+            });
+        }
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -741,12 +854,22 @@ router.post('/verify-email', [
         }
 
         const { token } = req.body;
+        
+        // Check JWT_SECRET
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('❌ Verify email: JWT_SECRET not configured');
+            return res.status(500).json({
+                success: false,
+                message: 'Server configuration error'
+            });
+        }
 
         // Get users collection
         const usersCollection = getCollection(req, 'users');
 
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        const decoded = jwt.verify(token, jwtSecret);
         
         // Check if user exists and token is still valid
         const user = await usersCollection.findOne({ email: decoded.email });
@@ -793,10 +916,19 @@ router.post('/verify-email', [
 
         console.log('✅ Email verification successful for user:', user.email);
 
+        // Check JWT_SECRET for login token generation
+        if (!jwtSecret) {
+            console.error('❌ Verify email: JWT_SECRET not configured for login token');
+            return res.status(500).json({
+                success: false,
+                message: 'Server configuration error'
+            });
+        }
+
         // Generate JWT token for login
         const loginToken = jwt.sign(
             { userId: user._id.toString(), email: user.email, role: user.role },
-            process.env.JWT_SECRET,
+            jwtSecret,
             { expiresIn: process.env.JWT_EXPIRE || '7d' }
         );
 
@@ -826,6 +958,17 @@ router.post('/resend-verification', [
     body('email').isEmail().withMessage('Email không hợp lệ')
 ], async (req, res) => {
     try {
+        console.log('🔐 Resend verification email request received');
+        
+        // Ensure database is available
+        if (!req.db) {
+            console.error('❌ Resend verification: Database not available');
+            return res.status(500).json({
+                success: false,
+                message: 'Server error: Database connection not available'
+            });
+        }
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -835,6 +978,16 @@ router.post('/resend-verification', [
         }
 
         const { email } = req.body;
+        
+        // Check JWT_SECRET
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('❌ Resend verification: JWT_SECRET not configured');
+            return res.status(500).json({
+                success: false,
+                message: 'Server configuration error'
+            });
+        }
 
         // Get users collection
         const usersCollection = getCollection(req, 'users');
@@ -861,7 +1014,7 @@ router.post('/resend-verification', [
         // Generate new verification token
         const verificationToken = jwt.sign(
             { email: user.email },
-            process.env.JWT_SECRET || 'balan-coffee-secret',
+            jwtSecret,
             { expiresIn: '24h' }
         );
 
