@@ -225,21 +225,21 @@ const AccountContent = ({ auth }) => {
       <div className="min-h-screen bg-cream-50">
         {/* Header */}
         <div className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   Xin chào, {user?.firstName || user?.email}!
                 </h1>
-                <p className="text-gray-600 mt-2">
+                <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
                   Quản lý thông tin và đơn hàng của bạn
                 </p>
               </div>
               <button
                 onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center justify-center px-4 sm:px-4 py-2.5 sm:py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors w-full sm:w-auto"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 Đăng xuất
@@ -248,11 +248,32 @@ const AccountContent = ({ auth }) => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="grid lg:grid-cols-4 gap-6 sm:gap-8">
+            {/* Sidebar - Horizontal scroll mobile, vertical desktop */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              {/* Mobile: Horizontal tabs */}
+              <div className="lg:hidden bg-white rounded-lg shadow-md overflow-hidden">
+                <nav className="flex overflow-x-auto">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex-1 flex flex-col items-center justify-center px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-brand-secondary/20 text-brand-primary border-b-2 border-brand-primary'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-xl mb-1">{tab.icon}</span>
+                      <span>{tab.name}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Desktop: Vertical tabs */}
+              <div className="hidden lg:block bg-white rounded-lg shadow-md overflow-hidden">
                 <nav className="space-y-1 p-4">
                   {tabs.map((tab) => (
                     <button
@@ -274,15 +295,15 @@ const AccountContent = ({ auth }) => {
 
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
                 {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md mb-4 sm:mb-6 text-sm sm:text-base">
                     {error}
                   </div>
                 )}
 
                 {success && (
-                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-6">
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md mb-4 sm:mb-6 text-sm sm:text-base">
                     {success}
                   </div>
                 )}
@@ -290,14 +311,14 @@ const AccountContent = ({ auth }) => {
                 {/* Profile Tab */}
                 {activeTab === 'profile' && (
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                       Thông tin cá nhân
                     </h2>
 
-                    <form onSubmit={handleProfileUpdate} className="space-y-6">
-                      <div className="grid md:grid-cols-2 gap-4">
+                    <form onSubmit={handleProfileUpdate} className="space-y-4 sm:space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="first-name-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="first-name-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             Họ
                           </label>
                           <input
@@ -305,12 +326,12 @@ const AccountContent = ({ auth }) => {
                             type="text"
                             value={formData.firstName}
                             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                            className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="last-name-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="last-name-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             Tên
                           </label>
                           <input
@@ -318,13 +339,13 @@ const AccountContent = ({ auth }) => {
                             type="text"
                             value={formData.lastName}
                             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                            className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label htmlFor="user-email-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="user-email-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                           Email (không thể thay đổi)
                         </label>
                         <input
@@ -333,14 +354,14 @@ const AccountContent = ({ auth }) => {
                           value={formData.email}
                           readOnly
                           disabled
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
+                          className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed text-base sm:text-sm"
                           title="Email không thể thay đổi vì lý do bảo mật"
                         />
                       </div>
 
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="user-phone-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="user-phone-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             Số điện thoại
                           </label>
                           <input
@@ -348,12 +369,12 @@ const AccountContent = ({ auth }) => {
                             type="tel"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                            className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="user-birthday-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="user-birthday-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             Ngày sinh
                           </label>
                           <input
@@ -361,20 +382,20 @@ const AccountContent = ({ auth }) => {
                             type="date"
                             value={formData.dateOfBirth}
                             onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                            className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label htmlFor="user-gender-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="user-gender-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                           Giới tính
                         </label>
                         <select
                           id="user-gender-acc"
                           value={formData.gender}
                           onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                          className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                         >
                           <option value="">Chọn giới tính</option>
                           <option value="male">Nam</option>
@@ -384,13 +405,13 @@ const AccountContent = ({ auth }) => {
                       </div>
 
                       {/* Address Information */}
-                      <div className="border-t pt-6 mt-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      <div className="border-t pt-4 sm:pt-6 mt-4 sm:mt-6">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                           Thông tin địa chỉ
                         </h3>
                         
                         <div>
-                          <label htmlFor="user-address-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                          <label htmlFor="user-address-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                             Địa chỉ
                           </label>
                           <input
@@ -398,14 +419,14 @@ const AccountContent = ({ auth }) => {
                             type="text"
                             value={formData.address}
                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                            className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                             placeholder="Số nhà, đường, phường/xã"
                           />
                         </div>
 
-                        <div className="grid md:grid-cols-4 gap-4 mt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                           <div>
-                            <label htmlFor="user-ward-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="user-ward-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                               Phường/Xã
                             </label>
                             <input
@@ -413,12 +434,12 @@ const AccountContent = ({ auth }) => {
                               type="text"
                               value={formData.wardCommune}
                               onChange={(e) => setFormData({ ...formData, wardCommune: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                              className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                             />
                           </div>
 
                           <div>
-                            <label htmlFor="user-district-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="user-district-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                               Quận/Huyện
                             </label>
                             <input
@@ -426,19 +447,19 @@ const AccountContent = ({ auth }) => {
                               type="text"
                               value={formData.district}
                               onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                              className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                             />
                           </div>
 
                           <div>
-                            <label htmlFor="user-province-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="user-province-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                               Tỉnh/Thành phố
                             </label>
                             <select
                               id="user-province-acc"
                               value={formData.province}
                               onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                              className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                             >
                               <option value="">Chọn tỉnh/thành phố</option>
                               <option value="An Giang">An Giang</option>
@@ -508,7 +529,7 @@ const AccountContent = ({ auth }) => {
                           </div>
 
                           <div>
-                            <label htmlFor="user-postal-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="user-postal-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                               Mã bưu điện
                             </label>
                             <input
@@ -516,7 +537,7 @@ const AccountContent = ({ auth }) => {
                               type="text"
                               value={formData.postalCode}
                               onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                              className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                             />
                           </div>
                         </div>
@@ -526,7 +547,7 @@ const AccountContent = ({ auth }) => {
                         type="submit"
                         disabled={loading}
                         onClick={() => console.log('🔘 Submit button clicked!')}
-                        className="bg-brand-primary text-white px-6 py-2 rounded-md hover:bg-brand-primary/90 disabled:opacity-50 transition-colors"
+                        className="w-full sm:w-auto bg-brand-primary text-white px-6 py-3 sm:py-2 rounded-md hover:bg-brand-primary/90 disabled:opacity-50 transition-colors font-medium"
                       >
                         {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
                       </button>
@@ -537,11 +558,11 @@ const AccountContent = ({ auth }) => {
                 {/* Password Tab */}
                 {activeTab === 'password' && (
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                       Đổi mật khẩu
-                    </h2>                    <form onSubmit={handlePasswordChange} className="space-y-6 max-w-md">
+                    </h2>                    <form onSubmit={handlePasswordChange} className="space-y-4 sm:space-y-6 max-w-md">
                       <div>
-                        <label htmlFor="current-password-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="current-password-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                           Mật khẩu hiện tại
                         </label>
                         <input
@@ -550,12 +571,12 @@ const AccountContent = ({ auth }) => {
                           value={passwordData.current_password}
                           onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                          className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="new-password-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="new-password-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                           Mật khẩu mới
                         </label>
                         <input
@@ -565,12 +586,12 @@ const AccountContent = ({ auth }) => {
                           onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
                           required
                           minLength={6}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                          className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="confirm-password-acc" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="confirm-password-acc" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                           Xác nhận mật khẩu mới
                         </label>
                         <input
@@ -580,14 +601,14 @@ const AccountContent = ({ auth }) => {
                           onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
                           required
                           minLength={6}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+                          className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-base sm:text-sm"
                         />
                       </div>
 
                       <button
                         type="submit"
                         disabled={loading}
-                        className="bg-brand-primary text-white px-6 py-2 rounded-md hover:bg-brand-primary/90 disabled:opacity-50 transition-colors"
+                        className="w-full sm:w-auto bg-brand-primary text-white px-6 py-3 sm:py-2 rounded-md hover:bg-brand-primary/90 disabled:opacity-50 transition-colors font-medium"
                       >
                         {loading ? 'Đang lưu...' : 'Đổi mật khẩu'}
                       </button>

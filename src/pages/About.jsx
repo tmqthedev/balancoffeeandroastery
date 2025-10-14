@@ -119,7 +119,7 @@ const About = () => {
 
       <div className="min-h-screen bg-cream-50">
         {/* Hero Section */}
-        <section className="relative h-screen flex items-end justify-center overflow-hidden pb-20">
+        <section className="relative h-screen flex items-end justify-center overflow-hidden pb-16 sm:pb-20">
           <div className="absolute inset-0 z-10"></div>
           <img src="/images/banners/about_banner.png"
             alt="About Banner"
@@ -128,7 +128,7 @@ const About = () => {
           <div className="relative z-20 text-center text-white max-w-4xl mx-auto px-4">
             <Link
               to="/products"
-              className="inline-block bg-brand-primary text-brand-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-brand-primary/90 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              className="inline-block bg-brand-primary text-brand-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:bg-brand-primary/90 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full sm:w-auto"
             >
               Khám phá sản phẩm
             </Link>
@@ -136,27 +136,27 @@ const About = () => {
         </section>
 
         {/* Story Section */}
-        <section className="py-20 bg-white">
+        <section className="py-12 sm:py-16 lg:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">              <div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">              <div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Câu chuyện thương hiệu
                 </h2>
-                <div className="prose prose-lg text-gray-700">
-                  <p className="mb-4">
+                <div className="prose prose-base sm:prose-lg text-gray-700">
+                  <p className="mb-3 sm:mb-4 text-sm sm:text-base">
                     Balan Coffee & Roastery khởi nguồn từ một triết lý rất giản dị: 
                     kinh doanh và xây dựng thương hiệu phải bắt đầu từ những điều mộc mạc 
                     và cơ bản nhất. Với chúng tôi, cà phê không chỉ để uống – mà để thưởng thức, 
                     từ hương vị, từ thái độ phục vụ đến trải nghiệm mà khách hàng cảm nhận.
                   </p>
-                  <p className="mb-4">
+                  <p className="mb-3 sm:mb-4 text-sm sm:text-base">
                     Chúng tôi tin rằng, chỉ khi làm từ Tâm và xuất phát từ sự Chân Thành, 
                     từng hạt cà phê mới thực sự chạm đến trái tim người thưởng thức. 
                     Cũng như bản chất mộc mạc của cà phê, Balan giữ trọn sự tử tế: 
                     từ khâu chọn nguyên liệu, cách rang xay cho đến cách đưa từng ly 
                     cà phê đến tay khách hàng.
                   </p>
-                  <p>
+                  <p className="text-sm sm:text-base">
                     Balan Coffee & Roastery mong muốn trở thành một nơi thật gần gũi – 
                     nơi bạn có thể dừng lại giữa nhịp sống hối hả, nhâm nhi một ly cà phê 
                     được tạo ra bằng tất cả sự chân thành, để rồi tìm thấy sự kết nối, 
@@ -170,9 +170,9 @@ const About = () => {
                   alt="Coffee processing"
                   className="rounded-lg shadow-xl"
                 />
-                <div className="absolute -bottom-6 -left-6 bg-brand-primary text-brand-white p-6 rounded-lg">
-                  <div className="text-3xl font-bold">3+</div>
-                  <div className="text-sm">Năm phát triển</div>
+                <div className="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-brand-primary text-brand-white p-4 sm:p-6 rounded-lg">
+                  <div className="text-2xl sm:text-3xl font-bold">3+</div>
+                  <div className="text-xs sm:text-sm">Năm phát triển</div>
 
                 </div>
               </div>
@@ -227,33 +227,33 @@ const About = () => {
         </section>
 
         {/* Team Section */}
-        <section className="py-20 bg-cream-50">
+        <section className="py-12 sm:py-16 lg:py-20 bg-cream-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
                 Đội ngũ chuyên gia
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto px-4">
                 Những con người tạo nên chất lượng đặc biệt của Balan Coffee
               </p>
-            </div><div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {teamMembers.map((member) => (
                 <div key={member.name} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                  <div className="h-64 overflow-hidden">
+                  <div className="h-48 sm:h-56 lg:h-64 overflow-hidden">
                     <img
                       src={member.image}
                       alt={member.name}
                       className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">
                       {member.name}
                     </h3>
-                    <div className="text-brand-primary font-medium mb-3 italic">
+                    <div className="text-sm sm:text-base text-brand-primary font-medium mb-2 sm:mb-3 italic">
                       {member.position}
                     </div>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-xs sm:text-sm">
                       {member.description}
                     </p>
                   </div>

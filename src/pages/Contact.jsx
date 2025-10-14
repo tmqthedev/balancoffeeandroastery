@@ -100,52 +100,52 @@ const Contact = () => {
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="bg-brand-primary text-brand-white py-16">
+        <section className="bg-brand-primary text-brand-white py-12 sm:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">            
             <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-white">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 text-brand-white">
                 Liên hệ với chúng tôi
               </h1>
-              <p className="text-xl text-brand-white/80 max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg lg:text-xl text-brand-white/80 max-w-3xl mx-auto px-4">
                 Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy liên hệ với chúng tôi để biết thêm thông tin về sản phẩm hoặc dịch vụ.
               </p>
             </div>
           </div>
         </section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12">
+            {/* Contact Form */}            <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Gửi tin nhắn cho chúng tôi
               </h2>
 
               {submitted ? (
-                <div className="text-center py-8">                  <div className="text-6xl text-green-500 mb-4">✅</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <div className="text-center py-6 sm:py-8">                  <div className="text-5xl sm:text-6xl text-green-500 mb-3 sm:mb-4">✅</div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                     Cảm ơn bạn đã liên hệ!
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                     Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất.
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
-                    className="bg-brand-primary text-brand-white px-6 py-2 rounded-md hover:bg-brand-primary/90 transition-colors"
+                    className="w-full sm:w-auto bg-brand-primary text-brand-white px-6 py-2.5 sm:py-2 rounded-md hover:bg-brand-primary/90 transition-colors"
                   >
                     Gửi tin nhắn khác
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md text-sm sm:text-base">
                       {error}
                     </div>
                   )}
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                         Họ tên *
                       </label>
                       <input
@@ -155,13 +155,13 @@ const Contact = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
+                        className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary text-base sm:text-sm"
                         placeholder="Nhập họ tên của bạn"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                         Email *
                       </label>
                       <input
@@ -171,15 +171,15 @@ const Contact = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
+                        className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary text-base sm:text-sm"
                         placeholder="Nhập email của bạn"
                       />
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                         Số điện thoại
                       </label>
                       <input
@@ -188,13 +188,13 @@ const Contact = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
+                        className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary text-base sm:text-sm"
                         placeholder="Nhập số điện thoại của bạn"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                         Chủ đề *
                       </label>
                       <select
@@ -203,7 +203,7 @@ const Contact = () => {
                         value={formData.subject}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
+                        className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary text-base sm:text-sm"
                       >                        <option value="">Chọn chủ đề</option>
                         <option value="general">Câu hỏi chung</option>
                         <option value="product">Thông tin sản phẩm</option>
@@ -215,7 +215,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                       Tin nhắn *
                     </label>
                     <textarea
@@ -225,7 +225,7 @@ const Contact = () => {
                       onChange={handleChange}
                       required
                       rows={6}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary"
+                      className="w-full px-3 sm:px-3 py-2.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary text-base sm:text-sm"
                       placeholder="Nhập tin nhắn của bạn..."
                     ></textarea>
                   </div>
@@ -233,7 +233,7 @@ const Contact = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-brand-primary text-brand-white py-3 px-6 rounded-md hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full bg-brand-primary text-brand-white py-3 sm:py-3 px-6 rounded-md hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                   >
                     {loading ? 'Đang gửi...' : 'Gửi tin nhắn'}
                   </button>
@@ -242,25 +242,25 @@ const Contact = () => {
             </div>
 
             {/* Contact Information */}
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {/* Store Information */}
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Thông tin liên hệ
                 </h2>
 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
-                      <svg className="w-6 h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <div className="ml-4">                      <h3 className="text-lg font-semibold text-gray-900">
+                    <div className="ml-3 sm:ml-4">                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                         Địa chỉ
                       </h3>
-                      <p className="text-gray-600 mt-1">
+                      <p className="text-sm sm:text-base text-gray-600 mt-1">
                         {storeInfo.address}
                       </p>
                     </div>
@@ -383,19 +383,19 @@ const Contact = () => {
           </div>
 
           {/* Map Section */}
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                   Vị trí cửa hàng
                 </h2>
-                <p className="text-gray-600 mt-2">
+                <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
                   Tìm chúng tôi tại địa chỉ dưới đây
                 </p>
               </div>
               
-              {/* Google Map iframe */}
-              <div className="h-96 relative">
+              {/* Google Map iframe - responsive height */}
+              <div className="h-64 sm:h-80 lg:h-96 relative">
                 <iframe 
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.5968705427917!2d106.8354841748059!3d10.842130789310659!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317529f54ced1d0f%3A0x10dea56b2dad9187!2sBalan%20Coffee%20Roastery!5e0!3m2!1svi!2s!4v1756018341637!5m2!1svi!2s" 
                   width="100%" 

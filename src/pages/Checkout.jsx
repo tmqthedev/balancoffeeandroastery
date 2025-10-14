@@ -425,55 +425,94 @@ const CheckoutContent = ({ auth, cart }) => {
                     </div>
                 </div>
 
-                <div className="container mx-auto px-4 py-8">
-                    {/* Progress Steps */}
-                    <div className="mb-8">
-                        <div className="flex items-center justify-center space-x-8">
+                <div className="container mx-auto px-4 py-6 sm:py-8">
+                    {/* Progress Steps - Responsive */}
+                    <div className="mb-6 sm:mb-8">
+                        {/* Desktop Progress */}
+                        <div className="hidden md:flex items-center justify-center space-x-6 lg:space-x-8">
                             {steps.map((step, index) => (
                                 <div key={step.number} className="flex items-center">
-                                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                                    <div className={`flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 ${
                                         currentStep >= step.number
                                             ? 'bg-brand-primary border-brand-primary text-white'
                                             : 'border-gray-300 text-gray-400'
                                     }`}>
                                         {currentStep > step.number ? (
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
                                         ) : (
-                                            <span className="text-sm font-semibold">{step.number}</span>
+                                            <span className="text-sm lg:text-base font-semibold">{step.number}</span>
                                         )}
                                     </div>
-                                    <span className={`ml-2 text-sm font-medium ${
+                                    <span className={`ml-2 lg:ml-3 text-sm lg:text-base font-medium ${
                                         currentStep >= step.number ? 'text-brand-primary' : 'text-gray-400'
                                     }`}>
                                         {step.title}
                                     </span>
                                     {index < steps.length - 1 && (
-                                        <div className={`w-16 h-0.5 ml-4 ${
+                                        <div className={`w-12 lg:w-16 h-0.5 ml-3 lg:ml-4 ${
                                             currentStep > step.number ? 'bg-brand-primary' : 'bg-gray-300'
                                         }`} />
                                     )}
                                 </div>
                             ))}
                         </div>
+
+                        {/* Mobile Progress - Vertical */}
+                        <div className="md:hidden space-y-3">
+                            {steps.map((step, index) => (
+                                <div key={step.number} className="flex items-start">
+                                    <div className="flex flex-col items-center mr-3">
+                                        <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 flex-shrink-0 ${
+                                            currentStep >= step.number
+                                                ? 'bg-brand-primary border-brand-primary text-white'
+                                                : 'border-gray-300 text-gray-400'
+                                        }`}>
+                                            {currentStep > step.number ? (
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            ) : (
+                                                <span className="text-xs font-semibold">{step.number}</span>
+                                            )}
+                                        </div>
+                                        {index < steps.length - 1 && (
+                                            <div className={`w-0.5 h-8 mt-1 ${
+                                                currentStep > step.number ? 'bg-brand-primary' : 'bg-gray-300'
+                                            }`} />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 pt-1">
+                                        <span className={`text-sm font-medium block ${
+                                            currentStep >= step.number ? 'text-brand-primary' : 'text-gray-400'
+                                        }`}>
+                                            {step.title}
+                                        </span>
+                                        {currentStep === step.number && (
+                                            <span className="text-xs text-gray-500 mt-1 block">Đang thực hiện</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                         {/* Checkout Form */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-lg shadow-md p-6">
+                            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8">
                                 {/* Step 1: Billing Information */}
                                 {currentStep === 1 && (
-                                    <div className="space-y-6">
+                                    <div className="space-y-4 sm:space-y-6">
                                         {/* Validation Status */}
-                                        <div className={`p-4 rounded-lg border ${
+                                        <div className={`p-3 sm:p-4 rounded-lg border ${
                                             hasCurrentStepErrors()
                                                 ? 'bg-red-50 border-red-200 text-red-700'
                                                 : 'bg-green-50 border-green-200 text-green-700'
                                         }`}>
-                                            <div className="flex items-center">
-                                                <svg className={`w-5 h-5 mr-2 ${
+                                            <div className="flex items-start sm:items-center">
+                                                <svg className={`w-5 h-5 mr-2 flex-shrink-0 mt-0.5 sm:mt-0 ${
                                                     hasCurrentStepErrors() ? 'text-red-500' : 'text-green-500'
                                                 }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     {hasCurrentStepErrors() ? (
@@ -511,13 +550,13 @@ const CheckoutContent = ({ auth, cart }) => {
                                             )}
                                         </div>
 
-                                        <h2 className="text-xl font-semibold text-brand-primary">
+                                        <h2 className="text-lg sm:text-xl font-semibold text-brand-primary">
                                             Thông tin thanh toán
                                         </h2>
                                         
                                         {user && user.addresses && user.addresses.length > 0 && (
-                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                <h3 className="text-sm font-medium text-blue-900 mb-2">
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                                                <h3 className="text-xs sm:text-sm font-medium text-blue-900 mb-2">
                                                     Sử dụng địa chỉ đã lưu
                                                 </h3>
                                                 <select
@@ -541,7 +580,7 @@ const CheckoutContent = ({ auth, cart }) => {
                                                             }
                                                         }
                                                     }}
-                                                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                    className="w-full px-3 py-2.5 sm:py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                                                 >
                                                     <option value="">Chọn địa chỉ đã lưu...</option>
                                                     {user.addresses.map(address => (
@@ -554,12 +593,12 @@ const CheckoutContent = ({ auth, cart }) => {
                                         )}
 
                                         {user && (
-                                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                                                <div className="flex items-center">
-                                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg">
+                                                <div className="flex items-start sm:items-center">
+                                                    <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5 sm:mt-0" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                                     </svg>
-                                                    <span className="text-sm">
+                                                    <span className="text-xs sm:text-sm">
                                                         Thông tin được tự động điền từ tài khoản của bạn. Bạn có thể chỉnh sửa nếu cần.
                                                     </span>
                                                 </div>
@@ -567,7 +606,7 @@ const CheckoutContent = ({ auth, cart }) => {
                                         )}
                                         
                                         <div>
-                                            <label htmlFor="billing-fullName" className="block text-sm font-medium text-brand-primary mb-1">
+                                            <label htmlFor="billing-fullName" className="block text-sm font-medium text-brand-primary mb-1.5 sm:mb-1">
                                                 Họ và tên *
                                             </label>
                                             <input
@@ -575,19 +614,19 @@ const CheckoutContent = ({ auth, cart }) => {
                                                 type="text"
                                                 value={formData.billing.fullName}
                                                 onChange={(e) => handleInputChange('billing', 'fullName', e.target.value)}
-                                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-base sm:text-sm ${
                                                     errors['billing.fullName'] ? 'border-red-300' : 'border-gray-300'
                                                 }`}
                                                 placeholder="Ví dụ: Nguyễn Văn A"
                                             />
                                             {errors['billing.fullName'] && (
-                                                <p className="mt-1 text-sm text-red-600">{errors['billing.fullName']}</p>
+                                                <p className="mt-1.5 sm:mt-1 text-xs sm:text-sm text-red-600">{errors['billing.fullName']}</p>
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label htmlFor="billing-email" className="block text-sm font-medium text-brand-primary mb-1">
+                                                <label htmlFor="billing-email" className="block text-sm font-medium text-brand-primary mb-1.5 sm:mb-1">
                                                     Email *
                                                 </label>
                                                 <input
@@ -595,7 +634,7 @@ const CheckoutContent = ({ auth, cart }) => {
                                                     type="email"
                                                     value={formData.billing.email}
                                                     onChange={(e) => handleInputChange('billing', 'email', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-brand-primary focus:border-brand-primary ${
+                                                    className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-base sm:text-sm ${
                                                         errors['billing.email'] ? 'border-red-300' : 'border-gray-300'
                                                     }`}
                                                 />
@@ -995,12 +1034,12 @@ const CheckoutContent = ({ auth, cart }) => {
                                     </div>
                                 )}
 
-                                {/* Navigation Buttons */}
-                                <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                                {/* Navigation Buttons - Mobile Responsive */}
+                                <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6 sm:mt-8 pt-6 border-t border-gray-200">
                                     <button
                                         onClick={handlePrevious}
                                         disabled={currentStep === 1}
-                                        className="bg-gray-100 hover:bg-gray-200 text-brand-primary px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-brand-primary px-6 py-3 sm:py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-sm"
                                     >
                                         Quay lại
                                     </button>
@@ -1009,26 +1048,28 @@ const CheckoutContent = ({ auth, cart }) => {
                                         <button
                                             onClick={handleNext}
                                             disabled={hasCurrentStepErrors()}
-                                            className="bg-brand-primary hover:bg-brand-primary text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-primary"
+                                            className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary text-white px-6 py-3 sm:py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-primary text-base sm:text-sm"
                                         >
-                                            {hasCurrentStepErrors() ? 'Vui lòng điền đầy đủ thông tin' : 'Tiếp tục'}
+                                            <span className="hidden sm:inline">{hasCurrentStepErrors() ? 'Vui lòng điền đầy đủ thông tin' : 'Tiếp tục'}</span>
+                                            <span className="sm:hidden">{hasCurrentStepErrors() ? 'Điền đầy đủ thông tin' : 'Tiếp tục'}</span>
                                         </button>
                                     )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Order Summary */}
+                        {/* Order Summary - Responsive */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">                                <h3 className="text-xl font-semibold text-brand-primary mb-6">
+                            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:sticky lg:top-4">
+                                <h3 className="text-lg sm:text-xl font-semibold text-brand-primary mb-4 sm:mb-6">
                                     Tóm tắt đơn hàng
                                 </h3>
                                 
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4 max-h-64 sm:max-h-96 overflow-y-auto">
                                     {cartItems.map((item) => (
-                                        <div key={item.product_id} className="flex justify-between items-center">
-                                            <div className="flex-1">
-                                                <h4 className="text-sm font-medium text-brand-primary">
+                                        <div key={item.product_id} className="flex justify-between items-start gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-medium text-brand-primary truncate">
                                                     {item.name}
                                                     {item.variant?.weight && (
                                                         <span className="text-xs font-normal text-gray-600 ml-1">
@@ -1036,36 +1077,38 @@ const CheckoutContent = ({ auth, cart }) => {
                                                         </span>
                                                     )}
                                                 </h4>
-                                                <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                                            </div>                                            <span className="text-sm font-semibold text-brand-primary">
+                                                <p className="text-xs sm:text-sm text-gray-600">SL: {item.quantity}</p>
+                                            </div>
+                                            <span className="text-sm font-semibold text-brand-primary whitespace-nowrap">
                                                 {formatCurrency(item.price * item.quantity)}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
                                 
-                                <hr className="my-4 border-gray-200" />
+                                <hr className="my-3 sm:my-4 border-gray-200" />
                                 
-                                <div className="space-y-2">                                    <div className="flex justify-between">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm sm:text-base">
                                         <span className="text-gray-600">Tạm tính</span>
                                         <span className="font-semibold text-brand-primary">{formatCurrency(subtotal)}</span>
                                     </div>
                                     
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between text-sm sm:text-base">
                                         <span className="text-gray-600">Thuế</span>
                                         <span className="font-semibold text-brand-primary">Đã bao gồm</span>
                                     </div>
                                     
                                     <hr className="border-gray-200" />
                                     
-                                    <div className="flex justify-between text-lg">
+                                    <div className="flex justify-between text-base sm:text-lg">
                                         <span className="font-semibold text-brand-primary">Tổng cộng</span>
                                         <span className="font-bold text-brand-primary">{formatCurrency(total)}</span>
                                     </div>
                                 </div>
                                 
-                                <div className="mt-6 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                    <p className="text-sm text-brand-primary text-center">
+                                <div className="mt-4 sm:mt-6 p-2.5 sm:p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <p className="text-xs sm:text-sm text-brand-primary text-center">
                                         🔒 Giao dịch được bảo mật an toàn
                                     </p>
                                 </div>
