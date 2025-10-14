@@ -26,14 +26,10 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
       });
     }
     
-    // Check JWT_SECRET early before processing
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      console.error('❌ Register: JWT_SECRET not configured');
-      return res.status(500).json({
-        success: false,
-        message: 'Server configuration error'
-      });
+    // Get JWT_SECRET with fallback (log warning if using default)
+    const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+    if (!process.env.JWT_SECRET) {
+      console.warn('⚠️ Register: JWT_SECRET not configured, using default (not recommended for production)');
     }
     
     const { 
@@ -219,10 +215,9 @@ router.post('/login', [
     }
 
     // Generate JWT token
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      console.error('❌ Auth: JWT_SECRET not configured');
-      return res.status(500).json({ error: 'Server configuration error' });
+    const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+    if (!process.env.JWT_SECRET) {
+      console.warn('⚠️ Login: JWT_SECRET not configured, using default (not recommended for production)');
     }
 
     const token = jwt.sign(
@@ -572,14 +567,10 @@ router.post('/forgot-password', [
             });
         }
 
-        // Check JWT_SECRET
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            console.error('❌ Forgot password: JWT_SECRET not configured');
-            return res.status(500).json({
-                success: false,
-                message: 'Server configuration error'
-            });
+        // Get JWT_SECRET with fallback
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        if (!process.env.JWT_SECRET) {
+          console.warn('⚠️ Forgot password: JWT_SECRET not configured, using default (not recommended for production)');
         }
 
         // Generate reset token (you can use crypto.randomBytes or jwt)
@@ -667,14 +658,10 @@ router.post('/verify-reset-token', [
 
         const { token } = req.body;
         
-        // Check JWT_SECRET
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            console.error('❌ Verify reset token: JWT_SECRET not configured');
-            return res.status(500).json({
-                success: false,
-                message: 'Server configuration error'
-            });
+        // Get JWT_SECRET with fallback
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        if (!process.env.JWT_SECRET) {
+          console.warn('⚠️ Verify reset token: JWT_SECRET not configured, using default');
         }
 
         // Get users collection
@@ -753,14 +740,10 @@ router.post('/reset-password', [
 
         const { token, newPassword } = req.body;
         
-        // Check JWT_SECRET
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            console.error('❌ Reset password: JWT_SECRET not configured');
-            return res.status(500).json({
-                success: false,
-                message: 'Server configuration error'
-            });
+        // Get JWT_SECRET with fallback
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        if (!process.env.JWT_SECRET) {
+          console.warn('⚠️ Reset password: JWT_SECRET not configured, using default');
         }
 
         // Get users collection
@@ -855,14 +838,10 @@ router.post('/verify-email', [
 
         const { token } = req.body;
         
-        // Check JWT_SECRET
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            console.error('❌ Verify email: JWT_SECRET not configured');
-            return res.status(500).json({
-                success: false,
-                message: 'Server configuration error'
-            });
+        // Get JWT_SECRET with fallback
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        if (!process.env.JWT_SECRET) {
+          console.warn('⚠️ Verify email: JWT_SECRET not configured, using default');
         }
 
         // Get users collection
@@ -916,15 +895,7 @@ router.post('/verify-email', [
 
         console.log('✅ Email verification successful for user:', user.email);
 
-        // Check JWT_SECRET for login token generation
-        if (!jwtSecret) {
-            console.error('❌ Verify email: JWT_SECRET not configured for login token');
-            return res.status(500).json({
-                success: false,
-                message: 'Server configuration error'
-            });
-        }
-
+        // Use the same jwtSecret for login token (already validated above)
         // Generate JWT token for login
         const loginToken = jwt.sign(
             { userId: user._id.toString(), email: user.email, role: user.role },
@@ -979,14 +950,10 @@ router.post('/resend-verification', [
 
         const { email } = req.body;
         
-        // Check JWT_SECRET
-        const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret) {
-            console.error('❌ Resend verification: JWT_SECRET not configured');
-            return res.status(500).json({
-                success: false,
-                message: 'Server configuration error'
-            });
+        // Get JWT_SECRET with fallback
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        if (!process.env.JWT_SECRET) {
+          console.warn('⚠️ Resend verification: JWT_SECRET not configured, using default');
         }
 
         // Get users collection

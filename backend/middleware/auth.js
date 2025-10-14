@@ -17,7 +17,11 @@ const authenticateToken = async (req, res, next) => {
         }
 
         console.log('🔍 Auth Middleware: Verifying token...');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        if (!process.env.JWT_SECRET) {
+            console.warn('⚠️ Auth Middleware: JWT_SECRET not configured, using default');
+        }
+        const decoded = jwt.verify(token, jwtSecret);
         console.log('✅ Auth Middleware: Token decoded successfully:', { userId: decoded.userId, email: decoded.email });
         
         // Verify user still exists and is active using MongoDB native driver
@@ -102,7 +106,8 @@ const optionalAuth = async (req, res, next) => {
         }
 
         console.log('🔍 Optional Auth: Verifying token...');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'balan-coffee-secret');
+        const jwtSecret = process.env.JWT_SECRET || 'balan-coffee-secret-2024';
+        const decoded = jwt.verify(token, jwtSecret);
         const usersCollection = getCollection(req, 'users');
         
         // Try multiple lookup methods for user
