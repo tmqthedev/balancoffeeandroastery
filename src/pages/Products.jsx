@@ -219,6 +219,21 @@ const Products = () => {
                 title="Sản phẩm - Balan Coffee & Roastery"
                 description="Khám phá bộ sưu tập cà phê rang mộc chất lượng cao từ Balan Coffee & Roastery. Hạt cà phê Arabica Cầu Đất, Typica Kongo, Robusta Lâm Đồng và các dịch vụ cà phê tuyệt vời."
                 keywords="sản phẩm cà phê, hạt cà phê rang mộc, Arabica Cầu Đất, Typica Kongo, Robusta Lâm Đồng, dịch vụ cà phê, đồ uống cà phê"
+                canonicalUrl="https://balancoffeeroastery.com.vn/products"
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "ItemList",
+                    "name": "Sản phẩm cà phê rang mộc - Balan Coffee & Roastery",
+                    "description": "Danh sách hạt cà phê rang mộc Arabica và Robusta chất lượng cao",
+                    "url": "https://balancoffeeroastery.com.vn/products",
+                    ...(products.length > 0 && { "numberOfItems": products.length }),
+                    "itemListElement": (searchResults.length > 0 ? searchResults : products).slice(0, 10).map((product, index) => ({
+                        "@type": "ListItem",
+                        "position": index + 1,
+                        "url": `https://balancoffeeroastery.com.vn/products/${product._id || product.id}`,
+                        "name": product.name
+                    }))
+                }}
             />
             {/* Enhanced Sticky Tab Navigation - Always Visible Below Header */}
             <div 

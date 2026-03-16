@@ -135,6 +135,35 @@ const Blog = () => {
         title="Blog - Kiến thức cà phê | Balan Coffee and Roastery"
         description="Khám phá thế giới cà phê qua blog của Balan Coffee and Roastery. Hướng dẫn pha chế, kiến thức rang xay và xu hướng cà phê mới nhất."
         keywords="blog cà phê, hướng dẫn pha chế, kiến thức cà phê, rang xay, Balan Coffee"
+        canonicalUrl="https://balancoffeeroastery.com.vn/blog"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": "Blog Cà Phê - Balan Coffee & Roastery",
+          "description": "Khám phá thế giới cà phê qua blog của Balan Coffee and Roastery. Hướng dẫn pha chế, kiến thức rang xay và xu hướng cà phê mới nhất.",
+          "url": "https://balancoffeeroastery.com.vn/blog",
+          "isPartOf": {
+            "@type": "WebSite",
+            "@id": "https://balancoffeeroastery.com.vn/#website"
+          },
+          "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Trang chủ",
+                "item": "https://balancoffeeroastery.com.vn"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Blog",
+                "item": "https://balancoffeeroastery.com.vn/blog"
+              }
+            ]
+          }
+        }}
       />
       
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12">

@@ -143,29 +143,63 @@ const BlogPost = () => {
 
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": title,
-    "description": excerpt,
-    "image": blog?.image || "/dist/title.jpg",
-    "datePublished": blog?.publishedAt || blog?.createdAt,
-    "dateModified": blog?.updatedAt || blog?.createdAt,
-    "author": {
-        "@type": "Organization",
-        "name": "Balan Coffee & Roastery",
-        "logo": {
-            "@type": "ImageObject",
-            "url": `${window.location.origin}/dist/logo.png`
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "headline": title,
+        "description": excerpt,
+        "image": blog?.image || "https://balancoffeeroastery.com.vn/images/logos/logo.png",
+        "datePublished": blog?.publishedAt || blog?.createdAt,
+        "dateModified": blog?.updatedAt || blog?.createdAt,
+        "url": `https://balancoffeeroastery.com.vn/blog/${blog?.slug || slug}`,
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": "https://balancoffeeroastery.com.vn/#website"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Balan Coffee & Roastery",
+            "url": "https://balancoffeeroastery.com.vn",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://balancoffeeroastery.com.vn/images/logos/logo.png"
+            }
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Balan Coffee & Roastery",
+            "url": "https://balancoffeeroastery.com.vn",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://balancoffeeroastery.com.vn/images/logos/logo.png"
+            }
         }
-    },
-    "publisher": {
-        "@type": "Organization",
-        "name": "Balan Coffee & Roastery",
-        "logo": {
-            "@type": "ImageObject",
-            "url": `${window.location.origin}/dist/logo.png`
-        }
-    }
-};
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Trang chủ",
+            "item": "https://balancoffeeroastery.com.vn"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": "https://balancoffeeroastery.com.vn/blog"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": title,
+            "item": `https://balancoffeeroastery.com.vn/blog/${blog?.slug || slug}`
+          }
+        ]
+      }
+    ]
+  };
 
   return (
     <>
@@ -173,14 +207,14 @@ const BlogPost = () => {
         <title>{title || 'Bài viết'} - Balan Coffee & Roastery</title>
         <meta name="description" content={excerpt || 'Bài viết về cà phê từ Balan Coffee & Roastery'} />
         <meta name="keywords" content={blog?.keywords || 'blog cà phê, cách pha cà phê, kiến thức cà phê, arabica, robusta, cà phê rang mộc'} />
-        <link rel="canonical" href={`${window.location.origin}/blog/${blog?.slug || slug}`} />
+        <link rel="canonical" href={`https://balancoffeeroastery.com.vn/blog/${blog?.slug || slug}`} />
         
         {/* Open Graph */}
         <meta property="og:title" content={title || 'Bài viết'} />
         <meta property="og:description" content={excerpt || 'Bài viết về cà phê từ Balan Coffee & Roastery'} />
-        <meta property="og:url" content={`${window.location.origin}/blog/${blog?.slug || slug}`} />
+        <meta property="og:url" content={`https://balancoffeeroastery.com.vn/blog/${blog?.slug || slug}`} />
         <meta property="og:type" content="article" />
-        <meta property="og:image" content={blog?.image || `${window.location.origin}/images/og-default.jpg`} />
+        <meta property="og:image" content={blog?.image || `https://balancoffeeroastery.com.vn/images/logos/logo.png`} />
         <meta property="article:published_time" content={blog?.publishedAt || blog?.createdAt} />
         <meta property="article:author" content="Balan Coffee & Roastery" />
         {blog?.category && (
@@ -191,7 +225,7 @@ const BlogPost = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title || 'Bài viết'} />
         <meta name="twitter:description" content={excerpt || 'Bài viết về cà phê từ Balan Coffee & Roastery'} />
-        <meta name="twitter:image" content={blog?.image || `${window.location.origin}/images/og-default.jpg`} />
+        <meta name="twitter:image" content={blog?.image || `https://balancoffeeroastery.com.vn/images/logos/logo.png`} />
         
         {/* Structured Data */}
         <script type="application/ld+json">
