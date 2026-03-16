@@ -103,27 +103,99 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Balan Coffee & Roastery",
-      "url": "https://balancoffeeroastery.com.vn",
-      "logo": "https://balancoffeeroastery.com.vn/logo.png",
-      "description": "Premium Vietnamese coffee roastery specializing in Arabica Cầu Đất and Robusta Lâm Đồng beans",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
-        "addressLocality": "Thủ Đức",
-        "addressRegion": "TP.HCM",
-        "addressCountry": "VN"
-      },
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "+84 964 822 269",
-        "contactType": "customer service",
-        "email": "info@balancoffeeroastery.com.vn"
-      },
-      "sameAs": [
-        "https://instagram.com/balancoffee",
-        "https://www.tiktok.com/@blan.vin"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://balancoffeeroastery.com.vn/#website",
+          "url": "https://balancoffeeroastery.com.vn",
+          "name": "Balan Coffee & Roastery",
+          "description": "Website thương mại điện tử chuyên bán hạt cà phê rang mộc chất lượng cao từ Việt Nam",
+          "inLanguage": "vi-VN",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://balancoffeeroastery.com.vn/products?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": ["LocalBusiness", "Store"],
+          "@id": "https://balancoffeeroastery.com.vn/#business",
+          "name": "Balan Coffee & Roastery",
+          "url": "https://balancoffeeroastery.com.vn",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://balancoffeeroastery.com.vn/images/logos/logo.png",
+            "width": 512,
+            "height": 512
+          },
+          "image": "https://balancoffeeroastery.com.vn/images/logos/logo.png",
+          "description": "Cửa hàng cà phê rang mộc chất lượng cao, chuyên Arabica Cầu Đất, Arabica Typica Kongo và Robusta Lâm Đồng. Mua hạt cà phê nguyên chất online.",
+          "priceRange": "₫₫",
+          "currenciesAccepted": "VND",
+          "paymentAccepted": "Cash, Bank Transfer",
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Sản phẩm cà phê rang mộc",
+            "itemListElement": [
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Product",
+                  "name": "Hạt Cà Phê Arabica Cầu Đất"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Product",
+                  "name": "Hạt Cà Phê Arabica Typica Kongo"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Product",
+                  "name": "Hạt Cà Phê Robusta Lâm Đồng"
+                }
+              }
+            ]
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
+            "addressLocality": "Thủ Đức",
+            "addressRegion": "TP.HCM",
+            "addressCountry": "VN",
+            "postalCode": "700000"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "10.8459",
+            "longitude": "106.7702"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+84964822269",
+            "contactType": "customer service",
+            "email": "info@balancoffeeroastery.com.vn",
+            "availableLanguage": ["Vietnamese", "English"]
+          },
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+              "opens": "08:00",
+              "closes": "21:00"
+            }
+          ],
+          "sameAs": [
+            "https://instagram.com/balancoffee",
+            "https://www.tiktok.com/@blan.vin"
+          ]
+        }
       ]
     }
     </script>

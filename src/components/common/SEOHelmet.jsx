@@ -31,28 +31,57 @@ const SEOHelmet = ({
 
   const defaultStructuredData = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Balan Coffee & Roastery",
-    "url": "https://balancoffeeroastery.com.vn",
-    "logo": `https://balancoffeeroastery.com.vn${ogImage}`,
-    "description": description,
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "123 Đường Cà Phê",
-      "addressLocality": "Quận 1",
-      "addressRegion": "TP.HCM",
-      "addressCountry": "VN"
-    },
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "+84-123-456-789",
-      "contactType": "customer service",
-      "email": "info@balancoffeeroastery.com.vn"
-    },
-    "sameAs": [
-      "https://facebook.com/balancoffee",
-      "https://instagram.com/balancoffee",
-      "https://www.tiktok.com/@blan.vin"
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://balancoffeeroastery.com.vn/#website",
+        "url": "https://balancoffeeroastery.com.vn",
+        "name": "Balan Coffee & Roastery",
+        "description": "Website thương mại điện tử chuyên bán hạt cà phê rang mộc chất lượng cao từ Việt Nam",
+        "inLanguage": "vi-VN",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://balancoffeeroastery.com.vn/products?search={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": ["LocalBusiness", "Store"],
+        "@id": "https://balancoffeeroastery.com.vn/#business",
+        "name": "Balan Coffee & Roastery",
+        "url": "https://balancoffeeroastery.com.vn",
+        "logo": {
+          "@type": "ImageObject",
+          "url": `https://balancoffeeroastery.com.vn${ogImage}`
+        },
+        "image": `https://balancoffeeroastery.com.vn${ogImage}`,
+        "description": description,
+        "priceRange": "₫₫",
+        "currenciesAccepted": "VND",
+        "paymentAccepted": "Cash, Bank Transfer",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "S6.01 Vinhome Grand Park Phường Long Bình, Thủ Đức, Hồ Chí Minh, Việt Nam.",
+          "addressLocality": "Thủ Đức",
+          "addressRegion": "TP.HCM",
+          "addressCountry": "VN",
+          "postalCode": "700000"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+84964822269",
+          "contactType": "customer service",
+          "email": "info@balancoffeeroastery.com.vn",
+          "availableLanguage": ["Vietnamese", "English"]
+        },
+        "sameAs": [
+          "https://instagram.com/balancoffee",
+          "https://www.tiktok.com/@blan.vin"
+        ]
+      }
     ]
   };
 

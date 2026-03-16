@@ -258,26 +258,59 @@ const ProductDetailContent = ({ auth, cart }) => {
                 <meta property="og:image" content={product.image_url} />
                 <meta property="product:price:amount" content={getCurrentPrice} />
                 <meta property="product:price:currency" content="VND" />
-                <link rel="canonical" href={window.location.href} />
+                <link rel="canonical" href={`https://balancoffeeroastery.com.vn/products/${product._id || product.id}`} />
                 
                 {/* Structured Data */}
                 <script type="application/ld+json">
                     {JSON.stringify({
                         "@context": "https://schema.org/",
-                        "@type": "Product",
-                        "name": product.name,
-                        "description": Array.isArray(product.description) ? product.description.join(', ') : product.description,
-                        "image": product.image_url,
-                        "brand": {
-                            "@type": "Brand",
-                            "name": "Balan Coffee"
-                        },
-                        "offers": {
-                            "@type": "Offer",
-                            "price": getCurrentPrice,
-                            "priceCurrency": "VND",
-                            "availability": "https://schema.org/InStock"
-                        }
+                        "@graph": [
+                            {
+                                "@type": "Product",
+                                "name": product.name,
+                                "description": Array.isArray(product.description) ? product.description.join(', ') : product.description,
+                                "image": product.image_url,
+                                "brand": {
+                                    "@type": "Brand",
+                                    "name": "Balan Coffee & Roastery"
+                                },
+                                "offers": {
+                                    "@type": "Offer",
+                                    "price": getCurrentPrice,
+                                    "priceCurrency": "VND",
+                                    "availability": "https://schema.org/InStock",
+                                    "seller": {
+                                        "@type": "Organization",
+                                        "name": "Balan Coffee & Roastery",
+                                        "url": "https://balancoffeeroastery.com.vn"
+                                    },
+                                    "url": `https://balancoffeeroastery.com.vn/products/${product._id || product.id}`
+                                }
+                            },
+                            {
+                                "@type": "BreadcrumbList",
+                                "itemListElement": [
+                                    {
+                                        "@type": "ListItem",
+                                        "position": 1,
+                                        "name": "Trang chủ",
+                                        "item": "https://balancoffeeroastery.com.vn"
+                                    },
+                                    {
+                                        "@type": "ListItem",
+                                        "position": 2,
+                                        "name": "Sản phẩm",
+                                        "item": "https://balancoffeeroastery.com.vn/products"
+                                    },
+                                    {
+                                        "@type": "ListItem",
+                                        "position": 3,
+                                        "name": product.name,
+                                        "item": `https://balancoffeeroastery.com.vn/products/${product._id || product.id}`
+                                    }
+                                ]
+                            }
+                        ]
                     })}
                 </script>
             </Helmet>
