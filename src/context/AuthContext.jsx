@@ -1,377 +1,214 @@
-import React, { createContext, useState, useMemo, useEffect } from 'react';
-import { useCallback } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import axios from 'axios';
+import api from '../services/apiClient';
 
-// Create AuthContext directly
 export const AuthContext = createContext(null);
 
-// Configure axios defaults
-const API_BASE_URL = '/api';
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const AUTH_STATE_KEY = 'authState';
 
-// Add token to all requests
-api.interceptors.request.use((config) => {
-    // Skip adding auth token for certain endpoints that don't require authentication
-    const skipAuthPaths = ['/auth/forgot-password', '/auth/reset-password', '/auth/verify-reset-token', '/auth/login', '/auth/register'];
-    const shouldSkipAuth = skipAuthPaths.some(path => config.url?.includes(path));
-    
-    if (!shouldSkipAuth) {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-    }
-    return config;
-});
+const setAuthStateMarker = (isAuthenticated) => {
+  if (isAuthenticated) {
+    localStorage.setItem(AUTH_STATE_KEY, 'authenticated');
+  } else {
+    localStorage.removeItem(AUTH_STATE_KEY);
+  }
+};
 
 export const AuthProvider = ({ children }) => {
-    console.log('🔧 AuthProvider rendering with children:', !!children);
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Check if user is logged in on mount
-    useEffect(() => {
-        checkAuthStatus();
-    }, []);
+  const applyUser = useCallback((userData) => {
+    setUser(userData || null);
+    setIsAuthenticated(!!userData);
+    setAuthStateMarker(!!userData);
 
-    // Refresh user data from server
-    const refreshUser = useCallback(async () => {
-        if (!isAuthenticated) return;
-        
-        try {
-            const response = await api.get('/auth/me');
-            setUser(response.data.user);
-            return response.data.user;
-        } catch (error) {
-            console.error('Failed to refresh user data:', error);
-            return null;
-        }
-    }, [isAuthenticated]);
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, []);
 
-    const checkAuthStatus = async () => {
-        const token = localStorage.getItem('authToken');
-        console.log('🔍 AuthContext: checkAuthStatus called, hasToken:', !!token);
-        
-        if (!token) {
-            console.log('❌ AuthContext: No token found, setting loading false');
-            setLoading(false);
-            return;
-        }
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      const response = await api.get('/auth/me');
+      applyUser(response.data.user);
+      return response.data.user;
+    } catch (error) {
+      applyUser(null);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [applyUser]);
 
-        try {
-            console.log('📡 AuthContext: Making /auth/me API call');
-            const response = await api.get('/auth/me');
-            console.log('✅ AuthContext: /auth/me response:', response.data);
-            
-            setUser(response.data.user);
-            setIsAuthenticated(true);
-            console.log('🔄 AuthContext: User state updated from /auth/me');
-        } catch (error) {
-            console.error('❌ AuthContext: Auth check failed:', error);
-            localStorage.removeItem('authToken');
-            setUser(null);
-            setIsAuthenticated(false);
-        } finally {
-            console.log('🏁 AuthContext: checkAuthStatus completed, setting loading false');
-            setLoading(false);
-        }
+  useEffect(() => {
+    checkAuthStatus();
+
+    const handleSessionExpired = () => {
+      applyUser(null);
     };
 
-    // Login function with real API call
-    const login = async (email, password, remember = false) => {
-        console.log('🔐 AuthContext: Login called with email:', email);
-        setLoading(true);
-        try {
-            console.log('📡 AuthContext: Making login API call');
-            const response = await api.post('/auth/login', {
-                email,
-                password,
-                remember
-            });
-            console.log('✅ AuthContext: Login API response:', response.data);
+    window.addEventListener('auth-session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth-session-expired', handleSessionExpired);
+  }, [applyUser, checkAuthStatus]);
 
-            const { token, user: userData } = response.data;
-            
-            // Store token in localStorage first
-            localStorage.setItem('authToken', token);
-            console.log('💾 AuthContext: Token stored in localStorage');
-            
-            // Update state immediately with batched state updates
-            console.log('🔄 AuthContext: Updating user state:', userData);
-            setUser(userData);
-            setIsAuthenticated(true);
-            console.log('✅ AuthContext: Initial user state updated successfully');
-            
-            // Call checkAuthStatus to get fresh user data from /auth/me endpoint
-            // This will make sure we have the most up-to-date user info
-            console.log('🔄 AuthContext: Calling checkAuthStatus for fresh user data');
-            try {
-                await checkAuthStatus();
-                console.log('✅ AuthContext: Fresh user data loaded from /auth/me');
-            } catch (error) {
-                console.error('❌ AuthContext: Failed to load fresh user data:', error);
-                // Still keep the login successful since we have basic user data
-            }
-            
-            // Trigger cart merge after authentication state is updated
-            console.log('🔄 AuthContext: Triggering cart merge after login');
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'authToken',
-                newValue: token,
-                oldValue: null
-            }));
-            
-            // Additional trigger with a small delay to ensure CartContext is ready
-            setTimeout(() => {
-                window.dispatchEvent(new Event('auth-login-complete'));
-            }, 150);
-            
-            return { success: true, user: userData };
-        } catch (error) {
-            console.error('❌ AuthContext: Login failed:', error);
-            const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại';
-            throw new Error(errorMessage);
-        } finally {
-            setLoading(false);
+  const refreshUser = useCallback(async () => {
+    if (!isAuthenticated) return null;
+    return checkAuthStatus();
+  }, [checkAuthStatus, isAuthenticated]);
+
+  const login = async (email, password, remember = false) => {
+    setLoading(true);
+
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+        rememberMe: remember
+      });
+
+      applyUser(response.data.user);
+
+      window.dispatchEvent(new CustomEvent('auth-login-complete'));
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Login failed';
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithToken = useCallback(async () => {
+    return checkAuthStatus();
+  }, [checkAuthStatus]);
+
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      localStorage.removeItem('cart');
+      localStorage.removeItem('buyNowProduct');
+      applyUser(null);
+      window.dispatchEvent(new CustomEvent('auth-logout-complete'));
+    }
+  };
+
+  const register = async (userData) => {
+    setLoading(true);
+
+    try {
+      const registrationData = {
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        fullName: userData.fullName,
+        phone: userData.phone
+      };
+
+      [
+        'dateOfBirth',
+        'gender',
+        'address',
+        'city',
+        'province',
+        'postalCode'
+      ].forEach((key) => {
+        if (userData[key] && String(userData[key]).trim()) {
+          registrationData[key] = userData[key];
         }
-    };
+      });
 
-    // Login with token (for OAuth callbacks)
-    const loginWithToken = useCallback(async (token) => {
-        setLoading(true);
-        try {
-            // Store token in localStorage
-            localStorage.setItem('authToken', token);
-            
-            // Get user data using the token
-            const response = await api.get('/auth/me');
-            setUser(response.data.user);
-            setIsAuthenticated(true);
-            
-            return { success: true };
-        } catch (error) {
-            console.error('Login with token failed:', error);
-            localStorage.removeItem('authToken');
-            const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại';
-            throw new Error(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+      const response = await api.post('/auth/register', registrationData);
+      return {
+        success: true,
+        requiresVerification: response.data.requiresConfirmation || response.data.requiresVerification,
+        message: response.data.message,
+        email: response.data.email,
+        user: response.data.user
+      };
+    } catch (error) {
+      const data = error.response?.data;
+      const errorMessage = data?.error || data?.message || data?.errors?.map((err) => err.msg || err.message).join(', ') || 'Registration failed';
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Logout function
-    const logout = async () => {
-        try {
-            await api.post('/auth/logout');
-        } catch (error) {
-            console.error('Logout API error:', error);
-        } finally {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('cart'); // Clear local cart on logout
-            localStorage.removeItem('buyNowProduct'); // Clear buy now product on logout
-            setUser(null);
-            setIsAuthenticated(false);
-        }
-    };    // Register function with real API call
-    const register = async (userData) => {
-        setLoading(true);
-        try {
-            // Prepare registration data - only include required fields first
-            const registrationData = {
-                email: userData.email,
-                password: userData.password,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                phone: userData.phone
-            };
+  const confirmSignUp = async (email, code) => {
+    const response = await api.post('/auth/confirm-sign-up', { email, code });
+    return response.data;
+  };
 
-            // Only add optional fields if they have values
-            if (userData.dateOfBirth && userData.dateOfBirth.trim()) {
-                registrationData.dateOfBirth = userData.dateOfBirth;
-            }
-            if (userData.gender && userData.gender.trim()) {
-                registrationData.gender = userData.gender;
-            }
-            if (userData.address && userData.address.trim()) {
-                registrationData.address = userData.address;
-            }
-            if (userData.city && userData.city.trim()) {
-                registrationData.city = userData.city;
-            }
-            if (userData.province && userData.province.trim()) {
-                registrationData.province = userData.province;
-            }
-            if (userData.postalCode && userData.postalCode.trim()) {
-                registrationData.postalCode = userData.postalCode;
-            }
+  const resendConfirmation = async (email) => {
+    const response = await api.post('/auth/resend-confirmation', { email });
+    return response.data;
+  };
 
-            console.log('📝 AuthContext: Registration data prepared:', registrationData);
+  const updateUserInfo = async (userData) => {
+    setLoading(true);
 
-            const response = await api.post('/auth/register', registrationData);
-            console.log('📡 AuthContext: Registration API response:', response.data);
+    try {
+      const { email, ...updateData } = userData;
+      const response = await api.put('/users/profile', updateData);
+      const updatedUser = response.data.user;
+      applyUser(updatedUser);
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Profile update failed';
+      return { success: false, message: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            // Check if email verification is required
-            if (response.data.requiresVerification) {
-                console.log('📧 AuthContext: Email verification required');
-                // Return response data for frontend to handle
-                return {
-                    success: true,
-                    requiresVerification: true,
-                    message: response.data.message,
-                    email: response.data.email
-                };
-            } else {
-                console.log('✅ AuthContext: Registration successful, setting up user session');
-                // Normal registration flow (for social logins, etc.)
-                const { token, user: newUser } = response.data;
+  const changePassword = async (currentPassword, newPassword) => {
+    setLoading(true);
 
-                // Store token in localStorage
-                localStorage.setItem('authToken', token);
-                console.log('💾 AuthContext: Token stored in localStorage');
+    try {
+      await api.put('/auth/password', {
+        currentPassword,
+        newPassword
+      });
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Change password failed';
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                // Update state
-                setUser(newUser);
-                setIsAuthenticated(true);
-                console.log('🔄 AuthContext: User state updated:', newUser);
+  const value = useMemo(() => ({
+    user,
+    loading,
+    isAuthenticated,
+    login,
+    loginWithToken,
+    logout,
+    register,
+    confirmSignUp,
+    resendConfirmation,
+    updateUserInfo,
+    changePassword,
+    checkAuthStatus,
+    refreshUser
+  }), [user, loading, isAuthenticated, loginWithToken, checkAuthStatus, refreshUser]);
 
-                // Merge local cart to user cart after successful registration
-                console.log('🔄 AuthContext: Checking for local cart to merge after registration');
-                const localCart = localStorage.getItem('cart');
-                if (localCart) {
-                    console.log('📦 AuthContext: Found local cart, setting up merge process');
-                    
-                    // Force a state update to ensure contexts are synchronized
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                    
-                    // Trigger storage event for immediate merge
-                    window.dispatchEvent(new StorageEvent('storage', {
-                        key: 'authToken',
-                        newValue: token,
-                        oldValue: null
-                    }));
-                    
-                    // Additional trigger with delay to ensure CartContext is ready
-                    setTimeout(() => {
-                        console.log('🔄 AuthContext: Triggering delayed merge event after registration');
-                        window.dispatchEvent(new Event('auth-login-complete'));
-                    }, 150);
-                    
-                    console.log('✅ AuthContext: Cart merge triggers set up for registration');
-                } else {
-                    console.log('❌ AuthContext: No local cart to merge after registration');
-                }
-
-                return { success: true };
-            }
-        } catch (error) {
-            console.error('❌ AuthContext: Registration failed:', error);
-
-            // Handle different error response formats
-            let errorMessage = 'Đăng ký thất bại';
-
-            if (error.response?.data) {
-                const { data } = error.response;
-                if (data.error) {
-                    errorMessage = data.error;
-                } else if (data.errors && Array.isArray(data.errors)) {
-                    // Handle validation errors from validateRequest middleware
-                    errorMessage = data.errors.map(err => err.message || err.msg).join(', ');
-                } else if (data.message) {
-                    errorMessage = data.message;
-                }
-            }
-
-            throw new Error(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };    // Update user info
-    const updateUserInfo = async (userData) => {
-        setLoading(true);
-        try {
-            // Remove email from userData to prevent updating it
-            // eslint-disable-next-line no-unused-vars
-            const { email, ...updateData } = userData;
-            
-            console.log('📤 AuthContext: Sending profile update:', updateData);
-            
-            const response = await api.put('/users/profile', updateData, {
-                headers: { 
-                    Authorization: `Bearer ${localStorage.getItem('authToken')}` 
-                }
-            });
-            
-            console.log('📥 AuthContext: Backend response:', response.data);
-            
-            if (response.data.success) {
-                const updatedUser = response.data.user;
-                console.log('✅ AuthContext: Updating user state with:', updatedUser);
-                
-                // Update context state
-                setUser(updatedUser);
-                
-                // Update localStorage
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-                
-                return { success: true, message: response.data.message };
-            } else {
-                throw new Error(response.data.message || 'Cập nhật thông tin thất bại');
-            }
-        } catch (error) {
-            console.error('❌ AuthContext: Update profile failed:', error);
-            const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Cập nhật thông tin thất bại';
-            return { success: false, message: errorMessage };
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Change password
-    const changePassword = async (currentPassword, newPassword) => {
-        setLoading(true);
-        try {
-            await api.put('/auth/password', {
-                currentPassword,
-                newPassword
-            });
-            return { success: true };
-        } catch (error) {
-            console.error('Change password failed:', error);
-            const errorMessage = error.response?.data?.error || 'Đổi mật khẩu thất bại';
-            throw new Error(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const value = useMemo(() => ({
-        user,
-        loading,
-        isAuthenticated,
-        login,
-        loginWithToken,
-        logout,
-        register,
-        updateUserInfo,
-        changePassword,
-        checkAuthStatus,
-        refreshUser
-    }), [user, loading, isAuthenticated, refreshUser, loginWithToken]);
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 AuthProvider.propTypes = {
-    children: PropTypes.node.isRequired,
+  children: PropTypes.node.isRequired
 };

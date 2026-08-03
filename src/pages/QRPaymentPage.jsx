@@ -56,9 +56,7 @@ const QRPaymentPage = () => {
                 const response = await fetch(
                     `/api/orders/${order.orderNumber}/payment-status`,
                     {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        }
+                        credentials: 'include'
                     }
                 );
 

@@ -3,20 +3,19 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { getRuntimeConfig } = require('./config/runtimeConfig');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// MongoDB Connection for Production
-const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
 
 console.log('🔗 MongoDB Configuration (Backend):');
 console.log('   Environment:', process.env.NODE_ENV || 'development');
-console.log('   Using ENV URI:', !!process.env.MONGODB_URI);
-console.log('   URI Domain:', uri.split('@')[1]?.split('/')[0] || 'not found');
+console.log('   Using Secrets Manager:', !!process.env.DATABASE_SECRET_ID);
 
 // MongoDB Client with optimized configuration for production
 const clientOptions = {
@@ -57,7 +56,7 @@ const clientOptions = {
   })
 };
 
-const client = new MongoClient(uri, clientOptions);
+let client = null;
 
 // Global database connection flag
 let isConnected = false;
@@ -137,6 +136,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Body parsing middleware
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -148,8 +148,13 @@ async function connectToDatabase() {
   }
 
   try {
+    const runtimeConfig = await getRuntimeConfig();
+
+    if (!client) {
+      client = new MongoClient(runtimeConfig.mongoUri, clientOptions);
+    }
+
     console.log('🔄 Backend: Attempting to connect to MongoDB...');
-    console.log('📍 Backend Connection URI prefix:', uri.substring(0, 50) + '...');
     
     const connectStart = Date.now();
     await client.connect();
@@ -179,7 +184,6 @@ async function connectToDatabase() {
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Error Code:', error.code);
-    console.error('   Full Error:', error);
     
     if (error.code === 8000) {
       console.error('🔐 Backend: Authentication failed - check username/password');
@@ -200,10 +204,6 @@ app.use(morgan('combined'));
 // Debug middleware to log all requests
 app.use((req, res, next) => {
   console.log(`🔍 ${req.method} ${req.url}`);
-  console.log('Headers:', req.headers);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-  }
   next();
 });
 
@@ -445,7 +445,9 @@ process.on('SIGTERM', async () => {
   try {
     console.log('🔌 Backend: Closing MongoDB connection...');
     const closeStart = Date.now();
-    await client.close();
+    if (client) {
+      await client.close();
+    }
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
@@ -471,7 +473,9 @@ process.on('SIGINT', async () => {
   try {
     console.log('🔌 Backend: Closing MongoDB connection...');
     const closeStart = Date.now();
-    await client.close();
+    if (client) {
+      await client.close();
+    }
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;

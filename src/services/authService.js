@@ -1,201 +1,110 @@
-// Authentication Service - API Integration
-import { buildApiUrl, API_ENDPOINTS } from '../config/api.js';
+import api from './apiClient';
+
+const AUTH_STATE_KEY = 'authState';
 
 class AuthService {
-  // Register new user
   async register(userData) {
-    try {
-      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
-      }
-
-      const data = await response.json();
-      return {
-        success: true,
-        user: data.user,
-        token: data.token
-      };
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw new Error(error.message || 'Registration failed');
-    }
+    const response = await api.post('/auth/register', userData);
+    return {
+      success: true,
+      user: response.data.user,
+      requiresVerification: response.data.requiresConfirmation || response.data.requiresVerification,
+      email: response.data.email,
+      message: response.data.message
+    };
   }
 
-  // Login user
+  async confirmSignUp(email, code) {
+    const response = await api.post('/auth/confirm-sign-up', { email, code });
+    return response.data;
+  }
+
+  async resendConfirmation(email) {
+    const response = await api.post('/auth/resend-confirmation', { email });
+    return response.data;
+  }
+
   async login(email, password, remember = false) {
-    try {
-      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, remember })
-      });
+    const response = await api.post('/auth/login', {
+      email,
+      password,
+      rememberMe: remember
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
-      }
+    localStorage.setItem(AUTH_STATE_KEY, 'authenticated');
+    localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      const data = await response.json();
-      return {
-        success: true,
-        user: data.user,
-        token: data.token
-      };
-    } catch (error) {
-      console.error('Login error:', error);
-      throw new Error(error.message || 'Login failed');
-    }
+    return {
+      success: true,
+      user: response.data.user
+    };
   }
 
-  // Logout user
   async logout() {
     try {
-      const token = localStorage.getItem('authToken');
-      
-      if (token) {
-        await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-      }
-
-      // Clear local storage
-      localStorage.removeItem('authToken');
+      await api.post('/auth/logout');
+    } finally {
+      localStorage.removeItem(AUTH_STATE_KEY);
       localStorage.removeItem('user');
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear local storage even if API call fails
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      return { success: true };
     }
+
+    return { success: true };
   }
 
-  // Reset password
   async resetPassword(email) {
-    try {
-      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Password reset failed');
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('Password reset error:', error);
-      throw new Error(error.message || 'Password reset failed');
-    }
+    await api.post('/auth/forgot-password', { email });
+    return { success: true };
   }
 
-  // Update user profile
+  async confirmForgotPassword(email, code, newPassword) {
+    await api.post('/auth/confirm-forgot-password', {
+      email,
+      code,
+      newPassword
+    });
+    return { success: true };
+  }
+
   async updateProfile(userData) {
-    try {
-      const token = localStorage.getItem('authToken');
-      
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
+    const response = await api.put('/auth/profile', userData);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Profile update failed');
-      }
-
-      const data = await response.json();
-      return {
-        success: true,
-        user: data.user
-      };
-    } catch (error) {
-      console.error('Profile update error:', error);
-      throw new Error(error.message || 'Profile update failed');
-    }
+    return {
+      success: true,
+      user: response.data.user
+    };
   }
 
-  // Get current user
   async getCurrentUser() {
     try {
-      const token = localStorage.getItem('authToken');
-      
-      if (!token) {
-        return { success: false, user: null };
-      }
+      const response = await api.get('/auth/me');
+      localStorage.setItem(AUTH_STATE_KEY, 'authenticated');
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      const response = await fetch(`${buildApiUrl(API_ENDPOINTS.auth)}/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
-        }
-        return { success: false, user: null };
-      }
-
-      const data = await response.json();
       return {
         success: true,
-        user: data.user
+        user: response.data.user
       };
     } catch (error) {
-      console.error('Get current user error:', error);
+      localStorage.removeItem(AUTH_STATE_KEY);
+      localStorage.removeItem('user');
       return { success: false, user: null };
     }
   }
 
-  // Check if user is authenticated
   isAuthenticated() {
-    const token = localStorage.getItem('authToken');
-    return !!token;
+    return localStorage.getItem(AUTH_STATE_KEY) === 'authenticated';
   }
 
-  // Get auth token
   getToken() {
-    return localStorage.getItem('authToken');
+    return null;
   }
 
-  // Store auth data
-  storeAuthData(token, user) {
-    localStorage.setItem('authToken', token);
+  storeAuthData(_token, user) {
+    localStorage.setItem(AUTH_STATE_KEY, 'authenticated');
     localStorage.setItem('user', JSON.stringify(user));
   }
 
-  // Get stored user data
   getStoredUser() {
     try {
       const userData = localStorage.getItem('user');
@@ -207,5 +116,4 @@ class AuthService {
   }
 }
 
-// Export singleton instance
 export default new AuthService();

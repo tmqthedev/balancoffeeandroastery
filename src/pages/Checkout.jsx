@@ -312,9 +312,9 @@ const CheckoutContent = ({ auth, cart }) => {
 
             const response = await fetch('/api/users/addresses', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(addressData)
             });
