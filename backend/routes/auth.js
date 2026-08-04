@@ -132,7 +132,7 @@ router.post('/register', validateRequest(userValidationRules), async (req, res) 
     console.log('✅ User created successfully with ID:', result.insertedId);
 
     // Create verification link
-    const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+    const verificationLink = `${process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`}/verify-email?token=${verificationToken}`;
     
     // Send email verification
     try {
@@ -595,7 +595,7 @@ router.post('/forgot-password', [
         console.log('✅ Reset token generated for user:', user.email);
 
         // Create reset link
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
         const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
         
         console.log('🔗 Reset link generated (not logged in production)');
@@ -998,7 +998,7 @@ router.post('/resend-verification', [
         );
 
         // Create verification link
-        const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+        const verificationLink = `${process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`}/verify-email?token=${verificationToken}`;
         
         // Send email verification
         try {
