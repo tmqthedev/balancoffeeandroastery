@@ -2,6 +2,7 @@ const ACCESS_TOKEN_COOKIE = 'bc_access_token';
 const REFRESH_TOKEN_COOKIE = 'bc_refresh_token';
 const ID_TOKEN_COOKIE = 'bc_id_token';
 const AUTH_USER_COOKIE = 'bc_auth_user';
+const REMEMBER_ME_COOKIE = 'bc_remember_me';
 
 function getCookieOptions({ maxAge, httpOnly = true } = {}) {
   const secure = String(process.env.AUTH_COOKIE_SECURE || process.env.NODE_ENV === 'production' || process.env.VERCEL) === 'true';
@@ -33,6 +34,7 @@ function setAuthCookies(res, tokens, email, rememberMe = false) {
   }
 
   res.cookie(AUTH_USER_COOKIE, email.toLowerCase(), getCookieOptions({ maxAge: refreshMaxAge }));
+  res.cookie(REMEMBER_ME_COOKIE, rememberMe ? 'true' : 'false', getCookieOptions({ maxAge: refreshMaxAge }));
 }
 
 function clearAuthCookies(res) {
@@ -42,7 +44,8 @@ function clearAuthCookies(res) {
     ACCESS_TOKEN_COOKIE,
     REFRESH_TOKEN_COOKIE,
     ID_TOKEN_COOKIE,
-    AUTH_USER_COOKIE
+    AUTH_USER_COOKIE,
+    REMEMBER_ME_COOKIE
   ].forEach((cookieName) => {
     res.clearCookie(cookieName, clearOptions);
   });
@@ -53,7 +56,8 @@ function getAuthCookies(req) {
     accessToken: req.cookies?.[ACCESS_TOKEN_COOKIE],
     refreshToken: req.cookies?.[REFRESH_TOKEN_COOKIE],
     idToken: req.cookies?.[ID_TOKEN_COOKIE],
-    email: req.cookies?.[AUTH_USER_COOKIE]
+    email: req.cookies?.[AUTH_USER_COOKIE],
+    rememberMe: req.cookies?.[REMEMBER_ME_COOKIE] === 'true'
   };
 }
 
@@ -62,6 +66,7 @@ module.exports = {
   REFRESH_TOKEN_COOKIE,
   ID_TOKEN_COOKIE,
   AUTH_USER_COOKIE,
+  REMEMBER_ME_COOKIE,
   setAuthCookies,
   clearAuthCookies,
   getAuthCookies,

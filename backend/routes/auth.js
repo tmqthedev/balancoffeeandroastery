@@ -319,7 +319,7 @@ router.post('/refresh', async (req, res) => {
     setAuthCookies(res, {
       ...tokens,
       RefreshToken: tokens.RefreshToken || cookies.refreshToken
-    }, cookies.email, true);
+    }, cookies.email, cookies.rememberMe);
 
     res.json({
       success: true,
