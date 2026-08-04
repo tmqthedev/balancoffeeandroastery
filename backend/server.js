@@ -499,7 +499,7 @@ console.log('   Process ID:', process.pid);
 console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Vercel Environment:', process.env.VERCEL ? 'Yes' : 'No');
 
-if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+if (process.env.VERCEL) {
   console.log('🏭 Backend: PRODUCTION MODE - Vercel Serverless Functions');
   console.log('⚡ Backend: Pre-connecting to database for optimal performance...');
   
