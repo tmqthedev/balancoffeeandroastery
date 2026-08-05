@@ -58,7 +58,7 @@ const ProductDetailContent = ({ auth, cart }) => {
         if (imageUrl.startsWith('/images/')) {
             return imageUrl;
         } else if (imageUrl.startsWith('backend/uploads/')) {
-            return `http://localhost:5000/${imageUrl}`;
+            return `/${imageUrl}`;
         } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
             return imageUrl;
         } else if (imageUrl.startsWith('src/assets/')) {
@@ -637,7 +637,7 @@ const ProductDetailContent = ({ auth, cart }) => {
                                         : relatedProduct.image_url.startsWith('/assets/')
                                         ? relatedProduct.image_url.replace('/assets/', '/images/')
                                         : relatedProduct.image_url.startsWith('backend/uploads/')
-                                        ? `http://localhost:5000/${relatedProduct.image_url}`
+                                        ? `/${relatedProduct.image_url}`
                                         : relatedProduct.image_url
                                     : null;
 

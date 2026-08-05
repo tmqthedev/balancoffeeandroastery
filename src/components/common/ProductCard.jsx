@@ -74,7 +74,7 @@ const ProductCard = ({ product }) => {
             }
             // If image_url starts with 'backend/', convert to proper API endpoint
             else if (imageUrl.startsWith('backend/uploads/')) {
-                imageUrl = `http://localhost:5000/${imageUrl}`;
+                imageUrl = `/${imageUrl}`;
             }
             // If it's already a full URL, use as is
             else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
