@@ -6,6 +6,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { getAuthCookies, setAuthCookies, clearAuthCookies } = require('../config/authCookies');
 const cognitoService = require('../services/cognitoService');
 const { getCollection, handleDatabaseError } = require('../middleware/mongoHelpers');
+const postgresUsers = require('../repositories/postgresUsersRepository');
 
 function handleValidation(req, res) {
   const errors = validationResult(req);
@@ -55,6 +56,10 @@ function getDisplayName({ fullName, firstName, lastName, email }) {
 }
 
 async function upsertMongoProfile(req, data) {
+  if (req.databaseProvider === 'postgres') {
+    return postgresUsers.upsertProfile(data);
+  }
+
   const usersCollection = getCollection(req, 'users');
   const email = data.email.toLowerCase();
   const now = new Date();
@@ -173,7 +178,6 @@ router.post('/register', [
       emailVerified: !!signUpResult.userConfirmed
     });
 
-    const usersCollection = getCollection(req, 'users');
     const optionalUpdate = {};
     if (dateOfBirth) optionalUpdate.dateOfBirth = new Date(dateOfBirth);
     if (gender) optionalUpdate.gender = gender;
@@ -193,7 +197,10 @@ router.post('/register', [
       }];
     }
 
-    if (Object.keys(optionalUpdate).length > 0) {
+    if (Object.keys(optionalUpdate).length > 0 && req.databaseProvider === 'postgres') {
+      await postgresUsers.updateProfile(user._id.toString(), optionalUpdate);
+    } else if (Object.keys(optionalUpdate).length > 0) {
+      const usersCollection = getCollection(req, 'users');
       await usersCollection.updateOne({ _id: user._id }, { $set: optionalUpdate });
     }
 
@@ -220,6 +227,14 @@ router.post('/confirm-sign-up', [
 
     const email = req.body.email.toLowerCase();
     await cognitoService.confirmSignUp({ email, code: req.body.code });
+
+    if (req.databaseProvider === 'postgres') {
+      await postgresUsers.confirmEmail(email);
+      return res.json({
+        success: true,
+        message: 'Email confirmed successfully. You can now log in.'
+      });
+    }
 
     const usersCollection = getCollection(req, 'users');
     await usersCollection.updateOne(
@@ -355,6 +370,16 @@ router.post('/logout', async (req, res) => {
 
 router.get('/me', authenticateToken, async (req, res) => {
   try {
+    if (req.databaseProvider === 'postgres') {
+      const user = await postgresUsers.findByLegacyId(req.user.userId);
+
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      return res.json({ success: true, user: publicUser(user) });
+    }
+
     const usersCollection = getCollection(req, 'users');
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
@@ -388,7 +413,6 @@ router.put('/profile', authenticateToken, [
       return;
     }
 
-    const usersCollection = getCollection(req, 'users');
     const { firstName, lastName, fullName, phone, address, city, postalCode } = req.body;
 
     const updateData = {
@@ -404,10 +428,21 @@ router.put('/profile', authenticateToken, [
 
     Object.keys(updateData).forEach((key) => {
       if (updateData[key] === undefined || updateData[key] === '') {
-        delete updateData[key];
+      delete updateData[key];
       }
     });
 
+    if (req.databaseProvider === 'postgres') {
+      const user = await postgresUsers.updateProfile(req.user.userId, updateData);
+
+      return res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        user: publicUser(user)
+      });
+    }
+
+    const usersCollection = getCollection(req, 'users');
     await usersCollection.updateOne(
       { _id: new ObjectId(req.user.userId) },
       { $set: updateData }

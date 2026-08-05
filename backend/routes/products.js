@@ -11,6 +11,7 @@ const {
   validateRequired,
   cleanData
 } = require('../middleware/mongoHelpers');
+const postgresCatalog = require('../repositories/postgresCatalogRepository');
 
 console.log('🛒 Products router loading');
 
@@ -26,6 +27,26 @@ router.get('/', async (req, res) => {
     
 
     const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice, sort } = req.query;
+
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresCatalog.listProducts({
+        page,
+        limit,
+        search,
+        category,
+        featured,
+        minPrice,
+        maxPrice,
+        sort
+      });
+
+      return res.json({
+        success: true,
+        products: result.products,
+        pagination: result.pagination
+      });
+    }
+
     const collection = getCollection(req, 'products');
     
     // Build filter query
@@ -105,6 +126,12 @@ router.get('/featured', async (req, res) => {
     console.log('⭐ Fetching featured products');
     
     const { limit = 8 } = req.query;
+
+    if (req.databaseProvider === 'postgres') {
+      const featuredProducts = await postgresCatalog.listFeaturedProducts(parseInt(limit));
+      return res.json(featuredProducts);
+    }
+
     const collection = getCollection(req, 'products');
     
     const featuredProducts = await collection.find({ featured: true })
@@ -130,6 +157,11 @@ router.get('/categories', async (req, res) => {
   try {
     console.log('📂 Fetching product categories');
     
+    if (req.databaseProvider === 'postgres') {
+      const categories = await postgresCatalog.listProductCategories();
+      return res.json(categories);
+    }
+
     const collection = getCollection(req, 'products');
     
     const categories = await collection.distinct('category');
@@ -146,6 +178,21 @@ router.get('/:id', async (req, res) => {
   try {
     console.log(`🔍 Fetching product ${req.params.id}`);
     
+    if (req.databaseProvider === 'postgres') {
+      const product = await postgresCatalog.getProductByLegacyId(req.params.id);
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      const relatedProducts = await postgresCatalog.getRelatedProducts(product);
+
+      return res.json({
+        product,
+        relatedProducts
+      });
+    }
+
     const collection = getCollection(req, 'products');
     const productId = toObjectId(req.params.id);
     
@@ -188,6 +235,19 @@ router.post('/', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
+
+    if (req.databaseProvider === 'postgres') {
+      if (!req.body.name || !req.body.description || !(req.body.categoryId || req.body.category)) {
+        return res.status(400).json({ error: 'Missing required fields: name, description, categoryId/category' });
+      }
+
+      const product = await postgresCatalog.createProduct(req.body);
+
+      return res.status(201).json({
+        message: 'Product created successfully',
+        product
+      });
+    }
     
     // Validate required fields
     const requiredFields = ['name', 'description', 'price', 'category'];
@@ -228,6 +288,19 @@ router.put('/:id', authenticateToken, async (req, res) => {
     // Check admin authorization
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const product = await postgresCatalog.updateProduct(req.params.id, req.body);
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      return res.json({
+        message: 'Product updated successfully',
+        product
+      });
     }
     
     const collection = getCollection(req, 'products');
@@ -270,6 +343,16 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     // Check admin authorization
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const deletedCount = await postgresCatalog.deleteProduct(req.params.id);
+
+      if (deletedCount === 0) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      return res.json({ message: 'Product deleted successfully' });
     }
     
     const collection = getCollection(req, 'products');

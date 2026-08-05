@@ -2,6 +2,7 @@ const { CognitoJwtVerifier } = require('aws-jwt-verify');
 const { getRuntimeConfig } = require('../config/runtimeConfig');
 const { getAuthCookies } = require('../config/authCookies');
 const { getCollection, handleDatabaseError } = require('./mongoHelpers');
+const postgresUsers = require('../repositories/postgresUsersRepository');
 
 let verifierPromise = null;
 
@@ -32,13 +33,44 @@ function getAccessToken(req) {
 }
 
 async function mapCognitoUser(req, payload) {
-  const usersCollection = getCollection(req, 'users');
   const cookies = getAuthCookies(req);
   const groups = Array.isArray(payload['cognito:groups']) ? payload['cognito:groups'] : [];
   const isAdmin = groups.includes('admin');
   const role = isAdmin ? 'admin' : 'customer';
   const email = payload.email || cookies.email;
 
+  if (req.databaseProvider === 'postgres') {
+    let user = await postgresUsers.findByCognitoSub(payload.sub);
+
+    if (!user && email) {
+      user = await postgresUsers.findByEmail(email);
+
+      if (user) {
+        user = await postgresUsers.linkCognitoUser({
+          legacyMongoId: user._id,
+          cognitoSub: payload.sub
+        });
+      }
+    }
+
+    if (!user || (user.status && user.status !== 'active')) {
+      return null;
+    }
+
+    return {
+      userId: user._id.toString(),
+      cognitoSub: payload.sub,
+      email: user.email || email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role,
+      isAdmin,
+      groups,
+      tokenPayload: payload
+    };
+  }
+
+  const usersCollection = getCollection(req, 'users');
   let user = await usersCollection.findOne({ cognitoSub: payload.sub });
 
   if (!user && email) {

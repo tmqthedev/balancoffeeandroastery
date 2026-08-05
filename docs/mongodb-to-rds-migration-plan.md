@@ -392,4 +392,76 @@ After backend database layer migration, verify:
 - Both `cart` and `carts` exist. The current backend uses `cart`, but both collections should be considered during migration to avoid data loss.
 - Legacy password and reset-token fields should not be migrated because authentication has moved to Cognito.
 - Blog and subscription tables should exist even when current source counts are zero, because backend routes reference them.
-- The current plan only designs schema and migration strategy. RDS provisioning, migration scripts, backend refactor, and final smoke testing are separate implementation steps.
+
+## Migration Execution Report
+
+### RDS target
+
+- Engine: Amazon RDS for PostgreSQL.
+- Region: `ap-southeast-1`.
+- DB identifier: `balan-coffee-postgres-dev`.
+- Database name: `balancoffee`.
+- Instance class: `db.t4g.micro`.
+- Network: public access enabled for development, restricted by security group ingress to the current developer IP.
+
+### Schema deployment
+
+The PostgreSQL schema in `backend/database/postgres/schema.sql` was applied successfully to the RDS database. Verified tables:
+
+- `users`
+- `user_addresses`
+- `categories`
+- `products`
+- `product_weight_pricing`
+- `carts`
+- `cart_items`
+- `orders`
+- `order_items`
+- `contacts`
+- `blogs`
+- `subscriptions`
+
+### Data migration validation
+
+The migration script `backend/scripts/migrate-mongo-to-postgres.js` completed successfully with these row counts:
+
+| PostgreSQL table | Row count |
+| --- | ---: |
+| `users` | 5 |
+| `user_addresses` | 3 |
+| `categories` | 3 |
+| `products` | 3 |
+| `product_weight_pricing` | 12 |
+| `carts` | 10 |
+| `cart_items` | 4 |
+| `orders` | 12 |
+| `order_items` | 14 |
+| `contacts` | 3 |
+| `blogs` | 0 |
+| `subscriptions` | 0 |
+
+The target counts match the expected source counts, including the combined migration of MongoDB `cart` and `carts` into PostgreSQL `carts`.
+
+### Backend integration checkpoint
+
+The backend now supports a configurable database provider:
+
+- `DATABASE_PROVIDER=mongodb`: existing MongoDB path.
+- `DATABASE_PROVIDER=postgres`: Amazon RDS PostgreSQL path.
+
+The following RDS-backed paths have been integrated:
+
+- runtime database bootstrap and health metadata
+- Cognito user profile mapping
+- product list/detail/admin mutations
+- category list
+- auth profile lookup/update
+- user profile read/update and address read
+- cart read/add/update/remove/clear
+- order create/list/detail/cancel/public lookup
+- payment create/status/verify
+- contact form submission
+- newsletter subscribe/unsubscribe
+- blog list/category/detail reads
+
+Syntax validation and repository smoke checks were completed for the PostgreSQL integration. Final browser/API smoke testing should run with `DATABASE_PROVIDER=postgres` before merging.
