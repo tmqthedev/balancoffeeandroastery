@@ -17,7 +17,7 @@ const Auth = () => {
 const AuthContent = ({ auth, cart }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, register } = auth;
+    const { login, register, confirmSignUp, resendConfirmation } = auth;
     const { addToCart } = cart;
     
     // Cart merge functions using context values directly (avoid hooks issue)
@@ -83,6 +83,7 @@ const AuthContent = ({ auth, cart }) => {
     });    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [registerErrors, setRegisterErrors] = useState({});
+    const [confirmationCode, setConfirmationCode] = useState('');
     const [buyNowProduct, setBuyNowProduct] = useState(null);
     const [cartMergeMessage, setCartMergeMessage] = useState('');
 
@@ -557,6 +558,38 @@ const AuthContent = ({ auth, cart }) => {
         } catch (err) {
             console.error('Registration error:', err); // Updated error handling
             setError(err.message || 'Đăng ký thất bại');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConfirmSignUp = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            await confirmSignUp(registerData.email, confirmationCode.trim());
+            alert('Xác thực email thành công. Bạn có thể đăng nhập.');
+            setMode('login');
+            setLoginData(prev => ({ ...prev, email: registerData.email }));
+            setConfirmationCode('');
+        } catch (err) {
+            setError(err.message || 'Xác thực email thất bại');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendConfirmation = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            await resendConfirmation(registerData.email);
+            alert('Mã xác thực đã được gửi lại.');
+        } catch (err) {
+            setError(err.message || 'Không thể gửi lại mã xác thực');
         } finally {
             setLoading(false);
         }
@@ -1109,12 +1142,37 @@ const AuthContent = ({ auth, cart }) => {
                                     </ol>
                                 </div>
 
+                                <form onSubmit={handleConfirmSignUp} className="space-y-4">
+                                    <div>
+                                        <label htmlFor="confirmationCode" className="block text-sm font-medium text-brand-primary mb-2">
+                                            Mã xác thực trong email
+                                        </label>
+                                        <input
+                                            id="confirmationCode"
+                                            type="text"
+                                            value={confirmationCode}
+                                            onChange={(e) => setConfirmationCode(e.target.value)}
+                                            className="w-full px-4 py-3 border-2 border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition-colors"
+                                            placeholder="Nhập mã xác thực"
+                                            required
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full bg-coffee-dark text-white py-2 px-4 rounded-md hover:bg-coffee-darker focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coffee-light disabled:opacity-50"
+                                    >
+                                        {loading ? 'Đang xác thực...' : 'Xác thực email'}
+                                    </button>
+                                </form>
+
                                 <div className="text-center text-sm text-gray-600">
                                     <p className="mb-2">Không thấy email? Kiểm tra thư mục spam hoặc</p>
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const response = await fetch('/api/auth/resend-verification', {
+                                                const response = await fetch('/api/auth/resend-confirmation', {
                                                     method: 'POST',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ email: registerData.email }),

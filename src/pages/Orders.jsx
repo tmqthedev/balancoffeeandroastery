@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/apiClient';
 import ContextConsumer from '../components/common/ContextConsumer';
 
 const OrdersContent = ({ auth }) => {
@@ -16,7 +16,7 @@ const OrdersContent = ({ auth }) => {
       setLoading(true);
       setError(''); // Clear previous errors
       
-      const token = localStorage.getItem('authToken');
+      const token = 'cookie-auth';
       console.log('🔑 Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'NULL');
       
       if (!token) {
@@ -38,9 +38,7 @@ const OrdersContent = ({ auth }) => {
       }
       
       console.log('📡 Sending GET request to /api/orders...');
-      const response = await axios.get('/api/orders', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/orders');
       
       console.log('✅ Orders response:', response.data);
       
@@ -57,7 +55,7 @@ const OrdersContent = ({ auth }) => {
       // Handle specific error cases
       if (err.response?.status === 401) {
         setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('authState');
         navigate('/login');
       } else if (err.response?.status === 403) {
         setError('Bạn không có quyền truy cập trang này.');

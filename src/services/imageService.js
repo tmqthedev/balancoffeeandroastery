@@ -21,9 +21,7 @@ class ImageService {
 
       const response = await fetch(`${this.baseUrl}/upload/products`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        credentials: 'include',
         body: formData
       });
 
@@ -51,9 +49,7 @@ class ImageService {
 
       const response = await fetch(`${this.baseUrl}/upload/blogs`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        credentials: 'include',
         body: formData
       });
 
@@ -81,9 +77,7 @@ class ImageService {
 
       const response = await fetch(`${this.baseUrl}/upload/avatar`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        credentials: 'include',
         body: formData
       });
 
@@ -108,8 +102,8 @@ class ImageService {
     try {
       const response = await fetch(`${this.baseUrl}/upload/${category}/${filename}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         }
       });

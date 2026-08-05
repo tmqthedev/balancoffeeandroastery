@@ -5,7 +5,8 @@ import axios from 'axios';
 
 // Create a separate axios instance for forgot password (without auth interceptors)
 const forgotPasswordApi = axios.create({
-  baseURL: '/api'
+  baseURL: '/api',
+  withCredentials: true
 });
 
 const ForgotPassword = () => {
@@ -22,9 +23,6 @@ const ForgotPassword = () => {
     setMessage('');
 
     try {
-      // Clear any existing auth token that might be invalid
-      localStorage.removeItem('authToken');
-      
       const response = await forgotPasswordApi.post('/auth/forgot-password', { email });
       setMessage(response.data.message || 'Email khôi phục mật khẩu đã được gửi đến địa chỉ email của bạn.');
       setEmailSent(true);

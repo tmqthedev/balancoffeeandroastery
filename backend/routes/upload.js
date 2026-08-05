@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const imageService = require('../services/imageService');
 const path = require('path');
+const { authenticateToken } = require('../middleware/auth');
 
 // Middleware để kiểm tra quyền admin
 const requireAdmin = (req, res, next) => {
@@ -16,7 +17,7 @@ const requireAdmin = (req, res, next) => {
 };
 
 // Upload product images
-router.post('/products', requireAdmin, (req, res) => {
+router.post('/products', authenticateToken, requireAdmin, (req, res) => {
   const upload = imageService.uploadProductImages();
   
   upload(req, res, async (err) => {
@@ -77,7 +78,7 @@ router.post('/products', requireAdmin, (req, res) => {
 });
 
 // Upload blog featured image
-router.post('/blogs', requireAdmin, (req, res) => {
+router.post('/blogs', authenticateToken, requireAdmin, (req, res) => {
   const upload = imageService.uploadBlogImages();
   
   upload(req, res, async (err) => {
@@ -184,7 +185,7 @@ router.post('/avatar', (req, res) => {
 });
 
 // Delete file
-router.delete('/:category/:filename', requireAdmin, (req, res) => {
+router.delete('/:category/:filename', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { category, filename } = req.params;
     const allowedCategories = ['products', 'blogs', 'avatars', 'thumbnails'];
@@ -253,7 +254,7 @@ router.get('/info/:category/:filename', (req, res) => {
 });
 
 // Cleanup old files (Admin only)
-router.post('/cleanup', requireAdmin, (req, res) => {
+router.post('/cleanup', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { days = 30 } = req.body;
     const results = imageService.cleanupOldFiles(days);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { formatDateForInput, formatDateForBackend } from '../utils/dateUtils';
-import axios from 'axios';
+import api from '../services/apiClient';
 import ContextConsumer from '../components/common/ContextConsumer';
 
 const AccountContent = ({ auth }) => {
@@ -188,8 +188,9 @@ const AccountContent = ({ auth }) => {
     setSuccess('');
 
     try {
-      const response = await axios.put('/api/users/change-password', passwordData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+      const response = await api.put('/auth/password', {
+        currentPassword: passwordData.current_password,
+        newPassword: passwordData.new_password
       });
 
       if (response.data.success) {
