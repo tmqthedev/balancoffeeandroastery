@@ -1,12 +1,24 @@
 const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
-const fs = require('fs').promises;
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const multerS3 = require('multer-s3');
 
 class ImageService {
   constructor() {
-    this.uploadDir = path.join(__dirname, '../uploads');
-    this.publicDir = path.join(__dirname, '../public');
+    const credentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      }
+      : undefined;
+
+    this.s3Client = new S3Client({
+      region: process.env.AWS_REGION || 'ap-southeast-1',
+      ...(credentials ? { credentials } : {})
+    });
+    this.bucketName = process.env.AWS_S3_BUCKET_NAME;
+
     this.imageFolder = {
       PRODUCTS: 'products',
       USERS: 'users', 
@@ -16,161 +28,61 @@ class ImageService {
       BANNERS: 'banners',
       TEMP: 'temp'
     };
-    this.initializeDirectories();
   }
 
-  async initializeDirectories() {
-    const directories = [
-      // Upload directories
-      path.join(this.uploadDir, this.imageFolder.PRODUCTS),
-      path.join(this.uploadDir, this.imageFolder.USERS),
-      path.join(this.uploadDir, this.imageFolder.BLOGS),
-      path.join(this.uploadDir, this.imageFolder.CATEGORIES),
-      path.join(this.uploadDir, this.imageFolder.LOGOS),
-      path.join(this.uploadDir, this.imageFolder.BANNERS),
-      path.join(this.uploadDir, this.imageFolder.TEMP),
-      
-      // Public directories
-      path.join(this.publicDir, 'images', this.imageFolder.PRODUCTS, 'thumbnails'),
-      path.join(this.publicDir, 'images', this.imageFolder.PRODUCTS, 'small'),
-      path.join(this.publicDir, 'images', this.imageFolder.PRODUCTS, 'medium'),
-      path.join(this.publicDir, 'images', this.imageFolder.PRODUCTS, 'large'),
-      path.join(this.publicDir, 'images', this.imageFolder.USERS),
-      path.join(this.publicDir, 'images', this.imageFolder.BLOGS),
-      path.join(this.publicDir, 'images', this.imageFolder.CATEGORIES),
-      path.join(this.publicDir, 'images', this.imageFolder.LOGOS),
-      path.join(this.publicDir, 'images', this.imageFolder.BANNERS)
-    ];
-
-    for (const dir of directories) {
-      try {
-        await fs.mkdir(dir, { recursive: true });
-      } catch (error) {
-        console.error(`Error creating directory ${dir}:`, error);
-      }
+  // File filter for multer
+  fileFilter(req, file, cb) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file hình ảnh (JPEG, PNG, WebP)!'), false);
     }
-    
-    console.log('✅ Image directories initialized');
   }
 
-  // Multer configuration for local storage
+  // Use memory storage so we can process with sharp before uploading
   getMulterConfig(folder = 'TEMP') {
-    const folderName = this.imageFolder[folder] || folder;
-    
-    const storage = multer.diskStorage({
-      destination: (req, file, cb) => {
-        cb(null, path.join(this.uploadDir, folderName));
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        const name = file.originalname.replace(ext, '').replace(/[^a-zA-Z0-9]/g, '-');
-        cb(null, `${folderName}-${name}-${uniqueSuffix}${ext}`);
-      }
-    });
-
-    const fileFilter = (req, file, cb) => {
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Chỉ chấp nhận file hình ảnh (JPEG, PNG, WebP)!'), false);
-      }
-    };
-
     return multer({
-      storage,
-      fileFilter,
+      storage: multer.memoryStorage(),
+      fileFilter: this.fileFilter,
       limits: {
         fileSize: 10 * 1024 * 1024, // 10MB
-        files: 10 // Maximum 10 files
+        files: 10
       }
     });
   }
 
-  // Process and optimize images
-  async processImage(inputPath, outputPath, options = {}) {
-    const {
-      width = 800,
-      height = 600,
-      quality = 85,
-      format = 'webp',
-      fit = 'cover'
-    } = options;
-
-    try {
-      let sharpInstance = sharp(inputPath);
-      
-      // Resize if dimensions provided
-      if (width || height) {
-        sharpInstance = sharpInstance.resize(width, height, { 
-          fit: fit,
-          position: 'center',
-          withoutEnlargement: true
-        });
-      }
-      
-      // Convert to format and set quality
-      if (format === 'webp') {
-        sharpInstance = sharpInstance.webp({ quality });
-      } else if (format === 'jpeg' || format === 'jpg') {
-        sharpInstance = sharpInstance.jpeg({ quality });
-      } else if (format === 'png') {
-        sharpInstance = sharpInstance.png({ quality });
-      }
-      
-      await sharpInstance.toFile(outputPath);
-      return outputPath;
-    } catch (error) {
-      console.error('Error processing image:', error);
-      throw error;
-    }
+  uploadProductImages() {
+    return this.getMulterConfig('PRODUCTS').array('images', 5);
   }
 
-  // Generate multiple sizes for responsive images
-  async generateImageVariants(inputPath, filename, folder = 'products') {
-    const sizes = {
-      thumbnail: { width: 150, height: 150, quality: 75 },
-      small: { width: 400, height: 400, quality: 80 },
-      medium: { width: 800, height: 800, quality: 85 },
-      large: { width: 1200, height: 1200, quality: 90 }
-    };
-
-    const variants = {};
-    const baseDir = path.join(this.publicDir, 'images', folder);
-    const baseName = path.parse(filename).name;
-
-    try {
-      for (const [sizeName, dimensions] of Object.entries(sizes)) {
-        const outputFileName = `${baseName}-${sizeName}.webp`;
-        const outputPath = path.join(baseDir, sizeName, outputFileName);
-        
-        await this.processImage(inputPath, outputPath, {
-          ...dimensions,
-          format: 'webp'
-        });
-        
-        variants[sizeName] = `/images/${folder}/${sizeName}/${outputFileName}`;
-      }
-
-      // Original size in WebP
-      const originalFileName = `${baseName}-original.webp`;
-      const originalPath = path.join(baseDir, originalFileName);
-      await this.processImage(inputPath, originalPath, {
-        format: 'webp',
-        quality: 95
-      });
-      variants.original = `/images/${folder}/${originalFileName}`;
-
-      return variants;
-    } catch (error) {
-      console.error('Error generating image variants:', error);
-      throw error;
-    }
+  uploadBlogImages() {
+    return this.getMulterConfig('BLOGS').single('image');
   }
 
-  // Upload image locally with variants
-  async uploadLocalImage(file, folder = 'general', generateVariants = false) {
+  uploadAvatar() {
+    return this.getMulterConfig('USERS').single('avatar');
+  }
+
+  // Upload a buffer to S3
+  async uploadToS3(buffer, key, mimeType) {
+    if (!this.bucketName) {
+      throw new Error('AWS_S3_BUCKET_NAME is not configured');
+    }
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: mimeType,
+      // ACL: 'public-read' // Only if bucket allows ACLs
+    });
+    await this.s3Client.send(command);
+    return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'ap-southeast-1'}.amazonaws.com/${key}`;
+  }
+
+  // Process image and upload to S3
+  async processAndUploadImage(file, folder, options = {}) {
     try {
       const folderName = this.imageFolder[folder] || folder;
       const timestamp = Date.now();
@@ -179,147 +91,86 @@ class ImageService {
       const baseName = file.originalname.replace(ext, '').replace(/[^a-zA-Z0-9]/g, '-');
       const fileName = `${baseName}-${timestamp}-${randomId}`;
 
-      if (generateVariants) {
-        // Generate multiple sizes
-        const variants = {};
-        const sizes = {
-          thumbnail: { width: 150, height: 150 },
-          small: { width: 400, height: 400 },
-          medium: { width: 800, height: 800 },
-          large: { width: 1200, height: 1200 }
-        };
+      const {
+        width,
+        height,
+        quality = 85,
+        format = 'webp',
+        fit = 'cover',
+        generateThumbnail = false
+      } = options;
 
-        for (const [sizeName, dimensions] of Object.entries(sizes)) {
-          const variantFileName = `${fileName}-${sizeName}.webp`;
-          const outputPath = path.join(this.publicDir, 'images', folderName, sizeName, variantFileName);
-          
-          await sharp(file.buffer || file.path)
-            .resize(dimensions.width, dimensions.height, { 
-              fit: 'cover',
-              position: 'center'
-            })
-            .webp({ quality: 85 })
-            .toFile(outputPath);
-
-          variants[sizeName] = {
-            fileName: variantFileName,
-            url: `/images/${folderName}/${sizeName}/${variantFileName}`,
-            path: outputPath,
-            size: sizeName,
-            width: dimensions.width,
-            height: dimensions.height
-          };
-        }
-
-        return {
-          variants,
-          mainImage: variants.large,
-          folder: folderName
-        };
-      } else {
-        // Single image upload
-        const fullFileName = `${fileName}.webp`;
-        const outputPath = path.join(this.publicDir, 'images', folderName, fullFileName);
-        
-        await sharp(file.buffer || file.path)
-          .webp({ quality: 90 })
-          .toFile(outputPath);
-
-        return {
-          fileName: fullFileName,
-          url: `/images/${folderName}/${fullFileName}`,
-          path: outputPath,
-          folder: folderName
-        };
+      let sharpInstance = sharp(file.buffer);
+      if (width || height) {
+        sharpInstance = sharpInstance.resize(width, height, { 
+          fit: fit, position: 'center', withoutEnlargement: true
+        });
       }
+
+      let buffer;
+      let mimeType;
+      if (format === 'webp') {
+        buffer = await sharpInstance.webp({ quality }).toBuffer();
+        mimeType = 'image/webp';
+      } else if (format === 'jpeg' || format === 'jpg') {
+        buffer = await sharpInstance.jpeg({ quality }).toBuffer();
+        mimeType = 'image/jpeg';
+      } else if (format === 'png') {
+        buffer = await sharpInstance.png({ quality }).toBuffer();
+        mimeType = 'image/png';
+      }
+
+      const s3Key = `${folderName}/${fileName}.${format}`;
+      const url = await this.uploadToS3(buffer, s3Key, mimeType);
+
+      const result = {
+        originalName: file.originalname,
+        fileName: `${fileName}.${format}`,
+        path: s3Key,
+        url: url,
+        size: buffer.length,
+        mimetype: mimeType
+      };
+
+      if (generateThumbnail) {
+        const thumbBuffer = await sharp(file.buffer)
+          .resize(150, 150, { fit: 'cover', position: 'center' })
+          .webp({ quality: 80 })
+          .toBuffer();
+        
+        const thumbKey = `${folderName}/thumb-${fileName}.webp`;
+        const thumbUrl = await this.uploadToS3(thumbBuffer, thumbKey, 'image/webp');
+        result.thumbnailUrl = thumbUrl;
+        result.thumbnailPath = thumbKey;
+      }
+
+      return result;
     } catch (error) {
-      console.error('Error uploading local image:', error);
+      console.error('Error processing and uploading image:', error);
       throw error;
     }
   }
 
-  // Delete image from local storage
-  async deleteLocalImage(filePath) {
+  // Delete image from S3
+  async deleteS3Image(s3Key) {
     try {
-      if (filePath.startsWith('/')) {
-        // Convert URL path to filesystem path
-        filePath = path.join(this.publicDir, filePath);
+      if (!this.bucketName) {
+        throw new Error('AWS_S3_BUCKET_NAME is not configured');
       }
 
-      await fs.unlink(filePath);
-      console.log(`✅ Deleted local image: ${filePath}`);
+      if (!s3Key) return false;
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: s3Key
+      });
+      await this.s3Client.send(command);
+      console.log(`✅ Deleted image from S3: ${s3Key}`);
       return true;
     } catch (error) {
-      console.error('Error deleting local image:', error);
+      console.error('Error deleting image from S3:', error);
       return false;
     }
   }
-
-  // Delete multiple variants from local storage
-  async deleteImageVariants(variants) {
-    if (!variants || typeof variants !== 'object') return false;
-
-    const deletePromises = Object.values(variants).map(variant => {
-      if (variant.path) {
-        return this.deleteLocalImage(variant.path);
-      }
-      return Promise.resolve(false);
-    });
-
-    const results = await Promise.allSettled(deletePromises);
-    return results.every(result => result.status === 'fulfilled' && result.value);
-  }
-
-  // Get optimized image URL
-  getImageUrl(imagePath, size = 'medium', baseUrl = '') {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    
-    // If it's an object with variants
-    if (typeof imagePath === 'object' && imagePath.variants) {
-      return imagePath.variants[size]?.url || imagePath.variants.medium?.url || null;
-    }
-    
-    return `${baseUrl}${imagePath}`;
-  }
-
-  // Clean up old temp files
-  async cleanupTempFiles(olderThanHours = 24) {
-    try {
-      const tempDir = path.join(this.uploadDir, this.imageFolder.TEMP);
-      const files = await fs.readdir(tempDir);
-      const cutoffTime = Date.now() - (olderThanHours * 60 * 60 * 1000);
-
-      for (const file of files) {
-        const filePath = path.join(tempDir, file);
-        const stats = await fs.stat(filePath);
-        
-        if (stats.mtime.getTime() < cutoffTime) {
-          await fs.unlink(filePath);
-          console.log(`🗑️ Cleaned up temp file: ${file}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error cleaning up temp files:', error);
-    }
-  }
-
-  // Validate image file
-  validateImageFile(file) {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-
-    if (!allowedTypes.includes(file.mimetype)) {
-      throw new Error('Định dạng file không được hỗ trợ. Chỉ chấp nhận JPEG, PNG, WebP.');
-    }
-
-    if (file.size > maxSize) {
-      throw new Error('File quá lớn. Kích thước tối đa là 10MB.');
-    }
-
-    return true;
-  }
 }
 
-// Export singleton instance
 module.exports = new ImageService();

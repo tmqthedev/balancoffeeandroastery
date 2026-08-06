@@ -12,6 +12,10 @@ const {
   cleanData
 } = require('../middleware/mongoHelpers');
 const postgresCatalog = require('../repositories/postgresCatalogRepository');
+const productController = require('../controllers/productController');
+
+// GET /api/products/recommendations - Get AI recommendations
+router.get('/recommendations', productController.getRecommendations);
 
 function normalizeSortQuery({ sort, sortBy, order }) {
   if (sort) return sort;

@@ -1,50 +1,65 @@
 const nodemailer = require('nodemailer');
+const { getRuntimeConfig } = require('../config/runtimeConfig');
 
 /**
  * Email Service for sending notifications and system emails
  */
 class EmailService {
     constructor() {
-        // Try both SMTP and EMAIL config for compatibility
-        const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-        const emailPass = process.env.EMAIL_PASSWORD || process.env.SMTP_PASS;
-        const emailHost = process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
-        const emailPort = process.env.EMAIL_PORT || process.env.SMTP_PORT || 587;
+        this.transporter = null;
+        this.initializingPromise = null;
+        this.emailUser = null;
+    }
 
-        // Only initialize email transporter if SMTP credentials are provided
-        if (emailUser && emailPass) {
-            this.transporter = nodemailer.createTransport({
-                host: emailHost,
-                port: emailPort,
-                secure: false,
-                auth: {
-                    user: emailUser,
-                    pass: emailPass
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-
-            console.log('📧 Email config:', {
-                host: emailHost,
-                port: emailPort,
-                user: emailUser,
-                hasPassword: !!emailPass
-            });
-
-            // Verify transporter configuration
-            this.transporter.verify((error, success) => {
-                if (error) {
-                    console.warn('❌ Email transporter verification failed:', error.message);
-                } else {
-                    console.log('✅ Email service ready');
-                }
-            });
-        } else {
-            console.warn('⚠️ Email service not configured (SMTP credentials missing)');
-            this.transporter = null;
+    async ensureTransport() {
+        if (this.transporter) {
+            return this.transporter;
         }
+
+        if (this.initializingPromise) {
+            return this.initializingPromise;
+        }
+
+        this.initializingPromise = (async () => {
+            try {
+                const runtimeConfig = await getRuntimeConfig();
+                const { emailHost, emailPort, emailUser, emailPassword } = runtimeConfig;
+
+                this.emailUser = emailUser;
+
+                if (!emailUser || !emailPassword) {
+                    console.warn('⚠️ Email service not configured (SMTP credentials missing)');
+                    this.transporter = null;
+                    return null;
+                }
+
+                this.transporter = nodemailer.createTransport({
+                    host: emailHost,
+                    port: emailPort,
+                    secure: false,
+                    auth: {
+                        user: emailUser,
+                        pass: emailPassword
+                    },
+                });
+
+                console.log('📧 Email config:', {
+                    host: emailHost,
+                    port: emailPort,
+                    user: emailUser,
+                    hasPassword: !!emailPassword
+                });
+
+                return this.transporter;
+            } catch (error) {
+                this.transporter = null;
+                throw error;
+            } finally {
+                this.initializingPromise = null;
+            }
+        })();
+
+        return this.initializingPromise;
     }
 
     /**
@@ -52,6 +67,8 @@ class EmailService {
      */
     async sendEmail(to, subject, html, text = null) {
         try {
+            await this.ensureTransport();
+
             if (!this.transporter) {
                 console.warn('Email service not configured, cannot send email');
                 return { success: false, error: 'Email service not configured' };
@@ -60,7 +77,7 @@ class EmailService {
             const mailOptions = {
                 from: {
                     name: 'Balan Coffee & Roastery',
-                    address: process.env.EMAIL_USER || process.env.SMTP_USER
+                    address: this.emailUser
                 },
                 to,
                 subject,
@@ -89,8 +106,9 @@ class EmailService {
     }
 
     /**
-     * Send email verification email
-     */
+        * Currently unused.
+        * Verification emails are handled by AWS Cognito.
+     
     async sendEmailVerificationEmail(email, verificationLink, userName = '') {
         try {
             if (!this.transporter) {
@@ -185,7 +203,10 @@ class EmailService {
             console.error('Email verification failed:', error.message);
             return { success: false, error: error.message };
         }
-    }    /**
+    }
+    */
+    
+    /**
      * Send forgot password email
      */
     async sendForgotPasswordEmail(email, resetLink, userName = '') {
@@ -269,6 +290,8 @@ class EmailService {
      */
     async sendOrderConfirmationEmail(email, orderData, userName = '') {
         try {
+            await this.ensureTransport();
+
             if (!this.transporter) {
                 console.warn('Email service not configured, cannot send order confirmation email');
                 return { success: false, error: 'Email service not configured' };
@@ -493,12 +516,19 @@ class EmailService {
                 </html>
             `;
 
+            await this.ensureTransport();
+
+            if (!this.transporter) {
+                console.warn('Email service not configured, skipping admin notification');
+                return { success: false, error: 'Email service not configured', totalSent: 0, totalFailed: 0 };
+            }
+
             // Send to all admin emails
             const results = await Promise.all(
                 adminEmails.map(async (adminEmail) => {
                     try {
                         const mailOptions = {
-                            from: `"Balan Coffee System" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+                            from: `"Balan Coffee System" <${this.emailUser}>`,
                             to: adminEmail,
                             subject: `🔔 Đơn hàng mới #${orderData.orderNumber} - ${formatCurrency(orderData.total || orderData.totalAmount)}`,
                             html: html
@@ -531,6 +561,8 @@ class EmailService {
      */
     async sendPaymentNotificationToAdmin(orderData, paymentData) {
         try {
+            await this.ensureTransport();
+
             if (!this.transporter) {
                 console.warn('Email service not configured, skipping admin notification');
                 return { success: false, error: 'Email service not configured' };
@@ -539,7 +571,7 @@ class EmailService {
             const adminEmail = process.env.ADMIN_EMAIL || 'admin@balancoffeeroastery.com.vn';
             
             const mailOptions = {
-                from: `"Balan Coffee System" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+                from: `"Balan Coffee System" <${this.emailUser}>`,
                 to: adminEmail,
                 subject: `💰 Thanh toán thành công - Đơn hàng ${orderData.orderNumber}`,
                 html: this.generateAdminPaymentTemplate(orderData, paymentData)
@@ -560,13 +592,15 @@ class EmailService {
      */
     async sendPaymentConfirmationToCustomer(orderData, paymentData) {
         try {
+            await this.ensureTransport();
+
             if (!this.transporter) {
                 console.warn('Email service not configured, skipping customer notification');
                 return { success: false, error: 'Email service not configured' };
             }
 
             const mailOptions = {
-                from: `"Balan Coffee & Roastery" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+                from: `"Balan Coffee & Roastery" <${this.emailUser}>`,
                 to: orderData.customerEmail,
                 subject: `✅ Xác nhận thanh toán - Đơn hàng ${orderData.orderNumber}`,
                 html: this.generateCustomerPaymentTemplate(orderData, paymentData)
