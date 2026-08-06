@@ -261,13 +261,15 @@ const productController = {
         const availableProducts = allProducts.filter((product) => product.inStock !== false);
 
         if (availableProducts.length === 0) {
-          return res.json({ success: true, recommendations: [] });
+          return res.json({ success: true, reply: "Hiện tại cửa hàng không có sản phẩm nào phù hợp.", recommendations: [] });
         }
 
-        const recommendedIds = await bedrockService.getRecommendations(query, availableProducts);
+        const bedrockResponse = await bedrockService.getRecommendations(query, availableProducts);
+        const recommendedIds = bedrockResponse.recommendedIds || [];
+        const reply = bedrockResponse.reply || "Gợi ý dành cho bạn:";
 
         if (!Array.isArray(recommendedIds) || recommendedIds.length === 0) {
-          return res.json({ success: true, recommendations: [] });
+          return res.json({ success: true, reply, recommendations: [] });
         }
 
         const recommendedProducts = [];
@@ -280,6 +282,7 @@ const productController = {
 
         return res.json({
           success: true,
+          reply,
           recommendations: recommendedProducts
         });
       }
@@ -287,16 +290,18 @@ const productController = {
       const collection = getCollection(req, 'products');
       
       // Fetch all available products to provide as context
-      const allProducts = await collection.find({ inStock: true }).toArray();
+      const allProducts = await collection.find({ isActive: true }).toArray();
       if (allProducts.length === 0) {
-        return res.json({ success: true, recommendations: [] });
+        return res.json({ success: true, reply: "Hiện tại cửa hàng không có sản phẩm nào phù hợp.", recommendations: [] });
       }
 
       // Get recommended IDs from Bedrock
-      const recommendedIds = await bedrockService.getRecommendations(query, allProducts);
+      const bedrockResponse = await bedrockService.getRecommendations(query, allProducts);
+      const recommendedIds = bedrockResponse.recommendedIds || [];
+      const reply = bedrockResponse.reply || "Gợi ý dành cho bạn:";
 
       if (!Array.isArray(recommendedIds) || recommendedIds.length === 0) {
-        return res.json({ success: true, recommendations: [] });
+        return res.json({ success: true, reply, recommendations: [] });
       }
 
       // Fetch the actual products based on recommended IDs
@@ -311,6 +316,7 @@ const productController = {
 
       res.json({
         success: true,
+        reply,
         recommendations: productsWithId
       });
     } catch (error) {
