@@ -3,6 +3,17 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 const { authenticateToken } = require('../middleware/auth');
 const { getCollection, toObjectId, handleDatabaseError } = require('../middleware/mongoHelpers');
+const postgresCart = require('../repositories/postgresCartRepository');
+
+function sendCartServiceError(error, res) {
+  if (error.statusCode) {
+    return res.status(error.statusCode).json({
+      success: false,
+      error: error.message
+    });
+  }
+  throw error;
+}
 
 // Get user cart (protected route)
 router.get('/', authenticateToken, async (req, res) => {
@@ -10,6 +21,20 @@ router.get('/', authenticateToken, async (req, res) => {
     console.log('🛒 Cart API: Getting cart for user:', req.user.userId);
     console.log('🛒 Cart API: User ID type:', typeof req.user.userId);
     
+    if (req.databaseProvider === 'postgres') {
+      const cart = await postgresCart.getCart(req.user.userId);
+      return res.json({
+        success: true,
+        cart: {
+          _id: cart._id,
+          items: cart.items,
+          itemCount: cart.itemCount || 0,
+          subtotal: cart.subtotal || 0,
+          lastActivity: cart.lastActivity
+        }
+      });
+    }
+
     const cartCollection = getCollection(req, 'cart');
     const productCollection = getCollection(req, 'products');
     
@@ -133,6 +158,19 @@ router.post('/', authenticateToken, async (req, res) => {
         success: false, 
         error: 'Quantity must be greater than 0' 
       });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      try {
+        const cart = await postgresCart.addItem(req.user.userId, { productId, quantity, variant });
+        return res.json({
+          success: true,
+          message: 'Item added to cart successfully',
+          cart
+        });
+      } catch (error) {
+        return sendCartServiceError(error, res);
+      }
     }
 
     const cartCollection = getCollection(req, 'cart');
@@ -314,6 +352,19 @@ router.put('/items/:productId', authenticateToken, async (req, res) => {
       });
     }
 
+    if (req.databaseProvider === 'postgres') {
+      try {
+        const cart = await postgresCart.updateItem(req.user.userId, { productId, quantity, variant });
+        return res.json({
+          success: true,
+          message: 'Cart updated successfully',
+          cart
+        });
+      } catch (error) {
+        return sendCartServiceError(error, res);
+      }
+    }
+
     const cartCollection = getCollection(req, 'cart');
     const userId = toObjectId(req.user.userId);
     const productObjectId = toObjectId(productId);
@@ -385,6 +436,19 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
 
     console.log('🗑️ Cart API: Remove item request:', { productId, variant, userId: req.user.userId });
     console.log('🗑️ Cart API: Request body:', req.body);
+
+    if (req.databaseProvider === 'postgres') {
+      try {
+        const cart = await postgresCart.removeItem(req.user.userId, { productId, variant });
+        return res.json({
+          success: true,
+          message: 'Item removed from cart successfully',
+          cart
+        });
+      } catch (error) {
+        return sendCartServiceError(error, res);
+      }
+    }
 
     const productObjectId = toObjectId(productId);
     if (!productObjectId) {
@@ -469,6 +533,19 @@ router.delete('/items/:productId', authenticateToken, async (req, res) => {
 // Clear entire cart (protected route)
 router.delete('/', authenticateToken, async (req, res) => {
   try {
+    if (req.databaseProvider === 'postgres') {
+      try {
+        const cart = await postgresCart.clearCart(req.user.userId);
+        return res.json({
+          success: true,
+          message: 'Cart cleared successfully',
+          cart
+        });
+      } catch (error) {
+        return sendCartServiceError(error, res);
+      }
+    }
+
     const cartCollection = getCollection(req, 'cart');
     const userId = toObjectId(req.user.userId);
     

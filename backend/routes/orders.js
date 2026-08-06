@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const { orderValidationRules } = require('../middleware/validation');
 const { authenticateToken, optionalAuth } = require('../middleware/auth'); // Use centralized auth middleware
 const emailService = require('../services/emailService');
+const postgresOrders = require('../repositories/postgresOrdersRepository');
 const {
   getCollection,
   toObjectId,
@@ -15,6 +16,59 @@ const {
   validateRequired,
   cleanData
 } = require('../middleware/mongoHelpers');
+
+function buildEmailOrderData(order) {
+  const customerName = order.customerInfo.fullName || `${order.customerInfo.firstName || ''} ${order.customerInfo.lastName || ''}`.trim();
+  return {
+    orderNumber: order.orderNumber,
+    createdAt: order.createdAt,
+    total: order.total,
+    totalAmount: order.total,
+    paymentMethod: order.payment?.method,
+    items: (order.items || []).map(item => ({
+      productName: item.productName,
+      name: item.productName,
+      quantity: item.quantity,
+      price: item.price
+    })),
+    customerName,
+    name: customerName,
+    customerEmail: order.customerInfo.email,
+    email: order.customerInfo.email,
+    customerPhone: order.customerInfo.phone,
+    phone: order.customerInfo.phone,
+    shippingAddress: `${order.shippingAddress.street || ''}, ${order.shippingAddress.wardCommune || ''}, ${order.shippingAddress.district || ''}, ${order.shippingAddress.province || ''}`.replace(/^,\s*|,\s*$/g, ''),
+    notes: order.notes
+  };
+}
+
+async function sendOrderEmails(order, contextLabel = 'order') {
+  try {
+    const emailOrderData = buildEmailOrderData(order);
+
+    const customerEmailResult = await emailService.sendOrderConfirmationEmail(
+      order.customerInfo.email,
+      emailOrderData,
+      order.customerInfo.fullName || order.customerInfo.firstName
+    );
+
+    if (customerEmailResult.success) {
+      console.log(`âœ… Customer ${contextLabel} confirmation email sent successfully`);
+    } else {
+      console.error(`âŒ Failed to send customer ${contextLabel} confirmation email:`, customerEmailResult.error);
+    }
+
+    const adminEmailResult = await emailService.sendNewOrderNotificationToAdmin(emailOrderData);
+
+    if (adminEmailResult.success) {
+      console.log(`âœ… Admin ${contextLabel} notifications sent: ${adminEmailResult.totalSent}/${adminEmailResult.totalSent + adminEmailResult.totalFailed}`);
+    } else {
+      console.error(`âŒ Failed to send admin ${contextLabel} notifications:`, adminEmailResult.error);
+    }
+  } catch (emailError) {
+    console.error(`âŒ ${contextLabel} email notification error (order still created):`, emailError);
+  }
+}
 
 console.log('🛍️ Backend: Orders router loading');
 
@@ -150,6 +204,39 @@ router.post('/', orderValidationRules, optionalAuth, async (req, res) => {
       notes: notes || '',
       status: 'pending'
     };
+
+    if (req.databaseProvider === 'postgres') {
+      if (paymentMethod === 'contact') {
+        orderData.payment.method = 'contact';
+        orderData.payment.status = 'pending';
+      } else if (paymentMethod === 'cod') {
+        orderData.payment.method = 'cod';
+        orderData.payment.status = 'pending';
+      }
+
+      const order = await postgresOrders.createOrder({
+        ...orderData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      await sendOrderEmails(order, paymentMethod === 'contact' ? 'contact payment order' : 'order');
+
+      return res.status(201).json({
+        success: true,
+        message: paymentMethod === 'contact'
+          ? 'ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c táº¡o thÃ nh cÃ´ng. ChÃºng tÃ´i sáº½ liÃªn há»‡ vá»›i báº¡n Ä‘á»ƒ hÆ°á»›ng dáº«n thanh toÃ¡n.'
+          : 'ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c táº¡o thÃ nh cÃ´ng',
+        order: {
+          _id: order._id,
+          orderNumber: order.orderNumber,
+          total: order.total,
+          status: order.status,
+          payment: order.payment,
+          createdAt: order.createdAt
+        }
+      });
+    }
 
     console.log('🛍️ Creating order:', orderNumber);
 
@@ -333,6 +420,17 @@ router.get('/', authenticateToken, async (req, res) => {
     const { page = 1, limit = 10, status } = req.query;
     const userId = req.user.userId;
 
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresOrders.listOrdersForCustomer(userId, { page, limit, status });
+      return res.json({
+        success: true,
+        data: {
+          orders: result.orders,
+          pagination: result.pagination
+        }
+      });
+    }
+
     console.log(`📋 Getting orders for user ${userId}`);
 
     // Get orders collection
@@ -397,6 +495,29 @@ router.get('/:orderNumber', authenticateToken, async (req, res) => {
     const { orderNumber } = req.params;
     const userId = req.user.userId;
 
+    if (req.databaseProvider === 'postgres') {
+      const order = await postgresOrders.getOrderByNumber(orderNumber);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng'
+        });
+      }
+
+      if (order.customerId !== userId && !req.user.isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: 'KhÃ´ng cÃ³ quyá»n truy cáº­p Ä‘Æ¡n hÃ ng nÃ y'
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: order
+      });
+    }
+
     console.log(`📋 Getting order ${orderNumber} for user ${userId}`);
 
     // Get orders collection
@@ -445,6 +566,45 @@ router.put('/:orderNumber/cancel', authenticateToken, async (req, res) => {
     
     const { orderNumber } = req.params;
     const userId = req.user.userId;
+
+    if (req.databaseProvider === 'postgres') {
+      const order = await postgresOrders.getOrderByNumber(orderNumber);
+
+      if (!order) {
+        console.log('❌ Order not found:', orderNumber);
+        return res.status(404).json({
+          success: false,
+          message: 'KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng'
+        });
+      }
+
+      if (order.customerId !== userId && !req.user.isAdmin) {
+        console.log('❌ User not authorized to cancel order:', userId);
+        return res.status(403).json({
+          success: false,
+          message: 'KhÃ´ng cÃ³ quyá»n huá»· Ä‘Æ¡n hÃ ng nÃ y'
+        });
+      }
+
+      if (order.status === 'delivered' || order.status === 'cancelled') {
+        console.log('❌ Order cannot be cancelled, status:', order.status);
+        return res.status(400).json({
+          success: false,
+          message: 'KhÃ´ng thá»ƒ huá»· Ä‘Æ¡n hÃ ng nÃ y'
+        });
+      }
+
+      await postgresOrders.cancelOrder(orderNumber, {
+        reason: req.body.reason || 'KhÃ¡ch hÃ ng yÃªu cáº§u huá»·',
+        cancelledBy: userId
+      });
+
+      console.log('✅ Order cancelled successfully:', orderNumber);
+      return res.json({
+        success: true,
+        message: 'ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c huá»· thÃ nh cÃ´ng'
+      });
+    }
 
     console.log(`❌ Cancelling order ${orderNumber} for user ${userId}`);
 
@@ -526,6 +686,24 @@ router.get('/public/:orderNumber', async (req, res) => {
     console.log('🛍️ Getting public order');
     
     const { orderNumber } = req.params;
+
+    if (req.databaseProvider === 'postgres') {
+      const order = await postgresOrders.getPublicOrder(orderNumber);
+
+      if (!order) {
+        console.log('❌ Public order not found:', orderNumber);
+        return res.status(404).json({
+          success: false,
+          message: 'KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng'
+        });
+      }
+
+      console.log('✅ Public order retrieved successfully:', orderNumber);
+      return res.json({
+        success: true,
+        data: order
+      });
+    }
 
     console.log(`🔍 Getting public order details for ${orderNumber}`);
 

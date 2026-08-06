@@ -9,6 +9,7 @@ export const CartContext = createContext(null);
 const API_BASE_URL = '/api';
 const api = axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -17,14 +18,11 @@ const api = axios.create({
 // Add token to requests
 api.interceptors.request.use((config) => {
     // Skip adding auth token for certain endpoints that don't require authentication
-    const skipAuthPaths = ['/auth/forgot-password', '/auth/reset-password', '/auth/verify-reset-token'];
+    const skipAuthPaths = ['/auth/forgot-password', '/auth/confirm-forgot-password'];
     const shouldSkipAuth = skipAuthPaths.some(path => config.url?.includes(path));
     
     if (!shouldSkipAuth) {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
+        config.withCredentials = true;
     }
     return config;
 });
@@ -35,7 +33,7 @@ api.interceptors.response.use(
     (error) => {
         if (error.response && error.response.status === 401) {
             console.log('🔐 CartContext API: Received 401, clearing auth state');
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('authState');
             // Don't automatically redirect, let the component handle it
         }
         return Promise.reject(error);
@@ -53,8 +51,7 @@ export const CartProvider = ({ children }) => {
     
     // Update authentication status
     const updateAuthStatus = useCallback(() => {
-        const token = localStorage.getItem('authToken');
-        const newIsAuthenticated = !!token;
+        const newIsAuthenticated = localStorage.getItem('authState') === 'authenticated';
         setIsAuthenticated(newIsAuthenticated);
         return newIsAuthenticated;
     }, []);
@@ -121,8 +118,7 @@ export const CartProvider = ({ children }) => {
         console.log('🔄 CartContext: mergeLocalCartToUserCart called, forceReload:', forceReload);
         
         // Double-check authentication status
-        const token = localStorage.getItem('authToken');
-        if (!token) {
+        if (!isAuthenticated) {
             console.log('❌ CartContext: No auth token found, cannot merge cart');
             return { success: false, merged: 0, error: 'User not authenticated' };
         }
@@ -282,7 +278,7 @@ export const CartProvider = ({ children }) => {
         
         // Listen for storage changes (login/logout in other tabs)
         const handleStorageChange = (e) => {
-            if (e.key === 'authToken') {
+            if (e.key === 'authState') {
                 console.log('🔄 CartContext: Storage event detected, updating auth status');
                 const wasAuthenticated = isAuthenticated;
                 const newIsAuthenticated = updateAuthStatus();
@@ -357,7 +353,7 @@ export const CartProvider = ({ children }) => {
     // Load cart on mount and when authentication state changes
     useEffect(() => {
         console.log('🔄 CartContext: useEffect triggered, isAuthenticated:', isAuthenticated);
-        console.log('🔄 CartContext: Current token exists:', !!localStorage.getItem('authToken'));
+        console.log('🔄 CartContext: Auth state:', localStorage.getItem('authState'));
         
         const handleAuthenticationChange = async () => {
             console.log('🔄 CartContext: handleAuthenticationChange started');
@@ -489,7 +485,7 @@ export const CartProvider = ({ children }) => {
             if (error.response && error.response.status === 401) {
                 console.log('🔐 CartContext: Authentication failed, switching to local cart');
                 setIsAuthenticated(false);
-                localStorage.removeItem('authToken');
+                localStorage.removeItem('authState');
                 
                 // Fall back to local cart handling
                 try {
@@ -635,7 +631,7 @@ export const CartProvider = ({ children }) => {
             
             if (isAuthenticated) {
                 console.log('🔐 CartContext: Updating quantity via API');
-                console.log('🔑 CartContext: Auth token:', localStorage.getItem('authToken') ? 'exists' : 'missing');
+                console.log('🔑 CartContext: Cookie auth mode active');
                 console.log('👤 CartContext: isAuthenticated:', isAuthenticated);
                 
                 // For authenticated users, call API

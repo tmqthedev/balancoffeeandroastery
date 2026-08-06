@@ -10,6 +10,7 @@ const {
   validateRequired,
   cleanData
 } = require('../middleware/mongoHelpers');
+const postgresOrders = require('../repositories/postgresOrdersRepository');
 const router = express.Router();
 
 console.log('💳 Payments router loading');
@@ -81,6 +82,51 @@ router.post('/create', authenticateToken, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Order number and payment method are required'
+            });
+        }
+
+        if (req.databaseProvider === 'postgres') {
+            const order = await postgresOrders.getOrderByNumber(orderNumber);
+
+            console.log('ðŸ“‹ Order found:', order ? 'Yes' : 'No');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            if (order.customerId !== req.user.userId && !req.user.isAdmin) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized access to order'
+                });
+            }
+
+            if (paymentMethod === 'contact' || paymentMethod === 'cod') {
+                await postgresOrders.updatePayment(orderNumber, {
+                    method: paymentMethod,
+                    status: 'pending'
+                });
+
+                return res.json({
+                    success: true,
+                    data: {
+                        paymentMethod,
+                        message: paymentMethod === 'contact'
+                            ? 'Order confirmed. We will contact you for payment instructions.'
+                            : 'Order confirmed with cash on delivery'
+                    },
+                    message: paymentMethod === 'contact'
+                        ? 'Contact payment confirmed'
+                        : 'COD payment confirmed'
+                });
+            }
+
+            return res.status(400).json({
+                success: false,
+                message: 'Unsupported payment method'
             });
         }
 
@@ -174,6 +220,38 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
         
         const { orderNumber } = req.params;
 
+        if (req.databaseProvider === 'postgres') {
+            const order = await postgresOrders.getOrderByNumber(orderNumber);
+
+            console.log('ðŸ“‹ Order status check:', order ? 'Found' : 'Not found');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            if (order.customerId !== req.user.userId && !req.user.isAdmin) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized access to order'
+                });
+            }
+
+            return res.json({
+                success: true,
+                data: {
+                    orderNumber: order.orderNumber,
+                    paymentMethod: order.paymentMethod || 'not_set',
+                    paymentStatus: order.paymentStatus || 'pending',
+                    total: order.total,
+                    lastUpdated: order.updatedAt || order.createdAt
+                },
+                message: 'Payment status retrieved successfully'
+            });
+        }
+
         // Get order details using MongoDB native driver
         const ordersCollection = getCollection(req, 'orders');
         const order = await ordersCollection.findOne({ orderNumber: orderNumber });
@@ -230,6 +308,51 @@ router.post('/verify', authenticateToken, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Order number and payment method are required'
+            });
+        }
+
+        if (req.databaseProvider === 'postgres') {
+            const order = await postgresOrders.getOrderByNumber(orderNumber);
+
+            console.log('ðŸ“‹ Order verification:', order ? 'Found' : 'Not found');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            if (order.customerId !== req.user.userId && !req.user.isAdmin) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Unauthorized access to order'
+                });
+            }
+
+            if (paymentMethod === 'contact') {
+                return res.json({
+                    success: true,
+                    data: {
+                        paymentStatus: order.paymentStatus,
+                        message: 'Contact payment will be arranged by our team'
+                    },
+                    message: 'Contact payment confirmed'
+                });
+            } else if (paymentMethod === 'cod') {
+                return res.json({
+                    success: true,
+                    data: {
+                        paymentStatus: order.paymentStatus,
+                        message: 'COD payment will be collected on delivery'
+                    },
+                    message: 'COD payment confirmed'
+                });
+            }
+
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid payment method or missing payment data'
             });
         }
 

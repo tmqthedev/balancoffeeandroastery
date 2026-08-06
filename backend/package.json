@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "migrate:mongo-to-postgres": "node scripts/migrate-mongo-to-postgres.js",
     "seed": "node seed-mongodb.js",
     "setup-production": "node setup-mongodb-production.js"
   },
@@ -21,8 +22,12 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1102.0",
     "@aws-sdk/client-s3": "^3.1102.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1101.0",
+    "@aws-sdk/client-secrets-manager": "^3.1101.0",
+    "aws-jwt-verify": "^5.2.1",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -38,6 +43,7 @@
     "nodemailer": "^7.0.5",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
+    "pg": "^8.22.0",
     "sharp": "^0.34.3"
   },
   "devDependencies": {

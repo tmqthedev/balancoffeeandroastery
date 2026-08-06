@@ -3,20 +3,21 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const { getRuntimeConfig } = require('./config/runtimeConfig');
+const { getPostgresPool, testPostgresConnection, closePostgresPool } = require('./config/postgres');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// MongoDB Connection for Production
-const uri = process.env.MONGODB_URI || "mongodb+srv://balancoffeeandroastery:balancoffeeandroastery@balancoffee.ah4nfkp.mongodb.net/?retryWrites=true&w=majority&appName=balancoffee";
 
 console.log('🔗 MongoDB Configuration (Backend):');
 console.log('   Environment:', process.env.NODE_ENV || 'development');
-console.log('   Using ENV URI:', !!process.env.MONGODB_URI);
-console.log('   URI Domain:', uri.split('@')[1]?.split('/')[0] || 'not found');
+console.log('   Using Secrets Manager:', !!process.env.DATABASE_SECRET_ID);
+console.log('   Database provider:', process.env.DATABASE_PROVIDER || 'mongodb');
 
 // MongoDB Client with optimized configuration for production
 const clientOptions = {
@@ -57,11 +58,12 @@ const clientOptions = {
   })
 };
 
-const client = new MongoClient(uri, clientOptions);
+let client = null;
 
 // Global database connection flag
 let isConnected = false;
 let db = null;
+let activeDatabaseProvider = null;
 
 // Security middleware
 app.use(helmet({
@@ -137,19 +139,43 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Body parsing middleware
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // MongoDB Connection Function with Enhanced Logging
 async function connectToDatabase() {
   if (isConnected && db) {
-    console.log('✅ Using existing MongoDB connection (Backend)');
+    console.log(`✅ Using existing ${activeDatabaseProvider || 'database'} connection (Backend)`);
     return db;
   }
 
   try {
+    const runtimeConfig = await getRuntimeConfig();
+
+    if (runtimeConfig.databaseProvider === 'postgres') {
+      console.log('Backend: Attempting to connect to PostgreSQL...');
+
+      const connectStart = Date.now();
+      const postgresPool = await getPostgresPool();
+      const connectionInfo = await testPostgresConnection();
+      const connectTime = Date.now() - connectStart;
+
+      db = postgresPool;
+      isConnected = true;
+      activeDatabaseProvider = 'postgres';
+
+      console.log(`Backend: PostgreSQL connected in ${connectTime}ms`);
+      console.log('Backend: Connected to PostgreSQL database:', connectionInfo.database);
+
+      return db;
+    }
+
+    if (!client) {
+      client = new MongoClient(runtimeConfig.mongoUri, clientOptions);
+    }
+
     console.log('🔄 Backend: Attempting to connect to MongoDB...');
-    console.log('📍 Backend Connection URI prefix:', uri.substring(0, 50) + '...');
     
     const connectStart = Date.now();
     await client.connect();
@@ -165,6 +191,7 @@ async function connectToDatabase() {
     
     db = client.db("balancoffee");
     isConnected = true;
+    activeDatabaseProvider = 'mongodb';
     
     console.log('🎯 Backend: Connected to database: balancoffee');
     console.log('📊 Backend Connection status:', { 
@@ -179,7 +206,6 @@ async function connectToDatabase() {
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Error Code:', error.code);
-    console.error('   Full Error:', error);
     
     if (error.code === 8000) {
       console.error('🔐 Backend: Authentication failed - check username/password');
@@ -200,10 +226,6 @@ app.use(morgan('combined'));
 // Debug middleware to log all requests
 app.use((req, res, next) => {
   console.log(`🔍 ${req.method} ${req.url}`);
-  console.log('Headers:', req.headers);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-  }
   next();
 });
 
@@ -229,6 +251,7 @@ app.get('/health', async (req, res) => {
       message: 'Backend server and database are healthy',
       timestamp: new Date().toISOString(),
       database: isConnected ? 'Connected' : 'Disconnected',
+      databaseProvider: activeDatabaseProvider || 'unknown',
       responseTime: `${healthTime}ms`,
       environment: process.env.NODE_ENV || 'development',
       version: '1.0.0',
@@ -291,10 +314,15 @@ app.use(async (req, res, next) => {
   
   try {
     console.log(`🔌 Backend: Database middleware for ${req.method} ${req.originalUrl}`);
-    req.db = await connectToDatabase();
+    const databaseConnection = await connectToDatabase();
+    req.databaseProvider = activeDatabaseProvider || 'mongodb';
+    req.db = databaseConnection;
+    req.pg = req.databaseProvider === 'postgres' ? databaseConnection : null;
     
     // Make database globally available for passport
-    global.db = req.db;
+    if (req.databaseProvider === 'mongodb') {
+      global.db = req.db;
+    }
     
     const middlewareTime = Date.now() - middlewareStart;
     console.log(`✅ Backend: Database available for route in ${middlewareTime}ms`);
@@ -445,7 +473,10 @@ process.on('SIGTERM', async () => {
   try {
     console.log('🔌 Backend: Closing MongoDB connection...');
     const closeStart = Date.now();
-    await client.close();
+    if (client) {
+      await client.close();
+    }
+    await closePostgresPool();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
@@ -471,7 +502,10 @@ process.on('SIGINT', async () => {
   try {
     console.log('🔌 Backend: Closing MongoDB connection...');
     const closeStart = Date.now();
-    await client.close();
+    if (client) {
+      await client.close();
+    }
+    await closePostgresPool();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
@@ -499,7 +533,7 @@ console.log('   Process ID:', process.pid);
 console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Vercel Environment:', process.env.VERCEL ? 'Yes' : 'No');
 
-if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+if (process.env.VERCEL) {
   console.log('🏭 Backend: PRODUCTION MODE - Vercel Serverless Functions');
   console.log('⚡ Backend: Pre-connecting to database for optimal performance...');
   

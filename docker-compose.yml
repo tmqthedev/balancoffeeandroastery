@@ -1,0 +1,30 @@
+services:
+  frontend:
+    build: .
+    container_name: balan-frontend
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    container_name: balan-backend
+
+    ports:
+      - "5000:5000"
+
+    env_file:
+      - ./backend/.env
+
+    environment:
+      NODE_ENV: production
+
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+    restart: unless-stopped

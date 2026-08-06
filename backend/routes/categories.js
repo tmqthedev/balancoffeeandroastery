@@ -2,15 +2,9 @@ const express = require('express');
 const router = express.Router();
 const {
   getCollection,
-  toObjectId,
-  createDocument,
-  updateDocument,
-  paginateQuery,
-  buildSort,
-  handleDatabaseError,
-  validateRequired,
-  cleanData
+  handleDatabaseError
 } = require('../middleware/mongoHelpers');
+const postgresCatalog = require('../repositories/postgresCatalogRepository');
 
 console.log('📂 Backend: Categories router loading');
 
@@ -19,6 +13,14 @@ router.get('/', async (req, res) => {
   try {
     console.log('📂 Fetching categories');
     
+    if (req.databaseProvider === 'postgres') {
+      const categories = await postgresCatalog.listCategories();
+      return res.json({
+        success: true,
+        categories
+      });
+    }
+
     // Get categories collection
     const categoriesCollection = getCollection(req, 'categories');
     
