@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 console.log('🔗 Database Configuration (Backend):');
 console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Using Secrets Manager:', !!process.env.DATABASE_SECRET_ID);
-console.log('   Database provider:', process.env.DATABASE_PROVIDER || 'mongodb');
+console.log('   Database provider:', process.env.DATABASE_PROVIDER || 'postgres');
 
 // MongoDB Client with optimized configuration for production
 const clientOptions = {
@@ -315,14 +315,9 @@ app.use(async (req, res, next) => {
   try {
     console.log(`🔌 Backend: Database middleware for ${req.method} ${req.originalUrl}`);
     const databaseConnection = await connectToDatabase();
-    req.databaseProvider = activeDatabaseProvider || 'mongodb';
-    req.db = databaseConnection;
-    req.pg = req.databaseProvider === 'postgres' ? databaseConnection : null;
-    
-    // Make database globally available for passport
-    if (req.databaseProvider === 'mongodb') {
-      global.db = req.db;
-    }
+    req.databaseProvider = activeDatabaseProvider || 'postgres';
+    req.db = null;
+    req.pg = databaseConnection;
     
     const middlewareTime = Date.now() - middlewareStart;
     console.log(`✅ Backend: Database available for route in ${middlewareTime}ms`);

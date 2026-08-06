@@ -6,6 +6,12 @@
  * This is set by the database middleware in server.js
  */
 function getDatabase(req) {
+  if (req.databaseProvider === 'postgres') {
+    const error = new Error('MongoDB fallback is disabled. This endpoint must use a PostgreSQL repository.');
+    error.status = 501;
+    throw error;
+  }
+
   if (!req.db) {
     throw new Error('Database not available in request. Make sure database middleware is loaded.');
   }
