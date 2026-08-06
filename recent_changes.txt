@@ -1,0 +1,1190 @@
+﻿diff --git a/backend/controllers/productController.js b/backend/controllers/productController.js
+index 1662219..b7745dd 100644
+--- a/backend/controllers/productController.js
++++ b/backend/controllers/productController.js
+@@ -9,6 +9,7 @@ const {
+   cleanData
+ } = require('../middleware/mongoHelpers');
+ const bedrockService = require('../services/bedrockService');
++const postgresCatalog = require('../repositories/postgresCatalogRepository');
+ 
+ const productController = {
+   // Test route
+@@ -250,6 +251,39 @@ const productController = {
+       }
+ 
+       console.log(`≡ƒñû Getting AI recommendations for: "${query}"`);
++
++      if (req.databaseProvider === 'postgres') {
++        const { products: allProducts } = await postgresCatalog.listProducts({
++          page: 1,
++          limit: 100,
++          sort: 'name_asc'
++        });
++        const availableProducts = allProducts.filter((product) => product.inStock !== false);
++
++        if (availableProducts.length === 0) {
++          return res.json({ success: true, recommendations: [] });
++        }
++
++        const recommendedIds = await bedrockService.getRecommendations(query, availableProducts);
++
++        if (!Array.isArray(recommendedIds) || recommendedIds.length === 0) {
++          return res.json({ success: true, recommendations: [] });
++        }
++
++        const recommendedProducts = [];
++        for (const id of recommendedIds) {
++          const product = await postgresCatalog.getProductByLegacyId(id);
++          if (product) {
++            recommendedProducts.push(product);
++          }
++        }
++
++        return res.json({
++          success: true,
++          recommendations: recommendedProducts
++        });
++      }
++
+       const collection = getCollection(req, 'products');
+       
+       // Fetch all available products to provide as context
+diff --git a/backend/repositories/postgresOrdersRepository.js b/backend/repositories/postgresOrdersRepository.js
+index 6195b90..e3fcecf 100644
+--- a/backend/repositories/postgresOrdersRepository.js
++++ b/backend/repositories/postgresOrdersRepository.js
+@@ -260,6 +260,169 @@ async function listOrdersForCustomer(customerId, { page = 1, limit = 10, status
+   };
+ }
+ 
++async function listOrders({ page = 1, limit = 10, status, paymentStatus, startDate, endDate } = {}) {
++  const currentPage = Math.max(Number(page) || 1, 1);
++  const actualLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
++  const offset = (currentPage - 1) * actualLimit;
++  const params = [];
++  const where = [];
++
++  if (status) {
++    params.push(status);
++    where.push(`status = $${params.length}`);
++  }
++
++  if (paymentStatus) {
++    params.push(paymentStatus);
++    where.push(`payment_status = $${params.length}`);
++  }
++
++  if (startDate) {
++    params.push(startDate);
++    where.push(`created_at >= $${params.length}`);
++  }
++
++  if (endDate) {
++    params.push(endDate);
++    where.push(`created_at <= $${params.length}`);
++  }
++
++  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
++  const countResult = await query(
++    `SELECT COUNT(*)::int AS count FROM orders ${whereSql}`,
++    params
++  );
++
++  const ordersResult = await query(`
++    SELECT *
++    FROM orders
++    ${whereSql}
++    ORDER BY created_at DESC NULLS LAST, id DESC
++    LIMIT $${params.length + 1}
++    OFFSET $${params.length + 2}
++  `, [...params, actualLimit, offset]);
++
++  const orders = [];
++  for (const orderRow of ordersResult.rows) {
++    const items = await getOrderItems(orderRow.id);
++    orders.push(mapOrderRow(orderRow, items));
++  }
++
++  const total = countResult.rows[0]?.count || 0;
++  return {
++    orders,
++    pagination: {
++      page: currentPage,
++      limit: actualLimit,
++      total,
++      totalPages: Math.ceil(total / actualLimit)
++    }
++  };
++}
++
++async function searchOrders(searchTerm, { page = 1, limit = 10 } = {}) {
++  const currentPage = Math.max(Number(page) || 1, 1);
++  const actualLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
++  const offset = (currentPage - 1) * actualLimit;
++  const search = `%${searchTerm || ''}%`;
++  const params = [search];
++
++  const whereSql = `
++    WHERE order_number ILIKE $1
++       OR customer_email ILIKE $1
++       OR customer_first_name ILIKE $1
++       OR customer_last_name ILIKE $1
++       OR customer_full_name ILIKE $1
++       OR customer_phone ILIKE $1
++  `;
++
++  const countResult = await query(
++    `SELECT COUNT(*)::int AS count FROM orders ${whereSql}`,
++    params
++  );
++
++  const ordersResult = await query(`
++    SELECT *
++    FROM orders
++    ${whereSql}
++    ORDER BY created_at DESC NULLS LAST, id DESC
++    LIMIT $2
++    OFFSET $3
++  `, [search, actualLimit, offset]);
++
++  const orders = [];
++  for (const orderRow of ordersResult.rows) {
++    const items = await getOrderItems(orderRow.id);
++    orders.push(mapOrderRow(orderRow, items));
++  }
++
++  const total = countResult.rows[0]?.count || 0;
++  return {
++    orders,
++    pagination: {
++      page: currentPage,
++      limit: actualLimit,
++      total,
++      totalPages: Math.ceil(total / actualLimit)
++    }
++  };
++}
++
++async function getOrderStatistics() {
++  const totalsResult = await query(`
++    SELECT
++      COUNT(*)::int AS total_orders,
++      COALESCE(SUM(total), 0)::numeric AS total_revenue,
++      COALESCE(AVG(total), 0)::numeric AS average_order_value
++    FROM orders
++  `);
++
++  const statusResult = await query(`
++    SELECT status, COUNT(*)::int AS count
++    FROM orders
++    GROUP BY status
++  `);
++
++  const paymentResult = await query(`
++    SELECT payment_status, COUNT(*)::int AS count
++    FROM orders
++    GROUP BY payment_status
++  `);
++
++  const totals = totalsResult.rows[0] || {};
++
++  return {
++    totalOrders: totals.total_orders || 0,
++    totalRevenue: toNumber(totals.total_revenue),
++    averageOrderValue: toNumber(totals.average_order_value),
++    byStatus: Object.fromEntries(statusResult.rows.map(row => [row.status || 'unknown', row.count])),
++    byPaymentStatus: Object.fromEntries(paymentResult.rows.map(row => [row.payment_status || 'unknown', row.count]))
++  };
++}
++
++async function updateOrderStatus(orderNumber, { status, notes, updatedBy } = {}) {
++  const event = [{
++    type: 'status_updated',
++    status,
++    notes: notes || '',
++    updatedAt: new Date().toISOString(),
++    updatedBy
++  }];
++
++  const result = await query(`
++    UPDATE orders
++    SET status = $2,
++        timeline = COALESCE(timeline, '[]'::jsonb) || $3::jsonb,
++        updated_at = $4
++    WHERE order_number = $1
++    RETURNING *
++  `, [orderNumber, status, JSON.stringify(event), new Date()]);
++
++  if (!result.rows[0]) return null;
++  const items = await getOrderItems(result.rows[0].id);
++  return mapOrderRow(result.rows[0], items);
++}
++
+ async function cancelOrder(orderNumber, { reason, cancelledBy } = {}) {
+   const event = [{
+     type: 'cancelled',
+@@ -288,7 +451,7 @@ async function updatePayment(orderNumber, { method, status = 'pending' } = {}) {
+ 
+   const payment = {
+     ...(existing.payment || {}),
+-    method,
++    method: method || existing.payment?.method || existing.paymentMethod || 'cod',
+     status
+   };
+ 
+@@ -300,7 +463,7 @@ async function updatePayment(orderNumber, { method, status = 'pending' } = {}) {
+         updated_at = $5
+     WHERE order_number = $1
+     RETURNING *
+-  `, [orderNumber, payment, method, status, new Date()]);
++  `, [orderNumber, payment, payment.method, status, new Date()]);
+ 
+   const items = await getOrderItems(result.rows[0].id);
+   return mapOrderRow(result.rows[0], items);
+@@ -353,8 +516,12 @@ async function countOrders() {
+ 
+ module.exports = {
+   createOrder,
++  listOrders,
+   listOrdersForCustomer,
++  searchOrders,
++  getOrderStatistics,
+   getOrderByNumber,
++  updateOrderStatus,
+   cancelOrder,
+   updatePayment,
+   getPublicOrder,
+diff --git a/backend/routes/orders.js b/backend/routes/orders.js
+index 4d1e59f..ff16d84 100644
+--- a/backend/routes/orders.js
++++ b/backend/routes/orders.js
+@@ -70,6 +70,22 @@ async function sendOrderEmails(order, contextLabel = 'order') {
+   }
+ }
+ 
++function isAdmin(req) {
++  return req.user?.isAdmin || req.user?.role === 'admin';
++}
++
++function requireAdminResponse(req, res) {
++  if (!isAdmin(req)) {
++    res.status(403).json({
++      success: false,
++      message: 'Admin access required'
++    });
++    return false;
++  }
++
++  return true;
++}
++
+ console.log('≡ƒ¢ì∩╕Å Backend: Orders router loading');
+ 
+ /**
+@@ -417,11 +433,14 @@ router.get('/', authenticateToken, async (req, res) => {
+   try {
+     console.log('≡ƒ¢ì∩╕Å Getting orders');
+     
+-    const { page = 1, limit = 10, status } = req.query;
++    const { page = 1, limit = 10, status, paymentStatus, startDate, endDate } = req.query;
+     const userId = req.user.userId;
+ 
+     if (req.databaseProvider === 'postgres') {
+-      const result = await postgresOrders.listOrdersForCustomer(userId, { page, limit, status });
++      const result = isAdmin(req)
++        ? await postgresOrders.listOrders({ page, limit, status, paymentStatus, startDate, endDate })
++        : await postgresOrders.listOrdersForCustomer(userId, { page, limit, status });
++
+       return res.json({
+         success: true,
+         data: {
+@@ -483,6 +502,325 @@ router.get('/', authenticateToken, async (req, res) => {
+   }
+ });
+ 
++/**
++ * @route GET /api/orders/statistics
++ * @desc Get order statistics for admin dashboards
++ * @access Private/Admin
++ */
++router.get('/statistics', authenticateToken, async (req, res) => {
++  try {
++    if (!requireAdminResponse(req, res)) return;
++
++    if (req.databaseProvider === 'postgres') {
++      const statistics = await postgresOrders.getOrderStatistics(req.query.period);
++      return res.json({ success: true, statistics });
++    }
++
++    const ordersCollection = getCollection(req, 'orders');
++    const orders = await ordersCollection.find({}).toArray();
++    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
++
++    return res.json({
++      success: true,
++      statistics: {
++        totalOrders: orders.length,
++        totalRevenue,
++        averageOrderValue: orders.length ? totalRevenue / orders.length : 0,
++        byStatus: orders.reduce((acc, order) => {
++          acc[order.status || 'unknown'] = (acc[order.status || 'unknown'] || 0) + 1;
++          return acc;
++        }, {}),
++        byPaymentStatus: orders.reduce((acc, order) => {
++          const paymentStatusValue = order.payment?.status || 'unknown';
++          acc[paymentStatusValue] = (acc[paymentStatusValue] || 0) + 1;
++          return acc;
++        }, {})
++      }
++    });
++  } catch (error) {
++    console.error('Γ¥î Get order statistics error:', error);
++    return handleDatabaseError(error, res, 'Get order statistics');
++  }
++});
++
++/**
++ * @route GET /api/orders/search
++ * @desc Search orders for admin screens
++ * @access Private/Admin
++ */
++router.get('/search', authenticateToken, async (req, res) => {
++  try {
++    if (!requireAdminResponse(req, res)) return;
++
++    const { search = '', page = 1, limit = 10 } = req.query;
++
++    if (req.databaseProvider === 'postgres') {
++      const result = await postgresOrders.searchOrders(search, { page, limit });
++      return res.json({
++        success: true,
++        orders: result.orders,
++        pagination: result.pagination
++      });
++    }
++
++    const ordersCollection = getCollection(req, 'orders');
++    const filter = search ? {
++      $or: [
++        { orderNumber: { $regex: search, $options: 'i' } },
++        { 'customerInfo.email': { $regex: search, $options: 'i' } },
++        { 'customerInfo.firstName': { $regex: search, $options: 'i' } },
++        { 'customerInfo.lastName': { $regex: search, $options: 'i' } },
++        { 'customerInfo.fullName': { $regex: search, $options: 'i' } },
++        { 'customerInfo.phone': { $regex: search, $options: 'i' } }
++      ]
++    } : {};
++    const { skip, limit: actualLimit } = paginateQuery(page, limit);
++    const orders = await ordersCollection.find(filter)
++      .sort({ createdAt: -1 })
++      .skip(skip)
++      .limit(actualLimit)
++      .toArray();
++    const total = await ordersCollection.countDocuments(filter);
++
++    return res.json({
++      success: true,
++      orders: orders.map(order => ({ ...order, id: order._id.toString() })),
++      pagination: {
++        page: parseInt(page),
++        limit: actualLimit,
++        total,
++        totalPages: Math.ceil(total / actualLimit)
++      }
++    });
++  } catch (error) {
++    console.error('Γ¥î Search orders error:', error);
++    return handleDatabaseError(error, res, 'Search orders');
++  }
++});
++
++/**
++ * @route GET /api/orders/:orderNumber/payment-status
++ * @desc Get limited payment status for polling payment screens
++ * @access Public
++ */
++router.get('/:orderNumber/payment-status', async (req, res) => {
++  try {
++    const { orderNumber } = req.params;
++
++    if (req.databaseProvider === 'postgres') {
++      const order = await postgresOrders.getPublicOrder(orderNumber);
++
++      if (!order) {
++        return res.status(404).json({
++          success: false,
++          message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng'
++        });
++      }
++
++      return res.json({
++        success: true,
++        order
++      });
++    }
++
++    const ordersCollection = getCollection(req, 'orders');
++    const order = await ordersCollection.findOne(
++      { orderNumber },
++      {
++        projection: {
++          orderNumber: 1,
++          total: 1,
++          status: 1,
++          'payment.status': 1,
++          'payment.method': 1,
++          createdAt: 1
++        }
++      }
++    );
++
++    if (!order) {
++      return res.status(404).json({
++        success: false,
++        message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng'
++      });
++    }
++
++    return res.json({
++      success: true,
++      order: {
++        orderNumber: order.orderNumber,
++        total: order.total,
++        status: order.status,
++        paymentStatus: order.payment?.status || 'pending',
++        paymentMethod: order.payment?.method || 'cod',
++        createdAt: order.createdAt
++      }
++    });
++  } catch (error) {
++    console.error('Γ¥î Get payment status error:', error);
++    return handleDatabaseError(error, res, 'Get payment status');
++  }
++});
++
++/**
++ * @route PUT /api/orders/:orderNumber/status
++ * @desc Update order status
++ * @access Private/Admin
++ */
++router.put('/:orderNumber/status', authenticateToken, async (req, res) => {
++  try {
++    if (!requireAdminResponse(req, res)) return;
++
++    const { orderNumber } = req.params;
++    const { status, notes = '' } = req.body;
++
++    if (!status) {
++      return res.status(400).json({
++        success: false,
++        message: 'status is required'
++      });
++    }
++
++    if (req.databaseProvider === 'postgres') {
++      const order = await postgresOrders.updateOrderStatus(orderNumber, {
++        status,
++        notes,
++        updatedBy: req.user.userId
++      });
++
++      if (!order) {
++        return res.status(404).json({
++          success: false,
++          message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng'
++        });
++      }
++
++      return res.json({
++        success: true,
++        message: 'Order status updated successfully',
++        order
++      });
++    }
++
++    const ordersCollection = getCollection(req, 'orders');
++    const result = await ordersCollection.findOneAndUpdate(
++      { orderNumber },
++      {
++        $set: {
++          status,
++          updatedAt: new Date()
++        },
++        $push: {
++          timeline: {
++            type: 'status_updated',
++            status,
++            notes,
++            updatedAt: new Date(),
++            updatedBy: req.user.userId
++          }
++        }
++      },
++      { returnDocument: 'after' }
++    );
++
++    const order = result.value || result;
++    if (!order) {
++      return res.status(404).json({
++        success: false,
++        message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng'
++      });
++    }
++
++    return res.json({
++      success: true,
++      message: 'Order status updated successfully',
++      order: { ...order, id: order._id.toString() }
++    });
++  } catch (error) {
++    console.error('Γ¥î Update order status error:', error);
++    return handleDatabaseError(error, res, 'Update order status');
++  }
++});
++
++/**
++ * @route PUT /api/orders/:orderNumber/payment
++ * @desc Update order payment status
++ * @access Private/Admin
++ */
++router.put('/:orderNumber/payment', authenticateToken, async (req, res) => {
++  try {
++    if (!requireAdminResponse(req, res)) return;
++
++    const { orderNumber } = req.params;
++    const { paymentStatus, status, method } = req.body;
++    const nextPaymentStatus = paymentStatus || status;
++
++    if (!nextPaymentStatus) {
++      return res.status(400).json({
++        success: false,
++        message: 'paymentStatus is required'
++      });
++    }
++
++    if (req.databaseProvider === 'postgres') {
++      const order = await postgresOrders.updatePayment(orderNumber, {
++        method,
++        status: nextPaymentStatus
++      });
++
++      if (!order) {
++        return res.status(404).json({
++          success: false,
++          message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng'
++        });
++      }
++
++      return res.json({
++        success: true,
++        message: 'Payment status updated successfully',
++        order
++      });
++    }
++
++    const ordersCollection = getCollection(req, 'orders');
++    const order = await ordersCollection.findOne({ orderNumber });
++
++    if (!order) {
++      return res.status(404).json({
++        success: false,
++        message: 'Kh├┤ng t├¼m thß║Ñy ─æ╞ín h├áng'
++      });
++    }
++
++    const nextPayment = {
++      ...(order.payment || {}),
++      method: method || order.payment?.method || 'cod',
++      status: nextPaymentStatus
++    };
++
++    const result = await ordersCollection.findOneAndUpdate(
++      { orderNumber },
++      {
++        $set: {
++          payment: nextPayment,
++          updatedAt: new Date()
++        }
++      },
++      { returnDocument: 'after' }
++    );
++
++    const updatedOrder = result.value || result;
++    return res.json({
++      success: true,
++      message: 'Payment status updated successfully',
++      order: { ...updatedOrder, id: updatedOrder._id.toString() }
++    });
++  } catch (error) {
++    console.error('Γ¥î Update payment status error:', error);
++    return handleDatabaseError(error, res, 'Update payment status');
++  }
++});
++
+ /**
+  * @route GET /api/orders/:orderNumber
+  * @desc Get specific order details
+diff --git a/backend/routes/products.js b/backend/routes/products.js
+index 61f20c8..e0509c6 100644
+--- a/backend/routes/products.js
++++ b/backend/routes/products.js
+@@ -17,6 +17,61 @@ const productController = require('../controllers/productController');
+ // GET /api/products/recommendations - Get AI recommendations
+ router.get('/recommendations', productController.getRecommendations);
+ 
++function normalizeSortQuery({ sort, sortBy, order }) {
++  if (sort) return sort;
++  if (!sortBy) return undefined;
++
++  if (sortBy === 'price') {
++    return order === 'desc' ? 'price_desc' : 'price_asc';
++  }
++
++  if (sortBy === 'name') {
++    return order === 'desc' ? 'name_desc' : 'name_asc';
++  }
++
++  return sortBy;
++}
++
++function sendProductList(res, result) {
++  const pagination = result.pagination || {};
++
++  return res.json({
++    success: true,
++    products: result.products || [],
++    pagination,
++    total: pagination.totalProducts || 0,
++    page: pagination.currentPage || 1,
++    totalPages: pagination.totalPages || 1
++  });
++}
++
++function normalizeWeightPricing(weightPricing) {
++  if (Array.isArray(weightPricing)) {
++    return weightPricing.map((item, index) => ({
++      ...item,
++      weight: item.weight ?? (parseInt(String(item.weightDisplay || '').replace(/\D/g, ''), 10) || null),
++      weightDisplay: item.weightDisplay || (item.weight ? `${item.weight}g` : undefined),
++      price: Number(item.price || 0),
++      isAvailable: item.isAvailable !== false,
++      isDefault: item.isDefault === true || index === 1
++    }));
++  }
++
++  if (weightPricing && typeof weightPricing === 'object') {
++    return Object.entries(weightPricing).map(([weightDisplay, price], index) => ({
++      weightDisplay,
++      weight: parseInt(weightDisplay.replace(/\D/g, ''), 10) || null,
++      price: Number(price || 0),
++      stockQuantity: 0,
++      isAvailable: true,
++      isDefault: weightDisplay === '250g' || index === 1,
++      discount: { isActive: false }
++    }));
++  }
++
++  return [];
++}
++
+ console.log('≡ƒ¢Æ Products router loading');
+ 
+ // GET /api/products/test - Simple test route
+@@ -30,7 +85,8 @@ router.get('/', async (req, res) => {
+     console.log('≡ƒôï Fetching products list');
+     
+ 
+-    const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice, sort } = req.query;
++    const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice } = req.query;
++    const normalizedSort = normalizeSortQuery(req.query);
+ 
+     if (req.databaseProvider === 'postgres') {
+       const result = await postgresCatalog.listProducts({
+@@ -41,14 +97,10 @@ router.get('/', async (req, res) => {
+         featured,
+         minPrice,
+         maxPrice,
+-        sort
++        sort: normalizedSort
+       });
+ 
+-      return res.json({
+-        success: true,
+-        products: result.products,
+-        pagination: result.pagination
+-      });
++      return sendProductList(res, result);
+     }
+ 
+     const collection = getCollection(req, 'products');
+@@ -78,7 +130,7 @@ router.get('/', async (req, res) => {
+     }
+     
+     // Build sort options
+-    const sortOptions = buildSort(sort) || { created_at: -1 };
++    const sortOptions = buildSort(normalizedSort) || { created_at: -1 };
+     
+     // Calculate pagination
+     const { skip, limit: actualLimit } = paginateQuery(page, limit);
+@@ -112,7 +164,10 @@ router.get('/', async (req, res) => {
+         hasNextPage: page < totalPages,
+         hasPrevPage: page > 1,
+         limit: actualLimit
+-      }
++      },
++      total: totalProducts,
++      page: parseInt(page),
++      totalPages
+     });
+   } catch (error) {
+     console.error('Γ¥î Error fetching products:', error);
+@@ -124,6 +179,111 @@ router.get('/', async (req, res) => {
+   }
+ });
+ 
++// GET /api/products/search - Search products through the API service contract
++router.get('/search', async (req, res) => {
++  try {
++    const search = req.query.search || req.query.q || req.query.query || '';
++    const { page = 1, limit = 12, category, minPrice, maxPrice } = req.query;
++    const normalizedSort = normalizeSortQuery(req.query);
++
++    if (req.databaseProvider === 'postgres') {
++      const result = await postgresCatalog.listProducts({
++        page,
++        limit,
++        search,
++        category,
++        minPrice,
++        maxPrice,
++        sort: normalizedSort
++      });
++
++      return sendProductList(res, result);
++    }
++
++    const collection = getCollection(req, 'products');
++    const filter = search ? {
++      $or: [
++        { name: { $regex: search, $options: 'i' } },
++        { description: { $regex: search, $options: 'i' } },
++        { tags: { $regex: search, $options: 'i' } }
++      ]
++    } : {};
++
++    if (category) {
++      filter.$and = [{
++        $or: [
++          { category },
++          { categoryId: category },
++          { 'category.slug': category },
++          { 'category.name': category }
++        ]
++      }];
++    }
++
++    const { skip, limit: actualLimit } = paginateQuery(page, limit);
++    const totalProducts = await collection.countDocuments(filter);
++    const products = await collection.find(filter)
++      .sort(buildSort(normalizedSort))
++      .skip(skip)
++      .limit(actualLimit)
++      .toArray();
++
++    return res.json({
++      success: true,
++      products: products.map(product => ({ ...product, id: product._id.toString() })),
++      total: totalProducts,
++      page: parseInt(page),
++      totalPages: Math.ceil(totalProducts / actualLimit)
++    });
++  } catch (error) {
++    console.error('Γ¥î Error searching products:', error);
++    return res.status(500).json({ success: false, error: 'Failed to search products' });
++  }
++});
++
++// GET /api/products/search-suggestions - Lightweight product name suggestions
++router.get('/search-suggestions', async (req, res) => {
++  try {
++    const search = req.query.q || req.query.search || '';
++    const limit = Math.min(parseInt(req.query.limit || 8), 20);
++
++    if (!search || search.trim().length < 2) {
++      return res.json({ success: true, suggestions: [] });
++    }
++
++    if (req.databaseProvider === 'postgres') {
++      const result = await postgresCatalog.listProducts({
++        search,
++        limit,
++        page: 1,
++        sort: 'name_asc'
++      });
++
++      return res.json({
++        success: true,
++        suggestions: result.products.map(product => product.name).filter(Boolean)
++      });
++    }
++
++    const collection = getCollection(req, 'products');
++    const products = await collection.find({
++      $or: [
++        { name: { $regex: search, $options: 'i' } },
++        { description: { $regex: search, $options: 'i' } },
++        { tags: { $regex: search, $options: 'i' } }
++      ]
++    }).limit(limit).toArray();
++
++    return res.json({
++      success: true,
++      suggestions: products.map(product => product.name).filter(Boolean)
++    });
++  } catch (error) {
++    console.error('Γ¥î Error fetching product suggestions:', error);
++    return res.status(500).json({ success: false, error: 'Failed to fetch product suggestions' });
++  }
++});
++
+ // GET /api/products/featured - Get featured products
+ router.get('/featured', async (req, res) => {
+   try {
+@@ -177,6 +337,101 @@ router.get('/categories', async (req, res) => {
+   }
+ });
+ 
++// GET /api/products/category/:category - Products by category API contract
++router.get('/category/:category', async (req, res) => {
++  try {
++    const { category } = req.params;
++    const { page = 1, limit = 12, minPrice, maxPrice } = req.query;
++    const normalizedSort = normalizeSortQuery(req.query);
++
++    if (req.databaseProvider === 'postgres') {
++      const result = await postgresCatalog.listProducts({
++        page,
++        limit,
++        category,
++        minPrice,
++        maxPrice,
++        sort: normalizedSort
++      });
++
++      return sendProductList(res, result);
++    }
++
++    const collection = getCollection(req, 'products');
++    const filter = {
++      $or: [
++        { category },
++        { categoryId: category },
++        { 'category.slug': category },
++        { 'category.name': category }
++      ]
++    };
++    const { skip, limit: actualLimit } = paginateQuery(page, limit);
++    const totalProducts = await collection.countDocuments(filter);
++    const products = await collection.find(filter)
++      .sort(buildSort(normalizedSort))
++      .skip(skip)
++      .limit(actualLimit)
++      .toArray();
++
++    return res.json({
++      success: true,
++      products: products.map(product => ({ ...product, id: product._id.toString() })),
++      total: totalProducts,
++      page: parseInt(page),
++      totalPages: Math.ceil(totalProducts / actualLimit)
++    });
++  } catch (error) {
++    console.error('Γ¥î Error fetching category products:', error);
++    return res.status(500).json({ success: false, error: 'Failed to fetch products by category' });
++  }
++});
++
++// GET /api/products/:id/related - Related products API contract
++router.get('/:id/related', async (req, res) => {
++  try {
++    const limit = Math.min(parseInt(req.query.limit || 4), 20);
++
++    if (req.databaseProvider === 'postgres') {
++      const product = await postgresCatalog.getProductByLegacyId(req.params.id);
++
++      if (!product) {
++        return res.status(404).json({ success: false, error: 'Product not found' });
++      }
++
++      const products = await postgresCatalog.getRelatedProducts(product, limit);
++      return res.json({ success: true, products });
++    }
++
++    const collection = getCollection(req, 'products');
++    const productId = toObjectId(req.params.id);
++    const product = await collection.findOne({ _id: productId });
++
++    if (!product) {
++      return res.status(404).json({ success: false, error: 'Product not found' });
++    }
++
++    const category = product.categoryId || product.category?.slug || product.category?.name || product.category;
++    const relatedProducts = await collection.find({
++      _id: { $ne: productId },
++      $or: [
++        { category },
++        { categoryId: category },
++        { 'category.slug': category },
++        { 'category.name': category }
++      ]
++    }).limit(limit).toArray();
++
++    return res.json({
++      success: true,
++      products: relatedProducts.map(item => ({ ...item, id: item._id.toString() }))
++    });
++  } catch (error) {
++    console.error('Γ¥î Error fetching related products:', error);
++    return res.status(500).json({ success: false, error: 'Failed to fetch related products' });
++  }
++});
++
+ // GET /api/products/:id - Get single product with related products
+ router.get('/:id', async (req, res) => {
+   try {
+@@ -284,6 +539,57 @@ router.post('/', authenticateToken, async (req, res) => {
+   }
+ });
+ 
++// PUT /api/products/:id/pricing - Update product pricing (Admin only)
++router.put('/:id/pricing', authenticateToken, async (req, res) => {
++  try {
++    if (req.user.role !== 'admin') {
++      return res.status(403).json({ success: false, error: 'Admin access required' });
++    }
++
++    const weightPricing = normalizeWeightPricing(req.body.weightPricing);
++
++    if (!weightPricing.length) {
++      return res.status(400).json({ success: false, error: 'weightPricing is required' });
++    }
++
++    if (req.databaseProvider === 'postgres') {
++      const product = await postgresCatalog.updateProduct(req.params.id, { weightPricing });
++
++      if (!product) {
++        return res.status(404).json({ success: false, error: 'Product not found' });
++      }
++
++      return res.json({
++        success: true,
++        message: 'Product pricing updated successfully',
++        product
++      });
++    }
++
++    const collection = getCollection(req, 'products');
++    const productId = toObjectId(req.params.id);
++    const result = await collection.findOneAndUpdate(
++      { _id: productId },
++      { $set: { weightPricing, updatedAt: new Date() } },
++      { returnDocument: 'after' }
++    );
++
++    const product = result.value || result;
++    if (!product) {
++      return res.status(404).json({ success: false, error: 'Product not found' });
++    }
++
++    return res.json({
++      success: true,
++      message: 'Product pricing updated successfully',
++      product: { ...product, id: product._id.toString() }
++    });
++  } catch (error) {
++    console.error(`Γ¥î Error updating product pricing ${req.params.id}:`, error);
++    return res.status(500).json({ success: false, error: 'Failed to update product pricing' });
++  }
++});
++
+ // PUT /api/products/:id - Update product (Admin only)
+ router.put('/:id', authenticateToken, async (req, res) => {
+   try {
+diff --git a/backend/routes/upload.js b/backend/routes/upload.js
+index 2f5c2bb..bf3d48f 100644
+--- a/backend/routes/upload.js
++++ b/backend/routes/upload.js
+@@ -1,28 +1,13 @@
+ const express = require('express');
+ const router = express.Router();
+ const uploadController = require('../controllers/uploadController');
++const { authenticateToken, requireRole } = require('../middleware/auth');
+ 
+-// Middleware ─æß╗â kiß╗âm tra quyß╗ün admin
+-const requireAdmin = (req, res, next) => {
+-  if (!req.user || req.user.role !== 'admin') {
+-    return res.status(403).json({
+-      success: false,
+-      message: 'Admin access required'
+-    });
+-  }
+-  next();
+-};
++router.use(authenticateToken);
+ 
+-// Upload product images
+-router.post('/products', requireAdmin, uploadController.uploadProductImages);
+-
+-// Upload blog featured image
+-router.post('/blogs', requireAdmin, uploadController.uploadBlogImage);
+-
+-// Upload user avatar
++router.post('/products', requireRole('admin'), uploadController.uploadProductImages);
++router.post('/blogs', requireRole('admin'), uploadController.uploadBlogImage);
+ router.post('/avatar', uploadController.uploadAvatar);
+-
+-// Delete file
+-router.delete('/:category/:filename', requireAdmin, uploadController.deleteFile);
++router.delete('/:category/:filename', requireRole('admin'), uploadController.deleteFile);
+ 
+ module.exports = router;
+diff --git a/backend/services/bedrockService.js b/backend/services/bedrockService.js
+index 1b0d35a..ec464c3 100644
+--- a/backend/services/bedrockService.js
++++ b/backend/services/bedrockService.js
+@@ -13,23 +13,31 @@ class BedrockService {
+       console.warn('Could not load barista-knowledge.txt');
+       this.baristaKnowledge = '- Arabica: ├ìt cafein, vß╗ï chua thanh, h╞░╞íng th╞ím phong ph├║.\n- Robusta: Nhiß╗üu cafein, vß╗ï ─æß║»ng ─æß║¡m, mß║ính mß║╜.';
+     }
+-    this.client = new BedrockRuntimeClient({
+-      region: process.env.AWS_REGION || 'ap-southeast-1',
+-      credentials: {
++    const credentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
++      ? {
+         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+       }
++      : undefined;
++
++    this.client = new BedrockRuntimeClient({
++      region: process.env.AWS_REGION || 'ap-southeast-1',
++      ...(credentials ? { credentials } : {})
+     });
+     // Use amazon.nova-lite-v1:0 or amazon.nova-micro-v1:0 for cost optimization
+-    this.modelId = 'amazon.nova-lite-v1:0'; 
++    this.modelId = process.env.BEDROCK_MODEL_ID || 'amazon.nova-lite-v1:0'; 
+   }
+ 
+   async getRecommendations(prompt, products) {
+     try {
+       // Chuß║⌐n bß╗ï dß╗» liß╗çu context c├íc sß║ún phß║⌐m
+-      const productsContext = products.map(p => 
+-        `ID: ${p._id.toString()} | Name: ${p.name} | Category: ${p.category} | Price: ${p.price} | Desc: ${p.description}`
+-      ).join('\n');
++      const productsContext = products.map(p => {
++        const category = typeof p.category === 'object'
++          ? (p.category.slug || p.category.name || p.categoryId || '')
++          : (p.category || p.categoryId || '');
++
++        return `ID: ${p._id.toString()} | Name: ${p.name} | Category: ${category} | Price: ${p.price} | Desc: ${p.description}`;
++      }).join('\n');
+ 
+       const systemPrompt = `Bß║ín l├á mß╗Öt chuy├¬n gia vß╗ü c├á ph├¬ (Barista). Dß╗▒a tr├¬n kiß║┐n thß╗⌐c c╞í bß║ún vß╗ü c├á ph├¬ ─æ╞░ß╗úc cung cß║Ñp d╞░ß╗¢i ─æ├óy:
+ --- KIß║╛N THß╗¿C BARISTA ---
+diff --git a/backend/services/imageService.js b/backend/services/imageService.js
+index d4423f4..d71fe63 100644
+--- a/backend/services/imageService.js
++++ b/backend/services/imageService.js
+@@ -6,12 +6,16 @@ const multerS3 = require('multer-s3');
+ 
+ class ImageService {
+   constructor() {
+-    this.s3Client = new S3Client({
+-      region: process.env.AWS_REGION || 'ap-southeast-1',
+-      credentials: {
++    const credentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
++      ? {
+         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+       }
++      : undefined;
++
++    this.s3Client = new S3Client({
++      region: process.env.AWS_REGION || 'ap-southeast-1',
++      ...(credentials ? { credentials } : {})
+     });
+     this.bucketName = process.env.AWS_S3_BUCKET_NAME;
+ 
+@@ -62,6 +66,10 @@ class ImageService {
+ 
+   // Upload a buffer to S3
+   async uploadToS3(buffer, key, mimeType) {
++    if (!this.bucketName) {
++      throw new Error('AWS_S3_BUCKET_NAME is not configured');
++    }
++
+     const command = new PutObjectCommand({
+       Bucket: this.bucketName,
+       Key: key,
+@@ -146,6 +154,10 @@ class ImageService {
+   // Delete image from S3
+   async deleteS3Image(s3Key) {
+     try {
++      if (!this.bucketName) {
++        throw new Error('AWS_S3_BUCKET_NAME is not configured');
++      }
++
+       if (!s3Key) return false;
+       const command = new DeleteObjectCommand({
+         Bucket: this.bucketName,
+diff --git a/src/pages/admin/ProductPricing.jsx b/src/pages/admin/ProductPricing.jsx
+index 791ec0f..204709a 100644
+--- a/src/pages/admin/ProductPricing.jsx
++++ b/src/pages/admin/ProductPricing.jsx
+@@ -13,6 +13,20 @@ const ProductPricing = () => {
+ 
+     const weights = ['100g', '250g', '500g', '1kg'];
+ 
++    const normalizePricingForForm = (weightPricing = []) => {
++        if (!Array.isArray(weightPricing)) {
++            return weightPricing || {};
++        }
++
++        return weightPricing.reduce((acc, item) => {
++            const key = item.weightDisplay || (item.weight ? `${item.weight}g` : null);
++            if (key) {
++                acc[key] = item.price;
++            }
++            return acc;
++        }, {});
++    };
++
+     useEffect(() => {
+         fetchProducts();
+     }, []);
+@@ -21,7 +35,10 @@ const ProductPricing = () => {
+         try {
+             setLoading(true);
+             const response = await axios.get(`${API_BASE_URL}/products`);
+-            setProducts(response.data.products);
++            setProducts((response.data.products || []).map(product => ({
++                ...product,
++                weightPricing: normalizePricingForForm(product.weightPricing)
++            })));
+         } catch (error) {
+             console.error('Failed to fetch products:', error);
+             setMessage('Kh├┤ng thß╗â tß║úi danh s├ích sß║ún phß║⌐m');
+diff --git a/src/services/productService.js b/src/services/productService.js
+index 8d5241c..7de11bc 100644
+--- a/src/services/productService.js
++++ b/src/services/productService.js
+@@ -96,7 +96,7 @@ class ProductService {
+       const data = await response.json();
+       return {
+         success: true,
+-        products: data.products
++        products: Array.isArray(data) ? data : data.products
+       };
+     } catch (error) {
+       console.error('Get featured products error:', error);
