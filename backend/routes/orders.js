@@ -70,6 +70,22 @@ async function sendOrderEmails(order, contextLabel = 'order') {
   }
 }
 
+function isAdmin(req) {
+  return req.user?.isAdmin || req.user?.role === 'admin';
+}
+
+function requireAdminResponse(req, res) {
+  if (!isAdmin(req)) {
+    res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
+    return false;
+  }
+
+  return true;
+}
+
 console.log('🛍️ Backend: Orders router loading');
 
 /**
@@ -417,11 +433,14 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     console.log('🛍️ Getting orders');
     
-    const { page = 1, limit = 10, status } = req.query;
+    const { page = 1, limit = 10, status, paymentStatus, startDate, endDate } = req.query;
     const userId = req.user.userId;
 
     if (req.databaseProvider === 'postgres') {
-      const result = await postgresOrders.listOrdersForCustomer(userId, { page, limit, status });
+      const result = isAdmin(req)
+        ? await postgresOrders.listOrders({ page, limit, status, paymentStatus, startDate, endDate })
+        : await postgresOrders.listOrdersForCustomer(userId, { page, limit, status });
+
       return res.json({
         success: true,
         data: {
@@ -480,6 +499,325 @@ router.get('/', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Get orders error:', error);
     return handleDatabaseError(error, res, 'Get orders');
+  }
+});
+
+/**
+ * @route GET /api/orders/statistics
+ * @desc Get order statistics for admin dashboards
+ * @access Private/Admin
+ */
+router.get('/statistics', authenticateToken, async (req, res) => {
+  try {
+    if (!requireAdminResponse(req, res)) return;
+
+    if (req.databaseProvider === 'postgres') {
+      const statistics = await postgresOrders.getOrderStatistics(req.query.period);
+      return res.json({ success: true, statistics });
+    }
+
+    const ordersCollection = getCollection(req, 'orders');
+    const orders = await ordersCollection.find({}).toArray();
+    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+
+    return res.json({
+      success: true,
+      statistics: {
+        totalOrders: orders.length,
+        totalRevenue,
+        averageOrderValue: orders.length ? totalRevenue / orders.length : 0,
+        byStatus: orders.reduce((acc, order) => {
+          acc[order.status || 'unknown'] = (acc[order.status || 'unknown'] || 0) + 1;
+          return acc;
+        }, {}),
+        byPaymentStatus: orders.reduce((acc, order) => {
+          const paymentStatusValue = order.payment?.status || 'unknown';
+          acc[paymentStatusValue] = (acc[paymentStatusValue] || 0) + 1;
+          return acc;
+        }, {})
+      }
+    });
+  } catch (error) {
+    console.error('❌ Get order statistics error:', error);
+    return handleDatabaseError(error, res, 'Get order statistics');
+  }
+});
+
+/**
+ * @route GET /api/orders/search
+ * @desc Search orders for admin screens
+ * @access Private/Admin
+ */
+router.get('/search', authenticateToken, async (req, res) => {
+  try {
+    if (!requireAdminResponse(req, res)) return;
+
+    const { search = '', page = 1, limit = 10 } = req.query;
+
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresOrders.searchOrders(search, { page, limit });
+      return res.json({
+        success: true,
+        orders: result.orders,
+        pagination: result.pagination
+      });
+    }
+
+    const ordersCollection = getCollection(req, 'orders');
+    const filter = search ? {
+      $or: [
+        { orderNumber: { $regex: search, $options: 'i' } },
+        { 'customerInfo.email': { $regex: search, $options: 'i' } },
+        { 'customerInfo.firstName': { $regex: search, $options: 'i' } },
+        { 'customerInfo.lastName': { $regex: search, $options: 'i' } },
+        { 'customerInfo.fullName': { $regex: search, $options: 'i' } },
+        { 'customerInfo.phone': { $regex: search, $options: 'i' } }
+      ]
+    } : {};
+    const { skip, limit: actualLimit } = paginateQuery(page, limit);
+    const orders = await ordersCollection.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(actualLimit)
+      .toArray();
+    const total = await ordersCollection.countDocuments(filter);
+
+    return res.json({
+      success: true,
+      orders: orders.map(order => ({ ...order, id: order._id.toString() })),
+      pagination: {
+        page: parseInt(page),
+        limit: actualLimit,
+        total,
+        totalPages: Math.ceil(total / actualLimit)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Search orders error:', error);
+    return handleDatabaseError(error, res, 'Search orders');
+  }
+});
+
+/**
+ * @route GET /api/orders/:orderNumber/payment-status
+ * @desc Get limited payment status for polling payment screens
+ * @access Public
+ */
+router.get('/:orderNumber/payment-status', async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    if (req.databaseProvider === 'postgres') {
+      const order = await postgresOrders.getPublicOrder(orderNumber);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy đơn hàng'
+        });
+      }
+
+      return res.json({
+        success: true,
+        order
+      });
+    }
+
+    const ordersCollection = getCollection(req, 'orders');
+    const order = await ordersCollection.findOne(
+      { orderNumber },
+      {
+        projection: {
+          orderNumber: 1,
+          total: 1,
+          status: 1,
+          'payment.status': 1,
+          'payment.method': 1,
+          createdAt: 1
+        }
+      }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng'
+      });
+    }
+
+    return res.json({
+      success: true,
+      order: {
+        orderNumber: order.orderNumber,
+        total: order.total,
+        status: order.status,
+        paymentStatus: order.payment?.status || 'pending',
+        paymentMethod: order.payment?.method || 'cod',
+        createdAt: order.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('❌ Get payment status error:', error);
+    return handleDatabaseError(error, res, 'Get payment status');
+  }
+});
+
+/**
+ * @route PUT /api/orders/:orderNumber/status
+ * @desc Update order status
+ * @access Private/Admin
+ */
+router.put('/:orderNumber/status', authenticateToken, async (req, res) => {
+  try {
+    if (!requireAdminResponse(req, res)) return;
+
+    const { orderNumber } = req.params;
+    const { status, notes = '' } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'status is required'
+      });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const order = await postgresOrders.updateOrderStatus(orderNumber, {
+        status,
+        notes,
+        updatedBy: req.user.userId
+      });
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy đơn hàng'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Order status updated successfully',
+        order
+      });
+    }
+
+    const ordersCollection = getCollection(req, 'orders');
+    const result = await ordersCollection.findOneAndUpdate(
+      { orderNumber },
+      {
+        $set: {
+          status,
+          updatedAt: new Date()
+        },
+        $push: {
+          timeline: {
+            type: 'status_updated',
+            status,
+            notes,
+            updatedAt: new Date(),
+            updatedBy: req.user.userId
+          }
+        }
+      },
+      { returnDocument: 'after' }
+    );
+
+    const order = result.value || result;
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Order status updated successfully',
+      order: { ...order, id: order._id.toString() }
+    });
+  } catch (error) {
+    console.error('❌ Update order status error:', error);
+    return handleDatabaseError(error, res, 'Update order status');
+  }
+});
+
+/**
+ * @route PUT /api/orders/:orderNumber/payment
+ * @desc Update order payment status
+ * @access Private/Admin
+ */
+router.put('/:orderNumber/payment', authenticateToken, async (req, res) => {
+  try {
+    if (!requireAdminResponse(req, res)) return;
+
+    const { orderNumber } = req.params;
+    const { paymentStatus, status, method } = req.body;
+    const nextPaymentStatus = paymentStatus || status;
+
+    if (!nextPaymentStatus) {
+      return res.status(400).json({
+        success: false,
+        message: 'paymentStatus is required'
+      });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const order = await postgresOrders.updatePayment(orderNumber, {
+        method,
+        status: nextPaymentStatus
+      });
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy đơn hàng'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Payment status updated successfully',
+        order
+      });
+    }
+
+    const ordersCollection = getCollection(req, 'orders');
+    const order = await ordersCollection.findOne({ orderNumber });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng'
+      });
+    }
+
+    const nextPayment = {
+      ...(order.payment || {}),
+      method: method || order.payment?.method || 'cod',
+      status: nextPaymentStatus
+    };
+
+    const result = await ordersCollection.findOneAndUpdate(
+      { orderNumber },
+      {
+        $set: {
+          payment: nextPayment,
+          updatedAt: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    );
+
+    const updatedOrder = result.value || result;
+    return res.json({
+      success: true,
+      message: 'Payment status updated successfully',
+      order: { ...updatedOrder, id: updatedOrder._id.toString() }
+    });
+  } catch (error) {
+    console.error('❌ Update payment status error:', error);
+    return handleDatabaseError(error, res, 'Update payment status');
   }
 });
 

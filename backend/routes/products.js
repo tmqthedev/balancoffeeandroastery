@@ -13,6 +13,61 @@ const {
 } = require('../middleware/mongoHelpers');
 const postgresCatalog = require('../repositories/postgresCatalogRepository');
 
+function normalizeSortQuery({ sort, sortBy, order }) {
+  if (sort) return sort;
+  if (!sortBy) return undefined;
+
+  if (sortBy === 'price') {
+    return order === 'desc' ? 'price_desc' : 'price_asc';
+  }
+
+  if (sortBy === 'name') {
+    return order === 'desc' ? 'name_desc' : 'name_asc';
+  }
+
+  return sortBy;
+}
+
+function sendProductList(res, result) {
+  const pagination = result.pagination || {};
+
+  return res.json({
+    success: true,
+    products: result.products || [],
+    pagination,
+    total: pagination.totalProducts || 0,
+    page: pagination.currentPage || 1,
+    totalPages: pagination.totalPages || 1
+  });
+}
+
+function normalizeWeightPricing(weightPricing) {
+  if (Array.isArray(weightPricing)) {
+    return weightPricing.map((item, index) => ({
+      ...item,
+      weight: item.weight ?? (parseInt(String(item.weightDisplay || '').replace(/\D/g, ''), 10) || null),
+      weightDisplay: item.weightDisplay || (item.weight ? `${item.weight}g` : undefined),
+      price: Number(item.price || 0),
+      isAvailable: item.isAvailable !== false,
+      isDefault: item.isDefault === true || index === 1
+    }));
+  }
+
+  if (weightPricing && typeof weightPricing === 'object') {
+    return Object.entries(weightPricing).map(([weightDisplay, price], index) => ({
+      weightDisplay,
+      weight: parseInt(weightDisplay.replace(/\D/g, ''), 10) || null,
+      price: Number(price || 0),
+      stockQuantity: 0,
+      isAvailable: true,
+      isDefault: weightDisplay === '250g' || index === 1,
+      discount: { isActive: false }
+    }));
+  }
+
+  return [];
+}
+
 console.log('🛒 Products router loading');
 
 // GET /api/products/test - Simple test route
@@ -26,7 +81,8 @@ router.get('/', async (req, res) => {
     console.log('📋 Fetching products list');
     
 
-    const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice, sort } = req.query;
+    const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice } = req.query;
+    const normalizedSort = normalizeSortQuery(req.query);
 
     if (req.databaseProvider === 'postgres') {
       const result = await postgresCatalog.listProducts({
@@ -37,14 +93,10 @@ router.get('/', async (req, res) => {
         featured,
         minPrice,
         maxPrice,
-        sort
+        sort: normalizedSort
       });
 
-      return res.json({
-        success: true,
-        products: result.products,
-        pagination: result.pagination
-      });
+      return sendProductList(res, result);
     }
 
     const collection = getCollection(req, 'products');
@@ -74,7 +126,7 @@ router.get('/', async (req, res) => {
     }
     
     // Build sort options
-    const sortOptions = buildSort(sort) || { created_at: -1 };
+    const sortOptions = buildSort(normalizedSort) || { created_at: -1 };
     
     // Calculate pagination
     const { skip, limit: actualLimit } = paginateQuery(page, limit);
@@ -108,7 +160,10 @@ router.get('/', async (req, res) => {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
         limit: actualLimit
-      }
+      },
+      total: totalProducts,
+      page: parseInt(page),
+      totalPages
     });
   } catch (error) {
     console.error('❌ Error fetching products:', error);
@@ -117,6 +172,111 @@ router.get('/', async (req, res) => {
       error: 'Failed to fetch products',
       details: error.message
     });
+  }
+});
+
+// GET /api/products/search - Search products through the API service contract
+router.get('/search', async (req, res) => {
+  try {
+    const search = req.query.search || req.query.q || req.query.query || '';
+    const { page = 1, limit = 12, category, minPrice, maxPrice } = req.query;
+    const normalizedSort = normalizeSortQuery(req.query);
+
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresCatalog.listProducts({
+        page,
+        limit,
+        search,
+        category,
+        minPrice,
+        maxPrice,
+        sort: normalizedSort
+      });
+
+      return sendProductList(res, result);
+    }
+
+    const collection = getCollection(req, 'products');
+    const filter = search ? {
+      $or: [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } }
+      ]
+    } : {};
+
+    if (category) {
+      filter.$and = [{
+        $or: [
+          { category },
+          { categoryId: category },
+          { 'category.slug': category },
+          { 'category.name': category }
+        ]
+      }];
+    }
+
+    const { skip, limit: actualLimit } = paginateQuery(page, limit);
+    const totalProducts = await collection.countDocuments(filter);
+    const products = await collection.find(filter)
+      .sort(buildSort(normalizedSort))
+      .skip(skip)
+      .limit(actualLimit)
+      .toArray();
+
+    return res.json({
+      success: true,
+      products: products.map(product => ({ ...product, id: product._id.toString() })),
+      total: totalProducts,
+      page: parseInt(page),
+      totalPages: Math.ceil(totalProducts / actualLimit)
+    });
+  } catch (error) {
+    console.error('❌ Error searching products:', error);
+    return res.status(500).json({ success: false, error: 'Failed to search products' });
+  }
+});
+
+// GET /api/products/search-suggestions - Lightweight product name suggestions
+router.get('/search-suggestions', async (req, res) => {
+  try {
+    const search = req.query.q || req.query.search || '';
+    const limit = Math.min(parseInt(req.query.limit || 8), 20);
+
+    if (!search || search.trim().length < 2) {
+      return res.json({ success: true, suggestions: [] });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresCatalog.listProducts({
+        search,
+        limit,
+        page: 1,
+        sort: 'name_asc'
+      });
+
+      return res.json({
+        success: true,
+        suggestions: result.products.map(product => product.name).filter(Boolean)
+      });
+    }
+
+    const collection = getCollection(req, 'products');
+    const products = await collection.find({
+      $or: [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } }
+      ]
+    }).limit(limit).toArray();
+
+    return res.json({
+      success: true,
+      suggestions: products.map(product => product.name).filter(Boolean)
+    });
+  } catch (error) {
+    console.error('❌ Error fetching product suggestions:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch product suggestions' });
   }
 });
 
@@ -170,6 +330,101 @@ router.get('/categories', async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching categories:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch categories' });
+  }
+});
+
+// GET /api/products/category/:category - Products by category API contract
+router.get('/category/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    const { page = 1, limit = 12, minPrice, maxPrice } = req.query;
+    const normalizedSort = normalizeSortQuery(req.query);
+
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresCatalog.listProducts({
+        page,
+        limit,
+        category,
+        minPrice,
+        maxPrice,
+        sort: normalizedSort
+      });
+
+      return sendProductList(res, result);
+    }
+
+    const collection = getCollection(req, 'products');
+    const filter = {
+      $or: [
+        { category },
+        { categoryId: category },
+        { 'category.slug': category },
+        { 'category.name': category }
+      ]
+    };
+    const { skip, limit: actualLimit } = paginateQuery(page, limit);
+    const totalProducts = await collection.countDocuments(filter);
+    const products = await collection.find(filter)
+      .sort(buildSort(normalizedSort))
+      .skip(skip)
+      .limit(actualLimit)
+      .toArray();
+
+    return res.json({
+      success: true,
+      products: products.map(product => ({ ...product, id: product._id.toString() })),
+      total: totalProducts,
+      page: parseInt(page),
+      totalPages: Math.ceil(totalProducts / actualLimit)
+    });
+  } catch (error) {
+    console.error('❌ Error fetching category products:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch products by category' });
+  }
+});
+
+// GET /api/products/:id/related - Related products API contract
+router.get('/:id/related', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || 4), 20);
+
+    if (req.databaseProvider === 'postgres') {
+      const product = await postgresCatalog.getProductByLegacyId(req.params.id);
+
+      if (!product) {
+        return res.status(404).json({ success: false, error: 'Product not found' });
+      }
+
+      const products = await postgresCatalog.getRelatedProducts(product, limit);
+      return res.json({ success: true, products });
+    }
+
+    const collection = getCollection(req, 'products');
+    const productId = toObjectId(req.params.id);
+    const product = await collection.findOne({ _id: productId });
+
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    const category = product.categoryId || product.category?.slug || product.category?.name || product.category;
+    const relatedProducts = await collection.find({
+      _id: { $ne: productId },
+      $or: [
+        { category },
+        { categoryId: category },
+        { 'category.slug': category },
+        { 'category.name': category }
+      ]
+    }).limit(limit).toArray();
+
+    return res.json({
+      success: true,
+      products: relatedProducts.map(item => ({ ...item, id: item._id.toString() }))
+    });
+  } catch (error) {
+    console.error('❌ Error fetching related products:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch related products' });
   }
 });
 
@@ -277,6 +532,57 @@ router.post('/', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Error creating product:', error);
     return res.status(500).json({ success: false, error: 'Failed to create product' });
+  }
+});
+
+// PUT /api/products/:id/pricing - Update product pricing (Admin only)
+router.put('/:id/pricing', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin access required' });
+    }
+
+    const weightPricing = normalizeWeightPricing(req.body.weightPricing);
+
+    if (!weightPricing.length) {
+      return res.status(400).json({ success: false, error: 'weightPricing is required' });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const product = await postgresCatalog.updateProduct(req.params.id, { weightPricing });
+
+      if (!product) {
+        return res.status(404).json({ success: false, error: 'Product not found' });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Product pricing updated successfully',
+        product
+      });
+    }
+
+    const collection = getCollection(req, 'products');
+    const productId = toObjectId(req.params.id);
+    const result = await collection.findOneAndUpdate(
+      { _id: productId },
+      { $set: { weightPricing, updatedAt: new Date() } },
+      { returnDocument: 'after' }
+    );
+
+    const product = result.value || result;
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Product pricing updated successfully',
+      product: { ...product, id: product._id.toString() }
+    });
+  } catch (error) {
+    console.error(`❌ Error updating product pricing ${req.params.id}:`, error);
+    return res.status(500).json({ success: false, error: 'Failed to update product pricing' });
   }
 });
 

@@ -13,6 +13,20 @@ const ProductPricing = () => {
 
     const weights = ['100g', '250g', '500g', '1kg'];
 
+    const normalizePricingForForm = (weightPricing = []) => {
+        if (!Array.isArray(weightPricing)) {
+            return weightPricing || {};
+        }
+
+        return weightPricing.reduce((acc, item) => {
+            const key = item.weightDisplay || (item.weight ? `${item.weight}g` : null);
+            if (key) {
+                acc[key] = item.price;
+            }
+            return acc;
+        }, {});
+    };
+
     useEffect(() => {
         fetchProducts();
     }, []);
@@ -21,7 +35,10 @@ const ProductPricing = () => {
         try {
             setLoading(true);
             const response = await axios.get(`${API_BASE_URL}/products`);
-            setProducts(response.data.products);
+            setProducts((response.data.products || []).map(product => ({
+                ...product,
+                weightPricing: normalizePricingForForm(product.weightPricing)
+            })));
         } catch (error) {
             console.error('Failed to fetch products:', error);
             setMessage('Không thể tải danh sách sản phẩm');

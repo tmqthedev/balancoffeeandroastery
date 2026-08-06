@@ -260,6 +260,169 @@ async function listOrdersForCustomer(customerId, { page = 1, limit = 10, status 
   };
 }
 
+async function listOrders({ page = 1, limit = 10, status, paymentStatus, startDate, endDate } = {}) {
+  const currentPage = Math.max(Number(page) || 1, 1);
+  const actualLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const offset = (currentPage - 1) * actualLimit;
+  const params = [];
+  const where = [];
+
+  if (status) {
+    params.push(status);
+    where.push(`status = $${params.length}`);
+  }
+
+  if (paymentStatus) {
+    params.push(paymentStatus);
+    where.push(`payment_status = $${params.length}`);
+  }
+
+  if (startDate) {
+    params.push(startDate);
+    where.push(`created_at >= $${params.length}`);
+  }
+
+  if (endDate) {
+    params.push(endDate);
+    where.push(`created_at <= $${params.length}`);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const countResult = await query(
+    `SELECT COUNT(*)::int AS count FROM orders ${whereSql}`,
+    params
+  );
+
+  const ordersResult = await query(`
+    SELECT *
+    FROM orders
+    ${whereSql}
+    ORDER BY created_at DESC NULLS LAST, id DESC
+    LIMIT $${params.length + 1}
+    OFFSET $${params.length + 2}
+  `, [...params, actualLimit, offset]);
+
+  const orders = [];
+  for (const orderRow of ordersResult.rows) {
+    const items = await getOrderItems(orderRow.id);
+    orders.push(mapOrderRow(orderRow, items));
+  }
+
+  const total = countResult.rows[0]?.count || 0;
+  return {
+    orders,
+    pagination: {
+      page: currentPage,
+      limit: actualLimit,
+      total,
+      totalPages: Math.ceil(total / actualLimit)
+    }
+  };
+}
+
+async function searchOrders(searchTerm, { page = 1, limit = 10 } = {}) {
+  const currentPage = Math.max(Number(page) || 1, 1);
+  const actualLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const offset = (currentPage - 1) * actualLimit;
+  const search = `%${searchTerm || ''}%`;
+  const params = [search];
+
+  const whereSql = `
+    WHERE order_number ILIKE $1
+       OR customer_email ILIKE $1
+       OR customer_first_name ILIKE $1
+       OR customer_last_name ILIKE $1
+       OR customer_full_name ILIKE $1
+       OR customer_phone ILIKE $1
+  `;
+
+  const countResult = await query(
+    `SELECT COUNT(*)::int AS count FROM orders ${whereSql}`,
+    params
+  );
+
+  const ordersResult = await query(`
+    SELECT *
+    FROM orders
+    ${whereSql}
+    ORDER BY created_at DESC NULLS LAST, id DESC
+    LIMIT $2
+    OFFSET $3
+  `, [search, actualLimit, offset]);
+
+  const orders = [];
+  for (const orderRow of ordersResult.rows) {
+    const items = await getOrderItems(orderRow.id);
+    orders.push(mapOrderRow(orderRow, items));
+  }
+
+  const total = countResult.rows[0]?.count || 0;
+  return {
+    orders,
+    pagination: {
+      page: currentPage,
+      limit: actualLimit,
+      total,
+      totalPages: Math.ceil(total / actualLimit)
+    }
+  };
+}
+
+async function getOrderStatistics() {
+  const totalsResult = await query(`
+    SELECT
+      COUNT(*)::int AS total_orders,
+      COALESCE(SUM(total), 0)::numeric AS total_revenue,
+      COALESCE(AVG(total), 0)::numeric AS average_order_value
+    FROM orders
+  `);
+
+  const statusResult = await query(`
+    SELECT status, COUNT(*)::int AS count
+    FROM orders
+    GROUP BY status
+  `);
+
+  const paymentResult = await query(`
+    SELECT payment_status, COUNT(*)::int AS count
+    FROM orders
+    GROUP BY payment_status
+  `);
+
+  const totals = totalsResult.rows[0] || {};
+
+  return {
+    totalOrders: totals.total_orders || 0,
+    totalRevenue: toNumber(totals.total_revenue),
+    averageOrderValue: toNumber(totals.average_order_value),
+    byStatus: Object.fromEntries(statusResult.rows.map(row => [row.status || 'unknown', row.count])),
+    byPaymentStatus: Object.fromEntries(paymentResult.rows.map(row => [row.payment_status || 'unknown', row.count]))
+  };
+}
+
+async function updateOrderStatus(orderNumber, { status, notes, updatedBy } = {}) {
+  const event = [{
+    type: 'status_updated',
+    status,
+    notes: notes || '',
+    updatedAt: new Date().toISOString(),
+    updatedBy
+  }];
+
+  const result = await query(`
+    UPDATE orders
+    SET status = $2,
+        timeline = COALESCE(timeline, '[]'::jsonb) || $3::jsonb,
+        updated_at = $4
+    WHERE order_number = $1
+    RETURNING *
+  `, [orderNumber, status, JSON.stringify(event), new Date()]);
+
+  if (!result.rows[0]) return null;
+  const items = await getOrderItems(result.rows[0].id);
+  return mapOrderRow(result.rows[0], items);
+}
+
 async function cancelOrder(orderNumber, { reason, cancelledBy } = {}) {
   const event = [{
     type: 'cancelled',
@@ -288,7 +451,7 @@ async function updatePayment(orderNumber, { method, status = 'pending' } = {}) {
 
   const payment = {
     ...(existing.payment || {}),
-    method,
+    method: method || existing.payment?.method || existing.paymentMethod || 'cod',
     status
   };
 
@@ -300,7 +463,7 @@ async function updatePayment(orderNumber, { method, status = 'pending' } = {}) {
         updated_at = $5
     WHERE order_number = $1
     RETURNING *
-  `, [orderNumber, payment, method, status, new Date()]);
+  `, [orderNumber, payment, payment.method, status, new Date()]);
 
   const items = await getOrderItems(result.rows[0].id);
   return mapOrderRow(result.rows[0], items);
@@ -353,8 +516,12 @@ async function countOrders() {
 
 module.exports = {
   createOrder,
+  listOrders,
   listOrdersForCustomer,
+  searchOrders,
+  getOrderStatistics,
   getOrderByNumber,
+  updateOrderStatus,
   cancelOrder,
   updatePayment,
   getPublicOrder,
