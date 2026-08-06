@@ -7,6 +7,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import { LoadingSpinner } from './components/common/Loading';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import AIChatbot from './components/common/AIChatbot';
 
 // Lazy load route components
 const PublicRoutes = React.lazy(() => import('./routes/PublicRoutes'));
@@ -26,8 +27,8 @@ const AppLayout = () => {
           } />
         </Routes>
       </main>
-      
       <Footer />
+      <AIChatbot />
     </div>
   );
 };
