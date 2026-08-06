@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const { getCollection, handleDatabaseError } = require('../middleware/mongoHelpers');
+const postgresContent = require('../repositories/postgresContentRepository');
 
 // Create contact form submission
 router.post('/', [
@@ -19,8 +20,6 @@ router.post('/', [
 
     const { name, email, phone, subject, message } = req.body;
 
-    // Create and save contact using MongoDB native driver
-    const contactsCollection = getCollection(req, 'contacts');
     const contactData = {
       name,
       email,
@@ -35,9 +34,16 @@ router.post('/', [
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
-    const insertResult = await contactsCollection.insertOne(contactData);
-    const contact = { ...contactData, _id: insertResult.insertedId };
+
+    let contact;
+    if (req.databaseProvider === 'postgres') {
+      contact = await postgresContent.createContact(contactData);
+    } else {
+      // Create and save contact using MongoDB native driver
+      const contactsCollection = getCollection(req, 'contacts');
+      const insertResult = await contactsCollection.insertOne(contactData);
+      contact = { ...contactData, _id: insertResult.insertedId };
+    }
 
     // Gửi email thông báo cho quản lý bộ phận
     const { notifyManagers } = require('../services/contactNotificationService');
@@ -76,21 +82,28 @@ router.post('/newsletter', [
 
     const { email } = req.body;
 
-    const subscriptionsCollection = getCollection(req, 'subscriptions');
-
-    // Check if email already exists
-    const existingSubscription = await subscriptionsCollection.findOne({ email });
+    let existingSubscription;
+    if (req.databaseProvider === 'postgres') {
+      existingSubscription = await postgresContent.findSubscriptionByEmail(email);
+    } else {
+      const subscriptionsCollection = getCollection(req, 'subscriptions');
+      existingSubscription = await subscriptionsCollection.findOne({ email });
+    }
 
     if (existingSubscription) {
       return res.status(400).json({ error: 'Email is already subscribed to our newsletter' });
     }
 
-    // Insert subscription
-    await subscriptionsCollection.insertOne({
-      email,
-      isActive: true,
-      createdAt: new Date()
-    });
+    if (req.databaseProvider === 'postgres') {
+      await postgresContent.createSubscription(email);
+    } else {
+      const subscriptionsCollection = getCollection(req, 'subscriptions');
+      await subscriptionsCollection.insertOne({
+        email,
+        isActive: true,
+        createdAt: new Date()
+      });
+    }
 
     res.status(201).json({
       message: 'Successfully subscribed to newsletter!'
@@ -114,20 +127,24 @@ router.post('/newsletter/unsubscribe', [
 
     const { email } = req.body;
 
-    const subscriptionsCollection = getCollection(req, 'subscriptions');
+    let found;
+    if (req.databaseProvider === 'postgres') {
+      found = await postgresContent.unsubscribe(email);
+    } else {
+      const subscriptionsCollection = getCollection(req, 'subscriptions');
+      const result = await subscriptionsCollection.updateOne(
+        { email },
+        {
+          $set: {
+            isActive: false,
+            updatedAt: new Date()
+          }
+        }
+      );
+      found = result.matchedCount > 0;
+    }
 
-    // Update subscription status
-    const result = await subscriptionsCollection.updateOne(
-      { email },
-      { 
-        $set: { 
-          isActive: false,
-          updatedAt: new Date()
-        } 
-      }
-    );
-
-    if (result.matchedCount === 0) {
+    if (!found) {
       return res.status(404).json({ error: 'Email not found in our subscription list' });
     }
 

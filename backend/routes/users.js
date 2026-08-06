@@ -5,10 +5,38 @@ const { body, validationResult } = require('express-validator');
 const { authenticateToken } = require('../middleware/auth');
 const { validateRequest, addressValidationRules } = require('../middleware/validation');
 const { getCollection, toObjectId, handleDatabaseError } = require('../middleware/mongoHelpers');
+const postgresUsers = require('../repositories/postgresUsersRepository');
 
 // Get user profile (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
+    if (req.databaseProvider === 'postgres') {
+      const user = await postgresUsers.findByLegacyId(req.user.userId);
+
+      if (!user || user.status !== 'active') {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      return res.json({
+        success: true,
+        user: {
+          _id: user._id,
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+          role: user.role,
+          avatar: user.avatar,
+          addresses: user.addresses || [],
+          preferences: user.preferences || {},
+          emailVerified: user.emailVerified,
+          phoneVerified: user.phoneVerified,
+          createdAt: user.createdAt
+        }
+      });
+    }
+
     const usersCollection = getCollection(req, 'users');
     const userId = toObjectId(req.user.userId);
     
@@ -93,6 +121,63 @@ router.put('/profile', authenticateToken, [
     // Email is not allowed to be updated for security reasons
     if (req.body.email) {
       return res.status(400).json({ error: 'Email cannot be updated for security reasons' });
+    }
+
+    if (req.databaseProvider === 'postgres') {
+      const user = await postgresUsers.findByLegacyId(req.user.userId);
+      if (!user) {
+        console.log('âŒ User not found with ID:', req.user.userId);
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      const updateData = {
+        firstName,
+        lastName,
+        fullName: `${firstName || ''} ${lastName || ''}`.trim(),
+        phone: phone || undefined,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        gender: gender || undefined
+      };
+
+      if (address || wardCommune || district || province) {
+        const addresses = (user.addresses || []).filter(addr => !addr.isDefault);
+        addresses.push({
+          type: 'both',
+          firstName,
+          lastName,
+          street: address || '',
+          address1: address || '',
+          wardCommune: wardCommune || '',
+          district: district || '',
+          city: district || '',
+          province: province || '',
+          postalCode: postalCode || '',
+          country: 'VN',
+          phone: phone || undefined,
+          isDefault: true
+        });
+        updateData.addresses = addresses;
+      }
+
+      const updatedUser = await postgresUsers.updateProfile(req.user.userId, updateData);
+      return res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        user: {
+          _id: updatedUser._id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          phone: updatedUser.phone,
+          dateOfBirth: updatedUser.dateOfBirth,
+          gender: updatedUser.gender,
+          addresses: updatedUser.addresses,
+          role: updatedUser.role
+        }
+      });
     }
 
     const usersCollection = getCollection(req, 'users');
@@ -283,6 +368,19 @@ router.post('/addresses', authenticateToken, validateRequest(addressValidationRu
 // Get user addresses (protected route)
 router.get('/addresses', authenticateToken, async (req, res) => {
   try {
+    if (req.databaseProvider === 'postgres') {
+      const user = await postgresUsers.findByLegacyId(req.user.userId);
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      return res.json({
+        success: true,
+        addresses: user.addresses || []
+      });
+    }
+
     const usersCollection = getCollection(req, 'users');
     const userId = toObjectId(req.user.userId);
     

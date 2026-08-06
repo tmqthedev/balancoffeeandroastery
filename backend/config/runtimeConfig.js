@@ -66,7 +66,9 @@ async function loadRuntimeConfig() {
     nodeEnv: process.env.NODE_ENV || 'development',
     port: process.env.PORT || 5000,
     awsRegion: region,
+    databaseProvider: process.env.DATABASE_PROVIDER || 'mongodb',
     mongoUri: databaseSecret.MONGODB_URI || process.env.MONGODB_URI,
+    postgresUri: databaseSecret.POSTGRES_URI || process.env.POSTGRES_URI,
     emailHost: smtpSecret.EMAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
     emailPort: Number(smtpSecret.EMAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || 587),
     emailUser: smtpSecret.EMAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER,
@@ -79,7 +81,11 @@ async function loadRuntimeConfig() {
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173'
   };
 
-  requireValue(config, 'mongoUri');
+  if (config.databaseProvider === 'postgres') {
+    requireValue(config, 'postgresUri');
+  } else {
+    requireValue(config, 'mongoUri');
+  }
   requireValue(config, 'cognitoUserPoolId');
   requireValue(config, 'cognitoClientId');
 

@@ -11,6 +11,7 @@ const {
   validateRequired,
   cleanData
 } = require('../middleware/mongoHelpers');
+const postgresContent = require('../repositories/postgresContentRepository');
 
 console.log('📝 Backend: Blogs router loading');
 
@@ -28,6 +29,15 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     console.log('📝 Blogs query params:', { page, limit, search, category, lang });
+
+    if (req.databaseProvider === 'postgres') {
+      const result = await postgresContent.listBlogs({ page, limit, search, category });
+      return res.json({
+        success: true,
+        blogs: result.blogs,
+        pagination: result.pagination
+      });
+    }
 
     // Get blogs collection
     const blogsCollection = getCollection(req, 'blogs');
@@ -140,6 +150,12 @@ router.get('/categories', async (req, res) => {
   try {
     console.log('📁 Fetching blog categories...');
     
+    if (req.databaseProvider === 'postgres') {
+      const categories = await postgresContent.listBlogCategories();
+      console.log('ðŸ“ Blog categories found:', categories);
+      return res.json(categories);
+    }
+
     // Get blogs collection
     const blogsCollection = getCollection(req, 'blogs');
     
@@ -185,6 +201,26 @@ router.get('/:slug', async (req, res) => {
     const { slug } = req.params;
     
     console.log('📝 Fetching blog by slug:', slug);
+
+    if (req.databaseProvider === 'postgres') {
+      const { blog, relatedBlogs } = await postgresContent.getBlogBySlug(slug);
+
+      if (!blog) {
+        return res.status(404).json({
+          success: false,
+          message: 'KhÃ´ng tÃ¬m tháº¥y bÃ i viáº¿t'
+        });
+      }
+
+      console.log('ðŸ“ Blog found:', blog.title);
+      console.log('ðŸ”— Related blogs:', relatedBlogs.length);
+
+      return res.json({
+        success: true,
+        blog,
+        relatedBlogs
+      });
+    }
 
     // Get blogs collection
     const blogsCollection = getCollection(req, 'blogs');

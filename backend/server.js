@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { getRuntimeConfig } = require('./config/runtimeConfig');
+const { getPostgresPool, testPostgresConnection, closePostgresPool } = require('./config/postgres');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,7 @@ const PORT = process.env.PORT || 5000;
 console.log('🔗 MongoDB Configuration (Backend):');
 console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Using Secrets Manager:', !!process.env.DATABASE_SECRET_ID);
+console.log('   Database provider:', process.env.DATABASE_PROVIDER || 'mongodb');
 
 // MongoDB Client with optimized configuration for production
 const clientOptions = {
@@ -61,6 +63,7 @@ let client = null;
 // Global database connection flag
 let isConnected = false;
 let db = null;
+let activeDatabaseProvider = null;
 
 // Security middleware
 app.use(helmet({
@@ -143,12 +146,30 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // MongoDB Connection Function with Enhanced Logging
 async function connectToDatabase() {
   if (isConnected && db) {
-    console.log('✅ Using existing MongoDB connection (Backend)');
+    console.log(`✅ Using existing ${activeDatabaseProvider || 'database'} connection (Backend)`);
     return db;
   }
 
   try {
     const runtimeConfig = await getRuntimeConfig();
+
+    if (runtimeConfig.databaseProvider === 'postgres') {
+      console.log('Backend: Attempting to connect to PostgreSQL...');
+
+      const connectStart = Date.now();
+      const postgresPool = await getPostgresPool();
+      const connectionInfo = await testPostgresConnection();
+      const connectTime = Date.now() - connectStart;
+
+      db = postgresPool;
+      isConnected = true;
+      activeDatabaseProvider = 'postgres';
+
+      console.log(`Backend: PostgreSQL connected in ${connectTime}ms`);
+      console.log('Backend: Connected to PostgreSQL database:', connectionInfo.database);
+
+      return db;
+    }
 
     if (!client) {
       client = new MongoClient(runtimeConfig.mongoUri, clientOptions);
@@ -170,6 +191,7 @@ async function connectToDatabase() {
     
     db = client.db("balancoffee");
     isConnected = true;
+    activeDatabaseProvider = 'mongodb';
     
     console.log('🎯 Backend: Connected to database: balancoffee');
     console.log('📊 Backend Connection status:', { 
@@ -229,6 +251,7 @@ app.get('/health', async (req, res) => {
       message: 'Backend server and database are healthy',
       timestamp: new Date().toISOString(),
       database: isConnected ? 'Connected' : 'Disconnected',
+      databaseProvider: activeDatabaseProvider || 'unknown',
       responseTime: `${healthTime}ms`,
       environment: process.env.NODE_ENV || 'development',
       version: '1.0.0',
@@ -291,10 +314,15 @@ app.use(async (req, res, next) => {
   
   try {
     console.log(`🔌 Backend: Database middleware for ${req.method} ${req.originalUrl}`);
-    req.db = await connectToDatabase();
+    const databaseConnection = await connectToDatabase();
+    req.databaseProvider = activeDatabaseProvider || 'mongodb';
+    req.db = databaseConnection;
+    req.pg = req.databaseProvider === 'postgres' ? databaseConnection : null;
     
     // Make database globally available for passport
-    global.db = req.db;
+    if (req.databaseProvider === 'mongodb') {
+      global.db = req.db;
+    }
     
     const middlewareTime = Date.now() - middlewareStart;
     console.log(`✅ Backend: Database available for route in ${middlewareTime}ms`);
@@ -448,6 +476,7 @@ process.on('SIGTERM', async () => {
     if (client) {
       await client.close();
     }
+    await closePostgresPool();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
@@ -476,6 +505,7 @@ process.on('SIGINT', async () => {
     if (client) {
       await client.close();
     }
+    await closePostgresPool();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
