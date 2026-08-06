@@ -13,23 +13,31 @@ class BedrockService {
       console.warn('Could not load barista-knowledge.txt');
       this.baristaKnowledge = '- Arabica: Ít cafein, vị chua thanh, hương thơm phong phú.\n- Robusta: Nhiều cafein, vị đắng đậm, mạnh mẽ.';
     }
-    this.client = new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || 'ap-southeast-1',
-      credentials: {
+    const credentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       }
+      : undefined;
+
+    this.client = new BedrockRuntimeClient({
+      region: process.env.AWS_REGION || 'ap-southeast-1',
+      ...(credentials ? { credentials } : {})
     });
     // Use amazon.nova-lite-v1:0 or amazon.nova-micro-v1:0 for cost optimization
-    this.modelId = 'amazon.nova-lite-v1:0'; 
+    this.modelId = process.env.BEDROCK_MODEL_ID || 'amazon.nova-lite-v1:0'; 
   }
 
   async getRecommendations(prompt, products) {
     try {
       // Chuẩn bị dữ liệu context các sản phẩm
-      const productsContext = products.map(p => 
-        `ID: ${p._id.toString()} | Name: ${p.name} | Category: ${p.category} | Price: ${p.price} | Desc: ${p.description}`
-      ).join('\n');
+      const productsContext = products.map(p => {
+        const category = typeof p.category === 'object'
+          ? (p.category.slug || p.category.name || p.categoryId || '')
+          : (p.category || p.categoryId || '');
+
+        return `ID: ${p._id.toString()} | Name: ${p.name} | Category: ${category} | Price: ${p.price} | Desc: ${p.description}`;
+      }).join('\n');
 
       const systemPrompt = `Bạn là một chuyên gia về cà phê (Barista). Dựa trên kiến thức cơ bản về cà phê được cung cấp dưới đây:
 --- KIẾN THỨC BARISTA ---

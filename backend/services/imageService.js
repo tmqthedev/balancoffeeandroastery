@@ -6,12 +6,16 @@ const multerS3 = require('multer-s3');
 
 class ImageService {
   constructor() {
-    this.s3Client = new S3Client({
-      region: process.env.AWS_REGION || 'ap-southeast-1',
-      credentials: {
+    const credentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       }
+      : undefined;
+
+    this.s3Client = new S3Client({
+      region: process.env.AWS_REGION || 'ap-southeast-1',
+      ...(credentials ? { credentials } : {})
     });
     this.bucketName = process.env.AWS_S3_BUCKET_NAME;
 
@@ -62,6 +66,10 @@ class ImageService {
 
   // Upload a buffer to S3
   async uploadToS3(buffer, key, mimeType) {
+    if (!this.bucketName) {
+      throw new Error('AWS_S3_BUCKET_NAME is not configured');
+    }
+
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
@@ -146,6 +154,10 @@ class ImageService {
   // Delete image from S3
   async deleteS3Image(s3Key) {
     try {
+      if (!this.bucketName) {
+        throw new Error('AWS_S3_BUCKET_NAME is not configured');
+      }
+
       if (!s3Key) return false;
       const command = new DeleteObjectCommand({
         Bucket: this.bucketName,

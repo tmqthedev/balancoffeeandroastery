@@ -96,7 +96,7 @@ class ProductService {
       const data = await response.json();
       return {
         success: true,
-        products: data.products
+        products: Array.isArray(data) ? data : data.products
       };
     } catch (error) {
       console.error('Get featured products error:', error);

@@ -9,6 +9,7 @@ const {
   cleanData
 } = require('../middleware/mongoHelpers');
 const bedrockService = require('../services/bedrockService');
+const postgresCatalog = require('../repositories/postgresCatalogRepository');
 
 const productController = {
   // Test route
@@ -250,6 +251,39 @@ const productController = {
       }
 
       console.log(`🤖 Getting AI recommendations for: "${query}"`);
+
+      if (req.databaseProvider === 'postgres') {
+        const { products: allProducts } = await postgresCatalog.listProducts({
+          page: 1,
+          limit: 100,
+          sort: 'name_asc'
+        });
+        const availableProducts = allProducts.filter((product) => product.inStock !== false);
+
+        if (availableProducts.length === 0) {
+          return res.json({ success: true, recommendations: [] });
+        }
+
+        const recommendedIds = await bedrockService.getRecommendations(query, availableProducts);
+
+        if (!Array.isArray(recommendedIds) || recommendedIds.length === 0) {
+          return res.json({ success: true, recommendations: [] });
+        }
+
+        const recommendedProducts = [];
+        for (const id of recommendedIds) {
+          const product = await postgresCatalog.getProductByLegacyId(id);
+          if (product) {
+            recommendedProducts.push(product);
+          }
+        }
+
+        return res.json({
+          success: true,
+          recommendations: recommendedProducts
+        });
+      }
+
       const collection = getCollection(req, 'products');
       
       // Fetch all available products to provide as context
