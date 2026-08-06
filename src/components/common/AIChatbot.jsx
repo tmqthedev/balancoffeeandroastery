@@ -103,7 +103,9 @@ const AIChatbot = () => {
                                         : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm'
                                 }`}
                             >
-                                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                <p className={`text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                                    {msg.text}
+                                </p>
                             </div>
                             
                             {/* Render Recommendations if AI role and has products */}
