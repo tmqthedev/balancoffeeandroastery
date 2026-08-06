@@ -73,6 +73,10 @@ async function loadRuntimeConfig() {
     emailPort: Number(smtpSecret.EMAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || 587),
     emailUser: smtpSecret.EMAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER,
     emailPassword: smtpSecret.EMAIL_PASSWORD || process.env.EMAIL_PASSWORD || process.env.SMTP_PASS,
+    emailFrom:
+    smtpSecret.EMAIL_FROM ||
+    process.env.EMAIL_FROM ||
+    'balancoffee.roastery@gmail.com',
     cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID,
     cognitoClientId: process.env.COGNITO_CLIENT_ID,
     cognitoClientSecret: cognitoSecret.COGNITO_CLIENT_SECRET || process.env.COGNITO_CLIENT_SECRET,
@@ -80,6 +84,8 @@ async function loadRuntimeConfig() {
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173'
   };
+
+  
 
   if (config.databaseProvider !== 'postgres') {
     throw new Error('MongoDB runtime mode has been disabled. Set DATABASE_PROVIDER=postgres.');

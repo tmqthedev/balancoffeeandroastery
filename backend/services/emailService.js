@@ -9,6 +9,7 @@ class EmailService {
         this.transporter = null;
         this.initializingPromise = null;
         this.emailUser = null;
+        this.emailFrom = null;
     }
 
     async ensureTransport() {
@@ -23,9 +24,16 @@ class EmailService {
         this.initializingPromise = (async () => {
             try {
                 const runtimeConfig = await getRuntimeConfig();
-                const { emailHost, emailPort, emailUser, emailPassword } = runtimeConfig;
+                const { 
+                     emailHost,
+                    emailPort,
+                    emailUser,
+                    emailPassword,
+                    emailFrom
+                 } = runtimeConfig;
 
                 this.emailUser = emailUser;
+                this.emailFrom = emailFrom;
 
                 if (!emailUser || !emailPassword) {
                     console.warn('⚠️ Email service not configured (SMTP credentials missing)');
@@ -77,7 +85,7 @@ class EmailService {
             const mailOptions = {
                 from: {
                     name: 'Balan Coffee & Roastery',
-                    address: this.emailUser
+                    address: this.emailFrom
                 },
                 to,
                 subject,
@@ -91,6 +99,14 @@ class EmailService {
                 subject,
                 messageId: result.messageId
             });
+
+            console.log("FULL RESULT:");
+            console.dir(result, { depth: null });
+
+            return {
+                success: true,
+                messageId: result.messageId
+            };
             return { success: true, messageId: result.messageId };
         } catch (error) {
             console.error('❌ Email send failed:', error);
