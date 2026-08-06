@@ -79,8 +79,8 @@ const AIChatbot = () => {
                             <MdCoffeeMaker size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg leading-tight">AI Barista</h3>
-                            <p className="text-xs text-white/80">Sẵn sàng tư vấn</p>
+                            <h3 className="font-black text-xl uppercase tracking-widest text-white drop-shadow-md">AI Barista</h3>
+                            <p className="text-xs text-white/90 font-medium tracking-wide mt-0.5">SẴN SÀNG TƯ VẤN</p>
                         </div>
                     </div>
                     <button 
