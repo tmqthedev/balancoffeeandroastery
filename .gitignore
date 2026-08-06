@@ -12,15 +12,11 @@ dist-ssr/
 build/
 .vite/
 
-# Environment variables
+# Environment variables (root/frontend)
 .env
 .env.local
 .env.development
 .env.production
-backend/.env
-backend/.env.local
-backend/.env.production
-backend/.env.development
 
 # Firebase
 *-service-account.json
@@ -29,7 +25,6 @@ firebase-adminsdk-*.json
 .firebaserc
 
 # Upload directories
-backend/uploads/
 uploads/
 !uploads/.gitkeep
 
