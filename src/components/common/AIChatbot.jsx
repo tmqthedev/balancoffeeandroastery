@@ -40,7 +40,7 @@ const AIChatbot = () => {
             // Based on standard vite setups, we'll try relative first, but fallback if needed.
             // Let's use the explicit backend URL to be safe in dev environment, 
             // but ideally we should use environment variables.
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const apiUrl = import.meta.env.VITE_API_URL || '/api';
             const response = await fetch(`${apiUrl}/products/recommendations?query=${encodeURIComponent(userMsg)}`);
             
             if (!response.ok) throw new Error('Network response was not ok');
