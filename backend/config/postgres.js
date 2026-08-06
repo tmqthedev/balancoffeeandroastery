@@ -14,6 +14,18 @@ function normalizePostgresConnectionString(uri) {
   return url.toString();
 }
 
+function getPostgresSslConfig() {
+  const sslMode = process.env.POSTGRES_SSLMODE || 'no-verify';
+
+  if (sslMode === 'disable') {
+    return false;
+  }
+
+  return {
+    rejectUnauthorized: sslMode !== 'no-verify'
+  };
+}
+
 async function getPostgresPool() {
   if (pool) {
     return pool;
@@ -22,6 +34,7 @@ async function getPostgresPool() {
   const config = await getRuntimeConfig();
   pool = new Pool({
     connectionString: normalizePostgresConnectionString(config.postgresUri),
+    ssl: getPostgresSslConfig(),
     max: process.env.NODE_ENV === 'production' ? 5 : 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000
