@@ -8,11 +8,18 @@ let verifierPromise = null;
 
 async function getVerifier() {
   if (!verifierPromise) {
-    verifierPromise = getRuntimeConfig().then((config) => CognitoJwtVerifier.create({
-      userPoolId: config.cognitoUserPoolId,
-      tokenUse: 'access',
-      clientId: config.cognitoClientId
-    }));
+    verifierPromise = getRuntimeConfig().then((config) => {
+      console.log('JWT CONFIG', {
+        userPoolId: config.cognitoUserPoolId,
+        clientId: config.cognitoClientId
+      });
+
+      return CognitoJwtVerifier.create({
+        userPoolId: config.cognitoUserPoolId,
+        tokenUse: 'access',
+        clientId: config.cognitoClientId
+      });
+    });
   }
 
   return verifierPromise;
@@ -135,6 +142,20 @@ async function authenticateToken(req, res, next) {
         success: false,
         message: 'Access token is required'
       });
+    }
+
+    // Decode token payload (no verification) for diagnostics
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(token.split('.')[1], 'base64url').toString()
+      );
+      console.log('JWT TOKEN', {
+        iss: decoded.iss,
+        client_id: decoded.client_id,
+        aud: decoded.aud
+      });
+    } catch (e) {
+      // ignore decode errors for diagnostics
     }
 
     const verifier = await getVerifier();
