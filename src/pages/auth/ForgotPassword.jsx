@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
@@ -15,6 +15,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +26,8 @@ const ForgotPassword = () => {
     try {
       const response = await forgotPasswordApi.post('/auth/forgot-password', { email });
       setMessage(response.data.message || 'Email khôi phục mật khẩu đã được gửi đến địa chỉ email của bạn.');
-      setEmailSent(true);
+      // Redirect user to reset password screen with email pre-filled
+      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (error) {
       console.error('Forgot password error:', error);
       setError(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
