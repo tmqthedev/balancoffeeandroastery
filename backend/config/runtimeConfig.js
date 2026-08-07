@@ -34,6 +34,22 @@ async function loadSecret(secretId) {
   return secretValue;
 }
 
+async function loadSecretWithLogging(envVarName, secretId, displayName) {
+  logger.info(`Loading ${envVarName}...`);
+
+  try {
+    const secretValue = await loadSecret(secretId);
+    logger.info(`${displayName} secret loaded successfully.`);
+    return secretValue;
+  } catch (error) {
+    logger.error(`Failed to load ${envVarName} from Secrets Manager.`, {
+      code: error.name || error.code || 'UnknownError',
+      message: error.message || String(error)
+    });
+    throw error;
+  }
+}
+
 function requireValue(config, key) {
   if (!config[key]) {
     throw new Error(`Missing required runtime config: ${key}`);
@@ -53,10 +69,10 @@ async function loadRuntimeConfig() {
 
   try {
     [databaseSecret, smtpSecret, cognitoSecret, authSecret] = await Promise.all([
-      loadSecret(databaseSecretId),
-      loadSecret(smtpSecretId),
-      loadSecret(cognitoSecretId),
-      loadSecret(authSecretId)
+      loadSecretWithLogging('DATABASE_SECRET_ID', databaseSecretId, 'Database'),
+      loadSecretWithLogging('SMTP_SECRET_ID', smtpSecretId, 'SMTP'),
+      loadSecretWithLogging('COGNITO_SECRET_ID', cognitoSecretId, 'Cognito'),
+      loadSecretWithLogging('AUTH_SECRET_ID', authSecretId, 'Auth')
     ]);
   } catch (error) {
     if (isProduction) {
