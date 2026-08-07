@@ -157,7 +157,7 @@ const CheckoutContent = ({ auth, cart }) => {
             // Refresh user data to ensure we have the latest information
             refreshUser();
         }
-    }, [user, refreshUser]);
+    }, [refreshUser]);
 
     // Real-time validation effect
     useEffect(() => {
