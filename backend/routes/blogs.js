@@ -12,13 +12,14 @@ const {
   cleanData
 } = require('../middleware/mongoHelpers');
 const postgresContent = require('../repositories/postgresContentRepository');
+const logger = require('../utils/logger');
 
-console.log('📝 Backend: Blogs router loading');
+logger.info('📝 Backend: Blogs router loading');
 
 // Get all blogs with filtering, search and pagination
 router.get('/', async (req, res) => {
   try {
-    console.log('📝 Fetching blogs');
+    logger.debug('📝 Fetching blogs');
     
     const {
       page = 1,
@@ -28,7 +29,7 @@ router.get('/', async (req, res) => {
       lang = 'vi'
     } = req.query;
 
-    console.log('📝 Blogs query params:', { page, limit, search, category, lang });
+    logger.debug('📝 Blogs query params:', { page, limit, search, category, lang });
 
     if (req.databaseProvider === 'postgres') {
       const result = await postgresContent.listBlogs({ page, limit, search, category });
@@ -54,18 +55,18 @@ router.get('/', async (req, res) => {
     }
     
     if (category) {
-      console.log('🔍 Filtering by category:', category);
+      logger.debug('🔍 Filtering by category:', category);
       
       // Normalize Unicode for Vietnamese characters
       const normalizedCategory = category.normalize('NFC');
-      console.log('🔍 Normalized category:', normalizedCategory);
+      logger.debug('🔍 Normalized category:', normalizedCategory);
       
       // Handle both string and object category formats
       filter.$or = [
         { category: normalizedCategory }, // For string format
         { 'category.name': normalizedCategory } // For object format {name: "category"}
       ];
-      console.log('🔍 Filter object:', JSON.stringify(filter, null, 2));
+      logger.debug('🔍 Filter object:', JSON.stringify(filter, null, 2));
     }
 
     // Build sort object (newest first)
@@ -76,7 +77,7 @@ router.get('/', async (req, res) => {
     const totalBlogs = await blogsCollection.countDocuments(filter);
     const totalPages = Math.ceil(totalBlogs / actualLimit);
 
-    console.log('📊 Blogs count:', totalBlogs);
+    logger.debug('📊 Blogs count:', totalBlogs);
 
     // Fetch blogs
     const blogs = await blogsCollection
@@ -96,7 +97,7 @@ router.get('/', async (req, res) => {
       })
       .toArray();
 
-    console.log('📝 Blogs found:', blogs.length);
+    logger.debug('📝 Blogs found:', blogs.length);
     
     // Add id field for frontend compatibility
     const blogsWithId = blogs.map(blog => ({
@@ -106,7 +107,7 @@ router.get('/', async (req, res) => {
     
     // Debug: Log first few blogs with their categories
     if (blogsWithId.length > 0) {
-      console.log('🔍 Sample blog categories:');
+      logger.debug('🔍 Sample blog categories:');
       blogsWithId.slice(0, 2).forEach(blog => {
         console.log(`- Blog: ${blog.title}`);
         console.log(`  Category:`, blog.category);
@@ -114,7 +115,7 @@ router.get('/', async (req, res) => {
       });
     } else if (category) {
       // If no results with filter, let's check what categories exist
-      console.log('🔍 No results found. Checking all published blogs...');
+      logger.debug('🔍 No results found. Checking all published blogs...');
       const allBlogs = await blogsCollection
         .find({ status: 'published' })
         .project({ title: 1, category: 1 })
@@ -140,7 +141,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error fetching blogs:', error);
+    logger.error('❌ Error fetching blogs:', error);
     return handleDatabaseError(error, res, 'Fetch blogs');
   }
 });
@@ -148,11 +149,11 @@ router.get('/', async (req, res) => {
 // Get blog categories
 router.get('/categories', async (req, res) => {
   try {
-    console.log('📁 Fetching blog categories...');
+    logger.debug('📁 Fetching blog categories...');
     
     if (req.databaseProvider === 'postgres') {
       const categories = await postgresContent.listBlogCategories();
-      console.log('ðŸ“ Blog categories found:', categories);
+      logger.debug('📁 Blog categories found:', categories);
       return res.json(categories);
     }
 
@@ -185,12 +186,12 @@ router.get('/categories', async (req, res) => {
     
     const categories = Array.from(categoriesSet).filter(cat => cat);
     
-    console.log('📁 Blog categories found:', categories);
+    logger.debug('📁 Blog categories found:', categories);
 
     res.json(categories); // Return array of strings
 
   } catch (error) {
-    console.error('❌ Error fetching blog categories:', error);
+    logger.error('❌ Error fetching blog categories:', error);
     return handleDatabaseError(error, res, 'Fetch blog categories');
   }
 });
@@ -200,7 +201,7 @@ router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     
-    console.log('📝 Fetching blog by slug:', slug);
+    logger.debug('📝 Fetching blog by slug:', slug);
 
     if (req.databaseProvider === 'postgres') {
       const { blog, relatedBlogs } = await postgresContent.getBlogBySlug(slug);
@@ -212,8 +213,8 @@ router.get('/:slug', async (req, res) => {
         });
       }
 
-      console.log('ðŸ“ Blog found:', blog.title);
-      console.log('ðŸ”— Related blogs:', relatedBlogs.length);
+      logger.debug('📝 Blog found:', blog.title);
+      logger.debug('📝 Related blogs:', relatedBlogs.length);
 
       return res.json({
         success: true,
@@ -259,8 +260,8 @@ router.get('/:slug', async (req, res) => {
       id: blog._id.toString()
     }));
 
-    console.log('📝 Blog found:', blog.title);
-    console.log('🔗 Related blogs:', relatedBlogs.length);
+    logger.debug('📝 Blog found:', blog.title);
+    logger.debug('🔗 Related blogs:', relatedBlogs.length);
 
     res.json({
       success: true,

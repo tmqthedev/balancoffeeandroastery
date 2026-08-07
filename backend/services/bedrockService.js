@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedrock-runtime');
+const logger = require('../utils/logger');
 
 class BedrockService {
   constructor() {
@@ -10,7 +11,7 @@ class BedrockService {
         'utf8'
       );
     } catch (err) {
-      console.warn('Could not load barista-knowledge.txt');
+      logger.warn('Could not load barista-knowledge.txt');
       this.baristaKnowledge = '- Arabica: Ít cafein, vị chua thanh, hương thơm phong phú.\n- Robusta: Nhiều cafein, vị đắng đậm, mạnh mẽ.';
     }
     const credentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
@@ -75,8 +76,11 @@ Ví dụ:
         }
       });
 
+      logger.debug('Bedrock recommendation request prepared for', products.length, 'products');
+
       const response = await this.client.send(command);
       const textOutput = response.output.message.content[0].text;
+      logger.debug('Bedrock model response received');
       
       // Parse the JSON object from the text output
       // In case the model adds some text before/after the JSON
@@ -87,7 +91,7 @@ Ví dụ:
         return JSON.parse(textOutput);
       }
     } catch (error) {
-      console.error('Error getting recommendations from Bedrock:', error);
+      logger.error('Error getting recommendations from Bedrock:', error);
       throw error;
     }
   }

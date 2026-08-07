@@ -10,6 +10,7 @@ const {
 } = require('../middleware/mongoHelpers');
 const bedrockService = require('../services/bedrockService');
 const postgresCatalog = require('../repositories/postgresCatalogRepository');
+const logger = require('../utils/logger');
 
 const productController = {
   // Test route
@@ -20,7 +21,7 @@ const productController = {
   // Get all products with pagination, search, and filtering
   getProducts: async (req, res) => {
     try {
-      console.log('📋 Fetching products list');
+      logger.debug('📋 Fetching products list');
       
       const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice, sort } = req.query;
       const collection = getCollection(req, 'products');
@@ -72,7 +73,7 @@ const productController = {
         }
       });
     } catch (error) {
-      console.error('❌ Error fetching products:', error);
+      logger.error('❌ Error fetching products:', error);
       return res.status(500).json({ success: false, error: 'Failed to fetch products', details: error.message });
     }
   },
@@ -80,7 +81,7 @@ const productController = {
   // Get featured products
   getFeaturedProducts: async (req, res) => {
     try {
-      console.log('⭐ Fetching featured products');
+      logger.debug('⭐ Fetching featured products');
       const { limit = 8 } = req.query;
       const collection = getCollection(req, 'products');
       
@@ -96,7 +97,7 @@ const productController = {
       
       res.json(featuredProductsWithId);
     } catch (error) {
-      console.error('❌ Error fetching featured products:', error);
+      logger.error('❌ Error fetching featured products:', error);
       return res.status(500).json({ success: false, error: 'Failed to fetch featured products' });
     }
   },
@@ -104,12 +105,12 @@ const productController = {
   // Get categories
   getCategories: async (req, res) => {
     try {
-      console.log('📂 Fetching product categories');
+      logger.debug('📂 Fetching product categories');
       const collection = getCollection(req, 'products');
       const categories = await collection.distinct('category');
       res.json(categories);
     } catch (error) {
-      console.error('❌ Error fetching categories:', error);
+      logger.error('❌ Error fetching categories:', error);
       return res.status(500).json({ success: false, error: 'Failed to fetch categories' });
     }
   },
@@ -117,7 +118,7 @@ const productController = {
   // Get single product
   getProduct: async (req, res) => {
     try {
-      console.log(`🔍 Fetching product ${req.params.id}`);
+      logger.debug(`🔍 Fetching product ${req.params.id}`);
       const collection = getCollection(req, 'products');
       const productId = toObjectId(req.params.id);
       
@@ -143,7 +144,7 @@ const productController = {
         relatedProducts: relatedProductsWithId
       });
     } catch (error) {
-      console.error(`❌ Error fetching product ${req.params.id}:`, error);
+      logger.error(`❌ Error fetching product ${req.params.id}:`, error);
       return res.status(500).json({ success: false, error: 'Failed to fetch product' });
     }
   },
@@ -151,7 +152,7 @@ const productController = {
   // Create product (Admin)
   createProduct: async (req, res) => {
     try {
-      console.log('➕ Creating new product');
+      logger.debug('➕ Creating new product');
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Admin access required' });
       }
@@ -175,7 +176,7 @@ const productController = {
       const result = await createDocument(collection, productData);
       res.status(201).json({ message: 'Product created successfully', product: result });
     } catch (error) {
-      console.error('❌ Error creating product:', error);
+      logger.error('❌ Error creating product:', error);
       return res.status(500).json({ success: false, error: 'Failed to create product' });
     }
   },
@@ -183,7 +184,7 @@ const productController = {
   // Update product (Admin)
   updateProduct: async (req, res) => {
     try {
-      console.log(`✏️ Updating product ${req.params.id}`);
+      logger.debug(`✏️ Updating product ${req.params.id}`);
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Admin access required' });
       }
@@ -210,7 +211,7 @@ const productController = {
       
       res.json({ message: 'Product updated successfully', product: result });
     } catch (error) {
-      console.error(`❌ Error updating product ${req.params.id}:`, error);
+      logger.error(`❌ Error updating product ${req.params.id}:`, error);
       return res.status(500).json({ success: false, error: 'Failed to update product' });
     }
   },
@@ -218,7 +219,7 @@ const productController = {
   // Delete product (Admin)
   deleteProduct: async (req, res) => {
     try {
-      console.log(`🗑️ Deleting product ${req.params.id}`);
+      logger.debug(`🗑️ Deleting product ${req.params.id}`);
       if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Admin access required' });
       }
@@ -237,7 +238,7 @@ const productController = {
       
       res.json({ message: 'Product deleted successfully' });
     } catch (error) {
-      console.error(`❌ Error deleting product ${req.params.id}:`, error);
+      logger.error(`❌ Error deleting product ${req.params.id}:`, error);
       return res.status(500).json({ success: false, error: 'Failed to delete product' });
     }
   },
@@ -250,7 +251,9 @@ const productController = {
         return res.status(400).json({ success: false, message: 'Query prompt is required' });
       }
 
-      console.log(`🤖 Getting AI recommendations for: "${query}"`);
+      logger.info(`🤖 Getting AI recommendations for: "${query}"`);
+      logger.debug('Database Provider:', req.databaseProvider);
+      logger.debug('Query:', query);
 
       if (req.databaseProvider === 'postgres') {
         const { products: allProducts } = await postgresCatalog.listProducts({
@@ -259,12 +262,16 @@ const productController = {
           sort: 'name_asc'
         });
         const availableProducts = allProducts.filter((product) => product.inStock !== false);
+        logger.debug('Total products:', allProducts.length);
+        logger.debug('Available products:', availableProducts.length);
+        
 
         if (availableProducts.length === 0) {
           return res.json({ success: true, reply: "Hiện tại cửa hàng không có sản phẩm nào phù hợp.", recommendations: [] });
         }
 
         const bedrockResponse = await bedrockService.getRecommendations(query, availableProducts);
+
         const recommendedIds = bedrockResponse.recommendedIds || [];
         const reply = bedrockResponse.reply || "Gợi ý dành cho bạn:";
 
@@ -320,7 +327,7 @@ const productController = {
         recommendations: productsWithId
       });
     } catch (error) {
-      console.error('❌ Error getting AI recommendations:', error);
+      logger.error('❌ Error getting AI recommendations:', error);
       res.status(500).json({ success: false, error: 'Failed to get recommendations', details: error.message });
     }
   }

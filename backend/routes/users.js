@@ -70,7 +70,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Get user profile error:', error);
+    logger.error('❌ Get user profile error:', error);
     return handleDatabaseError(error, res, 'fetch user profile');
   }
 });
@@ -90,13 +90,13 @@ router.put('/profile', authenticateToken, [
   body('postalCode').optional().matches(/^[0-9]{5,6}$/).withMessage('Mã bưu điện phải có 5-6 chữ số')
 ], async (req, res) => {
   try {
-    console.log('🔍 Profile update request received');
-    console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
-    console.log('👤 User ID:', req.user.userId);
+    logger.debug('🔍 Profile update request received');
+    logger.debug('📋 Request body:', JSON.stringify(req.body, null, 2));
+    logger.debug('👤 User ID:', req.user.userId);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('❌ Validation errors:', errors.array());
+      logger.warn('❌ Validation errors:', errors.array());
       return res.status(400).json({ 
         success: false,
         errors: errors.array(),
@@ -126,7 +126,7 @@ router.put('/profile', authenticateToken, [
     if (req.databaseProvider === 'postgres') {
       const user = await postgresUsers.findByLegacyId(req.user.userId);
       if (!user) {
-        console.log('âŒ User not found with ID:', req.user.userId);
+        logger.warn('❌ User not found with ID:', req.user.userId);
         return res.status(404).json({
           success: false,
           error: 'User not found'
@@ -185,14 +185,14 @@ router.put('/profile', authenticateToken, [
     
     const user = await usersCollection.findOne({ _id: userId });
     if (!user) {
-      console.log('❌ User not found with ID:', req.user.userId);
+      logger.warn('❌ User not found with ID:', req.user.userId);
       return res.status(404).json({ 
         success: false,
         error: 'User not found' 
       });
     }
     
-    console.log('✅ User found:', {
+    logger.debug('✅ User found:', {
       id: user._id,
       email: user.email,
       currentAddresses: user.addresses?.length || 0
@@ -210,7 +210,7 @@ router.put('/profile', authenticateToken, [
 
     // Update or create default address if address information is provided
     if (address || wardCommune || district || province) {
-      console.log('🏠 Processing address update:', { address, wardCommune, district, province });
+      logger.debug('🏠 Processing address update:', { address, wardCommune, district, province });
       
       // FORCE CREATE NEW ADDRESS WITH PROPER STRUCTURE
       // Remove existing default address
@@ -236,7 +236,7 @@ router.put('/profile', authenticateToken, [
       addresses.push(newAddress);
       updateData.addresses = addresses;
       
-      console.log('🆕 Force created new address with proper Vietnamese structure:', {
+      logger.debug('🆕 Force created new address with proper Vietnamese structure:', {
         street: newAddress.street,
         address1: newAddress.address1,
         wardCommune: newAddress.wardCommune,
@@ -265,8 +265,8 @@ router.put('/profile', authenticateToken, [
       { _id: userId },
       { projection: { password: 0 } }
     );
-    console.log('✅ User profile updated and saved successfully');
-    console.log('📤 Returning user data:', {
+    logger.info('✅ User profile updated and saved successfully');
+    logger.debug('📤 Returning user data:', {
       addresses: updatedUser.addresses,
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName
@@ -289,7 +289,7 @@ router.put('/profile', authenticateToken, [
     });
 
   } catch (error) {
-    console.error('❌ Update user profile error:', error);
+    logger.error('❌ Update user profile error:', error);
     return handleDatabaseError(error, res, 'update user profile');
   }
 });
@@ -360,7 +360,7 @@ router.post('/addresses', authenticateToken, validateRequest(addressValidationRu
     });
 
   } catch (error) {
-    console.error('❌ Add address error:', error);
+    logger.error('❌ Add address error:', error);
     return handleDatabaseError(error, res, 'save address');
   }
 });
@@ -399,7 +399,7 @@ router.get('/addresses', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Get addresses error:', error);
+    logger.error('❌ Get addresses error:', error);
     return handleDatabaseError(error, res, 'fetch addresses');
   }
 });
@@ -467,7 +467,7 @@ router.put('/addresses/:addressId', authenticateToken, [
     });
 
   } catch (error) {
-    console.error('❌ Update address error:', error);
+    logger.error('❌ Update address error:', error);
     return handleDatabaseError(error, res, 'update address');
   }
 });
@@ -518,7 +518,7 @@ router.delete('/addresses/:addressId', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Delete address error:', error);
+    logger.error('❌ Delete address error:', error);
     return handleDatabaseError(error, res, 'delete address');
   }
 });

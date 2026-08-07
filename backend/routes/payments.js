@@ -11,13 +11,14 @@ const {
   cleanData
 } = require('../middleware/mongoHelpers');
 const postgresOrders = require('../repositories/postgresOrdersRepository');
+const logger = require('../utils/logger');
 const router = express.Router();
 
-console.log('💳 Payments router loading');
+logger.info('💳 Payments router loading');
 
 // SIMPLE TEST ROUTE
 router.get('/simple-test', (req, res) => {
-    console.log('🎯 Backend Payments: Simple test route hit!');
+    logger.debug('🎯 Backend Payments: Simple test route hit!');
     res.json({ 
         success: true, 
         message: 'Backend Payments API working!',
@@ -58,7 +59,7 @@ router.get('/methods', (req, res) => {
             message: 'Payment methods retrieved successfully'
         });
     } catch (error) {
-        console.error('Get payment methods error:', error);
+        logger.error('Get payment methods error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to get payment methods',
@@ -74,7 +75,7 @@ router.get('/methods', (req, res) => {
  */
 router.post('/create', authenticateToken, async (req, res) => {
     try {
-        console.log('💳 Creating payment for order:', req.body);
+        logger.debug('💳 Creating payment for order:', req.body);
         
         const { orderNumber, paymentMethod } = req.body;
 
@@ -88,7 +89,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         if (req.databaseProvider === 'postgres') {
             const order = await postgresOrders.getOrderByNumber(orderNumber);
 
-            console.log('ðŸ“‹ Order found:', order ? 'Yes' : 'No');
+            logger.debug('📋 Order found:', order ? 'Yes' : 'No');
 
             if (!order) {
                 return res.status(404).json({
@@ -134,7 +135,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         const ordersCollection = getCollection(req, 'orders');
         const order = await ordersCollection.findOne({ orderNumber: orderNumber });
         
-        console.log('📋 Order found:', order ? 'Yes' : 'No');
+        logger.debug('📋 Order found:', order ? 'Yes' : 'No');
         
         if (!order) {
             return res.status(404).json({
@@ -164,7 +165,7 @@ router.post('/create', authenticateToken, async (req, res) => {
                 { $set: updateData }
             );
 
-            console.log('✅ Contact payment status updated for order:', orderNumber);
+            logger.info('✅ Contact payment status updated for order:', orderNumber);
 
             return res.json({
                 success: true,
@@ -186,7 +187,7 @@ router.post('/create', authenticateToken, async (req, res) => {
                 { $set: updateData }
             );
 
-            console.log('✅ COD payment status updated for order:', orderNumber);
+            logger.info('✅ COD payment status updated for order:', orderNumber);
 
             return res.json({
                 success: true,
@@ -204,7 +205,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         }
 
     } catch (error) {
-        console.error('❌ Create payment error:', error);
+        logger.error('❌ Create payment error:', error);
         return handleDatabaseError(error, res, 'Create payment');
     }
 });
@@ -216,14 +217,14 @@ router.post('/create', authenticateToken, async (req, res) => {
  */
 router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
     try {
-        console.log('📊 Checking payment status for order:', req.params.orderNumber);
+        logger.debug('📊 Checking payment status for order:', req.params.orderNumber);
         
         const { orderNumber } = req.params;
 
         if (req.databaseProvider === 'postgres') {
             const order = await postgresOrders.getOrderByNumber(orderNumber);
 
-            console.log('ðŸ“‹ Order status check:', order ? 'Found' : 'Not found');
+            logger.debug('📋 Order status check:', order ? 'Found' : 'Not found');
 
             if (!order) {
                 return res.status(404).json({
@@ -256,7 +257,7 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
         const ordersCollection = getCollection(req, 'orders');
         const order = await ordersCollection.findOne({ orderNumber: orderNumber });
         
-        console.log('📋 Order status check:', order ? 'Found' : 'Not found');
+        logger.debug('📋 Order status check:', order ? 'Found' : 'Not found');
         
         if (!order) {
             return res.status(404).json({
@@ -273,7 +274,7 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
             });
         }
 
-        console.log('✅ Payment status retrieved for order:', orderNumber);
+        logger.info('✅ Payment status retrieved for order:', orderNumber);
 
         res.json({
             success: true,
@@ -288,7 +289,7 @@ router.get('/status/:orderNumber', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Check payment status error:', error);
+        logger.error('❌ Check payment status error:', error);
         return handleDatabaseError(error, res, 'Check payment status');
     }
 });

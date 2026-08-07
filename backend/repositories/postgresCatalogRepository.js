@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const { query } = require('../config/postgres');
 
 function newLegacyId() {
@@ -28,7 +28,8 @@ function mapProduct(row) {
   const defaultPrice = weightPricing.find((item) => item.isDefault)?.price
     ?? weightPricing[0]?.price
     ?? 0;
-  const stockQuantity = row.stock_quantity ?? weightPricing.reduce((sum, item) => sum + (item.stockQuantity || 0), 0);
+  const stockQuantity = weightPricing.reduce((sum, item) => sum + (item.stockQuantity || 0), 0);
+  const inStock = weightPricing.some((item) => item.isAvailable && item.stockQuantity > 0);
 
   return {
     _id: row.legacy_mongo_id,
@@ -65,7 +66,7 @@ function mapProduct(row) {
     isFeatured: !!row.is_featured,
     featured: !!row.is_featured,
     isActive: !!row.is_active,
-    inStock: stockQuantity > 0,
+    inStock,
     isDigital: !!row.is_digital,
     requiresShipping: !!row.requires_shipping,
     promotion: toJson(row.promotion, {}),
@@ -304,7 +305,6 @@ function productColumnsFromPayload(payload, { isCreate = false } = {}) {
     stats: payload.stats,
     dimensions: payload.dimensions,
     images: payload.images,
-    stock_quantity: payload.stockQuantity,
     published_at: payload.publishedAt,
     updated_at: now
   };

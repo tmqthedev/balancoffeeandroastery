@@ -59,7 +59,7 @@ async function loadRuntimeConfig() {
       throw error;
     }
 
-    console.warn('AWS Secrets Manager unavailable; falling back to local .env config:', error.message);
+    logger.warn('AWS Secrets Manager unavailable; falling back to local .env config:', error.message);
   }
 
   const config = {
@@ -99,7 +99,7 @@ async function loadRuntimeConfig() {
     requireValue(config, 'emailUser');
     requireValue(config, 'emailPassword');
   } else if (!config.cognitoClientSecret) {
-    console.warn('Cognito client secret is not loaded; Cognito auth calls will fail until Secrets Manager access is configured.');
+    logger.warn('Cognito client secret is not loaded; Cognito auth calls will fail until Secrets Manager access is configured.');
   }
 
   return config;

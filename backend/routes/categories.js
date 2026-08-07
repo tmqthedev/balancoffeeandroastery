@@ -5,13 +5,14 @@ const {
   handleDatabaseError
 } = require('../middleware/mongoHelpers');
 const postgresCatalog = require('../repositories/postgresCatalogRepository');
+const logger = require('../utils/logger');
 
-console.log('📂 Backend: Categories router loading');
+logger.info('📂 Backend: Categories router loading');
 
 // Get all categories
 router.get('/', async (req, res) => {
   try {
-    console.log('📂 Fetching categories');
+    logger.debug('📂 Fetching categories');
     
     if (req.databaseProvider === 'postgres') {
       const categories = await postgresCatalog.listCategories();
@@ -35,7 +36,7 @@ router.get('/', async (req, res) => {
       id: category._id.toString()
     }));
 
-    console.log('📂 Categories found:', categoriesWithId.length);
+    logger.debug('📂 Categories found:', categoriesWithId.length);
 
     res.json({
       success: true,
@@ -43,7 +44,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Get categories error:', error);
+    logger.error('❌ Get categories error:', error);
     return handleDatabaseError(error, res, 'Get categories');
   }
 });

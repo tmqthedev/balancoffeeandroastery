@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const { getRuntimeConfig } = require('../config/runtimeConfig');
+const logger = require('../utils/logger');
 
 /**
  * Email Service for sending notifications and system emails
@@ -36,7 +37,7 @@ class EmailService {
                 this.emailFrom = emailFrom;
 
                 if (!emailUser || !emailPassword) {
-                    console.warn('⚠️ Email service not configured (SMTP credentials missing)');
+                    logger.warn('⚠️ Email service not configured (SMTP credentials missing)');
                     this.transporter = null;
                     return null;
                 }
@@ -51,7 +52,7 @@ class EmailService {
                     },
                 });
 
-                console.log('📧 Email config:', {
+                logger.debug('📧 Email config:', {
                     host: emailHost,
                     port: emailPort,
                     user: emailUser,
@@ -78,7 +79,7 @@ class EmailService {
             await this.ensureTransport();
 
             if (!this.transporter) {
-                console.warn('Email service not configured, cannot send email');
+                logger.warn('Email service not configured, cannot send email');
                 return { success: false, error: 'Email service not configured' };
             }
 
@@ -94,14 +95,13 @@ class EmailService {
             };
 
             const result = await this.transporter.sendMail(mailOptions);
-            console.log('✅ Email sent successfully:', {
+            logger.info('✅ Email sent successfully:', {
                 to,
                 subject,
                 messageId: result.messageId
             });
 
-            console.log("FULL RESULT:");
-            console.dir(result, { depth: null });
+            logger.debug('FULL RESULT:', result);
 
             return {
                 success: true,
@@ -109,7 +109,7 @@ class EmailService {
             };
             return { success: true, messageId: result.messageId };
         } catch (error) {
-            console.error('❌ Email send failed:', error);
+            logger.error('❌ Email send failed:', error);
             return { success: false, error: error.message };
         }
     }
@@ -128,7 +128,7 @@ class EmailService {
     async sendEmailVerificationEmail(email, verificationLink, userName = '') {
         try {
             if (!this.transporter) {
-                console.warn('Email service not configured, cannot send verification email');
+                logger.warn('Email service not configured, cannot send verification email');
                 return { success: false, error: 'Email service not configured' };
             }
 
@@ -216,7 +216,7 @@ class EmailService {
 
             return await this.sendEmail(email, subject, html);
         } catch (error) {
-            console.error('Email verification failed:', error.message);
+            logger.error('Email verification failed:', error.message);
             return { success: false, error: error.message };
         }
     }
@@ -296,7 +296,7 @@ class EmailService {
 
             return await this.sendEmail(email, subject, html);
         } catch (error) {
-            console.error('Forgot password email failed:', error.message);
+            logger.error('Forgot password email failed:', error.message);
             return { success: false, error: error.message };
         }
     }
@@ -309,7 +309,7 @@ class EmailService {
             await this.ensureTransport();
 
             if (!this.transporter) {
-                console.warn('Email service not configured, cannot send order confirmation email');
+                logger.warn('Email service not configured, cannot send order confirmation email');
                 return { success: false, error: 'Email service not configured' };
             }
 
@@ -421,7 +421,7 @@ class EmailService {
 
             return await this.sendEmail(email, subject, html);
         } catch (error) {
-            console.error('Order confirmation email failed:', error.message);
+            logger.error('Order confirmation email failed:', error.message);
             return { success: false, error: error.message };
         }
     }    /**
@@ -430,7 +430,7 @@ class EmailService {
     async sendNewOrderNotificationToAdmin(orderData) {
         try {
             if (!this.transporter) {
-                console.warn('Email service not configured, skipping admin notification');
+                logger.warn('Email service not configured, skipping admin notification');
                 return { success: false, error: 'Email service not configured', totalSent: 0, totalFailed: 0 };
             }
 
@@ -535,7 +535,7 @@ class EmailService {
             await this.ensureTransport();
 
             if (!this.transporter) {
-                console.warn('Email service not configured, skipping admin notification');
+                logger.warn('Email service not configured, skipping admin notification');
                 return { success: false, error: 'Email service not configured', totalSent: 0, totalFailed: 0 };
             }
 
@@ -551,10 +551,10 @@ class EmailService {
                         };
 
                         const result = await this.transporter.sendMail(mailOptions);
-                        console.log(`✅ Admin notification sent to ${adminEmail}:`, result.messageId);
+                        logger.info(`✅ Admin notification sent to ${adminEmail}:`, result.messageId);
                         return { email: adminEmail, success: true, messageId: result.messageId };
                     } catch (error) {
-                        console.error(`❌ Failed to send admin notification to ${adminEmail}:`, error);
+                        logger.error(`❌ Failed to send admin notification to ${adminEmail}:`, error);
                         return { email: adminEmail, success: false, error: error.message };
                     }
                 })
@@ -567,7 +567,7 @@ class EmailService {
                 totalFailed: results.filter(r => !r.success).length
             };
         } catch (error) {
-            console.error('Failed to send admin notifications:', error);
+            logger.error('Failed to send admin notifications:', error);
             return { success: false, error: error.message, totalSent: 0, totalFailed: 0 };
         }
     }
@@ -580,7 +580,7 @@ class EmailService {
             await this.ensureTransport();
 
             if (!this.transporter) {
-                console.warn('Email service not configured, skipping admin notification');
+                logger.warn('Email service not configured, skipping admin notification');
                 return { success: false, error: 'Email service not configured' };
             }
 
@@ -594,11 +594,11 @@ class EmailService {
             };
 
             const result = await this.transporter.sendMail(mailOptions);
-            console.log('Admin payment notification sent:', result.messageId);
+            logger.info('Admin payment notification sent:', result.messageId);
             
             return { success: true, messageId: result.messageId };
         } catch (error) {
-            console.error('Failed to send admin payment notification:', error);
+            logger.error('Failed to send admin payment notification:', error);
             return { success: false, error: error.message };
         }
     }
@@ -611,7 +611,7 @@ class EmailService {
             await this.ensureTransport();
 
             if (!this.transporter) {
-                console.warn('Email service not configured, skipping customer notification');
+                logger.warn('Email service not configured, skipping customer notification');
                 return { success: false, error: 'Email service not configured' };
             }
 
@@ -623,11 +623,11 @@ class EmailService {
             };
 
             const result = await this.transporter.sendMail(mailOptions);
-            console.log('Customer payment confirmation sent:', result.messageId);
+            logger.info('Customer payment confirmation sent:', result.messageId);
             
             return { success: true, messageId: result.messageId };
         } catch (error) {
-            console.error('Failed to send customer payment confirmation:', error);
+            logger.error('Failed to send customer payment confirmation:', error);
             return { success: false, error: error.message };
         }
     }

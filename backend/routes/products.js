@@ -13,6 +13,7 @@ const {
 } = require('../middleware/mongoHelpers');
 const postgresCatalog = require('../repositories/postgresCatalogRepository');
 const productController = require('../controllers/productController');
+const logger = require('../utils/logger');
 
 // GET /api/products/recommendations - Get AI recommendations
 router.get('/recommendations', productController.getRecommendations);
@@ -72,7 +73,7 @@ function normalizeWeightPricing(weightPricing) {
   return [];
 }
 
-console.log('🛒 Products router loading');
+logger.info('🛒 Products router loading');
 
 // GET /api/products/test - Simple test route
 router.get('/test', async (req, res) => {
@@ -82,7 +83,7 @@ router.get('/test', async (req, res) => {
 // GET /api/products - List all products with pagination, search, and filtering
 router.get('/', async (req, res) => {
   try {
-    console.log('📋 Fetching products list');
+    logger.debug('📋 Fetching products list');
     
 
     const { page = 1, limit = 12, search, category, featured, minPrice, maxPrice } = req.query;
@@ -170,7 +171,7 @@ router.get('/', async (req, res) => {
       totalPages
     });
   } catch (error) {
-    console.error('❌ Error fetching products:', error);
+    logger.error('❌ Error fetching products:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch products',
@@ -236,7 +237,7 @@ router.get('/search', async (req, res) => {
       totalPages: Math.ceil(totalProducts / actualLimit)
     });
   } catch (error) {
-    console.error('❌ Error searching products:', error);
+    logger.error('❌ Error searching products:', error);
     return res.status(500).json({ success: false, error: 'Failed to search products' });
   }
 });
@@ -279,7 +280,7 @@ router.get('/search-suggestions', async (req, res) => {
       suggestions: products.map(product => product.name).filter(Boolean)
     });
   } catch (error) {
-    console.error('❌ Error fetching product suggestions:', error);
+    logger.error('❌ Error fetching product suggestions:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch product suggestions' });
   }
 });
@@ -287,7 +288,7 @@ router.get('/search-suggestions', async (req, res) => {
 // GET /api/products/featured - Get featured products
 router.get('/featured', async (req, res) => {
   try {
-    console.log('⭐ Fetching featured products');
+    logger.debug('⭐ Fetching featured products');
     
     const { limit = 8 } = req.query;
 
@@ -311,7 +312,7 @@ router.get('/featured', async (req, res) => {
     
     res.json(featuredProductsWithId);
   } catch (error) {
-    console.error('❌ Error fetching featured products:', error);
+    logger.error('❌ Error fetching featured products:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch featured products' });
   }
 });
@@ -319,7 +320,7 @@ router.get('/featured', async (req, res) => {
 // GET /api/products/categories - Get all product categories
 router.get('/categories', async (req, res) => {
   try {
-    console.log('📂 Fetching product categories');
+    logger.debug('📂 Fetching product categories');
     
     if (req.databaseProvider === 'postgres') {
       const categories = await postgresCatalog.listProductCategories();
@@ -332,7 +333,7 @@ router.get('/categories', async (req, res) => {
     
     res.json(categories);
   } catch (error) {
-    console.error('❌ Error fetching categories:', error);
+    logger.error('❌ Error fetching categories:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch categories' });
   }
 });
@@ -382,7 +383,7 @@ router.get('/category/:category', async (req, res) => {
       totalPages: Math.ceil(totalProducts / actualLimit)
     });
   } catch (error) {
-    console.error('❌ Error fetching category products:', error);
+    logger.error('❌ Error fetching category products:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch products by category' });
   }
 });
@@ -427,7 +428,7 @@ router.get('/:id/related', async (req, res) => {
       products: relatedProducts.map(item => ({ ...item, id: item._id.toString() }))
     });
   } catch (error) {
-    console.error('❌ Error fetching related products:', error);
+    logger.error('❌ Error fetching related products:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch related products' });
   }
 });
@@ -435,7 +436,7 @@ router.get('/:id/related', async (req, res) => {
 // GET /api/products/:id - Get single product with related products
 router.get('/:id', async (req, res) => {
   try {
-    console.log(`🔍 Fetching product ${req.params.id}`);
+    logger.debug(`🔍 Fetching product ${req.params.id}`);
     
     if (req.databaseProvider === 'postgres') {
       const product = await postgresCatalog.getProductByLegacyId(req.params.id);
@@ -480,7 +481,7 @@ router.get('/:id', async (req, res) => {
       relatedProducts: relatedProductsWithId
     });
   } catch (error) {
-    console.error(`❌ Error fetching product ${req.params.id}:`, error);
+    logger.error(`❌ Error fetching product ${req.params.id}:`, error);
     return res.status(500).json({ success: false, error: 'Failed to fetch product' });
   }
 });
@@ -488,7 +489,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/products - Create new product (Admin only)
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    console.log('➕ Creating new product');
+    logger.debug('➕ Creating new product');
     
     // Check admin authorization
     if (req.user.role !== 'admin') {
@@ -534,7 +535,7 @@ router.post('/', authenticateToken, async (req, res) => {
       product: result
     });
   } catch (error) {
-    console.error('❌ Error creating product:', error);
+    logger.error('❌ Error creating product:', error);
     return res.status(500).json({ success: false, error: 'Failed to create product' });
   }
 });
@@ -585,7 +586,7 @@ router.put('/:id/pricing', authenticateToken, async (req, res) => {
       product: { ...product, id: product._id.toString() }
     });
   } catch (error) {
-    console.error(`❌ Error updating product pricing ${req.params.id}:`, error);
+    logger.error(`❌ Error updating product pricing ${req.params.id}:`, error);
     return res.status(500).json({ success: false, error: 'Failed to update product pricing' });
   }
 });
@@ -593,7 +594,7 @@ router.put('/:id/pricing', authenticateToken, async (req, res) => {
 // PUT /api/products/:id - Update product (Admin only)
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    console.log(`✏️ Updating product ${req.params.id}`);
+    logger.debug(`✏️ Updating product ${req.params.id}`);
     
     // Check admin authorization
     if (req.user.role !== 'admin') {
@@ -640,7 +641,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       product: result
     });
   } catch (error) {
-    console.error(`❌ Error updating product ${req.params.id}:`, error);
+    logger.error(`❌ Error updating product ${req.params.id}:`, error);
     return res.status(500).json({ success: false, error: 'Failed to update product' });
   }
 });
@@ -648,7 +649,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // DELETE /api/products/:id - Delete product (Admin only)
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    console.log(`🗑️ Deleting product ${req.params.id}`);
+    logger.debug(`🗑️ Deleting product ${req.params.id}`);
     
     // Check admin authorization
     if (req.user.role !== 'admin') {
@@ -680,7 +681,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
-    console.error(`❌ Error deleting product ${req.params.id}:`, error);
+    logger.error(`❌ Error deleting product ${req.params.id}:`, error);
     return res.status(500).json({ success: false, error: 'Failed to delete product' });
   }
 });
