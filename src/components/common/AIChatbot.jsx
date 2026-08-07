@@ -40,7 +40,7 @@ const AIChatbot = () => {
             // Based on standard vite setups, we'll try relative first, but fallback if needed.
             // Let's use the explicit backend URL to be safe in dev environment, 
             // but ideally we should use environment variables.
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const apiUrl = import.meta.env.VITE_API_URL || '/api';
             const response = await fetch(`${apiUrl}/products/recommendations?query=${encodeURIComponent(userMsg)}`);
             
             if (!response.ok) throw new Error('Network response was not ok');
@@ -79,8 +79,8 @@ const AIChatbot = () => {
                             <MdCoffeeMaker size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg leading-tight">AI Barista</h3>
-                            <p className="text-xs text-white/80">Sẵn sàng tư vấn</p>
+                            <h3 className="font-black text-xl uppercase tracking-widest text-white drop-shadow-md">AI Barista</h3>
+                            <p className="text-xs text-white/90 font-medium tracking-wide mt-0.5">SẴN SÀNG TƯ VẤN</p>
                         </div>
                     </div>
                     <button 
@@ -103,7 +103,9 @@ const AIChatbot = () => {
                                         : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm'
                                 }`}
                             >
-                                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                <p className={`text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                                    {msg.text}
+                                </p>
                             </div>
                             
                             {/* Render Recommendations if AI role and has products */}
