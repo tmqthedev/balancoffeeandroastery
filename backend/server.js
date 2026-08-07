@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const { getRuntimeConfig } = require('./config/runtimeConfig');
 const { getPostgresPool, testPostgresConnection, closePostgresPool } = require('./config/postgres');
 require('dotenv').config();
@@ -18,47 +17,6 @@ console.log('🔗 Database Configuration (Backend):');
 console.log('   Environment:', process.env.NODE_ENV || 'development');
 console.log('   Using Secrets Manager:', !!process.env.DATABASE_SECRET_ID);
 console.log('   Database provider:', process.env.DATABASE_PROVIDER || 'postgres');
-
-// MongoDB Client with optimized configuration for production
-const clientOptions = {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-  // Connection timeouts - increased for better reliability
-  connectTimeoutMS: 30000,
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 30000,
-  
-  // Connection pool settings optimized for Vercel serverless
-  maxPoolSize: process.env.NODE_ENV === 'production' ? 5 : 10,
-  minPoolSize: 1,
-  maxIdleTimeMS: 30000,
-  
-  // Retry settings
-  retryWrites: true,
-  retryReads: true,
-  
-  // Heartbeat settings
-  heartbeatFrequencyMS: 10000,
-  
-  // Compression for better performance
-  compressors: ['zlib'],
-  
-  // SSL/TLS settings - relaxed for development, strict for production
-  ...(process.env.NODE_ENV === 'development' ? {
-    tls: true,
-    tlsAllowInvalidCertificates: true,
-    tlsAllowInvalidHostnames: true
-  } : {
-    tls: true,
-    tlsAllowInvalidCertificates: false,
-    tlsAllowInvalidHostnames: false
-  })
-};
-
-let client = null;
 
 // Global database connection flag
 let isConnected = false;
@@ -143,83 +101,49 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MongoDB Connection Function with Enhanced Logging
+// PostgreSQL connection function with enhanced logging
 async function connectToDatabase() {
   if (isConnected && db) {
-    console.log(`✅ Using existing ${activeDatabaseProvider || 'database'} connection (Backend)`);
+    console.log(`Using existing ${activeDatabaseProvider || 'database'} connection (Backend)`);
     return db;
   }
 
   try {
     const runtimeConfig = await getRuntimeConfig();
 
-    if (runtimeConfig.databaseProvider === 'postgres') {
-      console.log('Backend: Attempting to connect to PostgreSQL...');
+    console.log('Backend: Attempting to connect to PostgreSQL...');
 
-      const connectStart = Date.now();
-      const postgresPool = await getPostgresPool();
-      const connectionInfo = await testPostgresConnection();
-      const connectTime = Date.now() - connectStart;
-
-      db = postgresPool;
-      isConnected = true;
-      activeDatabaseProvider = 'postgres';
-
-      console.log(`Backend: PostgreSQL connected in ${connectTime}ms`);
-      console.log('Backend: Connected to PostgreSQL database:', connectionInfo.database);
-
-      return db;
-    }
-
-    if (!client) {
-      client = new MongoClient(runtimeConfig.mongoUri, clientOptions);
-    }
-
-    console.log('🔄 Backend: Attempting to connect to MongoDB...');
-    
     const connectStart = Date.now();
-    await client.connect();
+    const postgresPool = await getPostgresPool();
+    const connectionInfo = await testPostgresConnection();
     const connectTime = Date.now() - connectStart;
-    console.log(`⚡ Backend: MongoDB client connected in ${connectTime}ms`);
-    
-    // Send a ping to confirm a successful connection
-    console.log('🏓 Backend: Sending ping to MongoDB admin database...');
-    const pingStart = Date.now();
-    await client.db("admin").command({ ping: 1 });
-    const pingTime = Date.now() - pingStart;
-    console.log(`✅ Backend: MongoDB ping successful in ${pingTime}ms`);
-    
-    db = client.db("balancoffee");
+
+    db = postgresPool;
     isConnected = true;
-    activeDatabaseProvider = 'mongodb';
-    
-    console.log('🎯 Backend: Connected to database: balancoffee');
-    console.log('📊 Backend Connection status:', { 
-      isConnected: true, 
-      timestamp: new Date().toISOString(),
-      serverApi: 'v1'
-    });
-    
+    activeDatabaseProvider = runtimeConfig.databaseProvider;
+
+    console.log(`Backend: PostgreSQL connected in ${connectTime}ms`);
+    console.log('Backend: Connected to PostgreSQL database:', connectionInfo.database);
+
     return db;
   } catch (error) {
-    console.error('❌ Backend: Database connection failed:');
+    console.error('Backend: Database connection failed:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Error Code:', error.code);
-    
+
     if (error.code === 8000) {
-      console.error('🔐 Backend: Authentication failed - check username/password');
+      console.error('Backend: Authentication failed - check username/password');
     } else if (error.code === 6) {
-      console.error('🌐 Backend: Network error - check connection and firewall');
+      console.error('Backend: Network error - check connection and firewall');
     } else if (error.message.includes('ENOTFOUND')) {
-      console.error('🔍 Backend: DNS resolution failed - check connection string');
+      console.error('Backend: DNS resolution failed - check connection string');
     }
-    
+
     isConnected = false;
     throw error;
   }
 }
-
 // Logging middleware
 app.use(morgan('combined'));
 
@@ -466,19 +390,16 @@ process.on('SIGTERM', async () => {
   console.log('   Environment:', process.env.NODE_ENV);
   
   try {
-    console.log('🔌 Backend: Closing MongoDB connection...');
+    console.log('🔌 Backend: Closing PostgreSQL connection...');
     const closeStart = Date.now();
-    if (client) {
-      await client.close();
-    }
     await closePostgresPool();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
-    console.log(`✅ Backend: MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log(`✅ Backend: PostgreSQL connection closed successfully in ${closeTime}ms`);
     console.log('👋 Backend: Server shutdown complete');
   } catch (error) {
-    console.error('❌ Backend: Error during MongoDB connection close:');
+    console.error('❌ Backend: Error during PostgreSQL connection close:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Full Error:', error);
@@ -495,19 +416,16 @@ process.on('SIGINT', async () => {
   console.log('   Environment:', process.env.NODE_ENV);
   
   try {
-    console.log('🔌 Backend: Closing MongoDB connection...');
+    console.log('🔌 Backend: Closing PostgreSQL connection...');
     const closeStart = Date.now();
-    if (client) {
-      await client.close();
-    }
     await closePostgresPool();
     const closeTime = Date.now() - closeStart;
     
     isConnected = false;
-    console.log(`✅ Backend: MongoDB connection closed successfully in ${closeTime}ms`);
+    console.log(`✅ Backend: PostgreSQL connection closed successfully in ${closeTime}ms`);
     console.log('👋 Backend: Server shutdown complete');
   } catch (error) {
-    console.error('❌ Backend: Error during MongoDB connection close:');
+    console.error('❌ Backend: Error during PostgreSQL connection close:');
     console.error('   Error Type:', error.name);
     console.error('   Error Message:', error.message);
     console.error('   Full Error:', error);

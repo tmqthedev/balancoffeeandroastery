@@ -67,7 +67,6 @@ async function loadRuntimeConfig() {
     port: process.env.PORT || 5000,
     awsRegion: region,
     databaseProvider: process.env.DATABASE_PROVIDER || 'postgres',
-    mongoUri: databaseSecret.MONGODB_URI || process.env.MONGODB_URI,
     postgresUri: databaseSecret.POSTGRES_URI || process.env.POSTGRES_URI,
     emailHost: smtpSecret.EMAIL_HOST || process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
     emailPort: Number(smtpSecret.EMAIL_PORT || process.env.EMAIL_PORT || process.env.SMTP_PORT || 587),
@@ -88,7 +87,7 @@ async function loadRuntimeConfig() {
   
 
   if (config.databaseProvider !== 'postgres') {
-    throw new Error('MongoDB runtime mode has been disabled. Set DATABASE_PROVIDER=postgres.');
+    throw new Error('Only PostgreSQL runtime mode is supported. Set DATABASE_PROVIDER=postgres.');
   }
 
   requireValue(config, 'postgresUri');
