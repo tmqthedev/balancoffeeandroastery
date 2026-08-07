@@ -6,6 +6,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { validateRequest, addressValidationRules } = require('../middleware/validation');
 const { getCollection, toObjectId, handleDatabaseError } = require('../middleware/mongoHelpers');
 const postgresUsers = require('../repositories/postgresUsersRepository');
+const logger = require('../utils/logger');
 
 // Get user profile (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {

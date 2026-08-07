@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import { PRODUCT_DETAIL_ROUTE } from './routeHelpers';
 
 // Loading component for public routes
 const PublicLoadingSpinner = () => (
@@ -40,7 +41,7 @@ const PublicRoutes = () => {
         <Route path="/about" element={<About />} />
         <Route path="/gioi-thieu" element={<About />} />
         <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path={PRODUCT_DETAIL_ROUTE} element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />

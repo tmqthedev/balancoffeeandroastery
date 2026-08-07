@@ -1,4 +1,5 @@
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+const logger = require('../utils/logger');
 
 const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'ap-southeast-1';
@@ -43,16 +44,19 @@ async function loadRuntimeConfig() {
   const databaseSecretId = process.env.DATABASE_SECRET_ID;
   const smtpSecretId = process.env.SMTP_SECRET_ID;
   const cognitoSecretId = process.env.COGNITO_SECRET_ID;
+  const authSecretId = process.env.AUTH_SECRET_ID;
 
   let databaseSecret = {};
   let smtpSecret = {};
   let cognitoSecret = {};
+  let authSecret = {};
 
   try {
-    [databaseSecret, smtpSecret, cognitoSecret] = await Promise.all([
+    [databaseSecret, smtpSecret, cognitoSecret, authSecret] = await Promise.all([
       loadSecret(databaseSecretId),
       loadSecret(smtpSecretId),
-      loadSecret(cognitoSecretId)
+      loadSecret(cognitoSecretId),
+      loadSecret(authSecretId)
     ]);
   } catch (error) {
     if (isProduction) {
@@ -79,6 +83,8 @@ async function loadRuntimeConfig() {
     cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID,
     cognitoClientId: process.env.COGNITO_CLIENT_ID,
     cognitoClientSecret: cognitoSecret.COGNITO_CLIENT_SECRET || process.env.COGNITO_CLIENT_SECRET,
+    jwtSecret: authSecret.JWT_SECRET || process.env.JWT_SECRET,
+    sessionSecret: authSecret.SESSION_SECRET || process.env.SESSION_SECRET,
     authCookieSecure: String(process.env.AUTH_COOKIE_SECURE || isProduction) === 'true',
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
     corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173'
@@ -98,6 +104,8 @@ async function loadRuntimeConfig() {
     requireValue(config, 'cognitoClientSecret');
     requireValue(config, 'emailUser');
     requireValue(config, 'emailPassword');
+    requireValue(config, 'jwtSecret');
+    requireValue(config, 'sessionSecret');
   } else if (!config.cognitoClientSecret) {
     logger.warn('Cognito client secret is not loaded; Cognito auth calls will fail until Secrets Manager access is configured.');
   }

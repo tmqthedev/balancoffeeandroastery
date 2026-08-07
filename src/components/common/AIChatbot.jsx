@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { MdChat, MdClose, MdSend, MdCoffeeMaker } from 'react-icons/md';
-import ProductCard from './ProductCard';
+import { productDetailPath } from '../../routes/routeHelpers';
 
 const AIChatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -126,12 +127,12 @@ const AIChatbot = () => {
                                                 <p className="text-xs text-brand-primary font-semibold mt-1">
                                                     {product.price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price) : 'Liên hệ'}
                                                 </p>
-                                                <a 
-                                                    href={`/san-pham/${product.slug || product._id}`}
+                                                <Link
+                                                    to={product._id ? productDetailPath(product._id) : '#'}
                                                     className="mt-2 block text-center bg-gray-100 hover:bg-brand-primary hover:text-white text-gray-700 text-xs py-1.5 rounded-lg transition-colors"
                                                 >
                                                     Xem chi tiết
-                                                </a>
+                                                </Link>
                                             </div>
                                         </div>
                                     ))}
