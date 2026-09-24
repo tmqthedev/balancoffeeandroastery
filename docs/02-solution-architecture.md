@@ -74,7 +74,7 @@ Operational visibility is provided through Amazon CloudWatch and the CloudWatch 
 ## Client Layer
 
 - Web Browser
-- HTTPS Requests
+- HTTP Requests
 
 Responsibilities
 
@@ -91,7 +91,7 @@ Responsibilities
 Responsibilities
 
 - Global content delivery
-- HTTPS termination
+- HTTP termination
 - Edge caching
 - Performance optimization
 
@@ -178,11 +178,11 @@ Provides
 ```
 User
     │
-HTTPS
+HTTP
     ▼
 CloudFront
     │
-HTTPS
+Internet Gateway
     ▼
 EC2
     │
@@ -248,7 +248,7 @@ Amazon Cognito
 
 ---
 
-## Product Management
+## Product List
 
 ```
 Frontend
@@ -306,18 +306,18 @@ AI Response
 
 # 8. AWS Services
 
-| AWS Service | Role |
-|--------------|------|
-| Amazon EC2 | Compute |
-| Docker | Application runtime |
-| Amazon CloudFront | Content delivery |
-| Amazon RDS | Database |
-| Amazon S3 | Object storage |
-| Amazon Cognito | Authentication |
-| Amazon SES | Email |
-| Amazon Bedrock | AI |
-| AWS Secrets Manager | Secret storage |
-| Amazon CloudWatch | Monitoring |
+| AWS Service 		| Role 			|
+|-----------------------|-----------------------|
+| Amazon EC2 		| Compute 		|
+| Docker 		| Application runtime 	|
+| Amazon CloudFront 	| Content delivery 	|
+| Amazon RDS 		| Database 		|
+| Amazon S3 		| Object storage 	|
+| Amazon Cognito 	| Authentication 	|
+| Amazon SES 		| Email 		|
+| Amazon Bedrock 	| AI 			|
+| AWS Secrets Manager 	| Secret storage 	|
+| Amazon CloudWatch 	| Monitoring 		|
 
 ---
 
